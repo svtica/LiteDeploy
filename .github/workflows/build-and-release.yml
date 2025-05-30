@@ -35,7 +35,7 @@ jobs:
       run: nuget restore LiteDeploy.sln
       
     - name: Build solution
-      run: msbuild LiteDeploy.sln /p:Configuration=Release /p:Platform="Any CPU" /p:OutputPath=bin\Release\
+      run: msbuild LiteDeploy.sln /p:Configuration=Release /p:Platform=x64 /p:OutputPath=bin\Release\
       
     - name: Copy dependencies and assets
       run: |
@@ -71,16 +71,16 @@ jobs:
           $version = "1.0.0-$branch-$sha"
         }
         
-        Compress-Archive -Path "publish\*" -DestinationPath "LiteDeploy-$version-win.zip"
+        Compress-Archive -Path "publish\*" -DestinationPath "LiteDeploy-$version-win-x64.zip"
         echo "PACKAGE_VERSION=$version" >> $env:GITHUB_ENV
-        echo "PACKAGE_NAME=LiteDeploy-$version-win.zip" >> $env:GITHUB_ENV
+        echo "PACKAGE_NAME=LiteDeploy-$version-win-x64.zip" >> $env:GITHUB_ENV
       shell: powershell
       
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: LiteDeploy-${{ env.PACKAGE_VERSION }}
-        path: LiteDeploy-${{ env.PACKAGE_VERSION }}-win.zip
+        name: LiteDeploy-${{ env.PACKAGE_VERSION }}-x64
+        path: LiteDeploy-${{ env.PACKAGE_VERSION }}-win-x64.zip
         
     - name: Upload to release (if tag)
       if: startsWith(github.ref, 'refs/tags/')
@@ -89,8 +89,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./LiteDeploy-${{ env.PACKAGE_VERSION }}-win.zip
-        asset_name: LiteDeploy-${{ env.PACKAGE_VERSION }}-win.zip
+        asset_path: ./LiteDeploy-${{ env.PACKAGE_VERSION }}-win-x64.zip
+        asset_name: LiteDeploy-${{ env.PACKAGE_VERSION }}-win-x64.zip
         asset_content_type: application/zip
 
   security:
@@ -114,7 +114,7 @@ jobs:
       run: nuget restore LiteDeploy.sln
       
     - name: Build for analysis
-      run: msbuild LiteDeploy.sln /p:Configuration=Release /p:Platform="Any CPU"
+      run: msbuild LiteDeploy.sln /p:Configuration=Release /p:Platform=x64
       
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
