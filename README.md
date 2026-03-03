@@ -1,6 +1,5 @@
 # LiteDeploy
 
-[![Part of LiteSuite](https://img.shields.io/badge/part%20of-LiteSuite-blue)](https://github.com/svtica/LiteSuite)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-green.svg)](LICENSE)
 
 **Lightweight network deployment tool for managing remote Windows systems with credential management and file operations.**
@@ -106,18 +105,12 @@ This software is released under [The Unlicense](LICENSE) - public domain.
 
 ## 🌟 Part of LiteSuite
 
-This tool is part of **[LiteSuite](https://github.com/svtica/LiteSuite)** - a comprehensive collection of lightweight Windows administration tools.
+This tool is part of **LiteSuite** - a comprehensive collection of lightweight Windows administration tools.
 
 ### Other Tools in the Suite:
 - **[LiteTask](https://github.com/svtica/LiteTask)** - Advanced Task Scheduler Alternative  
 - **[LitePM](https://github.com/svtica/LitePM)** - Process Manager with System Monitoring
 - **[LiteDeploy](https://github.com/svtica/LiteDeploy)** - Network Deployment and Management
-- **[LiteRun](https://github.com/svtica/LiteRun)** - Remote Command Execution Utility
-- **[LiteSrv](https://github.com/svtica/LiteSrv)** - Windows Service Wrapper
+- **[LiteRun](https://github.com/svtica/LiteRun)** - Remote Command Execution Utility (archived)
+- **[LiteSrv](https://github.com/svtica/LiteSrv)** - Windows Service Wrapper (archived)
 
-### 📦 Download the Complete Suite
-Get all tools in one package: **[LiteSuite Releases](https://github.com/svtica/LiteSuite/releases/latest)**
-
----
-
-*LiteSuite - Professional Windows administration tools for modern IT environments.*
