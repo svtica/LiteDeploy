@@ -64,6 +64,13 @@ LiteDeploy is a Windows Forms application designed for system administrators to 
 3. Execute and monitor output from remote systems
 4. Review results and error messages
 
+## Software updates (MAJ-Logiciels)
+
+The package also ships **[MAJ-Logiciels](MAJ-Logiciels/README.md)**, PowerShell tools by Patrick Bédard
+that keep third-party software up to date on the fleet through winget (panel, unattended agent, Adobe
+Reader and 1Password modules, site profiles). Install it once with `MAJ-Logiciels\Installer.ps1 -Profil
+<site profile>`, then open it from LiteDeploy: *App > Software updates*.
+
 ## Configuration
 
 ### Computer Management

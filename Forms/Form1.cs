@@ -57,7 +57,18 @@ namespace LiteDeploy
         public Form1()
         {            
             InitializeComponent();
+
+            // App > Software updates: MAJ-Logiciels panel (PowerShell tools shipped next to LiteDeploy.exe)
+            ToolStripMenuItem majLogiciels = new ToolStripMenuItem("Software updates (MAJ-Logiciels)...");
+            majLogiciels.Click += majLogicielsToolStripMenuItem_Click;
+            fileToolStripMenuItem.DropDownItems.Insert(1, majLogiciels);
+
             Hide();
+        }
+
+        private void majLogicielsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MajLogiciels.OpenPanel(this);
         }
 
         private void CheckForUpdate()
