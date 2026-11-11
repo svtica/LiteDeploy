@@ -58,6 +58,42 @@ public static class SoakUi
 {
     [DllImport("user32.dll")]
     public static extern uint GetGuiResources(IntPtr hProcess, uint uiFlags);
+    [DllImport("user32.dll")]
+    static extern bool SetCursorPos(int x, int y);
+    [DllImport("user32.dll")]
+    static extern void mouse_event(uint flags, uint dx, uint dy, uint data, UIntPtr extra);
+    [DllImport("user32.dll")]
+    static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    // Real mouse click in the middle of an element. Used for menu items: invoking a menu item
+    // through accessibility while its drop-down is open leaves the target UI unresponsive to
+    // UI Automation when the item opens a modal window.
+    public static bool ClickCenter(AutomationElement e)
+    {
+        try
+        {
+            System.Windows.Rect r = e.Current.BoundingRectangle;
+            if (r.IsEmpty || r.Width <= 0) { LastError = "empty bounding rectangle"; return false; }
+            SetCursorPos((int)(r.Left + r.Width / 2), (int)(r.Top + r.Height / 2));
+            Thread.Sleep(100);
+            mouse_event(0x0002, 0, 0, 0, UIntPtr.Zero);   // left down
+            mouse_event(0x0004, 0, 0, 0, UIntPtr.Zero);   // left up
+            return true;
+        }
+        catch (Exception ex) { LastError = ex.Message; return false; }
+    }
+
+    public static void Activate(AutomationElement w)
+    {
+        try { SetForegroundWindow(new IntPtr(w.Current.NativeWindowHandle)); }
+        catch (Exception ex) { LastError = ex.Message; }
+    }
+
+    public static void Minimize(AutomationElement w)
+    {
+        try { ((WindowPattern)w.GetCurrentPattern(WindowPattern.Pattern)).SetWindowVisualState(WindowVisualState.Minimized); }
+        catch (Exception ex) { LastError = ex.Message; }
+    }
 
     public static string LastError = "";
     static int pending = 0;
@@ -403,15 +439,23 @@ function Start-Deployment {
 }
 
 function Start-PingAll {
+    # The process reports window opens over the main window: keep the menu bar visible
+    $reports = [SoakUi]::FindWindow($procId, 'Lite Deploy - Process Reports')
+    if ($reports) { [SoakUi]::Minimize($reports) }
+    $main = Get-Main
+    if (-not $main) { Write-ActionFailure 'main window not found'; return }
+    [SoakUi]::Activate($main)
+    Start-Sleep -Milliseconds 300
     $menu = [SoakUi]::FindMenuItem($procId, 'Computers')
     if (-not $menu) { Write-ActionFailure 'Computers menu not found'; return }
-    [SoakUi]::ExpandAsync($menu)
+    # Mouse clicks, like a user: see SoakUi.ClickCenter
+    if (-not [SoakUi]::ClickCenter($menu)) { Write-ActionFailure 'click on the Computers menu'; return }
     $script:pingItem = $null
     if (-not (Wait-Until { $script:pingItem = [SoakUi]::FindMenuItem($procId, 'Ping'); $null -ne $script:pingItem } 10)) {
         Write-ActionFailure 'Computers > Ping menu item not found'
         return
     }
-    [SoakUi]::InvokeAsync($script:pingItem)
+    if (-not [SoakUi]::ClickCenter($script:pingItem)) { Write-ActionFailure 'click on Computers > Ping'; return }
     $script:pingWindow = $null
     if (-not (Wait-Until { $script:pingWindow = [SoakUi]::FindWindow($procId, 'Lite Deploy - Ping'); $null -ne $script:pingWindow } 20)) {
         Write-ActionFailure 'ping window did not open'
@@ -433,11 +477,21 @@ function Edit-ComputerList {
 }
 
 $cycle = 0
+$idleCycles = 0
+$script:stalled = $false
 while ($sw.Elapsed.TotalMinutes -lt $DurationMinutes -and -not $script:crashed) {
     $cycleStart = $sw.Elapsed.TotalSeconds
     $cycle++
 
+    $before = $stats.Deployments
     Start-Deployment
+    # A run where the load stopped measures nothing: fail it instead of writing a misleading summary
+    if ($stats.Deployments -eq $before) { $idleCycles++ } else { $idleCycles = 0 }
+    if ($idleCycles -ge 3) {
+        Write-Host "::error::No deployment completed in 3 cycles in a row: the UI of LiteDeploy (or the UI automation) stopped responding"
+        $script:stalled = $true
+        break
+    }
     if ($cycle % 3 -eq 0) { Start-PingAll }
     if ($cycle % 5 -eq 0) { Edit-ComputerList }
 
@@ -471,7 +525,7 @@ $last = $rows | Select-Object -Last 1
 $md = New-Object System.Text.StringBuilder
 [void]$md.AppendLine("### LiteDeploy soak - $Label")
 [void]$md.AppendLine()
-[void]$md.AppendLine("Duration: $([math]::Round($last.ElapsedMin,1)) min" + $(if ($script:crashed) { ' - **LiteDeploy exited before the end**' } else { '' }))
+[void]$md.AppendLine("Duration: $([math]::Round($last.ElapsedMin,1)) min" + $(if ($script:crashed) { ' - **LiteDeploy exited before the end**' } elseif ($script:stalled) { ' - **load stopped: UI not responding, run not usable**' } else { '' }))
 [void]$md.AppendLine("Load: $($hosts.Count) computers, $($stats.Deployments) deployments ($($stats.DeployTimeouts) timed out), $($stats.PingRuns) ping runs, $($stats.ListEdits) list edits, $($stats.Dialogs) message boxes answered, $($stats.ActionFailures) failed UI actions.")
 if ($steady.Count -gt 0) {
     [void]$md.AppendLine("Main window shown after $startupSeconds s. Average CPU after warm-up: $([math]::Round((@($steady | Measure-Object CpuPercent -Average).Average), 2)) % of one core.")
@@ -495,4 +549,5 @@ Set-Content -Path $SummaryPath -Value $summary -Encoding UTF8
 Write-Host $summary
 if ($env:GITHUB_STEP_SUMMARY) { Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $summary }
 if ($script:crashed) { exit 2 }
+if ($script:stalled) { exit 4 }
 if ($stats.Deployments -eq 0) { Write-Host "::error::No deployment completed: the load did not run."; exit 3 }

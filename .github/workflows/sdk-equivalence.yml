@@ -42,6 +42,8 @@ jobs:
         $conv = git log -1 --format=%H -S 'Sdk="Microsoft.NET.Sdk"' -- LiteDeploy.csproj
         if (-not $conv) { throw "Conversion commit not found" }
         Write-Host "Project converted in $conv; old project file from $conv^"
+        # The comparison script of this commit (not the one of the conversion commit)
+        Copy-Item tools\sdk-equivalence "$env:RUNNER_TEMP\sdk-equivalence" -Recurse -Force
         # Both builds use the sources of the conversion commit itself, so later changes (new files) do not count
         git checkout --quiet $conv
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -69,7 +71,7 @@ jobs:
     - name: Compare
       shell: pwsh
       run: |
-        ./new/tools/sdk-equivalence/Compare-Builds.ps1 -OldRoot old -NewRoot new `
+        & "$env:RUNNER_TEMP/sdk-equivalence/Compare-Builds.ps1" -OldRoot old -NewRoot new `
             -OldLog build-old.log -NewLog build-new.log `
             -OutputDir '${{ matrix.output }}' -ReportPath equivalence-${{ matrix.platform }}.md
 
