@@ -1,24 +1,47 @@
 # .github/workflows/build-and-release.yml
 # GitHub Actions workflow for LiteDeploy (.NET Framework 4.8, C#, WinForms)
 #
-# Builds the solution on every push and pull request to main and uploads the
-# build output as the "LiteDeploy" artifact.
+# Release package contract (used by LiteTask, Tools menu):
+#   - asset name LiteDeploy.zip (fixed, so that
+#     https://github.com/svtica/LiteDeploy/releases/latest/download/LiteDeploy.zip
+#     always points to the latest release) on a v<Major.Minor.Build> tag;
+#     LiteTask matches ^LiteDeploy.*\.(zip|exe)$ on the latest release;
+#   - LiteDeploy.exe and all its dependencies (.config, ...) in the same
+#     folder (LiteTask copies the folder of the shortest LiteDeploy.exe path);
+#   - LiteDeploy.exe signed with Authenticode when the SIGNING_CERTIFICATE
+#     secret exists (LiteTask refuses a signature that does not match the
+#     file and installs an unsigned exe with a warning).
+#
+# Signing secrets (repository settings > Secrets and variables > Actions),
+# the same certificate as LiteTask:
+#   SIGNING_CERTIFICATE   the .pfx file, base64-encoded
+#   CERTIFICATE_PASSWORD  its password
+# Without them the build stays green and produces an unsigned package.
 
 name: Build and Release
 
 on:
   push:
     branches: [ main ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
 
-permissions:
-  contents: read
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  RELEASE_REF: ${{ github.ref }}
+  CERTIFICATE_BASE64: ${{ secrets.SIGNING_CERTIFICATE }}
+  CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
 
 jobs:
   build:
     runs-on: windows-latest
+    permissions:
+      contents: write
 
     steps:
     - name: Checkout code
@@ -30,18 +53,116 @@ jobs:
     - name: Build solution
       shell: powershell
       run: |
-        msbuild LiteDeploy.sln --% /p:Configuration=Release /p:Platform=x64 /v:minimal
+        msbuild LiteDeploy.sln --% -restore /p:Configuration=Release /p:Platform=x64 /v:minimal
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-    - name: Collect build output
+    - name: Assemble package folder
       shell: powershell
       run: |
         $buildPath = "bin\x64\Release"
-        New-Item -ItemType Directory -Force -Path publish | Out-Null
-        Copy-Item "$buildPath\LiteDeploy.exe", "$buildPath\LiteDeploy.exe.config", "$buildPath\RemoteManagement.msc" -Destination publish
+        $publishPath = "publish"
+        New-Item -ItemType Directory -Force -Path $publishPath | Out-Null
 
+        # LiteDeploy.exe and everything it needs next to it
+        Copy-Item "$buildPath\LiteDeploy.exe", "$buildPath\LiteDeploy.exe.config", "$buildPath\RemoteManagement.msc" -Destination $publishPath
+        Copy-Item "$buildPath\*.dll" -Destination $publishPath -ErrorAction SilentlyContinue
+
+        Copy-Item "README.md", "LICENSE", "CHANGELOG.md" -Destination $publishPath -ErrorAction SilentlyContinue
+        Get-ChildItem $publishPath | Format-Table Name, Length
+
+    - name: Decode certificate
+      if: ${{ env.CERTIFICATE_BASE64 != '' }}
+      shell: pwsh
+      run: |
+        $certBytes = [System.Convert]::FromBase64String($env:CERTIFICATE_BASE64)
+        $certPath = Join-Path -Path $env:RUNNER_TEMP -ChildPath "signing-cert.pfx"
+        [IO.File]::WriteAllBytes($certPath, $certBytes)
+        echo "CERTIFICATE_PATH=$certPath" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+    - name: Sign LiteDeploy binaries
+      if: ${{ env.CERTIFICATE_BASE64 != '' }}
+      shell: pwsh
+      run: ./tools/ci/Sign-Binaries.ps1 -Dir publish -CertPath "$env:CERTIFICATE_PATH"
+
+    # Without the secret, still exercise the signing script on a copy of the
+    # binaries with a throw-away self-signed certificate (trusted on this
+    # ephemeral runner only). The package itself stays unsigned.
+    - name: Signing self-test (no secret)
+      if: ${{ env.CERTIFICATE_BASE64 == '' }}
+      shell: pwsh
+      run: |
+        $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=LiteDeploy CI self-test" -CertStoreLocation Cert:\CurrentUser\My -NotAfter (Get-Date).AddDays(1)
+        $env:SELFTEST_PASSWORD = [guid]::NewGuid().ToString()
+        $pfx = Join-Path $env:RUNNER_TEMP "selftest.pfx"
+        Export-PfxCertificate -Cert $cert -FilePath $pfx -Password (ConvertTo-SecureString $env:SELFTEST_PASSWORD -AsPlainText -Force) | Out-Null
+        $cer = Join-Path $env:RUNNER_TEMP "selftest.cer"
+        Export-Certificate -Cert $cert -FilePath $cer | Out-Null
+        Import-Certificate -FilePath $cer -CertStoreLocation Cert:\LocalMachine\Root | Out-Null
+        $copy = Join-Path $env:RUNNER_TEMP "sign-selftest"
+        New-Item -ItemType Directory -Force -Path $copy | Out-Null
+        Copy-Item "publish\*" -Destination $copy
+        try {
+          ./tools/ci/Sign-Binaries.ps1 -Dir $copy -CertPath $pfx -PasswordEnvVar SELFTEST_PASSWORD
+        } finally {
+          Remove-Item $pfx, $cer -Force
+          Get-ChildItem Cert:\LocalMachine\Root | Where-Object Subject -eq "CN=LiteDeploy CI self-test" | Remove-Item
+          Remove-Item $cert.PSPath
+        }
+
+    - name: Remove certificate
+      if: always()
+      shell: pwsh
+      run: |
+        if ($env:CERTIFICATE_PATH -and (Test-Path $env:CERTIFICATE_PATH)) {
+          Remove-Item $env:CERTIFICATE_PATH -Force
+        }
+
+    - name: Warn when the release is unsigned
+      if: ${{ env.CERTIFICATE_BASE64 == '' && startsWith(env.RELEASE_REF, 'refs/tags/') }}
+      shell: bash
+      run: echo "::warning::SIGNING_CERTIFICATE secret is not set - LiteDeploy.exe in this release is NOT signed (LiteTask will install it with a warning)."
+
+    - name: Create release package
+      shell: powershell
+      run: |
+        Compress-Archive -Path "publish\*" -DestinationPath "LiteDeploy.zip"
+        echo "PACKAGE_NAME=LiteDeploy.zip" >> $env:GITHUB_ENV
+
+    - name: Check package layout (LiteTask contract)
+      shell: powershell
+      run: |
+        # Same rules as LiteTask Class/ToolCatalog.vb and Class/ToolManager.vb
+        if ($env:PACKAGE_NAME -notmatch '^LiteDeploy.*\.(zip|exe)$') { Write-Error "Asset name $env:PACKAGE_NAME breaks the LiteTask pattern"; exit 1 }
+        if ($env:PACKAGE_NAME -ne 'LiteDeploy.zip') { Write-Error "Asset must be named LiteDeploy.zip (releases/latest/download link)"; exit 1 }
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        $zip = [IO.Compression.ZipFile]::OpenRead((Resolve-Path $env:PACKAGE_NAME))
+        try { $names = @($zip.Entries | ForEach-Object { $_.FullName -replace '\\', '/' }) } finally { $zip.Dispose() }
+        $exes = @($names | Where-Object { ($_ -split '/')[-1] -eq 'LiteDeploy.exe' } | Sort-Object Length)
+        if ($exes.Count -eq 0) { Write-Error "LiteDeploy.exe not found in the zip"; exit 1 }
+        if ($exes[0] -ne 'LiteDeploy.exe') { Write-Error "LiteDeploy.exe must be at the zip root (found $($exes[0]))"; exit 1 }
+        $required = 'LiteDeploy.exe', 'LiteDeploy.exe.config', 'RemoteManagement.msc'
+        $missing = $required | Where-Object { $names -notcontains $_ }
+        if ($missing) { Write-Error "Missing next to LiteDeploy.exe in the zip: $($missing -join ', ')"; exit 1 }
+        # Every DLL of the build output must ship next to the exe
+        $dlls = Get-ChildItem "bin\x64\Release\*.dll" -ErrorAction SilentlyContinue | ForEach-Object Name
+        $missingDll = $dlls | Where-Object { $names -notcontains $_ }
+        if ($missingDll) { Write-Error "Build DLLs missing from the zip: $($missingDll -join ', ')"; exit 1 }
+        Write-Host "Package OK: $($names.Count) entries, LiteDeploy.exe and its dependencies at the zip root."
+
+    # GitHub always serves an artifact as <name>.zip: upload the package
+    # folder (not the zip itself), so the download is LiteDeploy.zip with
+    # LiteDeploy.exe inside, like the release asset (no zip in a zip).
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: LiteDeploy
         path: publish/
+
+    - name: Upload to release (if tag)
+      if: startsWith(env.RELEASE_REF, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ github.ref_name }}
+        files: ./${{ env.PACKAGE_NAME }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

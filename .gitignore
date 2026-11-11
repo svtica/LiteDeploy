@@ -50,3 +50,23 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Visual Studio / MSBuild output and user files
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user
+*.suo
+
+# Release package built by CI
+publish/
+LiteDeploy.zip
+
+# Certificates and keys: never in the repository (CI uses secrets)
+*.pfx
+*.p12
+*.snk
+
+# Runtime data written next to LiteDeploy.exe (Active Directory computer list)
+adcache.xml
+selectedComputers.txt

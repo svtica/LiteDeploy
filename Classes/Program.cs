@@ -14,9 +14,17 @@ namespace LiteDeploy
         [STAThread]
         static void Main(string[] args)
         {
-            if (!File.Exists("PsExec.exe"))
+            // LiteDeploy reads and writes its files (adcache.xml, RemoteManagement.msc,
+            // RDPWInst.exe...) next to LiteDeploy.exe, whatever folder it is started from
+            // (LiteTask, shortcut, command line).
+            Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
+
+            if (PsExecLocator.Find(AppDomain.CurrentDomain.BaseDirectory) == null)
             {
-                MessageBox.Show("PsExec.Exe is missing. The application cannot continue.", "File Missing", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("PsExec is missing. The application cannot continue.\n\n" +
+                                "Put PsExec.exe (Sysinternals) next to LiteDeploy.exe, or install LiteDeploy from LiteTask (Tools menu), " +
+                                "which provides PsExec64.exe in its tools folder.",
+                                "File Missing", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
             else

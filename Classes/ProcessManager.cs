@@ -26,7 +26,7 @@ namespace LiteDeploy
 
         static public void AddProcess(String command)
         {
-            ProcessStartInfo startInfo = new ProcessStartInfo("PsExec.exe", command.TrimEnd(new char[]{' '}) );
+            ProcessStartInfo startInfo = new ProcessStartInfo(PsExecLocator.Path, command.TrimEnd(new char[]{' '}) );
             startInfo.CreateNoWindow = true;
             startInfo.UseShellExecute = false;
             startInfo.RedirectStandardOutput = true;
@@ -133,7 +133,7 @@ namespace LiteDeploy
                         instances.Add(p);
                     }
 
-                    AppConsole.WriteLine("Executing: PsExec.exe " + processList[i].Arguments);
+                    AppConsole.WriteLine("Executing: " + Path.GetFileName(PsExecLocator.Path) + " " + processList[i].Arguments);
                     incrementString = "Deploying to: " + deployNameList[i];
                     incrementString2 = "Next: " + ((i + 1) < deployNameList.Count ? deployNameList[i + 1] : "");
                     SetDeployingToString();
@@ -209,7 +209,7 @@ namespace LiteDeploy
             if ( deployNameList.Count > 0 )
                 currentHost = deployNameList[currentHostIndex];
 
-            Process[] PsExec = Process.GetProcessesByName("PsExec");
+            Process[] PsExec = Process.GetProcessesByName(PsExecLocator.ProcessName);
 
             try
             {
