@@ -1,0 +1,25 @@
+# Site settings (copy config.example.json to config.json)
+Outils/config.json
+
+# Runtime files written by the panel and the agent
+agent-settings.json
+agent-queue.json
+agent-status.json
+agent-state.json
+agent-webcheck.txt
+mac-cache.json
+uptodate.json
+catalog.json
+
+# Reports and exports (computer names, users, versions)
+Rapports/
+PDQ/
+*.log
+*.csv
+
+# Manual backups
+*.bak
+*-stable.ps1
+
+# Profile backups made by profil.ps1 / Installer.ps1
+Profil-backups/
