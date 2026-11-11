@@ -157,6 +157,22 @@ public static class SoakUi
         return null;
     }
 
+    // Window whose title is the given text or starts with it followed by " - "
+    // (the computer list adds the Active Directory state to its title)
+    public static AutomationElement FindWindowPrefix(int pid, string title)
+    {
+        foreach (AutomationElement w in Windows(pid))
+        {
+            try
+            {
+                string name = w.Current.Name;
+                if (name == title || name.StartsWith(title + " - ", StringComparison.Ordinal)) return w;
+            }
+            catch { }
+        }
+        return null;
+    }
+
     public static AutomationElement FindById(AutomationElement scope, string automationId)
     {
         if (scope == null) return null;
@@ -412,7 +428,7 @@ function Open-ComputerList {
     if (-not $button) { Write-ActionFailure 'Computers button not found'; return $null }
     [SoakUi]::InvokeAsync($button)
     $script:designer = $null
-    if (-not (Wait-Until { $script:designer = [SoakUi]::FindWindow($procId, 'Lite Deploy - Computers'); $null -ne $script:designer } 20)) {
+    if (-not (Wait-Until { $script:designer = [SoakUi]::FindWindowPrefix($procId, 'Lite Deploy - Computers'); $null -ne $script:designer } 20)) {
         Write-ActionFailure 'computer list window did not open'
         return $null
     }
@@ -424,7 +440,7 @@ function Use-ComputerList($designer) {
     if (-not $use) { Write-ActionFailure '"Use List" button not found'; return $false }
     [SoakUi]::InvokeAsync($use)
     # The confirmation ("This will clear the Selected Computers List") is answered Yes
-    if (-not (Wait-Until { $null -eq [SoakUi]::FindWindow($procId, 'Lite Deploy - Computers') } 20)) {
+    if (-not (Wait-Until { $null -eq [SoakUi]::FindWindowPrefix($procId, 'Lite Deploy - Computers') } 20)) {
         Write-ActionFailure 'computer list window did not close'
         return $false
     }
