@@ -377,7 +377,12 @@ function Write-ActionFailure([string] $what) {
 # ---- Start-up ------------------------------------------------------------------
 $startWatch = [Diagnostics.Stopwatch]::StartNew()
 $script:main = $null
-if (-not (Wait-Until { $script:main = [SoakUi]::FindWindow($procId, 'Lite Deploy'); $null -ne $script:main } 120)) {
+# The main window exists while the splash screen (a modal dialog shown from its Load event) is
+# still open: wait until the splash is gone and the main window accepts input.
+if (-not (Wait-Until {
+        $script:main = [SoakUi]::FindWindow($procId, 'Lite Deploy')
+        $null -ne $script:main -and $null -eq [SoakUi]::FindWindow($procId, 'SplashForm') -and [SoakUi]::IsEnabled($script:main)
+    } 120)) {
     if (-not $proc.HasExited) { Stop-Process -Id $procId -Force }
     throw "LiteDeploy main window did not appear (exited: $($proc.HasExited)). Message boxes: $($dialogTexts -join ' | ')"
 }
@@ -432,7 +437,8 @@ function Use-ComputerList($designer) {
 
 # Fill the computer list
 $designer = Open-ComputerList
-if (-not $designer) { throw "Could not open the computer list" }
+if (-not $designer) { $designer = Open-ComputerList }   # one retry: the first click can come too early
+if (-not $designer) { throw "Could not open the computer list (windows: $([SoakUi]::Titles($procId)))" }
 $manualPC = [SoakUi]::FindById($designer, 'manualPC')
 $manAdd = [SoakUi]::FindById($designer, 'manAdd')
 if (-not $manualPC -or -not $manAdd) { throw "Computer list controls not found" }
