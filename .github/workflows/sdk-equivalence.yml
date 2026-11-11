@@ -4,7 +4,8 @@
 #
 # Both builds use the sources of the commit that converted the project to the
 # SDK format; only LiteDeploy.csproj differs: the "old" copy takes the project
-# file from the parent of that commit.
+# file from the parent of that commit, the "new" one the project file of that
+# commit with the global properties of the current project.
 
 name: SDK project equivalence
 
@@ -44,9 +45,16 @@ jobs:
         Write-Host "Project converted in $conv; old project file from $conv^"
         # The comparison script of this commit (not the one of the conversion commit)
         Copy-Item tools\sdk-equivalence "$env:RUNNER_TEMP\sdk-equivalence" -Recurse -Force
+        # Global properties of the current project (first PropertyGroup), applied to the conversion commit below
+        $headProps = [regex]::Match((Get-Content LiteDeploy.csproj -Raw), '(?s)<PropertyGroup>.*?</PropertyGroup>').Value
+        if (-not $headProps) { throw "No global PropertyGroup in LiteDeploy.csproj" }
         # Both builds use the sources of the conversion commit itself, so later changes (new files) do not count
         git checkout --quiet $conv
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        $proj = Get-Content LiteDeploy.csproj -Raw
+        $proj = ([regex]'(?s)<PropertyGroup>.*?</PropertyGroup>').Replace($proj, $headProps.Replace('$', '$$'), 1)
+        [IO.File]::WriteAllText((Resolve-Path LiteDeploy.csproj), $proj, (New-Object System.Text.UTF8Encoding($true)))
+        Write-Host "Global properties of the current LiteDeploy.csproj applied to the conversion commit"
         Set-Location ..
         Copy-Item new old -Recurse
         Set-Location old

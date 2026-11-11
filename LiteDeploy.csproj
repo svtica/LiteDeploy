@@ -26,6 +26,12 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <DisableImplicitFrameworkDefines>true</DisableImplicitFrameworkDefines>
+    <!-- Same compiler inputs and outputs as the former project format: no implicit
+         RELEASE/DEBUG define, no implicit framework references, app.config copied as is -->
+    <DisableImplicitConfigurationDefines>true</DisableImplicitConfigurationDefines>
+    <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
+    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
+    <GenerateSupportedRuntime>false</GenerateSupportedRuntime>
     <EmbeddedResourceUseDependentUponConvention>false</EmbeddedResourceUseDependentUponConvention>
     <SignAssembly>false</SignAssembly>
   </PropertyGroup>

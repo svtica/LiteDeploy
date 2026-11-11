@@ -48,7 +48,16 @@ function Get-CompilerArgs([string] $logPath, [string] $root) {
     if (-not $line) { throw "No csc command line found in $logPath" }
     $cmd = $line.Substring($line.IndexOf('/noconfig'))
     $rootFull = [IO.Path]::GetFullPath($root).TrimEnd('\') + '\'
+    # Options that do not change the compiled assembly, accepted on purpose (listed in the report):
+    #  /deterministic+  reproducible builds (MVID and timestamp derived from the inputs)
+    #  /analyzerconfig, /sourcelink: editorconfig for analyzers, source link file for the PDB
+    #  /checked- /unsafe- /warnaserror- /debug- /warn:4 /sdkpath: compiler defaults written explicitly
+    #  /warnaserror+:NU1605: NuGet restore warning
+    $accepted = '^/(deterministic\+|analyzerconfig:|sourcelink:|checked-|unsafe-|warnaserror-$|debug-$|warn:4$|sdkpath:|warnaserror\+:NU1605)'
     $result = foreach ($t in (Split-CommandLine $cmd)) {
+        if ($t -match $accepted) { $script:acceptedArgs.Add($t); continue }
+        # /nowarn: compared as a set (both formats add 1701;1702, the SDK once more)
+        if ($t -match '^/nowarn:(.+)$') { '/nowarn:' + ((($Matches[1] -split '[,;]') | Sort-Object -Unique) -join ','); continue }
         $n = $t.Replace($rootFull, '<root>\')
         # References: compared by file name (reference assemblies may come from
         # the installed targeting pack or from the NuGet reference package)
@@ -159,6 +168,23 @@ function Get-AssemblyFacts([string] $path) {
     return $facts
 }
 
+# Text output files that differ: show their content (both sides)
+function Show-TextDiff([string] $oldDir, [string] $newDir) {
+    foreach ($f in Get-ChildItem $oldDir -File | Where-Object { $_.Extension -in '.config', '.xml', '.msc', '.json' }) {
+        $other = Join-Path $newDir $f.Name
+        if (-not (Test-Path $other)) { continue }
+        if ((Get-FileHash $f.FullName).Hash -eq (Get-FileHash $other).Hash) { continue }
+        [void]$report.AppendLine("#### $($f.Name)")
+        [void]$report.AppendLine('```diff')
+        foreach ($d in (Compare-Object (Get-Content $f.FullName) (Get-Content $other))) {
+            [void]$report.AppendLine("$(if ($d.SideIndicator -eq '<=') { '-' } else { '+' }) $($d.InputObject)")
+        }
+        $oldBytes = [IO.File]::ReadAllBytes($f.FullName); $newBytes = [IO.File]::ReadAllBytes($other)
+        [void]$report.AppendLine("(bytes: old $($oldBytes.Length), new $($newBytes.Length); BOM old $($oldBytes[0] -eq 0xEF), new $($newBytes[0] -eq 0xEF))")
+        [void]$report.AppendLine('```')
+    }
+}
+
 function Get-OutputFacts([string] $dir) {
     Get-ChildItem $dir -File -Recurse | Sort-Object FullName | ForEach-Object {
         $rel = $_.FullName.Substring((Resolve-Path $dir).Path.Length).TrimStart('\')
@@ -169,6 +195,7 @@ function Get-OutputFacts([string] $dir) {
 
 $report = New-Object System.Text.StringBuilder
 $failed = $false
+$script:acceptedArgs = New-Object System.Collections.Generic.List[string]
 
 function Compare-Facts([string] $title, $old, $new) {
     $diff = Compare-Object -ReferenceObject @($old) -DifferenceObject @($new)
@@ -196,6 +223,13 @@ Compare-Facts 'LiteDeploy.exe: types, IL, resources, references, attributes, PE 
     (Get-AssemblyFacts (Join-Path $OldRoot "$OutputDir\LiteDeploy.exe")) `
     (Get-AssemblyFacts (Join-Path $NewRoot "$OutputDir\LiteDeploy.exe"))
 Compare-Facts 'Output files' (Get-OutputFacts (Join-Path $OldRoot $OutputDir)) (Get-OutputFacts (Join-Path $NewRoot $OutputDir))
+Show-TextDiff (Join-Path $OldRoot $OutputDir) (Join-Path $NewRoot $OutputDir)
+if ($script:acceptedArgs.Count -gt 0) {
+    [void]$report.AppendLine("### Accepted compiler options (no effect on the assembly, see Compare-Builds.ps1)")
+    [void]$report.AppendLine()
+    [void]$report.AppendLine((($script:acceptedArgs | Sort-Object -Unique | ForEach-Object { $_ -replace '^/(analyzerconfig|sourcelink|sdkpath):.*', '/$1:...' }) | Sort-Object -Unique) -join ' ')
+    [void]$report.AppendLine()
+}
 
 $text = $report.ToString()
 Set-Content -Path $ReportPath -Value $text -Encoding utf8
