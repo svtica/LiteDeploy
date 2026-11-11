@@ -92,9 +92,6 @@ namespace LiteDeploy
             this.publicDesktopToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.publicDesktopToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.publicStartMenuToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.windowsXpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.publicDesktopToolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
-            this.publicStartMenuToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
             this.POSTListUpdateTimer = new System.Windows.Forms.Timer(this.components);
             this.tabControl1.SuspendLayout();
@@ -495,8 +492,7 @@ namespace LiteDeploy
             // openAdminShareToolStripMenuItem
             // 
             this.openAdminShareToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.publicDesktopToolStripMenuItem,
-            this.windowsXpToolStripMenuItem});
+            this.publicDesktopToolStripMenuItem});
             this.openAdminShareToolStripMenuItem.Name = "openAdminShareToolStripMenuItem";
             this.openAdminShareToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
             this.openAdminShareToolStripMenuItem.Text = "Open Admin Share";
@@ -509,7 +505,7 @@ namespace LiteDeploy
             this.publicStartMenuToolStripMenuItem});
             this.publicDesktopToolStripMenuItem.Name = "publicDesktopToolStripMenuItem";
             this.publicDesktopToolStripMenuItem.Size = new System.Drawing.Size(140, 22);
-            this.publicDesktopToolStripMenuItem.Text = "Windows 7";
+            this.publicDesktopToolStripMenuItem.Text = "Public Folders";
             // 
             // publicDesktopToolStripMenuItem1
             // 
@@ -524,29 +520,6 @@ namespace LiteDeploy
             this.publicStartMenuToolStripMenuItem.Size = new System.Drawing.Size(168, 22);
             this.publicStartMenuToolStripMenuItem.Text = "Public Start Menu";
             this.publicStartMenuToolStripMenuItem.Click += new System.EventHandler(this.publicStartMenuToolStripMenuItem_Click);
-            // 
-            // windowsXpToolStripMenuItem
-            // 
-            this.windowsXpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.publicDesktopToolStripMenuItem2,
-            this.publicStartMenuToolStripMenuItem1});
-            this.windowsXpToolStripMenuItem.Name = "windowsXpToolStripMenuItem";
-            this.windowsXpToolStripMenuItem.Size = new System.Drawing.Size(140, 22);
-            this.windowsXpToolStripMenuItem.Text = "Windows Xp";
-            // 
-            // publicDesktopToolStripMenuItem2
-            // 
-            this.publicDesktopToolStripMenuItem2.Name = "publicDesktopToolStripMenuItem2";
-            this.publicDesktopToolStripMenuItem2.Size = new System.Drawing.Size(168, 22);
-            this.publicDesktopToolStripMenuItem2.Text = "Public Desktop";
-            this.publicDesktopToolStripMenuItem2.Click += new System.EventHandler(this.publicDesktopToolStripMenuItem2_Click);
-            // 
-            // publicStartMenuToolStripMenuItem1
-            // 
-            this.publicStartMenuToolStripMenuItem1.Name = "publicStartMenuToolStripMenuItem1";
-            this.publicStartMenuToolStripMenuItem1.Size = new System.Drawing.Size(168, 22);
-            this.publicStartMenuToolStripMenuItem1.Text = "Public Start Menu";
-            this.publicStartMenuToolStripMenuItem1.Click += new System.EventHandler(this.publicStartMenuToolStripMenuItem1_Click);
             // 
             // toolStripSeparator5
             // 
@@ -623,9 +596,6 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripMenuItem publicDesktopToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem publicDesktopToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem publicStartMenuToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem windowsXpToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem publicDesktopToolStripMenuItem2;
-        private System.Windows.Forms.ToolStripMenuItem publicStartMenuToolStripMenuItem1;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator5;
         private System.Windows.Forms.Button OpenLog;
         private System.Windows.Forms.Timer POSTListUpdateTimer;

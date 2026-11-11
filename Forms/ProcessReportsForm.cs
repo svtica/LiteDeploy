@@ -44,8 +44,6 @@ namespace LiteDeploy
         private bool pollingActive = false;
         private Object pollingLock;
 
-        String pingHostString = "";
-
         public ProcessReportsForm()
         {
             InitializeComponent();
@@ -648,128 +646,13 @@ namespace LiteDeploy
             }
         }
 
-        private void pingHost_Click(object sender, EventArgs e)
-        {
-            pingHostString = hostName.Text;
-            Thread t = new Thread( new ThreadStart(PingHost));
-            t.Start();
-        }
-
-        private void PingHost()
-        {
-            try
-            {
-                PingReply reply;
-
-                using (Ping pingSender = new Ping())
-                {
-                    reply = pingSender.Send(pingHostString, 5000);
-                }
-
-                MessageBox.Show(reply.Status == IPStatus.Success ? "Ping OK." : "Ping failed.", "Ping: " + pingHostString, MessageBoxButtons.OK, reply.Status == IPStatus.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
-            }
-
-            catch
-            {
-                MessageBox.Show("Network device could not be found.", "Ping Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }            
-        }
-
-        private void remoteToHost_Click(object sender, EventArgs e)
-        {
-            ProcessStartInfo info = new ProcessStartInfo("mstsc", "/v:" + hostName.Text);
-            using (Process.Start(info)) { }
-        }
-
-        private void mangementConsoleToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (!File.Exists(Directory.GetCurrentDirectory() + "\\RemoteManagement.msc"))
-            {
-                try
-                {
-                    File.Copy(AppSettings.LOCAL_UPDATE_DIR + "\\RemoteManagement.msc", Directory.GetCurrentDirectory() + "\\RemoteManagement.msc");
-                }
-
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message, "Error Aquiring RemoteMangement.msc", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-            }
-
-            ProcessStartInfo info = new ProcessStartInfo("mmc", "\"" + Directory.GetCurrentDirectory() + "\\RemoteManagement.msc\" /computer:" + hostName.Text);
-            using (Process.Start(info)) { }
-        }
-
-        private void openAdminShareToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (MainFormAccess.mainForm.IsCompAvailablePingString != "")
-            {
-                MessageBox.Show("Application is busy checking another host. Please try again.", "Application Busy", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            MainFormAccess.mainForm.IsCompAvailablePingString = hostName.Text;
-
-            Thread t = new Thread(new ThreadStart(MainFormAccess.mainForm.LaunchAdminShare));
-            t.Start();
-        }
-
-        private void publicDesktopToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            if (MainFormAccess.mainForm.IsCompAvailablePingString != "")
-            {
-                MessageBox.Show("Application is busy checking another host. Please try again.", "Application Busy", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            MainFormAccess.mainForm.IsCompAvailablePingString = hostName.Text;
-
-            Thread t = new Thread(new ThreadStart(MainFormAccess.mainForm.LaunchAdminShareWin7PubDesk));
-            t.Start();
-        }
-
-        private void publicStartMenuToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (MainFormAccess.mainForm.IsCompAvailablePingString != "")
-            {
-                MessageBox.Show("Application is busy checking another host. Please try again.", "Application Busy", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            MainFormAccess.mainForm.IsCompAvailablePingString = hostName.Text;
-
-            Thread t = new Thread(new ThreadStart(MainFormAccess.mainForm.LaunchAdminShareWin7PubStartMenu));
-            t.Start();
-        }
-
-        private void publicDesktopToolStripMenuItem2_Click(object sender, EventArgs e)
-        {
-            if (MainFormAccess.mainForm.IsCompAvailablePingString != "")
-            {
-                MessageBox.Show("Application is busy checking another host. Please try again.", "Application Busy", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            MainFormAccess.mainForm.IsCompAvailablePingString = hostName.Text;
-
-            Thread t = new Thread(new ThreadStart(MainFormAccess.mainForm.LaunchAdminShareWinXPPubDesk));
-            t.Start();
-        }
-
-        private void publicStartMenuToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            if (MainFormAccess.mainForm.IsCompAvailablePingString != "")
-            {
-                MessageBox.Show("Application is busy checking another host. Please try again.", "Application Busy", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            MainFormAccess.mainForm.IsCompAvailablePingString = hostName.Text;
-
-            Thread t = new Thread(new ThreadStart(MainFormAccess.mainForm.LaunchAdminShareWinXPPubStartMenu));
-            t.Start();
-        }
+        // Right-click menu on a computer: shared with the process reports (RemoteActions)
+        private void pingHost_Click(object sender, EventArgs e) { RemoteActions.Ping(hostName.Text); }
+        private void remoteToHost_Click(object sender, EventArgs e) { RemoteActions.RemoteDesktop(hostName.Text); }
+        private void mangementConsoleToolStripMenuItem_Click(object sender, EventArgs e) { RemoteActions.ManagementConsole(hostName.Text); }
+        private void openAdminShareToolStripMenuItem_Click(object sender, EventArgs e) { RemoteActions.OpenAdminShare(hostName.Text, ""); }
+        private void publicDesktopToolStripMenuItem1_Click(object sender, EventArgs e) { RemoteActions.OpenAdminShare(hostName.Text, "Users\\Public\\Desktop"); }
+        private void publicStartMenuToolStripMenuItem_Click(object sender, EventArgs e) { RemoteActions.OpenAdminShare(hostName.Text, "ProgramData\\Microsoft\\Windows\\Start Menu"); }
 
         private void OpenLog_Click(object sender, EventArgs e)
         {

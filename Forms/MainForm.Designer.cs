@@ -53,8 +53,6 @@ namespace LiteDeploy
             this.selectFileToExecute = new System.Windows.Forms.Button();
             this.label4 = new System.Windows.Forms.Label();
             this.executable = new System.Windows.Forms.TextBox();
-            this.deployTo = new System.Windows.Forms.ComboBox();
-            this.label5 = new System.Windows.Forms.Label();
             this.startDeploy = new System.Windows.Forms.Button();
             this.openExecutable = new System.Windows.Forms.OpenFileDialog();
             this.lookUpGroup = new System.Windows.Forms.GroupBox();
@@ -74,9 +72,6 @@ namespace LiteDeploy
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.computersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.customListToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
-            this.installRDPWrapperToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.removeRDPWrapperToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
             this.pingAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pingAllCheckedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -93,7 +88,6 @@ namespace LiteDeploy
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.changeLogToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.compCountTimer = new System.Windows.Forms.Timer(this.components);
             this.contextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.hostName = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
@@ -104,9 +98,6 @@ namespace LiteDeploy
             this.publicDesktopToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.publicDesktopToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.publicStartMenuToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.windowsXpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.publicDesktopToolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
-            this.publicStartMenuToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
             this.copyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.removeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -268,7 +259,6 @@ namespace LiteDeploy
             this.arguments.Name = "arguments";
             this.arguments.Size = new System.Drawing.Size(221, 20);
             this.arguments.TabIndex = 2;
-            this.arguments.TextChanged += new System.EventHandler(this.arguments_TextChanged);
             // 
             // label9
             // 
@@ -310,36 +300,6 @@ namespace LiteDeploy
             this.executable.Size = new System.Drawing.Size(221, 20);
             this.executable.TabIndex = 0;
             this.executable.TextChanged += new System.EventHandler(this.executable_TextChanged);
-            // 
-            // deployTo
-            // 
-            this.deployTo.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.deployTo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.deployTo.Enabled = false;
-            this.deployTo.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.deployTo.FormattingEnabled = true;
-            this.deployTo.Items.AddRange(new object[] {
-            "Host Name or IP Address",
-            "Computer List",
-            "Selected Computers",
-            "Current Domain"});
-            this.deployTo.Location = new System.Drawing.Point(29, 192);
-            this.deployTo.Name = "deployTo";
-            this.deployTo.Size = new System.Drawing.Size(221, 21);
-            this.deployTo.TabIndex = 3;
-            this.deployTo.Visible = false;
-            this.deployTo.SelectedIndexChanged += new System.EventHandler(this.deployTo_SelectedIndexChanged);
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(26, 176);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(59, 13);
-            this.label5.TabIndex = 3;
-            this.label5.Text = "Deploy To:";
-            this.label5.Visible = false;
             // 
             // startDeploy
             // 
@@ -507,9 +467,6 @@ namespace LiteDeploy
             // 
             this.computersToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.customListToolStripMenuItem,
-            this.toolStripSeparator2,
-            this.installRDPWrapperToolStripMenuItem,
-            this.removeRDPWrapperToolStripMenuItem,
             this.toolStripSeparator4,
             this.pingAllToolStripMenuItem,
             this.pingAllCheckedToolStripMenuItem,
@@ -526,25 +483,6 @@ namespace LiteDeploy
             this.customListToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
             this.customListToolStripMenuItem.Text = "Edit List";
             this.customListToolStripMenuItem.Click += new System.EventHandler(this.customListToolStripMenuItem_Click);
-            // 
-            // toolStripSeparator2
-            // 
-            this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(187, 6);
-            // 
-            // installRDPWrapperToolStripMenuItem
-            // 
-            this.installRDPWrapperToolStripMenuItem.Name = "installRDPWrapperToolStripMenuItem";
-            this.installRDPWrapperToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
-            this.installRDPWrapperToolStripMenuItem.Text = "Install RDP Wrapper";
-            this.installRDPWrapperToolStripMenuItem.Click += new System.EventHandler(this.installRDPWrapperToolStripMenuItem_Click);
-            // 
-            // removeRDPWrapperToolStripMenuItem
-            // 
-            this.removeRDPWrapperToolStripMenuItem.Name = "removeRDPWrapperToolStripMenuItem";
-            this.removeRDPWrapperToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
-            this.removeRDPWrapperToolStripMenuItem.Text = "Remove RDP Wrapper";
-            this.removeRDPWrapperToolStripMenuItem.Click += new System.EventHandler(this.removeRDPWrapperToolStripMenuItem_Click);
             // 
             // toolStripSeparator4
             // 
@@ -661,11 +599,6 @@ namespace LiteDeploy
             this.aboutToolStripMenuItem.Text = "About";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click_1);
             // 
-            // compCountTimer
-            // 
-            this.compCountTimer.Enabled = true;
-            this.compCountTimer.Tick += new System.EventHandler(this.compCountTimer_Tick);
-            // 
             // contextMenu
             // 
             this.contextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -716,8 +649,7 @@ namespace LiteDeploy
             // openAdminShareToolStripMenuItem
             // 
             this.openAdminShareToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.publicDesktopToolStripMenuItem,
-            this.windowsXpToolStripMenuItem});
+            this.publicDesktopToolStripMenuItem});
             this.openAdminShareToolStripMenuItem.Name = "openAdminShareToolStripMenuItem";
             this.openAdminShareToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
             this.openAdminShareToolStripMenuItem.Text = "Open Admin Share";
@@ -730,7 +662,7 @@ namespace LiteDeploy
             this.publicStartMenuToolStripMenuItem});
             this.publicDesktopToolStripMenuItem.Name = "publicDesktopToolStripMenuItem";
             this.publicDesktopToolStripMenuItem.Size = new System.Drawing.Size(140, 22);
-            this.publicDesktopToolStripMenuItem.Text = "Windows 7";
+            this.publicDesktopToolStripMenuItem.Text = "Public Folders";
             // 
             // publicDesktopToolStripMenuItem1
             // 
@@ -745,29 +677,6 @@ namespace LiteDeploy
             this.publicStartMenuToolStripMenuItem.Size = new System.Drawing.Size(168, 22);
             this.publicStartMenuToolStripMenuItem.Text = "Public Start Menu";
             this.publicStartMenuToolStripMenuItem.Click += new System.EventHandler(this.publicStartMenuToolStripMenuItem_Click);
-            // 
-            // windowsXpToolStripMenuItem
-            // 
-            this.windowsXpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.publicDesktopToolStripMenuItem2,
-            this.publicStartMenuToolStripMenuItem1});
-            this.windowsXpToolStripMenuItem.Name = "windowsXpToolStripMenuItem";
-            this.windowsXpToolStripMenuItem.Size = new System.Drawing.Size(140, 22);
-            this.windowsXpToolStripMenuItem.Text = "Windows Xp";
-            // 
-            // publicDesktopToolStripMenuItem2
-            // 
-            this.publicDesktopToolStripMenuItem2.Name = "publicDesktopToolStripMenuItem2";
-            this.publicDesktopToolStripMenuItem2.Size = new System.Drawing.Size(168, 22);
-            this.publicDesktopToolStripMenuItem2.Text = "Public Desktop";
-            this.publicDesktopToolStripMenuItem2.Click += new System.EventHandler(this.publicDesktopToolStripMenuItem2_Click);
-            // 
-            // publicStartMenuToolStripMenuItem1
-            // 
-            this.publicStartMenuToolStripMenuItem1.Name = "publicStartMenuToolStripMenuItem1";
-            this.publicStartMenuToolStripMenuItem1.Size = new System.Drawing.Size(168, 22);
-            this.publicStartMenuToolStripMenuItem1.Text = "Public Start Menu";
-            this.publicStartMenuToolStripMenuItem1.Click += new System.EventHandler(this.publicStartMenuToolStripMenuItem1_Click);
             // 
             // toolStripSeparator5
             // 
@@ -944,9 +853,7 @@ namespace LiteDeploy
             this.groupBox4.Controls.Add(this.groupBox1);
             this.groupBox4.Controls.Add(this.startDeploy);
             this.groupBox4.Controls.Add(this.groupBox3);
-            this.groupBox4.Controls.Add(this.deployTo);
             this.groupBox4.Controls.Add(this.groupBox2);
-            this.groupBox4.Controls.Add(this.label5);
             this.groupBox4.Location = new System.Drawing.Point(9, 27);
             this.groupBox4.Name = "groupBox4";
             this.groupBox4.Size = new System.Drawing.Size(772, 228);
@@ -972,7 +879,6 @@ namespace LiteDeploy
             this.Text = "Lite Deploy";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.Load += new System.EventHandler(this.MainForm_Load);
-            this.ResizeEnd += new System.EventHandler(this.MainForm_ResizeEnd);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.groupBox2.ResumeLayout(false);
@@ -1005,8 +911,6 @@ namespace LiteDeploy
         private System.Windows.Forms.Button selectFileToExecute;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.TextBox executable;
-        private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.ComboBox deployTo;
         private System.Windows.Forms.TextBox arguments;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.OpenFileDialog openExecutable;
@@ -1034,7 +938,6 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripStatusLabel totalComps;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel2;
         private System.Windows.Forms.ToolStripStatusLabel selComps;
-        private System.Windows.Forms.Timer compCountTimer;
         private System.Windows.Forms.ToolStripMenuItem clearConsoleToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem stopPsExecToolStripMenuItem;
         private System.Windows.Forms.ContextMenuStrip contextMenu;
@@ -1045,7 +948,6 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripMenuItem helpToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem changeLogToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
-        private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.ToolStripMenuItem pingAllToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem pingAllCheckedToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem restartToolStripMenuItem;
@@ -1076,13 +978,8 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripMenuItem publicDesktopToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem publicDesktopToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem publicStartMenuToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem windowsXpToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem publicDesktopToolStripMenuItem2;
-        private System.Windows.Forms.ToolStripMenuItem publicStartMenuToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem1;
-        private System.Windows.Forms.ToolStripMenuItem installRDPWrapperToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator4;
-        private System.Windows.Forms.ToolStripMenuItem removeRDPWrapperToolStripMenuItem;
     }
 }
 
