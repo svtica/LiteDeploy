@@ -32,8 +32,14 @@ namespace LiteDeploy
         static public bool processing = false;
         static private int currentHostIndex = 0;
 
-        static public void AddProcess(String command)
+        /// <summary>Command lines as shown in the console (password masked), one per process.</summary>
+        static public List<String> displayList = new List<String>();
+
+        /// <summary>Queues one PsExec run: arguments (PsExecCommandBuilder) and the same with the password masked.</summary>
+        static public void AddProcess(String command, String displayCommand)
         {
+            displayList.Add(displayCommand);
+
             ProcessStartInfo startInfo = new ProcessStartInfo(PsExecLocator.Path, command.TrimEnd(new char[]{' '}) );
             startInfo.CreateNoWindow = true;
             startInfo.UseShellExecute = false;
@@ -141,7 +147,7 @@ namespace LiteDeploy
                         instances.Add(p);
                     }
 
-                    AppConsole.WriteLine(Localization.F("ProcessManager.Executing", "Executing: {0} {1}", Path.GetFileName(PsExecLocator.Path), processList[i].Arguments));
+                    AppConsole.WriteLine(Localization.F("ProcessManager.Executing", "Executing: {0} {1}", Path.GetFileName(PsExecLocator.Path), displayList[i]));
                     incrementString = "Deploying to: " + deployNameList[i];
                     incrementString2 = "Next: " + ((i + 1) < deployNameList.Count ? deployNameList[i + 1] : "");
                     SetDeployingToString();

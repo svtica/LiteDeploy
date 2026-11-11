@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Unit tests of LiteDeploy (MSTest, as in LiteTask). Build with MSBuild (the main project has a
+    COM reference), then run the test assembly:
+      msbuild tests\LiteDeploy.Tests\LiteDeploy.Tests.csproj -restore /p:Configuration=Release
+      dotnet test tests\LiteDeploy.Tests\bin\Release\LiteDeploy.Tests.dll
+  -->
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <RootNamespace>LiteDeploy.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <PlatformTarget>x64</PlatformTarget>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <LangVersion>7.3</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.6.1" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.6.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Windows.Forms" />
+    <ProjectReference Include="..\..\LiteDeploy.csproj" SetPlatform="Platform=x64" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Same location as next to LiteDeploy.exe: lang\fr.xml -->
+    <Content Include="..\..\lang\fr.xml" Link="lang\fr.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+</Project>

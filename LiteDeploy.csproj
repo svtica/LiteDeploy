@@ -160,6 +160,7 @@
       <DependentUpon>ProcessReportsForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Classes\ProcessManager.cs" />
+    <Compile Include="Classes\PsExecCommandBuilder.cs" />
     <Compile Include="Classes\PsExecLocator.cs" />
     <Compile Include="Classes\RemoteActions.cs" />
     <Compile Include="Classes\UserSettings.cs" />
