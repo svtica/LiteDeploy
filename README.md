@@ -34,10 +34,16 @@ LiteDeploy is a Windows Forms application designed for system administrators to 
 
 ## Installation
 
-1. Download the latest release
-2. Extract files to desired location
-3. Run `LiteDeploy.exe`
-4. **Note**: Administrative privileges may be required for some remote operations
+- **From LiteTask** (recommended): *Tools* menu > LiteDeploy. LiteTask downloads
+  the latest release, checks its Authenticode signature and installs it in
+  `LiteTaskData\tools\LiteDeploy\`; LiteDeploy then uses the `PsExec64.exe`
+  provided by LiteTask.
+- **Manually**: download
+  [LiteDeploy.zip](https://github.com/svtica/LiteDeploy/releases/latest/download/LiteDeploy.zip),
+  extract it, put `PsExec.exe` ([Sysinternals](https://learn.microsoft.com/sysinternals/downloads/psexec),
+  not redistributed here) next to `LiteDeploy.exe` and run `LiteDeploy.exe`.
+- Administrative privileges on the target computers are required for most
+  remote operations.
 
 ## Usage
 
@@ -72,9 +78,9 @@ LiteDeploy is a Windows Forms application designed for system administrators to 
 
 ## Technology Stack
 
-- **Platform**: .NET Framework (Windows Forms)
+- **Platform**: .NET Framework 4.8 (Windows Forms), SDK-style project
 - **Language**: C#
-- **Networking**: WMI, PowerShell Remoting, Windows APIs
+- **Remote execution**: Sysinternals PsExec; Active Directory (LDAP), ICMP ping, DNS
 - **Security**: Windows Credential Manager integration
 
 ## Development Status
@@ -83,8 +89,9 @@ This project is **Work in Progress** and **not actively developed**. The core fu
 
 ## System Requirements
 
-- Windows 7 or later
-- .NET Framework 4.5 or higher
+- Windows 10 or later
+- .NET Framework 4.8
+- PsExec (Sysinternals)
 - Network access to target systems
 - Appropriate permissions on remote systems
 
@@ -94,6 +101,17 @@ This project is **Work in Progress** and **not actively developed**. The core fu
 - Use appropriate authentication methods for your environment
 - Consider firewall and group policy impacts on remote operations
 - Store credentials securely and follow organizational security policies
+
+## Building and releasing
+
+- Build: `msbuild LiteDeploy.sln -restore /p:Configuration=Release /p:Platform=x64`
+  (output in `bin\x64\Release\`).
+- Release: *Actions > Release > Run workflow* (or `bump-version.ps1` on `main`).
+  The version is bumped, tagged `v<Major.Minor.Build>`, built, signed when the
+  `SIGNING_CERTIFICATE` / `CERTIFICATE_PASSWORD` secrets exist, and published as
+  `LiteDeploy.zip`. See [CHANGELOG.md](CHANGELOG.md).
+- Memory soak test: label a pull request `soak` or `soak-quick`
+  (see [tools/soak/README.md](tools/soak/README.md)).
 
 ## License
 
