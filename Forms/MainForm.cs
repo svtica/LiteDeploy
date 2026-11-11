@@ -27,37 +27,21 @@ namespace LiteDeploy
 {
     public partial class MainForm : Form
     {
-        // Child Forms
-        static public ComputerListForm listMaker = new ComputerListForm();
+        // Child windows used by the deployment threads: created with the main window, on the UI thread
         static private ProcessReportsForm processConsole = new ProcessReportsForm();
         static public DeploymentProgressForm prepareWindow = new DeploymentProgressForm();
+
+        // Computer list window: created the first time it is opened, then kept (it keeps its search results)
+        static private ComputerListForm listMaker;
 
         //Static Reference to Start Button
         static Button StartRef = null;
 
-        //Change Log
-        static private ChangeLogForm clog = new ChangeLogForm();
-
         // Command Handling
         List<String> commandList;
 
-        // Ping Use
-        public String pingHostString;
-        public String IsCompAvailablePingString = "";
-        static public PingAllForm pingAllWindow = new PingAllForm();
-
         // Relative working path (if set)
         public String workPath = "";
-
-        // About Box
-        static private AboutForm about = new AboutForm();
-        bool update;
-
-        // Easy Menu Settings Container
-        public List<DeploySettings> allSettings = new List<DeploySettings>();
-
-        // MSI Logs
-        public static List<String> MSILogs = new List<String>();
 
         public static SplashForm screen;
 
@@ -65,38 +49,42 @@ namespace LiteDeploy
         {            
             InitializeComponent();
 
+            // Computer counters in the status bar follow the list (they were refreshed by a 100 ms timer)
+            selectedComputers.ItemCheck += (s, e) => BeginInvoke(new MethodInvoker(UpdateComputerCounts));
+
             Hide();
         }
 
-
-        private void CheckForUpdate()
+        /// <summary>Total and checked computers, in the status bar. Call after changing the computer list.</summary>
+        public void UpdateComputerCounts()
         {
-            if (File.Exists(AppSettings.LOCAL_UPDATE_DIR + "Easy Deploy.exe"))
+            if (InvokeRequired)
             {
-                FileVersionInfo serverVersion = FileVersionInfo.GetVersionInfo(AppSettings.LOCAL_UPDATE_DIR + "Easy Deploy.exe");
-                FileVersionInfo current = FileVersionInfo.GetVersionInfo(Directory.GetCurrentDirectory() + "\\Easy Deploy.exe");
-                Version s = new Version(serverVersion.ProductVersion);
-                Version c = new Version(current.ProductVersion);
-
-                if (s > c)
-                {
-                    update = true;
-                }
-            }
-        }
-
-        private void MainForm_Load(object sender, EventArgs e)
-        {
-            update = false;            
-            CheckForUpdate();
-
-            if (update)
-            {
-                using (Process.Start(Directory.GetCurrentDirectory() + "\\edupdater.exe")) { }
-                Close();
+                BeginInvoke(new MethodInvoker(UpdateComputerCounts));
                 return;
             }
 
+            totalComps.Text = selectedComputers.Items.Count.ToString();
+            selComps.Text = selectedComputers.CheckedItems.Count.ToString();
+        }
+
+        private ComputerListForm ComputerList
+        {
+            get
+            {
+                if (listMaker == null || listMaker.IsDisposed)
+                {
+                    listMaker = new ComputerListForm();
+                    listMaker.initUseList(selectedComputers);
+                }
+
+                return listMaker;
+            }
+        }
+
+
+        private void MainForm_Load(object sender, EventArgs e)
+        {
             screen = new SplashForm(this);
             screen.ShowDialog();
             screen.Dispose();
@@ -110,22 +98,9 @@ namespace LiteDeploy
             commandList = new List<String>();
             username.Text = Environment.UserDomainName + "\\" + Environment.UserName;
             username.Select(username.Text.Length, 0);
-            listMaker.initUseList(selectedComputers);
-            deployTo.SelectedIndex = 2;
             priority.SelectedIndex = 2;
-            //loadEasyFile();
+            UpdateComputerCounts();
         }        
-
-        private void deployTo_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            startDeploy.Enabled = true;
-            lookUpGroup.Enabled = true;
-
-            if (deployTo.SelectedIndex == 2) // SELECTED COMPUTERS
-            {
-                selectedComputers.Focus();
-            }
-        }
 
         private void selectFileToExecute_Click(object sender, EventArgs e)
         {
@@ -148,16 +123,6 @@ namespace LiteDeploy
         {
             PConsoleAccess().ClearMSI();
             executable.Text = openExecutable.FileName;            
-        }
-
-        private void writeSelectedComputerList()
-        {
-            using (FileStream file = new FileStream("selectedComputers.txt", FileMode.Create))
-            using (StreamWriter writer = new StreamWriter(file))
-            {
-                for (int i = 0; i < selectedComputers.CheckedItems.Count; i++)
-                    writer.WriteLine(selectedComputers.CheckedItems[i].ToString());
-            }
         }
 
         private String buildMultiProcessCommand(String pc)
@@ -243,12 +208,6 @@ namespace LiteDeploy
         {
             clearLists();
 
-            if (deployTo.SelectedIndex == 3)
-            {
-                MessageBox.Show("Deployment to Domain not possible. Feature disabled for security reasons.", "Unable to Deploy", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
             if (executable.Text.Length == 0 && arguments.Text.Length == 0)
             {
                 MessageBox.Show("You have not selected a file to execute or provided a command.", "Nothing to Execute", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
@@ -273,14 +232,11 @@ namespace LiteDeploy
                 }
             }
 
-            if (deployTo.SelectedIndex == 2) // SELECTED COMPUTERS
+            if (selectedComputers.CheckedItems.Count == 0)
             {
-                if (selectedComputers.CheckedItems.Count == 0)
-                {
-                    MessageBox.Show("Please check atleast one computer from the computer list.", "Computer Not Selected", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                    selectedComputers.Focus();
-                    return;
-                }
+                MessageBox.Show("Please check at least one computer from the computer list.", "Computer Not Selected", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                selectedComputers.Focus();
+                return;
             }
 
             commandList.Clear();
@@ -368,14 +324,16 @@ namespace LiteDeploy
 
         private void customListToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            listMaker.selected.BeginUpdate();
-            listMaker.selected.Items.Clear();
+            ComputerListForm list = ComputerList;
+            list.selected.BeginUpdate();
+            list.selected.Items.Clear();
             foreach (String o in selectedComputers.Items)
             {
-                listMaker.selected.Items.Add(o, o, 0);
+                list.selected.Items.Add(o, o, 0);
             }
-            listMaker.selected.EndUpdate();
-            listMaker.ShowDialog();
+            list.selected.EndUpdate();
+            list.ShowDialog();
+            UpdateComputerCounts();
         }        
 
         private void killAllProcessesToolStripMenuItem_Click(object sender, EventArgs e)
@@ -402,6 +360,12 @@ namespace LiteDeploy
             }
         }
 
+        // Same as "Stop Current Process"
+        private void stopPsExecToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ProcessManager.KillCurrentProcess();
+        }
+
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Close();
@@ -414,43 +378,15 @@ namespace LiteDeploy
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            about.ShowDialog();
-        }
-
-        private void compCountTimer_Tick(object sender, EventArgs e)
-        {
-            totalComps.Text = selectedComputers.Items.Count.ToString();
-            selComps.Text = selectedComputers.CheckedItems.Count.ToString();            
+            using (AboutForm about = new AboutForm())
+            {
+                about.ShowDialog();
+            }
         }
 
         private void clearConsoleToolStripMenuItem_Click(object sender, EventArgs e)
         {
             AppConsole.Clear();
-        }
-
-        private void stopPsExecToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Process[] PsExec = Process.GetProcessesByName(PsExecLocator.ProcessName);
-
-            try
-            {
-                if (PsExec.Count() > 0)
-                {
-                    PsExec[0].Kill();
-                    AppConsole.WriteLine("PsExec.exe was manually aborted by User.");
-                }
-
-                else
-                {
-                    AppConsole.WriteLine("PsExec.exe is not running.");
-                }
-            }
-
-            finally
-            {
-                foreach (Process p in PsExec)
-                    p.Dispose();
-            }
         }
 
         private void executable_TextChanged(object sender, EventArgs e)
@@ -481,32 +417,13 @@ namespace LiteDeploy
             }
         }
 
-        private void pingHost_Click(object sender, EventArgs e)
-        {
-            pingHostString = hostName.Text;
-            Thread t = new Thread( new ThreadStart(PingHost));
-            t.Start();
-        }
-
-        private void PingHost()
-        {
-            try
-            {
-                PingReply reply;
-
-                using (Ping pingSender = new Ping())
-                {
-                    reply = pingSender.Send(pingHostString, 5000);
-                }
-
-                MessageBox.Show(reply.Status == IPStatus.Success ? "Ping OK." : "Ping failed.", "Ping: " + pingHostString, MessageBoxButtons.OK, reply.Status == IPStatus.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
-            }
-
-            catch
-            {
-                MessageBox.Show("Network device could not be found.", "Ping Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }            
-        }
+        // Right-click menu on a computer: shared with the process reports (RemoteActions)
+        private void pingHost_Click(object sender, EventArgs e) { RemoteActions.Ping(hostName.Text); }
+        private void remoteToHost_Click(object sender, EventArgs e) { RemoteActions.RemoteDesktop(hostName.Text); }
+        private void mangementConsoleToolStripMenuItem_Click(object sender, EventArgs e) { RemoteActions.ManagementConsole(hostName.Text); }
+        private void openAdminShareToolStripMenuItem_Click(object sender, EventArgs e) { RemoteActions.OpenAdminShare(hostName.Text, ""); }
+        private void publicDesktopToolStripMenuItem1_Click(object sender, EventArgs e) { RemoteActions.OpenAdminShare(hostName.Text, "Users\\Public\\Desktop"); }
+        private void publicStartMenuToolStripMenuItem_Click(object sender, EventArgs e) { RemoteActions.OpenAdminShare(hostName.Text, "ProgramData\\Microsoft\\Windows\\Start Menu"); }
 
         private void selectedComputers_MouseDown(object sender, MouseEventArgs e)
         {
@@ -523,12 +440,6 @@ namespace LiteDeploy
             }
         }
 
-        private void remoteToHost_Click(object sender, EventArgs e)
-        {
-            ProcessStartInfo info = new ProcessStartInfo("mstsc", "/v:" + hostName.Text);
-            using (Process.Start(info)) { }
-        }
-
         private void aboutToolStripMenuItem_Click_1(object sender, EventArgs e)
         {
             aboutToolStripMenuItem_Click(sender, e);
@@ -536,41 +447,33 @@ namespace LiteDeploy
 
         private void changeLogToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            clog.ShowDialog();
+            using (ChangeLogForm clog = new ChangeLogForm())
+            {
+                clog.ShowDialog();
+            }
         }
 
         private void pingAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            pingAllWindow.loadSelectedComputers( false );
-            pingAllWindow.firstInit = true;
-            pingAllWindow.ShowDialog();                       
+            ShowPingAll(false);
         }
 
         private void pingAllCheckedToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            pingAllWindow.loadSelectedComputers( true );
-            pingAllWindow.firstInit = true;
-            pingAllWindow.ShowDialog();                       
+            ShowPingAll(true);
         }
 
-        private void mangementConsoleToolStripMenuItem_Click(object sender, EventArgs e)
+        // Ping window: created for each use and disposed when closed
+        private void ShowPingAll(bool checkedOnly)
         {
-            if ( !File.Exists(Directory.GetCurrentDirectory() + "\\RemoteManagement.msc") )
+            using (PingAllForm pingAllWindow = new PingAllForm())
             {
-                try
-                {
-                    File.Copy( AppSettings.LOCAL_UPDATE_DIR + "\\RemoteManagement.msc", Directory.GetCurrentDirectory() + "\\RemoteManagement.msc");
-                }
-
-                catch ( Exception ex )
-                {
-                    MessageBox.Show(ex.Message, "Error Aquiring RemoteMangement.msc", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
+                pingAllWindow.loadSelectedComputers(checkedOnly);
+                pingAllWindow.firstInit = true;
+                pingAllWindow.ShowDialog();
             }
 
-            ProcessStartInfo info = new ProcessStartInfo("mmc", "\"" + Directory.GetCurrentDirectory() +"\\RemoteManagement.msc\" /computer:" + hostName.Text);
-            using (Process.Start(info)) { }
+            UpdateComputerCounts();
         }
 
         private void restartToolStripMenuItem_Click(object sender, EventArgs e)
@@ -591,38 +494,6 @@ namespace LiteDeploy
             startDeploy.Focus();
         }
 
-        private void installRDPWrapperToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (File.Exists(Directory.GetCurrentDirectory() + "\\RDPWInst.exe"))
-            {
-                PConsoleAccess().ClearMSI();
-                SetOpsForRDPWrapperInstall();
-                MessageBox.Show("Click \"Start Deploy\" to execute command.", "Wrapper Install Ready", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                startDeploy.Focus();
-            }
-
-            else
-            {
-                MessageBox.Show("RDPWInst.exe is missing. Make sure RDPWinst.exe is in the same directory as Easy Deploy.exe.", "Easy Deploy - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private void removeRDPWrapperToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (File.Exists(Directory.GetCurrentDirectory() + "\\RDPWInst.exe"))
-            {
-                PConsoleAccess().ClearMSI();
-                SetOpsForRDPWrapperRemove();
-                MessageBox.Show("Click \"Start Deploy\" to execute command.", "Wrapper Remove Ready", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                startDeploy.Focus();
-            }
-
-            else
-            {
-                MessageBox.Show("RDPWInst.exe is missing. Make sure RDPWinst.exe is in the same directory as Easy Deploy.exe.", "Easy Deploy - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }      
-
         private void SetOpsForRestartShutdownCmd()
         {
             PConsoleAccess().ClearMSI();
@@ -635,168 +506,6 @@ namespace LiteDeploy
             executable.Clear();
         }
 
-        private void SetOpsForRDPWrapperRemove()
-        {
-            PConsoleAccess().ClearMSI();
-            credentials.Checked = true;
-            systemAccount.Checked = false;
-            timeOut.Value = 2;
-            wait.Checked = true;
-            copy.Checked = true;
-            forceCopy.Checked = true;
-            executable.Text = Directory.GetCurrentDirectory() + "\\RDPWInst.exe";
-            arguments.Text = "-u";
-        }
-
-        private void SetOpsForRDPWrapperInstall()
-        {
-            PConsoleAccess().ClearMSI();
-            credentials.Checked = true;
-            systemAccount.Checked = false;
-            timeOut.Value = 2;
-            wait.Checked = true;
-            copy.Checked = true;
-            forceCopy.Checked = true;
-            executable.Text = Directory.GetCurrentDirectory() + "\\RDPWInst.exe";
-            arguments.Text = "-i";
-        }
-
-        /*
-        private void loadEasyFile()
-        {
-            try
-            {
-                List<DeploySettings> newSettings;
-                FileStream file = new FileStream( Settings.EASY_DB_LOCATION + "applist.xml", FileMode.Open, FileAccess.Read );
-                XmlSerializer serializer = new XmlSerializer( typeof( List<DeploySettings> ) );
-                newSettings = (List<DeploySettings>)serializer.Deserialize( file );
-                file.Close();
-
-                foreach (DeploySettings d in newSettings)
-                    allSettings.Add( d );
-
-                for (int i = 0; i < allSettings.Count; i++)
-                {
-                    if (allSettings[i].Type == 0) // Executable
-                    {
-                        bool exists = false;
-                        for (int ii = 0; i < commandsToolStripMenuItem.DropDownItems.Count; ii++)
-                        {
-                            if (allSettings[i].Name == commandsToolStripMenuItem.DropDownItems[ii].Text)
-                                exists = true;
-                        }
-
-                        if (!exists)
-                        {
-                            applicationsToolStripMenuItem.DropDownItems.Add(allSettings[i].Name);
-                            applicationsToolStripMenuItem.DropDownItems[applicationsToolStripMenuItem.DropDownItems.Count - 1].Click += new EventHandler(MainForm_Click);
-                        }
-                    }
-
-                    else if (allSettings[i].Type == 1) // Commands
-                    {
-                        bool exists = false;
-                        for (int ii = 0; i < commandsToolStripMenuItem.DropDownItems.Count; ii++)
-                        {
-                            if (allSettings[i].Name == commandsToolStripMenuItem.DropDownItems[ii].Text)
-                                exists = true;
-                        }
-
-                        if (!exists)
-                        {
-                            commandsToolStripMenuItem.DropDownItems.Add(allSettings[i].Name);
-                            commandsToolStripMenuItem.DropDownItems[commandsToolStripMenuItem.DropDownItems.Count - 1].Click += new EventHandler(MainForm_Click);
-                        }
-                    }
-                }
-
-                List<String> items = new List<String>();
-
-                foreach ( Control c in commandsToolStripMenuItem.DropDownItems )
-                    items.Add( c.Text);
-
-                items.Sort();
-
-                for (int i = 0; i < items.Count; i++)
-                    commandsToolStripMenuItem.DropDownItems[i].Text = items[i];
-
-                AppConsole.WriteLine( "Easy App configs loaded." );
-            }
-
-            catch
-            {
-                AppConsole.WriteLine( "Easy App configs could not be loaded." );
-            }
-        }
-        
-
-        private void SortEasyAppConfigNames()
-        {
-            List<String> items = new List<String>();
-
-            foreach (Control c in commandsToolStripMenuItem.DropDownItems)
-                items.Add(c.Text);
-
-            items.Sort();
-
-            for (int i = 0; i < items.Count; i++)
-                commandsToolStripMenuItem.DropDownItems[i].Text = items[i];
-
-            items = new List<String>();
-
-            foreach (Control c in applicationsToolStripMenuItem.DropDownItems)
-                items.Add(c.Text);
-
-            items.Sort();
-
-            for (int i = 0; i < items.Count; i++)
-                applicationsToolStripMenuItem.DropDownItems[i].Text = items[i];
-        }
-         * */
-
-        void MainForm_Click(object sender, EventArgs e)
-        {
-            for (int i = 0; i < allSettings.Count; i++)
-            {
-                if (allSettings[i].Name == ((ToolStripMenuItem)(sender)).Text)
-                {
-                    // Set the settings
-                    ClearDeployOps();
-                    SetEasySettings(allSettings[i]);
-                }
-            }
-        }
-
-        private void ClearDeployOps()
-        {
-            systemAccount.Checked = false;
-            credentials.Checked = false;
-            copy.Checked = false;
-            forceCopy.Checked = false;
-            wait.Checked = false;
-            priority.SelectedIndex = 2;
-            executable.Clear();
-            arguments.Clear();
-        }
-
-        private void SetEasySettings(DeploySettings d)
-        {
-            systemAccount.Checked = d.UseSystem;
-            credentials.Checked = d.UseCredentials;
-            timeOut.Value = (decimal)d.ConnectionTimeout;
-            copy.Checked = d.CopyExecutable;
-            forceCopy.Checked = d.OverwriteExisting;
-            wait.Checked = d.DontWait;
-            priority.SelectedIndex = d.RunPriorityIndex;
-
-            if ( d.Executable.Length > 0 )
-                executable.Text = d.Executable;
-
-            if ( d.CommandArgs.Length > 0 )
-                arguments.Text = d.CommandArgs;
-
-            MessageBox.Show("Click \"Start Deploy\" to run the command.", "Easy Settings Ready", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
 
         private void relWorkingPath_CheckedChanged(object sender, EventArgs e)
         {
@@ -815,63 +524,6 @@ namespace LiteDeploy
                 MessageBox.Show("Interactive process requires a local account on the remote machine. Make sure to use the proper credentials.",
                                 "Interactive Process", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-        }
-
-        private void openAdminShareToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (IsCompAvailablePingString != "")
-            {
-                MessageBox.Show("Application is busy checking another host. Please try again.", "Application Busy", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            IsCompAvailablePingString = hostName.Text;
-
-            Thread t = new Thread(new ThreadStart(LaunchAdminShare));
-            t.Start();
-        }
-
-        public void LaunchAdminShare()
-        {
-            if (IsComputerAvailable())
-            {
-                try
-                {
-                    using (Process.Start("explorer.exe", "\\\\" + IsCompAvailablePingString + "\\C$")) { }
-                }
-                catch (Exception e)
-                {
-                    MessageBox.Show(e.Message, "PsExec Error: " + e.Source, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
-
-            else
-            {
-                MessageBox.Show(IsCompAvailablePingString + " is not available. Try again later.", "Host Not Available", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-            }
-
-            IsCompAvailablePingString = "";
-        }
-
-        private bool IsComputerAvailable()
-        {
-            try
-            {
-                using (Ping pingSender = new Ping())
-                {
-                    PingReply reply = pingSender.Send(IsCompAvailablePingString, 2000);
-
-                    if (reply.Status == IPStatus.Success)
-                        return true;
-                }
-            }
-
-            catch
-            {
-                return false;
-            }
-
-            return false;
         }
 
         private delegate void DisableStartDel();
@@ -924,6 +576,7 @@ namespace LiteDeploy
         private void removeToolStripMenuItem_Click(object sender, EventArgs e)
         {
             selectedComputers.Items.RemoveAt(selectedComputers.SelectedIndex);
+            UpdateComputerCounts();
         }
 
         private void copyToolStripMenuItem_Click(object sender, EventArgs e)
@@ -934,156 +587,6 @@ namespace LiteDeploy
         private void ListEditButton_Click( object sender, EventArgs e )
         {
             customListToolStripMenuItem_Click( sender, e );
-        }
-
-        private void publicDesktopToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            if (IsCompAvailablePingString != "")
-            {
-                MessageBox.Show("Application is busy checking another host. Please try again.", "Application Busy", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            IsCompAvailablePingString = hostName.Text;
-
-            Thread t = new Thread(new ThreadStart(LaunchAdminShareWin7PubDesk));
-            t.Start();
-        }
-
-        public void LaunchAdminShareWin7PubDesk()
-        {
-            if (IsComputerAvailable())
-            {
-                try
-                {
-                    using (Process.Start("explorer.exe", "\\\\" + IsCompAvailablePingString + "\\C$\\Users\\Public\\Desktop")) { }
-                }
-                catch (Exception e)
-                {
-                    MessageBox.Show(e.Message, "PsExec Error: " + e.Source, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                
-            }
-
-            else
-            {
-                MessageBox.Show(IsCompAvailablePingString + " is not available. Try again later.", "Host Not Available", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-            }
-
-            IsCompAvailablePingString = "";
-        }
-
-        public void LaunchAdminShareWin7PubStartMenu()
-        {
-            if (IsComputerAvailable())
-            {
-                try
-                {
-                    using (Process.Start("explorer.exe", "\\\\" + IsCompAvailablePingString + "\\C$\\ProgramData\\Microsoft\\Windows\\Start Menu")) { }
-                }
-                catch (Exception e)
-                {
-                    MessageBox.Show(e.Message, "PsExec Error: " + e.Source, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
-
-            else
-            {
-                MessageBox.Show(IsCompAvailablePingString + " is not available. Try again later.", "Host Not Available", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-            }
-
-            IsCompAvailablePingString = "";
-        }
-
-        private void publicStartMenuToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (IsCompAvailablePingString != "")
-            {
-                MessageBox.Show("Application is busy checking another host. Please try again.", "Application Busy", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            IsCompAvailablePingString = hostName.Text;
-
-            Thread t = new Thread(new ThreadStart(LaunchAdminShareWin7PubStartMenu));
-            t.Start();
-
-        }
-
-        private void publicDesktopToolStripMenuItem2_Click( object sender, EventArgs e )
-        {
-            if (IsCompAvailablePingString != "")
-            {
-                MessageBox.Show( "Application is busy checking another host. Please try again.", "Application Busy", MessageBoxButtons.OK, MessageBoxIcon.Information );
-                return;
-            }
-
-            IsCompAvailablePingString = hostName.Text;
-
-            Thread t = new Thread( new ThreadStart( LaunchAdminShareWinXPPubDesk ) );
-            t.Start();
-        }
-
-        public void LaunchAdminShareWinXPPubDesk()
-        {
-            if (IsComputerAvailable())
-            {
-                try
-                {
-                    using (Process.Start( "explorer.exe", "\\\\" + IsCompAvailablePingString + "\\C$\\Documents and Settings\\All Users\\Desktop" )) { }
-                }
-                catch (Exception e)
-                {
-                    MessageBox.Show( e.Message, "PsExec Error: " + e.Source, MessageBoxButtons.OK, MessageBoxIcon.Error );
-                }
-            }
-
-            else
-            {
-                MessageBox.Show( IsCompAvailablePingString + " is not available. Try again later.", "Host Not Available", MessageBoxButtons.OK, MessageBoxIcon.Exclamation );
-            }
-
-            IsCompAvailablePingString = "";
-        }
-
-        public void LaunchAdminShareWinXPPubStartMenu()
-        {
-            if (IsComputerAvailable())
-            {
-                try
-                {
-                    using (Process.Start( "explorer.exe", "\\\\" + IsCompAvailablePingString + "\\C$\\Documents and Settings\\All Users\\Start Menu" )) { }
-                }
-                catch (Exception e)
-                {
-                    MessageBox.Show( e.Message, "PsExec Error: " + e.Source, MessageBoxButtons.OK, MessageBoxIcon.Error );
-                }
-            }
-
-            else
-            {
-                MessageBox.Show( IsCompAvailablePingString + " is not available. Try again later.", "Host Not Available", MessageBoxButtons.OK, MessageBoxIcon.Exclamation );
-            }
-
-            IsCompAvailablePingString = "";
-        }
-
-        private void publicStartMenuToolStripMenuItem1_Click( object sender, EventArgs e )
-        {
-            if (IsCompAvailablePingString != "")
-            {
-                MessageBox.Show( "Application is busy checking another host. Please try again.", "Application Busy", MessageBoxButtons.OK, MessageBoxIcon.Information );
-                return;
-            }
-
-            IsCompAvailablePingString = hostName.Text;
-
-            Thread t = new Thread( new ThreadStart( LaunchAdminShareWinXPPubStartMenu ) );
-            t.Start();
-        }
-
-        private void MainForm_ResizeEnd(object sender, EventArgs e)
-        {
         }
 
         delegate void ShowConsoleDel();
@@ -1118,11 +621,6 @@ namespace LiteDeploy
         private void openProcessConsoleToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ShowProcessConsole();
-        }
-
-        private void arguments_TextChanged(object sender, EventArgs e)
-        {
-            
         }
 
         private delegate bool IsPConsoleVis();

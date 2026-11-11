@@ -65,6 +65,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Lighter start-up: the About, Change Log and Ping windows are created when
+  opened and disposed when closed, the computer list window when first
+  opened; the status bar counters follow the computer list instead of a
+  100 ms timer.
+- Right-click actions on a computer (ping, remote desktop, management
+  console, admin share, public folders) shared by the main window and the
+  process reports; several admin shares can be opened at once; "Stop
+  PsExec.exe" does the same as "Stop Current Process".
 - Source files and classes renamed to a standard (`Form1` -> `MainForm`,
   `PCListDesigner` -> `ComputerListForm`, `ProcessConsole` ->
   `ProcessReportsForm`, `ActiveDir` -> `ActiveDirectoryCache`...), one
@@ -84,6 +92,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   started from.
 
 ### Removed
+
+- RDP Wrapper install and remove (`RDPWInst.exe`: flagged as a hacking tool
+  by antivirus software and against the Windows client license).
+- Windows XP shortcuts of the right-click menus ("Windows 7" renamed
+  "Public Folders").
+- Dead code: self-update to `Easy Deploy.exe` / `edupdater.exe`, "Easy"
+  presets (`DeploySettings`), Active Directory tree window, hidden and
+  inactive "Deploy To" list, unused helpers.
 
 - Build output (`bin/`, `obj/`) and Visual Studio user file from the
   repository, including a cached list of Active Directory computer names

@@ -22,7 +22,7 @@ namespace LiteDeploy
         static void Main(string[] args)
         {
             // LiteDeploy reads and writes its files (adcache.xml, RemoteManagement.msc,
-            // RDPWInst.exe...) next to LiteDeploy.exe, whatever folder it is started from
+            // logs...) next to LiteDeploy.exe, whatever folder it is started from
             // (LiteTask, shortcut, command line).
             Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
 

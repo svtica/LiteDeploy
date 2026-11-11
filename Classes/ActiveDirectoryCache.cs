@@ -32,7 +32,6 @@ namespace LiteDeploy
     {
         static public List<String> Computers = new List<String>();
         static public List<String> CachedAD = new List<String>();
-        static public List<List<String>> OUs = new List<List<String>>();
         static public bool cacheFound = false;
         static public bool adUpdating = false;
         static public bool adUpToDate = false;
@@ -158,7 +157,6 @@ namespace LiteDeploy
                 try
                 {
                     Computers.Clear();
-                    OUs.Clear();
 
                     // SearchResultCollection must be disposed explicitly (it holds the
                     // unmanaged ADSI search handle), and so must every DirectoryEntry.
