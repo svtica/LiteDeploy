@@ -44,6 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   **Memory soak** workflow): builds the base branch and the pull request side
   by side and drives each one for 30 or 180 minutes.
 - Build workflow on pushes and pull requests to `main`.
+- `docs/dotnet-migration.md`: blockers, effort and recommendation for a
+  migration to .NET 10.
 - Release package `LiteDeploy.zip` built by CI: `LiteDeploy.exe`, its
   `.config` and `RemoteManagement.msc` at the zip root, with README, LICENSE
   and CHANGELOG. A CI step checks the LiteTask contract (asset name,
@@ -56,6 +58,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Project converted to the SDK format, still on .NET Framework 4.8 (explicit
+  file lists, existing `AssemblyInfo.cs`, same output folders). Build with
+  `msbuild LiteDeploy.sln -restore`. A migration to .NET 10 was evaluated and
+  is not recommended for now (`docs/dotnet-migration.md`).
 - PsExec is looked for next to `LiteDeploy.exe` (`PsExec.exe`, then
   `PsExec64.exe`), then in the parent folder: when LiteDeploy is installed
   by LiteTask (`LiteTaskData\tools\LiteDeploy\`), it uses the

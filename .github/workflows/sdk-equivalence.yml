@@ -1,0 +1,82 @@
+# TEMPORARY (lot 3): proves that the SDK-style LiteDeploy.csproj builds the
+# same thing as the former project format. Remove this workflow and
+# tools/sdk-equivalence/ before merging.
+#
+# Both builds use the same sources (this commit); only LiteDeploy.csproj
+# differs: the "old" copy takes the project file from the parent of the
+# commit that converted it to the SDK format.
+
+name: SDK project equivalence
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: x64
+            output: bin\x64\Release
+          - platform: x86
+            output: bin\Release
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        path: new
+        fetch-depth: 0
+
+    - name: Old-format copy
+      shell: pwsh
+      run: |
+        Set-Location new
+        $conv = git log -1 --format=%H -S 'Sdk="Microsoft.NET.Sdk"' -- LiteDeploy.csproj
+        if (-not $conv) { throw "Conversion commit not found" }
+        Write-Host "Project converted in $conv; old project file from $conv^"
+        Set-Location ..
+        Copy-Item new old -Recurse
+        Set-Location old
+        git checkout "$conv^" -- LiteDeploy.csproj
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        Select-String -Path LiteDeploy.csproj -Pattern 'Sdk=' -Quiet | ForEach-Object { if ($_) { throw "old copy still SDK-style" } }
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Build both
+      shell: powershell
+      run: |
+        foreach ($v in 'old', 'new') {
+          Push-Location $v
+          msbuild LiteDeploy.sln -restore /p:Configuration=Release /p:Platform=${{ matrix.platform }} /v:minimal "/flp:v=n;logfile=..\build-$v.log"
+          $code = $LASTEXITCODE
+          Pop-Location
+          if ($code -ne 0) { exit $code }
+        }
+
+    - name: Compare
+      shell: pwsh
+      run: |
+        ./new/tools/sdk-equivalence/Compare-Builds.ps1 -OldRoot old -NewRoot new `
+            -OldLog build-old.log -NewLog build-new.log `
+            -OutputDir '${{ matrix.output }}' -ReportPath equivalence-${{ matrix.platform }}.md
+
+    - name: Upload report and logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: sdk-equivalence-${{ matrix.platform }}
+        path: |
+          equivalence-${{ matrix.platform }}.md
+          build-old.log
+          build-new.log
+        if-no-files-found: ignore
