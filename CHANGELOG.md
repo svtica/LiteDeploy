@@ -44,6 +44,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   **Memory soak** workflow): builds the base branch and the pull request side
   by side and drives each one for 30 or 180 minutes.
 - Build workflow on pushes and pull requests to `main`.
+- Release action: `bump-version.ps1` (`-Version x.y.z.w` or
+  `-Bump patch|minor|major`; clean tree, `main`, fast-forward pull, greater
+  version and new tag required; commits "Bump version to X", tags
+  `v<Major.Minor.Build>`, pushes, exposes `version` and `tag` to the calling
+  workflow) and **Release** workflow, which runs it and then calls the build
+  (`workflow_call` with the tag, `secrets: inherit`) to publish
+  `LiteDeploy.zip`.
 - `docs/dotnet-migration.md`: blockers, effort and recommendation for a
   migration to .NET 10.
 - Release package `LiteDeploy.zip` built by CI: `LiteDeploy.exe`, its
