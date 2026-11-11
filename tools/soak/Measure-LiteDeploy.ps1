@@ -89,6 +89,25 @@ public static class SoakUi
         catch (Exception ex) { LastError = ex.Message; }
     }
 
+    // Window by its native handle: does not depend on the UI Automation tree, which can
+    // stop listing the main window after another top-level window of the process is minimized.
+    public static AutomationElement FromHandle(int handle)
+    {
+        try { return handle == 0 ? null : AutomationElement.FromHandle(new IntPtr(handle)); }
+        catch (Exception e) { LastError = e.Message; return null; }
+    }
+
+    // Titles of the windows of the process, for diagnostics
+    public static string Titles(int pid)
+    {
+        List<string> names = new List<string>();
+        foreach (AutomationElement w in Windows(pid))
+        {
+            try { names.Add("'" + w.Current.Name + "'"); } catch { }
+        }
+        return string.Join(", ", names.ToArray());
+    }
+
     public static void Minimize(AutomationElement w)
     {
         try { ((WindowPattern)w.GetCurrentPattern(WindowPattern.Pattern)).SetWindowVisualState(WindowVisualState.Minimized); }
@@ -376,7 +395,12 @@ try {
 $script:lastCpu = $proc.TotalProcessorTime.TotalSeconds
 $script:lastCpuAt = $sw.Elapsed.TotalSeconds
 
-function Get-Main { [SoakUi]::FindWindow($procId, 'Lite Deploy') }
+$script:mainHandle = $script:main.Current.NativeWindowHandle
+function Get-Main {
+    $w = [SoakUi]::FromHandle($script:mainHandle)
+    if (-not $w) { $w = [SoakUi]::FindWindow($procId, 'Lite Deploy') }
+    return $w
+}
 
 function Open-ComputerList {
     $button = [SoakUi]::FindById((Get-Main), 'ListEditButton')
@@ -445,7 +469,7 @@ function Start-PingAll {
     $reports = [SoakUi]::FindWindow($procId, 'Lite Deploy - Process Reports')
     if ($reports) { [SoakUi]::Minimize($reports) }
     $main = Get-Main
-    if (-not $main) { Write-ActionFailure 'main window not found'; return }
+    if (-not $main) { Write-ActionFailure "main window not found (windows: $([SoakUi]::Titles($procId)))"; return }
     [SoakUi]::Activate($main)
     Start-Sleep -Milliseconds 300
     $menu = [SoakUi]::FindMenuItem($procId, 'Computers')
