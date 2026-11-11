@@ -4,7 +4,7 @@
 
 .DESCRIPTION
     Signs, in -Dir, the files produced by the solution (LiteDeploy.exe, and
-    every PowerShell script of the package, MAJ-Logiciels included) with the
+    every PowerShell script shipped in the package) with the
     newest signtool.exe found in the Windows SDKs, SHA-256 file digest and an
     RFC 3161 timestamp, then checks each signature with "signtool verify /pa".
     Third-party binaries (PsExec.exe, RDPWInst.exe...) are never signed.

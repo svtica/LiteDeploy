@@ -1,8 +1,0 @@
-# winget package Id | processes to close (without .exe, comma-separated) | label | DisplayName regex
-#  - A running process is closed (forced) before the package is upgraded.
-#  - Label: name shown in the panel and in the messages to the user (default: the Id).
-#  - DisplayName regex: finds the installed version in the registry (panel, verify-winget-upgrade.ps1).
-#    Group 1, when present, is used as the version instead of DisplayVersion. No "|" in the regex.
-7zip.7zip | 7zFM, 7zG | 7-Zip | ^7-Zip
-Notepad++.Notepad++ | notepad++ | Notepad++ | ^Notepad\+\+
-VideoLAN.VLC | vlc | VLC | ^VLC media player
