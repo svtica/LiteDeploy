@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.IO;
+using System.Runtime.InteropServices;
 using WindowsInstaller;
 
 namespace LiteDeploy
@@ -20,18 +21,58 @@ namespace LiteDeploy
             logDirectory.Text = Settings.LOGGING_DIR + "\\MSI\\";
             installer.Text = msiP;
 
+            // The Windows Installer COM objects are released as soon as the two
+            // properties are read: the open database used to keep the .msi file
+            // open until the next garbage collection.
             Type t = Type.GetTypeFromProgID("WindowsInstaller.Installer");
-            Installer inst = (Installer)Activator.CreateInstance(t);
-            Database d = inst.OpenDatabase( msiP, MsiOpenDatabaseMode.msiOpenDatabaseModeReadOnly);
-            WindowsInstaller.View v = d.OpenView( "SELECT * FROM Property WHERE Property = 'ProductName'");
-            v.Execute(null);
-            Record r = v.Fetch();
-            MSIProductName.Text = r.get_StringData(2);
+            Installer inst = null;
+            Database d = null;
 
-            v = d.OpenView("SELECT * FROM Property WHERE Property = 'ProductVersion'");
-            v.Execute(null);
-            r = v.Fetch();
-            MSIPVersion.Text = r.get_StringData(2);
+            try
+            {
+                inst = (Installer)Activator.CreateInstance(t);
+                d = inst.OpenDatabase( msiP, MsiOpenDatabaseMode.msiOpenDatabaseModeReadOnly);
+                MSIProductName.Text = ReadProperty(d, "ProductName");
+                MSIPVersion.Text = ReadProperty(d, "ProductVersion");
+            }
+
+            finally
+            {
+                ReleaseComObject(d);
+                ReleaseComObject(inst);
+            }
+        }
+
+        private static String ReadProperty(Database d, String name)
+        {
+            WindowsInstaller.View v = d.OpenView("SELECT * FROM Property WHERE Property = '" + name + "'");
+            Record r = null;
+
+            try
+            {
+                v.Execute(null);
+                r = v.Fetch();
+                return r.get_StringData(2);
+            }
+
+            finally
+            {
+                ReleaseComObject(r);
+
+                try
+                {
+                    v.Close();
+                }
+                catch { }
+
+                ReleaseComObject(v);
+            }
+        }
+
+        private static void ReleaseComObject(Object o)
+        {
+            if (o != null && Marshal.IsComObject(o))
+                Marshal.FinalReleaseComObject(o);
         }
 
         private void statusLogging_CheckedChanged(object sender, EventArgs e)

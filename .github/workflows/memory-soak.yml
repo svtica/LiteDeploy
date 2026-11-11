@@ -1,0 +1,105 @@
+# Long-running memory/handle soak test for LiteDeploy.
+#
+# Builds two versions side by side (base = main, head = the PR / chosen ref),
+# drives each one through its UI for a long time (deployments to a list of
+# computers through a PsExec stand-in, ping runs, computer list edits) and
+# compares Private Bytes, handles, GDI and USER objects, threads, GC heap and
+# CPU. See tools/soak/README.md.
+#
+# Triggers:
+#   - manually (Actions > Memory soak > Run workflow);
+#   - on a pull request when the "soak" label (180 min) or the "soak-quick"
+#     label (30 min) is added; remove and re-add the label to run it again.
+
+name: Memory soak
+
+on:
+  workflow_dispatch:
+    inputs:
+      duration_minutes:
+        description: 'Run length per version, in minutes (max ~330)'
+        default: '180'
+      base_ref:
+        description: 'Baseline ref (before)'
+        default: 'main'
+  pull_request:
+    types: [ labeled ]
+
+permissions:
+  contents: read
+
+jobs:
+  soak:
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'soak' || github.event.label.name == 'soak-quick'
+    runs-on: windows-latest
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [ base, head ]
+
+    steps:
+    - name: Checkout soak tooling
+      uses: actions/checkout@v4
+      with:
+        path: tooling
+
+    - name: Checkout ${{ matrix.variant }}
+      uses: actions/checkout@v4
+      with:
+        path: src
+        ref: ${{ matrix.variant == 'base' && (inputs.base_ref || github.event.pull_request.base.sha || 'main') || github.event.pull_request.head.sha || github.sha }}
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Build
+      working-directory: src
+      shell: powershell
+      run: |
+        msbuild LiteDeploy.sln --% -restore /p:Configuration=Release /p:Platform=x64 /v:minimal
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+    - name: Soak (${{ matrix.variant }})
+      shell: powershell
+      run: |
+        $duration = '${{ inputs.duration_minutes }}'
+        if (-not $duration) { $duration = '180' }
+        if ('${{ github.event.label.name }}' -eq 'soak-quick') { $duration = '30' }
+        & tooling\tools\soak\Measure-LiteDeploy.ps1 `
+            -ExePath src\bin\x64\Release\LiteDeploy.exe `
+            -DurationMinutes ([int]$duration) `
+            -Label '${{ matrix.variant }}' `
+            -OutCsv soak-${{ matrix.variant }}.csv `
+            -SummaryPath soak-${{ matrix.variant }}.md
+        exit $LASTEXITCODE
+
+    - name: Upload samples
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: soak-${{ matrix.variant }}
+        path: |
+          soak-${{ matrix.variant }}.csv
+          soak-${{ matrix.variant }}.md
+        if-no-files-found: ignore
+
+  compare:
+    needs: soak
+    if: always() && needs.soak.result != 'skipped'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        pattern: soak-*
+        merge-multiple: true
+    - name: Before / after summary
+      run: |
+        {
+          echo "## LiteDeploy memory soak - before (base) vs after (head)"
+          echo
+          for v in base head; do
+            if [ -f "soak-$v.md" ]; then cat "soak-$v.md"; echo; else echo "_No result for $v._"; echo; fi
+          done
+        } >> "$GITHUB_STEP_SUMMARY"
+        cat "$GITHUB_STEP_SUMMARY"

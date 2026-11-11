@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Forms;
@@ -33,6 +34,7 @@ namespace LiteDeploy
             startInfo.ErrorDialog = true;
             startInfo.WorkingDirectory = Directory.GetCurrentDirectory();
             startInfo.StandardOutputEncoding = Encoding.UTF8;
+            startInfo.StandardErrorEncoding = Encoding.UTF8;
             processList.Add(startInfo);
         }
 
@@ -47,7 +49,11 @@ namespace LiteDeploy
                 MainFormAccess.mainForm.PConsoleAccess().AddLogEntry("Deployment", "MSI logging has been initiated.");
             }
 
-            instances.Clear();
+            lock (instances)
+            {
+                instances.Clear();
+            }
+
             AppConsole.WriteLine("Deployment Processing Started.");
             StartProcessWindow();
             mainThread = new Thread(new ThreadStart(ProcessThreadFunction));
@@ -99,12 +105,13 @@ namespace LiteDeploy
         {
             try
             {
-                FileStream fstream = new FileStream(file, FileMode.Create, FileAccess.Write);
-                XmlSerializer serializer = new XmlSerializer(typeof(List<String>));
-                XmlTextWriter xmlWriter = new XmlTextWriter(fstream, Encoding.UTF8);
-                xmlWriter.Formatting = Formatting.Indented;
-                serializer.Serialize(xmlWriter, outputList);
-                fstream.Close();
+                using (FileStream fstream = new FileStream(file, FileMode.Create, FileAccess.Write))
+                using (XmlTextWriter xmlWriter = new XmlTextWriter(fstream, Encoding.UTF8))
+                {
+                    XmlSerializer serializer = new XmlSerializer(typeof(List<String>));
+                    xmlWriter.Formatting = Formatting.Indented;
+                    serializer.Serialize(xmlWriter, outputList);
+                }
             }
             catch (Exception e)
             {
@@ -121,17 +128,29 @@ namespace LiteDeploy
 
                 using (Process p = Process.Start(processList[i]))
                 {
-                    instances.Add(p);
+                    lock (instances)
+                    {
+                        instances.Add(p);
+                    }
+
                     AppConsole.WriteLine("Executing: PsExec.exe " + processList[i].Arguments);
                     incrementString = "Deploying to: " + deployNameList[i];
                     incrementString2 = "Next: " + ((i + 1) < deployNameList.Count ? deployNameList[i + 1] : "");
                     SetDeployingToString();
-                    StreamReader reader = new StreamReader(p.StandardError.BaseStream);
-                    outputList[i] = reader.ReadToEnd().Replace("\r\n", "\n");
-                    reader.Close();
-                    reader = new StreamReader(p.StandardOutput.BaseStream);
-                    outputList[i] += reader.ReadToEnd().Replace("\r\n", "\n");
-                    reader.Close();
+
+                    // Read standard output on another thread while standard error is
+                    // read here: reading them one after the other blocks PsExec (and
+                    // this thread) as soon as the other pipe buffer is full.
+                    Task<String> stdout = p.StandardOutput.ReadToEndAsync();
+                    String stderr = p.StandardError.ReadToEnd();
+                    outputList[i] = stderr.Replace("\r\n", "\n") + stdout.Result.Replace("\r\n", "\n");
+                    p.WaitForExit();
+
+                    lock (instances)
+                    {
+                        instances.Remove(p);
+                    }
+
                     MainFormAccess.mainForm.PConsoleAccess().AddProcessToList(deployNameList[i]);
                     IncrementBar();
 
@@ -148,27 +167,30 @@ namespace LiteDeploy
             if (processing)
             {
                 AppConsole.WriteLine("Stopping all processing.");
-                Process[] PsExec = Process.GetProcesses();
                 processing = false;
-                mainThread.Abort();
-                Process p;
+                Process p = null;
 
-                if (instances.Count > 0)
+                lock (instances)
                 {
-                    p = instances[instances.Count - 1];
+                    if (instances.Count > 0)
+                        p = instances[instances.Count - 1];
+                }
 
+                // Kill the running PsExec first: the processing thread is blocked
+                // reading its output and only stops once the pipes are closed.
+                if (p != null)
+                {
                     try
                     {
-                        if (p != null)
-                        {
-                            p.Kill();
-                        }
+                        p.Kill();
                     }
                     catch (Exception e)
                     {
-                        AppConsole.WriteLine("Process " + p.Id.ToString() + " could not be aborted. " + e.Message.ToString());
+                        AppConsole.WriteLine("Process could not be aborted. " + e.Message.ToString());
                     }
                 }
+
+                mainThread.Abort();
 
                 AppConsole.WriteLine("Deployment was manually aborted by user.");
                 MainFormAccess.mainForm.PConsoleAccess().AddLogEntry("Deployment", "Deployment was manually aborted by user.");
@@ -189,26 +211,35 @@ namespace LiteDeploy
 
             Process[] PsExec = Process.GetProcessesByName("PsExec");
 
-            if (PsExec.Count() > 0)
+            try
             {
-                try
+                if (PsExec.Count() > 0)
                 {
-                    PsExec[0].Kill();
-                    PsExec[0].Dispose();
-                    AppConsole.WriteLine("Process was manually aborted by user.");
+                    try
+                    {
+                        PsExec[0].Kill();
+                        AppConsole.WriteLine("Process was manually aborted by user.");
 
-                    if ( currentHost != "" )
-                        MainFormAccess.mainForm.PConsoleAccess().AddLogEntry(currentHost, "Process manually aborted by user.");
+                        if ( currentHost != "" )
+                            MainFormAccess.mainForm.PConsoleAccess().AddLogEntry(currentHost, "Process manually aborted by user.");
+                    }
+                    catch
+                    {
+                        AppConsole.WriteLine("Process could not be aborted.");
+                    }
                 }
-                catch
+
+                else
                 {
-                    AppConsole.WriteLine("Process could not be aborted.");
+                    AppConsole.WriteLine("No process running.");
                 }
             }
 
-            else
+            finally
             {
-                AppConsole.WriteLine("No process running.");
+                // Process objects hold a process handle once used: release them all.
+                foreach (Process proc in PsExec)
+                    proc.Dispose();
             }
         }
     }

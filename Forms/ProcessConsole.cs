@@ -441,72 +441,72 @@ namespace LiteDeploy
                             String thisLogHostName = MSILogFiles[i].Substring(MSILogFiles[i].LastIndexOf("\\") + 1);
                             String thisLogFile = MSILogFiles[i] + ".txt";
 
-                            FileStream logFile = new FileStream(thisLogFile, FileMode.Open, FileAccess.Read);
-                            StreamReader reader = new StreamReader(logFile);
-
                             bool indeterminate = true;
 
-                            while (!reader.EndOfStream)
+                            // using: an exception while parsing used to leave the log
+                            // file open until the next garbage collection (every 5 s poll).
+                            using (FileStream logFile = new FileStream(thisLogFile, FileMode.Open, FileAccess.Read))
+                            using (StreamReader reader = new StreamReader(logFile))
                             {
-                                String line = reader.ReadLine();
-
-                                if (line.Contains("Product") && line.Contains(MSIProductName))
+                                while (!reader.EndOfStream)
                                 {
-                                    if (line.Contains("Success") || line.Contains("success") )
-                                    {
-                                        MSIStatSet(thisLogHostName, "Package was successfully installed.", "OK");
-                                    }
+                                    String line = reader.ReadLine();
 
-                                    else if (line.Contains("fail") || line.Contains("Fail") || line.Contains("error") || line.Contains("Error") || line.Contains("Disk full: Out of disk space"))
+                                    if (line.Contains("Product") && line.Contains(MSIProductName))
                                     {
-                                        bool errorCode = false;
-
-                                        // Check for specifi error codes
-                                        while (!reader.EndOfStream)
+                                        if (line.Contains("Success") || line.Contains("success") )
                                         {
-                                            line = reader.ReadLine();
-
-                                            if (line.Contains("Windows Installer reconfigured") && line.Contains("Reconfiguration success or error status: 1638"))
-                                            {
-                                                MSIStatSet(thisLogHostName, "Another version of this product is already installed. Installation cannot continue.", "ERROR");
-                                                errorCode = true;
-                                                break;
-                                            }
+                                            MSIStatSet(thisLogHostName, "Package was successfully installed.", "OK");
                                         }
 
-                                        if ( !errorCode)
-                                            MSIStatSet(thisLogHostName, "Package installation failed." + (line.Contains("Disk full: Out of disk space") ? " Disk out of space." : ""), "ERROR");
+                                        else if (line.Contains("fail") || line.Contains("Fail") || line.Contains("error") || line.Contains("Error") || line.Contains("Disk full: Out of disk space"))
+                                        {
+                                            bool errorCode = false;
+
+                                            // Check for specifi error codes
+                                            while (!reader.EndOfStream)
+                                            {
+                                                line = reader.ReadLine();
+
+                                                if (line.Contains("Windows Installer reconfigured") && line.Contains("Reconfiguration success or error status: 1638"))
+                                                {
+                                                    MSIStatSet(thisLogHostName, "Another version of this product is already installed. Installation cannot continue.", "ERROR");
+                                                    errorCode = true;
+                                                    break;
+                                                }
+                                            }
+
+                                            if ( !errorCode)
+                                                MSIStatSet(thisLogHostName, "Package installation failed." + (line.Contains("Disk full: Out of disk space") ? " Disk out of space." : ""), "ERROR");
+                                        }
+
+                                        MSILogFiles.Remove(thisLogFile.Replace(".txt", ""));
+                                        i--;
+                                        indeterminate = false;
+                                        break;
                                     }
 
-                                    MSILogFiles.Remove(thisLogFile.Replace(".txt", ""));
-                                    i--;
-                                    indeterminate = false;
-                                    break;
-                                }
+                                    else if (line.Contains("Failed to connect to server"))
+                                    {
+                                        MSIStatSet(thisLogHostName, "Package installation failed.", "ERROR");
 
-                                else if (line.Contains("Failed to connect to server"))
-                                {
-                                    MSIStatSet(thisLogHostName, "Package installation failed.", "ERROR");
+                                        MSILogFiles.Remove(thisLogFile.Replace(".txt", ""));
+                                        i--;
+                                        indeterminate = false;
+                                        break;
+                                    }
 
-                                    MSILogFiles.Remove(thisLogFile.Replace(".txt", ""));
-                                    i--;
-                                    indeterminate = false;
-                                    break;
-                                }
+                                    else if (line.Contains("Failed to grab mutex for logging"))
+                                    {
+                                        MSIStatSet(thisLogHostName, "Package installation failed.", "ERROR");
 
-                                else if (line.Contains("Failed to grab mutex for logging"))
-                                {
-                                    MSIStatSet(thisLogHostName, "Package installation failed.", "ERROR");
-
-                                    MSILogFiles.Remove(thisLogFile.Replace(".txt", ""));
-                                    i--;
-                                    indeterminate = false;
-                                    break;
+                                        MSILogFiles.Remove(thisLogFile.Replace(".txt", ""));
+                                        i--;
+                                        indeterminate = false;
+                                        break;
+                                    }
                                 }
                             }
-
-                            reader.Close();
-                            logFile.Close();
 
                             if (indeterminate)
                             {
@@ -544,11 +544,11 @@ namespace LiteDeploy
 
                         if (File.Exists(ThisLogFile))
                         {
-                            FileStream logFile = new FileStream(ThisLogFile, FileMode.Open, FileAccess.Read);
-                            StreamReader reader = new StreamReader(logFile);
-                            ActualMSILog.Text = reader.ReadToEnd();
-                            reader.Close();
-                            logFile.Close();
+                            using (FileStream logFile = new FileStream(ThisLogFile, FileMode.Open, FileAccess.Read))
+                            using (StreamReader reader = new StreamReader(logFile))
+                            {
+                                ActualMSILog.Text = reader.ReadToEnd();
+                            }
                             OpenLog.Enabled = true;
                         }
 
@@ -649,11 +649,15 @@ namespace LiteDeploy
 
         private void PingHost()
         {
-            Ping pingSender = new Ping();
-
             try
             {
-                PingReply reply = pingSender.Send(pingHostString, 5000);
+                PingReply reply;
+
+                using (Ping pingSender = new Ping())
+                {
+                    reply = pingSender.Send(pingHostString, 5000);
+                }
+
                 MessageBox.Show(reply.Status == IPStatus.Success ? "Ping OK." : "Ping failed.", "Ping: " + pingHostString, MessageBoxButtons.OK, reply.Status == IPStatus.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
             }
 
@@ -666,7 +670,7 @@ namespace LiteDeploy
         private void remoteToHost_Click(object sender, EventArgs e)
         {
             ProcessStartInfo info = new ProcessStartInfo("mstsc", "/v:" + hostName.Text);
-            Process.Start(info);
+            using (Process.Start(info)) { }
         }
 
         private void mangementConsoleToolStripMenuItem_Click(object sender, EventArgs e)
@@ -686,7 +690,7 @@ namespace LiteDeploy
             }
 
             ProcessStartInfo info = new ProcessStartInfo("mmc", "\"" + Directory.GetCurrentDirectory() + "\\RemoteManagement.msc\" /computer:" + hostName.Text);
-            Process.Start(info);
+            using (Process.Start(info)) { }
         }
 
         private void openAdminShareToolStripMenuItem_Click(object sender, EventArgs e)
@@ -763,7 +767,7 @@ namespace LiteDeploy
         {
             if (File.Exists(LogFileLocation.Text))
             {
-                Process.Start(LogFileLocation.Text);
+                using (Process.Start(LogFileLocation.Text)) { }
             }
         }        
     }

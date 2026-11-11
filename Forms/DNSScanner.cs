@@ -31,6 +31,14 @@ namespace LiteDeploy.Forms
             HostNumLock = new Object();
         }
 
+        public List<String> GetHosts()
+        {
+            lock (Hosts)
+            {
+                return new List<String>(Hosts);
+            }
+        }
+
         private void DNSScanner_Load(object sender, EventArgs e)
         {
             
@@ -55,7 +63,13 @@ namespace LiteDeploy.Forms
                 IPAddress[] address = hostInfo.AddressList;
 
                 if ( address.Length > 0 )
-                    Hosts.Add(hostInfo.HostName.ToUpper().Substring(0, hostInfo.HostName.IndexOf('.')));
+                {
+                    // Several lookup threads add to the same list
+                    lock (Hosts)
+                    {
+                        Hosts.Add(hostInfo.HostName.ToUpper().Substring(0, hostInfo.HostName.IndexOf('.')));
+                    }
+                }
             }
             catch
             {

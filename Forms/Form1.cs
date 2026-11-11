@@ -83,13 +83,15 @@ namespace LiteDeploy
 
             if (update)
             {
-                Process.Start(Directory.GetCurrentDirectory() + "\\edupdater.exe");
+                using (Process.Start(Directory.GetCurrentDirectory() + "\\edupdater.exe")) { }
                 Close();
                 return;
             }
 
             screen = new Splash(this);
             screen.ShowDialog();
+            screen.Dispose();
+            screen = null;
 
             StartRef = startDeploy;
             MainFormAccess.Init(this);
@@ -141,14 +143,12 @@ namespace LiteDeploy
 
         private void writeSelectedComputerList()
         {
-            FileStream file = new FileStream("selectedComputers.txt", FileMode.Create);
-            StreamWriter writer = new StreamWriter(file);
-
-            for (int i = 0; i < selectedComputers.CheckedItems.Count; i++)
-                writer.WriteLine(selectedComputers.CheckedItems[i].ToString());
-
-            writer.Close();
-            file.Close();
+            using (FileStream file = new FileStream("selectedComputers.txt", FileMode.Create))
+            using (StreamWriter writer = new StreamWriter(file))
+            {
+                for (int i = 0; i < selectedComputers.CheckedItems.Count; i++)
+                    writer.WriteLine(selectedComputers.CheckedItems[i].ToString());
+            }
         }
 
         private String buildMultiProcessCommand(String pc)
@@ -290,12 +290,15 @@ namespace LiteDeploy
             bool MSIPrepCancelled = false;
             if (processConsole.MSIDeployment)
             {
-                Deployment_Prep MSIPrep = new Deployment_Prep();
-                DialogResult result = MSIPrep.ShowDialog();
-
-                if (result == System.Windows.Forms.DialogResult.Cancel)
+                // A form shown with ShowDialog is only hidden when closed: dispose it.
+                using (Deployment_Prep MSIPrep = new Deployment_Prep())
                 {
-                    MSIPrepCancelled = true;
+                    DialogResult result = MSIPrep.ShowDialog();
+
+                    if (result == System.Windows.Forms.DialogResult.Cancel)
+                    {
+                        MSIPrepCancelled = true;
+                    }
                 }
 
                 processConsole.MSIprogressBar.Maximum = ProcessManager.deployNameList.Count;                
@@ -419,15 +422,25 @@ namespace LiteDeploy
         private void stopPsExecToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Process[] PsExec = Process.GetProcessesByName("PsExec");
-            if (PsExec.Count() > 0)
+
+            try
             {
-                PsExec[0].Kill();
-                AppConsole.WriteLine("PsExec.exe was manually aborted by User.");
+                if (PsExec.Count() > 0)
+                {
+                    PsExec[0].Kill();
+                    AppConsole.WriteLine("PsExec.exe was manually aborted by User.");
+                }
+
+                else
+                {
+                    AppConsole.WriteLine("PsExec.exe is not running.");
+                }
             }
 
-            else
+            finally
             {
-                AppConsole.WriteLine("PsExec.exe is not running.");
+                foreach (Process p in PsExec)
+                    p.Dispose();
             }
         }
 
@@ -441,17 +454,19 @@ namespace LiteDeploy
 
                     if (info.Extension == ".msi" || info.Extension == ".mst" )
                     {
-                        MSIOps MSIWindow = new MSIOps(openExecutable.FileName);
-                        DialogResult result = MSIWindow.ShowDialog();
-                        arguments.Text = MSIWindow.GetCommandString();
-                        executable.Text = "C:\\Windows\\System32\\msiexec.exe";
-                        wait.Checked = true;
-                        copy.Checked = false;
-                        forceCopy.Checked = false;
-                        interactive.Checked = false;
-                        relWorkingPath.Checked = false;
-                        PConsoleAccess().MSIStatProductName.Text = MSIWindow.MSIProductName.Text;
-                        PConsoleAccess().MSIStatProductVersion.Text = MSIWindow.MSIPVersion.Text;
+                        using (MSIOps MSIWindow = new MSIOps(openExecutable.FileName))
+                        {
+                            DialogResult result = MSIWindow.ShowDialog();
+                            arguments.Text = MSIWindow.GetCommandString();
+                            executable.Text = "C:\\Windows\\System32\\msiexec.exe";
+                            wait.Checked = true;
+                            copy.Checked = false;
+                            forceCopy.Checked = false;
+                            interactive.Checked = false;
+                            relWorkingPath.Checked = false;
+                            PConsoleAccess().MSIStatProductName.Text = MSIWindow.MSIProductName.Text;
+                            PConsoleAccess().MSIStatProductVersion.Text = MSIWindow.MSIPVersion.Text;
+                        }
                     }
                 }
             }
@@ -466,11 +481,15 @@ namespace LiteDeploy
 
         private void PingHost()
         {
-            Ping pingSender = new Ping();
-
             try
             {
-                PingReply reply = pingSender.Send(pingHostString, 5000);
+                PingReply reply;
+
+                using (Ping pingSender = new Ping())
+                {
+                    reply = pingSender.Send(pingHostString, 5000);
+                }
+
                 MessageBox.Show(reply.Status == IPStatus.Success ? "Ping OK." : "Ping failed.", "Ping: " + pingHostString, MessageBoxButtons.OK, reply.Status == IPStatus.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
             }
 
@@ -498,7 +517,7 @@ namespace LiteDeploy
         private void remoteToHost_Click(object sender, EventArgs e)
         {
             ProcessStartInfo info = new ProcessStartInfo("mstsc", "/v:" + hostName.Text);
-            Process.Start(info);
+            using (Process.Start(info)) { }
         }
 
         private void aboutToolStripMenuItem_Click_1(object sender, EventArgs e)
@@ -542,7 +561,7 @@ namespace LiteDeploy
             }
 
             ProcessStartInfo info = new ProcessStartInfo("mmc", "\"" + Directory.GetCurrentDirectory() +"\\RemoteManagement.msc\" /computer:" + hostName.Text);
-            Process.Start(info);
+            using (Process.Start(info)) { }
         }
 
         private void restartToolStripMenuItem_Click(object sender, EventArgs e)
@@ -774,8 +793,10 @@ namespace LiteDeploy
         {
             if (relWorkingPath.Checked)
             {
-                WorkingDirSet dialog = new WorkingDirSet(this, workPath);
-                dialog.ShowDialog();
+                using (WorkingDirSet dialog = new WorkingDirSet(this, workPath))
+                {
+                    dialog.ShowDialog();
+                }
             }
         }
 
@@ -807,7 +828,7 @@ namespace LiteDeploy
             {
                 try
                 {
-                    Process.Start("explorer.exe", "\\\\" + IsCompAvailablePingString + "\\C$");
+                    using (Process.Start("explorer.exe", "\\\\" + IsCompAvailablePingString + "\\C$")) { }
                 }
                 catch (Exception e)
                 {
@@ -825,14 +846,15 @@ namespace LiteDeploy
 
         private bool IsComputerAvailable()
         {
-            Ping pingSender = new Ping();
-
             try
             {
-                PingReply reply = pingSender.Send(IsCompAvailablePingString, 2000);
+                using (Ping pingSender = new Ping())
+                {
+                    PingReply reply = pingSender.Send(IsCompAvailablePingString, 2000);
 
-                if (reply.Status == IPStatus.Success)
-                    return true;
+                    if (reply.Status == IPStatus.Success)
+                        return true;
+                }
             }
 
             catch
@@ -925,7 +947,7 @@ namespace LiteDeploy
             {
                 try
                 {
-                    Process.Start("explorer.exe", "\\\\" + IsCompAvailablePingString + "\\C$\\Users\\Public\\Desktop");
+                    using (Process.Start("explorer.exe", "\\\\" + IsCompAvailablePingString + "\\C$\\Users\\Public\\Desktop")) { }
                 }
                 catch (Exception e)
                 {
@@ -948,7 +970,7 @@ namespace LiteDeploy
             {
                 try
                 {
-                    Process.Start("explorer.exe", "\\\\" + IsCompAvailablePingString + "\\C$\\ProgramData\\Microsoft\\Windows\\Start Menu");
+                    using (Process.Start("explorer.exe", "\\\\" + IsCompAvailablePingString + "\\C$\\ProgramData\\Microsoft\\Windows\\Start Menu")) { }
                 }
                 catch (Exception e)
                 {
@@ -999,7 +1021,7 @@ namespace LiteDeploy
             {
                 try
                 {
-                    Process.Start( "explorer.exe", "\\\\" + IsCompAvailablePingString + "\\C$\\Documents and Settings\\All Users\\Desktop" );
+                    using (Process.Start( "explorer.exe", "\\\\" + IsCompAvailablePingString + "\\C$\\Documents and Settings\\All Users\\Desktop" )) { }
                 }
                 catch (Exception e)
                 {
@@ -1021,7 +1043,7 @@ namespace LiteDeploy
             {
                 try
                 {
-                    Process.Start( "explorer.exe", "\\\\" + IsCompAvailablePingString + "\\C$\\Documents and Settings\\All Users\\Start Menu" );
+                    using (Process.Start( "explorer.exe", "\\\\" + IsCompAvailablePingString + "\\C$\\Documents and Settings\\All Users\\Start Menu" )) { }
                 }
                 catch (Exception e)
                 {
@@ -1118,8 +1140,10 @@ namespace LiteDeploy
 
         private void optionsToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            SettingsManager SetWin = new SettingsManager();
-            SetWin.ShowDialog();
+            using (SettingsManager SetWin = new SettingsManager())
+            {
+                SetWin.ShowDialog();
+            }
         }
 
                   

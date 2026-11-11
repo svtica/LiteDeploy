@@ -34,6 +34,14 @@ namespace LiteDeploy
         public PingAll()
         {
             InitializeComponent();
+
+            // The window is created at start-up and stays hidden most of the time:
+            // only refresh the running thread count while it is shown (the timer
+            // used to tick every millisecond for the whole session).
+            timer1.Enabled = false;
+            timer1.Interval = 250;
+            VisibleChanged += PingAll_VisibleChanged;
+
             hosts = new List<String>();
             indexes = new List<int>();
             stopSignal = false;
@@ -43,6 +51,11 @@ namespace LiteDeploy
 
         private void PingAll_Load(object sender, EventArgs e)
         {
+        }
+
+        private void PingAll_VisibleChanged(object sender, EventArgs e)
+        {
+            timer1.Enabled = Visible;
         }
 
         private delegate void ChangeStopButtonTextDel(String s);
@@ -171,8 +184,12 @@ namespace LiteDeploy
 
             try
             {
-                Ping pingSender = new Ping();
-                PingReply reply = pingSender.Send(pingHostString, PING_TIMEOUT);
+                PingReply reply;
+
+                using (Ping pingSender = new Ping())
+                {
+                    reply = pingSender.Send(pingHostString, PING_TIMEOUT);
+                }
 
                 if (reply.Status == IPStatus.Success)
                 {
@@ -201,23 +218,23 @@ namespace LiteDeploy
 
         private void WaitForThreadsToFinish()
         {
-            bool notDone = false;
-
-            do
+            // Wait (without spinning a CPU core) until every ping thread is done.
+            while (true)
             {
-                if (runningThreadCount == 0)
-                    run = 0;
-
-                if (run > 0)
-                    notDone = true;
-
-                else if (run == 0)
+                lock (CounterLock)
                 {
-                    runningThreadCount = 0;
-                    notDone = false;
+                    if (runningThreadCount == 0)
+                        run = 0;
+
+                    if (run <= 0)
+                    {
+                        runningThreadCount = 0;
+                        break;
+                    }
                 }
 
-            } while (notDone);
+                Thread.Sleep(50);
+            }
 
             IncreaseProgress("Done");
         }
