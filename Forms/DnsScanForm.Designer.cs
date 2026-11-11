@@ -1,6 +1,13 @@
-﻿namespace LiteDeploy.Forms
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    DnsScanForm.Designer.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: Windows Forms designer part of DnsScanForm (layout and controls).
+// -----------------------------------------------------------------------------
+namespace LiteDeploy
 {
-    partial class DNSScanner
+    partial class DnsScanForm
     {
         /// <summary>
         /// Required designer variable.
@@ -57,7 +64,7 @@
             this.ThreadStartTimer.Interval = 1;
             this.ThreadStartTimer.Tick += new System.EventHandler(this.ThreadStartTimer_Tick);
             // 
-            // DNSScanner
+            // DnsScanForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -69,13 +76,13 @@
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.Name = "DNSScanner";
+            this.Name = "DnsScanForm";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Scanning";
             this.TopMost = true;
-            this.Load += new System.EventHandler(this.DNSScanner_Load);
+            this.Load += new System.EventHandler(this.DnsScanForm_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 

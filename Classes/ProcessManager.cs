@@ -1,4 +1,12 @@
-﻿using System;
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    ProcessManager.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: Runs PsExec once per target computer, one after the other, and
+//          collects its output.
+// -----------------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -62,23 +70,23 @@ namespace LiteDeploy
 
         static private void StartProcessWindow()
         {
-            Form1.prepareWindow.initialize(processList.Count);
-            Form1.prepareWindow.Show();
+            MainForm.prepareWindow.initialize(processList.Count);
+            MainForm.prepareWindow.Show();
         }
 
         static private void IncrementBar()
         {
-            Form1.prepareWindow.IncrementBar();
+            MainForm.prepareWindow.IncrementBar();
         }
 
         static private void SetDeployingToString()
         {
-            Form1.prepareWindow.SetIncrementString(incrementString, incrementString2);
+            MainForm.prepareWindow.SetIncrementString(incrementString, incrementString2);
         }
 
         static void EndProcessWindow()
         {
-            Form1.prepareWindow.SetIncrementString("Done!", "Done!");
+            MainForm.prepareWindow.SetIncrementString("Done!", "Done!");
             AppConsole.WriteLine("Processing Completed.");
             MainFormAccess.mainForm.PConsoleAccess().AddLogEntry("Deployment", "Deployment finished.");
 

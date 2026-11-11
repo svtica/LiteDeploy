@@ -1,6 +1,13 @@
-﻿namespace LiteDeploy
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    PingAllForm.Designer.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: Windows Forms designer part of PingAllForm (layout and controls).
+// -----------------------------------------------------------------------------
+namespace LiteDeploy
 {
-    partial class PingAll
+    partial class PingAllForm
     {
         /// <summary>
         /// Required designer variable.
@@ -29,7 +36,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PingAll));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PingAllForm));
             this.pingList = new System.Windows.Forms.ListView();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -265,7 +272,7 @@
             this.ThreadStartTimer.Interval = 1;
             this.ThreadStartTimer.Tick += new System.EventHandler(this.ThreadStartTimer_Tick);
             // 
-            // PingAll
+            // PingAllForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -284,14 +291,14 @@
             this.MaximumSize = new System.Drawing.Size(398, 2048);
             this.MinimizeBox = false;
             this.MinimumSize = new System.Drawing.Size(398, 39);
-            this.Name = "PingAll";
+            this.Name = "PingAllForm";
             this.ShowInTaskbar = false;
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Lite Deploy - Ping";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.PingAll_FormClosing);
-            this.Load += new System.EventHandler(this.PingAll_Load);
-            this.Resize += new System.EventHandler(this.PingAll_Resize);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.PingAllForm_FormClosing);
+            this.Load += new System.EventHandler(this.PingAllForm_Load);
+            this.Resize += new System.EventHandler(this.PingAllForm_Resize);
             this.ButtonGroup.ResumeLayout(false);
             this.ButtonGroup.PerformLayout();
             this.groupBox1.ResumeLayout(false);

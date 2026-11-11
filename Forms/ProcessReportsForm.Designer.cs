@@ -1,6 +1,14 @@
-﻿namespace LiteDeploy
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    ProcessReportsForm.Designer.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: Windows Forms designer part of ProcessReportsForm (layout and
+//          controls).
+// -----------------------------------------------------------------------------
+namespace LiteDeploy
 {
-    partial class ProcessConsole
+    partial class ProcessReportsForm
     {
         /// <summary>
         /// Required designer variable.
@@ -29,7 +37,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ProcessConsole));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ProcessReportsForm));
             System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem(new System.Windows.Forms.ListViewItem.ListViewSubItem[] {
             new System.Windows.Forms.ListViewItem.ListViewSubItem(null, ""),
             new System.Windows.Forms.ListViewItem.ListViewSubItem(null, "0", System.Drawing.SystemColors.WindowText, System.Drawing.SystemColors.Control, new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0))))}, -1);
@@ -549,7 +557,7 @@
             // 
             this.POSTListUpdateTimer.Interval = 5;
             // 
-            // ProcessConsole
+            // ProcessReportsForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -557,12 +565,12 @@
             this.Controls.Add(this.tabControl1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(1036, 654);
-            this.Name = "ProcessConsole";
+            this.Name = "ProcessReportsForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Lite Deploy - Process Reports";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ProcessConsole_FormClosing);
-            this.Load += new System.EventHandler(this.ProcessConsole_Load);
-            this.VisibleChanged += new System.EventHandler(this.ProcessConsole_VisibleChanged);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ProcessReportsForm_FormClosing);
+            this.Load += new System.EventHandler(this.ProcessReportsForm_Load);
+            this.VisibleChanged += new System.EventHandler(this.ProcessReportsForm_VisibleChanged);
             this.tabControl1.ResumeLayout(false);
             this.tabPage2.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);

@@ -1,4 +1,12 @@
-﻿
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    LogEntry.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: One line of the process report (time, computer, raw output,
+//          message).
+// -----------------------------------------------------------------------------
+
 using System;
 using System.Collections.Generic;
 using System.Linq;

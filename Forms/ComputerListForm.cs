@@ -1,4 +1,12 @@
-﻿using System;
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    ComputerListForm.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: Builds the computer list: Active Directory search, subnet scan,
+//          file, manual entry, ping.
+// -----------------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -12,11 +20,10 @@ using System.Net;
 using System.DirectoryServices;
 using System.Threading.Tasks;
 using System.Net.NetworkInformation;
-using LiteDeploy.Forms;
 
 namespace LiteDeploy
 {
-    public partial class PCListDesigner : Form
+    public partial class ComputerListForm : Form
     {
         CheckedListBox UseList;
         private bool searchInProgress = false;
@@ -25,22 +32,22 @@ namespace LiteDeploy
         private Object pingThreadCountLock;
         private bool abortPing = false;
 
-        public PCListDesigner()
+        public ComputerListForm()
         {
             InitializeComponent();
 
             // Created at start-up and hidden most of the time: only refresh the
             // status (title, counters) while the window is shown.
             timer.Enabled = false;
-            VisibleChanged += PCListDesigner_VisibleChanged;
+            VisibleChanged += ComputerListForm_VisibleChanged;
         }
 
-        private void PCListDesigner_VisibleChanged(object sender, EventArgs e)
+        private void ComputerListForm_VisibleChanged(object sender, EventArgs e)
         {
             timer.Enabled = Visible;
         }
 
-        private void PCListDesigner_Load(object sender, EventArgs e)
+        private void ComputerListForm_Load(object sender, EventArgs e)
         {
             getSubnets();
             abortPing = false;
@@ -242,9 +249,9 @@ namespace LiteDeploy
 
         public bool CompInDomain(string username)
         {
-            if (ActiveDir.cacheFound && ActiveDir.adUpdating)
+            if (ActiveDirectoryCache.cacheFound && ActiveDirectoryCache.adUpdating)
             {
-                if (ActiveDir.CachedAD.Contains(username))
+                if (ActiveDirectoryCache.CachedAD.Contains(username))
                     return true;
 
                 else
@@ -253,7 +260,7 @@ namespace LiteDeploy
 
             else
             {
-                if (ActiveDir.Computers.Contains(username))
+                if (ActiveDirectoryCache.Computers.Contains(username))
                     return true;
 
                 else
@@ -408,7 +415,7 @@ namespace LiteDeploy
             List<String> hosts;
 
             // A form shown with ShowDialog is only hidden when closed: dispose it.
-            using (DNSScanner dq = new DNSScanner(octet1.Value.ToString() + "." + octet2.Value.ToString() + "." + octet3.Value.ToString() + "."))
+            using (DnsScanForm dq = new DnsScanForm(octet1.Value.ToString() + "." + octet2.Value.ToString() + "." + octet3.Value.ToString() + "."))
             {
                 dq.ShowDialog();
                 hosts = dq.GetHosts();
@@ -433,9 +440,9 @@ namespace LiteDeploy
 
             List<String> results;
 
-            if (ActiveDir.cacheFound && (ActiveDir.adUpdating || !ActiveDir.DCAvailable ))
+            if (ActiveDirectoryCache.cacheFound && (ActiveDirectoryCache.adUpdating || !ActiveDirectoryCache.DCAvailable ))
             {
-                results = ActiveDir.CachedAD.FindAll(     x => x.Equals(adSearchKey.Text) ||
+                results = ActiveDirectoryCache.CachedAD.FindAll(     x => x.Equals(adSearchKey.Text) ||
                     
                                                           (adSearchStartsWith.Checked ? x.StartsWith(adSearchKey.Text) : false) || 
 
@@ -451,7 +458,7 @@ namespace LiteDeploy
 
             else
             {
-                results = ActiveDir.Computers.FindAll(    x => x.Equals(adSearchKey.Text) ||
+                results = ActiveDirectoryCache.Computers.FindAll(    x => x.Equals(adSearchKey.Text) ||
 
                                                           (adSearchStartsWith.Checked ? x.StartsWith(adSearchKey.Text) : false) ||
 
@@ -476,10 +483,10 @@ namespace LiteDeploy
 
             RunPing();
 
-            if (ActiveDir.adUpdating)
+            if (ActiveDirectoryCache.adUpdating)
             {
-                MessageBox.Show( "Results acquired from Active Directory cache created on " + ActiveDir.LastUpdate.ToShortDateString() +
-                                " at " + ActiveDir.LastUpdate.ToShortTimeString() + ".", "Search Results", MessageBoxButtons.OK, MessageBoxIcon.Information );
+                MessageBox.Show( "Results acquired from Active Directory cache created on " + ActiveDirectoryCache.LastUpdate.ToShortDateString() +
+                                " at " + ActiveDirectoryCache.LastUpdate.ToShortTimeString() + ".", "Search Results", MessageBoxButtons.OK, MessageBoxIcon.Information );
             }            
         }
 
@@ -557,11 +564,11 @@ namespace LiteDeploy
 
         private void timer_Tick(object sender, EventArgs e)
         {
-            if (!ActiveDir.adNotAvailable)
+            if (!ActiveDirectoryCache.adNotAvailable)
             {
-                if (ActiveDir.adUpdating)
+                if (ActiveDirectoryCache.adUpdating)
                 {
-                    if (Text == "Computers" || Text == "Computers - AD Last Update: " + ActiveDir.LastUpdate.ToShortDateString() + " " + ActiveDir.LastUpdate.ToShortTimeString())
+                    if (Text == "Computers" || Text == "Computers - AD Last Update: " + ActiveDirectoryCache.LastUpdate.ToShortDateString() + " " + ActiveDirectoryCache.LastUpdate.ToShortTimeString())
                         Text = "Computers - AD Updating";
 
                     else
@@ -570,11 +577,11 @@ namespace LiteDeploy
                     updateToolStripMenuItem.Enabled = false;
                 }
 
-                if (ActiveDir.adUpToDate || !ActiveDir.DCAvailable)
+                if (ActiveDirectoryCache.adUpToDate || !ActiveDirectoryCache.DCAvailable)
                 {
                     if (Text == "Computers" || Text == "Computers - AD Updating")
                     {
-                        Text = "Computers - AD Last Update: " + ActiveDir.LastUpdate.ToShortDateString() + " " + ActiveDir.LastUpdate.ToShortTimeString();
+                        Text = "Computers - AD Last Update: " + ActiveDirectoryCache.LastUpdate.ToShortDateString() + " " + ActiveDirectoryCache.LastUpdate.ToShortTimeString();
                     }
 
                     if (updateToolStripMenuItem.Enabled == false)
@@ -635,7 +642,7 @@ namespace LiteDeploy
 
         private void updateToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ActiveDir.GetComputers();
+            ActiveDirectoryCache.GetComputers();
         }
 
         private void octet1_Enter( object sender, EventArgs e )
@@ -668,11 +675,11 @@ namespace LiteDeploy
             octet3_Enter( sender, e );
         }
 
-        private void PCListDesigner_FormClosing(object sender, FormClosingEventArgs e)
+        private void ComputerListForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             e.Cancel = true;
             Hide();
-            DNSScanner.abort = true;
+            DnsScanForm.abort = true;
             abortPing = true;
             MainFormAccess.mainForm.Focus();
         }

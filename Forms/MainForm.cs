@@ -1,4 +1,12 @@
-﻿using System;
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    MainForm.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: Main window: target computers, file or command to run, PsExec
+//          options, console.
+// -----------------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -14,22 +22,21 @@ using System.Diagnostics;
 using System.Net.NetworkInformation;
 using System.Xml.Serialization;
 using System.Configuration;
-using LiteDeploy.Forms;
 
 namespace LiteDeploy
 {
-    public partial class Form1 : Form
+    public partial class MainForm : Form
     {
         // Child Forms
-        static public PCListDesigner listMaker = new PCListDesigner();
-        static private ProcessConsole processConsole = new ProcessConsole();
-        static public BatchProcessWindow prepareWindow = new BatchProcessWindow();
+        static public ComputerListForm listMaker = new ComputerListForm();
+        static private ProcessReportsForm processConsole = new ProcessReportsForm();
+        static public DeploymentProgressForm prepareWindow = new DeploymentProgressForm();
 
         //Static Reference to Start Button
         static Button StartRef = null;
 
         //Change Log
-        static private ChangeLog clog = new ChangeLog();
+        static private ChangeLogForm clog = new ChangeLogForm();
 
         // Command Handling
         List<String> commandList;
@@ -37,13 +44,13 @@ namespace LiteDeploy
         // Ping Use
         public String pingHostString;
         public String IsCompAvailablePingString = "";
-        static public PingAll pingAllWindow = new PingAll();
+        static public PingAllForm pingAllWindow = new PingAllForm();
 
         // Relative working path (if set)
         public String workPath = "";
 
         // About Box
-        static private AboutBox1 about = new AboutBox1();
+        static private AboutForm about = new AboutForm();
         bool update;
 
         // Easy Menu Settings Container
@@ -52,9 +59,9 @@ namespace LiteDeploy
         // MSI Logs
         public static List<String> MSILogs = new List<String>();
 
-        public static Splash screen;
+        public static SplashForm screen;
 
-        public Form1()
+        public MainForm()
         {            
             InitializeComponent();
 
@@ -64,9 +71,9 @@ namespace LiteDeploy
 
         private void CheckForUpdate()
         {
-            if (File.Exists(Settings.LOCAL_UPDATE_DIR + "Easy Deploy.exe"))
+            if (File.Exists(AppSettings.LOCAL_UPDATE_DIR + "Easy Deploy.exe"))
             {
-                FileVersionInfo serverVersion = FileVersionInfo.GetVersionInfo(Settings.LOCAL_UPDATE_DIR + "Easy Deploy.exe");
+                FileVersionInfo serverVersion = FileVersionInfo.GetVersionInfo(AppSettings.LOCAL_UPDATE_DIR + "Easy Deploy.exe");
                 FileVersionInfo current = FileVersionInfo.GetVersionInfo(Directory.GetCurrentDirectory() + "\\Easy Deploy.exe");
                 Version s = new Version(serverVersion.ProductVersion);
                 Version c = new Version(current.ProductVersion);
@@ -78,7 +85,7 @@ namespace LiteDeploy
             }
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void MainForm_Load(object sender, EventArgs e)
         {
             update = false;            
             CheckForUpdate();
@@ -90,7 +97,7 @@ namespace LiteDeploy
                 return;
             }
 
-            screen = new Splash(this);
+            screen = new SplashForm(this);
             screen.ShowDialog();
             screen.Dispose();
             screen = null;
@@ -225,7 +232,7 @@ namespace LiteDeploy
             {
                 commandList.Clear();
                 processConsole.processList.Items.Clear();
-                ProcessConsole.logEntries.Clear();
+                ProcessReportsForm.logEntries.Clear();
                 ProcessManager.processList.Clear();
                 ProcessManager.outputList.Clear();
                 ProcessManager.deployNameList.Clear();
@@ -293,7 +300,7 @@ namespace LiteDeploy
             if (processConsole.MSIDeployment)
             {
                 // A form shown with ShowDialog is only hidden when closed: dispose it.
-                using (Deployment_Prep MSIPrep = new Deployment_Prep())
+                using (DeploymentPrepForm MSIPrep = new DeploymentPrepForm())
                 {
                     DialogResult result = MSIPrep.ShowDialog();
 
@@ -311,7 +318,7 @@ namespace LiteDeploy
                 processConsole.PrepareForDeployment();
                 processConsole.Show();
 
-                ProcessConsole.currentExecutableOrCommand = (executable.Text.Length > 0 ? executable.Text + " " + arguments.Text : arguments.Text);
+                ProcessReportsForm.currentExecutableOrCommand = (executable.Text.Length > 0 ? executable.Text + " " + arguments.Text : arguments.Text);
                 ProcessManager.StartProcessing();
 
                 processConsole.AddLogEntry("Deployment", "Deployment started.");
@@ -456,7 +463,7 @@ namespace LiteDeploy
 
                     if (info.Extension == ".msi" || info.Extension == ".mst" )
                     {
-                        using (MSIOps MSIWindow = new MSIOps(openExecutable.FileName))
+                        using (MsiOptionsForm MSIWindow = new MsiOptionsForm(openExecutable.FileName))
                         {
                             DialogResult result = MSIWindow.ShowDialog();
                             arguments.Text = MSIWindow.GetCommandString();
@@ -552,7 +559,7 @@ namespace LiteDeploy
             {
                 try
                 {
-                    File.Copy( Settings.LOCAL_UPDATE_DIR + "\\RemoteManagement.msc", Directory.GetCurrentDirectory() + "\\RemoteManagement.msc");
+                    File.Copy( AppSettings.LOCAL_UPDATE_DIR + "\\RemoteManagement.msc", Directory.GetCurrentDirectory() + "\\RemoteManagement.msc");
                 }
 
                 catch ( Exception ex )
@@ -682,7 +689,7 @@ namespace LiteDeploy
                         if (!exists)
                         {
                             applicationsToolStripMenuItem.DropDownItems.Add(allSettings[i].Name);
-                            applicationsToolStripMenuItem.DropDownItems[applicationsToolStripMenuItem.DropDownItems.Count - 1].Click += new EventHandler(Form1_Click);
+                            applicationsToolStripMenuItem.DropDownItems[applicationsToolStripMenuItem.DropDownItems.Count - 1].Click += new EventHandler(MainForm_Click);
                         }
                     }
 
@@ -698,7 +705,7 @@ namespace LiteDeploy
                         if (!exists)
                         {
                             commandsToolStripMenuItem.DropDownItems.Add(allSettings[i].Name);
-                            commandsToolStripMenuItem.DropDownItems[commandsToolStripMenuItem.DropDownItems.Count - 1].Click += new EventHandler(Form1_Click);
+                            commandsToolStripMenuItem.DropDownItems[commandsToolStripMenuItem.DropDownItems.Count - 1].Click += new EventHandler(MainForm_Click);
                         }
                     }
                 }
@@ -747,7 +754,7 @@ namespace LiteDeploy
         }
          * */
 
-        void Form1_Click(object sender, EventArgs e)
+        void MainForm_Click(object sender, EventArgs e)
         {
             for (int i = 0; i < allSettings.Count; i++)
             {
@@ -795,7 +802,7 @@ namespace LiteDeploy
         {
             if (relWorkingPath.Checked)
             {
-                using (WorkingDirSet dialog = new WorkingDirSet(this, workPath))
+                using (WorkingDirectoryForm dialog = new WorkingDirectoryForm(this, workPath))
                 {
                     dialog.ShowDialog();
                 }
@@ -897,7 +904,7 @@ namespace LiteDeploy
             }
         }
 
-        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (ProcessManager.processing)
             {
@@ -911,7 +918,7 @@ namespace LiteDeploy
             }
 
             ProcessManager.KillAll();
-            ActiveDir.StopUpdate();
+            ActiveDirectoryCache.StopUpdate();
         }
 
         private void removeToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1075,7 +1082,7 @@ namespace LiteDeploy
             t.Start();
         }
 
-        private void Form1_ResizeEnd(object sender, EventArgs e)
+        private void MainForm_ResizeEnd(object sender, EventArgs e)
         {
         }
 
@@ -1135,14 +1142,14 @@ namespace LiteDeploy
             return false;
         }
 
-        public ProcessConsole PConsoleAccess()
+        public ProcessReportsForm PConsoleAccess()
         {
             return processConsole;
         }
 
         private void optionsToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            using (SettingsManager SetWin = new SettingsManager())
+            using (OptionsForm SetWin = new OptionsForm())
             {
                 SetWin.ShowDialog();
             }

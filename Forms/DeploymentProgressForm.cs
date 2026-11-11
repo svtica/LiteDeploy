@@ -1,4 +1,12 @@
-﻿using System;
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    DeploymentProgressForm.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: Progress of a running deployment: current computer, elapsed time,
+//          skip, stop.
+// -----------------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -9,7 +17,7 @@ using System.Windows.Forms;
 
 namespace LiteDeploy
 {
-    public partial class BatchProcessWindow : Form
+    public partial class DeploymentProgressForm : Form
     {
         const bool MORE_INFO = false;
         const bool LESS_INFO = true;
@@ -22,7 +30,7 @@ namespace LiteDeploy
         static int[] TotalInts = new int[3] { 0, 0, 0 };
         static int[] CurrentInts = new int[3] { 0, 0, 0 }; 
 
-        public BatchProcessWindow()
+        public DeploymentProgressForm()
         {
             InitializeComponent();
         }
@@ -180,7 +188,7 @@ namespace LiteDeploy
             }
         }
 
-        private void BatchProcessWindow_FormClosing(object sender, FormClosingEventArgs e)
+        private void DeploymentProgressForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             e.Cancel = true;
 

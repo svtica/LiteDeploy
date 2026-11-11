@@ -1,4 +1,11 @@
-﻿using System;
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    WorkingDirectoryForm.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: Working directory of the remote process (PsExec -w).
+// -----------------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -9,11 +16,11 @@ using System.Windows.Forms;
 
 namespace LiteDeploy
 {
-    public partial class WorkingDirSet : Form
+    public partial class WorkingDirectoryForm : Form
     {
-        Form1 parent;
+        MainForm parent;
 
-        public WorkingDirSet(Form1 p, String current)
+        public WorkingDirectoryForm(MainForm p, String current)
         {
             InitializeComponent();
             enteredPath.Text = current;
@@ -40,7 +47,7 @@ namespace LiteDeploy
             }
         }
 
-        private void WorkingDirSet_FormClosing(object sender, FormClosingEventArgs e)
+        private void WorkingDirectoryForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (enteredPath.Text.Length < 3)
                 parent.relWorkingPath.Checked = false;
@@ -59,7 +66,7 @@ namespace LiteDeploy
             }
         }
 
-        private void WorkingDirSet_KeyDown(object sender, KeyEventArgs e)
+        private void WorkingDirectoryForm_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyData == Keys.Escape)
             {

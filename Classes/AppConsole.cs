@@ -1,4 +1,12 @@
-﻿using System;
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    AppConsole.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: Console of the main window: the last 500 timestamped messages,
+//          newest first, password masked.
+// -----------------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,13 +23,13 @@ namespace LiteDeploy
 
         // UI Black Box
         static RichTextBox display;
-        static public Form1 parent;
+        static public MainForm parent;
         static readonly LinkedList<String> messages = new LinkedList<String>();   // newest first
         static readonly Object messagesLock = new Object();
         static List < String > que = new List<String>();
         static List <DateTime> queTime = new List<DateTime>();
 
-        static public void  Init(RichTextBox d, Form1 p)
+        static public void  Init(RichTextBox d, MainForm p)
         {
             display = d;
             parent = p;

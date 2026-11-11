@@ -1,4 +1,11 @@
-﻿using System;
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    AboutForm.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: About box.
+// -----------------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
@@ -8,9 +15,9 @@ using System.Windows.Forms;
 
 namespace LiteDeploy
 {
-    partial class AboutBox1 : Form
+    partial class AboutForm : Form
     {
-        public AboutBox1()
+        public AboutForm()
         {
             InitializeComponent();
             this.Text = String.Format("About {0}", AssemblyTitle);

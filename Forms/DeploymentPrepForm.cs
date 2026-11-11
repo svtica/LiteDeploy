@@ -1,4 +1,12 @@
-﻿using System;
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    DeploymentPrepForm.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: Creates the MSI log folders on each target computer before an MSI
+//          deployment.
+// -----------------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -9,11 +17,11 @@ using System.Windows.Forms;
 using System.Threading;
 using System.IO;
 
-namespace LiteDeploy.Forms
+namespace LiteDeploy
 {
-    public partial class Deployment_Prep : Form
+    public partial class DeploymentPrepForm : Form
     {
-        public Deployment_Prep()
+        public DeploymentPrepForm()
         {
             InitializeComponent();
         }
@@ -21,7 +29,7 @@ namespace LiteDeploy.Forms
         Thread PrepThread;
         bool cancelled;
 
-        private void Deployment_Prep_Load(object sender, EventArgs e)
+        private void DeploymentPrepForm_Load(object sender, EventArgs e)
         {
             progressBar1.Maximum = ProcessManager.deployNameList.Count;
             progressBar1.Value = 0;
@@ -41,11 +49,11 @@ namespace LiteDeploy.Forms
 
                 String thisHost = ProcessManager.deployNameList[i];
 
-                if (!Directory.Exists(Settings.LOGGING_DIR.Replace("%computername%", thisHost)))
+                if (!Directory.Exists(AppSettings.LOGGING_DIR.Replace("%computername%", thisHost)))
                 {
                     try
                     {
-                        Directory.CreateDirectory(Settings.LOGGING_DIR.Replace("%computername%", thisHost));
+                        Directory.CreateDirectory(AppSettings.LOGGING_DIR.Replace("%computername%", thisHost));
                     }
 
                     catch
@@ -54,11 +62,11 @@ namespace LiteDeploy.Forms
                     }                    
                 }
 
-                if (!Directory.Exists(Settings.LOGGING_DIR.Replace("%computername%", thisHost) + "\\MSI"))
+                if (!Directory.Exists(AppSettings.LOGGING_DIR.Replace("%computername%", thisHost) + "\\MSI"))
                 {
                     try
                     {
-                        Directory.CreateDirectory(Settings.LOGGING_DIR.Replace("%computername%", thisHost) + "\\MSI");
+                        Directory.CreateDirectory(AppSettings.LOGGING_DIR.Replace("%computername%", thisHost) + "\\MSI");
                     }
 
                     catch
@@ -67,9 +75,9 @@ namespace LiteDeploy.Forms
                     }
                 }
 
-                else if (File.Exists(Settings.LOGGING_DIR.Replace("%computername%", thisHost) + "\\MSI" + "\\" + thisHost + ".txt"))
+                else if (File.Exists(AppSettings.LOGGING_DIR.Replace("%computername%", thisHost) + "\\MSI" + "\\" + thisHost + ".txt"))
                 {
-                    File.Delete(Settings.LOGGING_DIR.Replace("%computername%", thisHost) + "\\MSI" + "\\" + thisHost + ".txt");
+                    File.Delete(AppSettings.LOGGING_DIR.Replace("%computername%", thisHost) + "\\MSI" + "\\" + thisHost + ".txt");
                 }
 
                 if (cancelled)

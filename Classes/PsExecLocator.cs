@@ -1,4 +1,12 @@
-﻿using System;
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    PsExecLocator.cs
+// Author:  LiteDeploy contributors
+// Date:    2026-11-11
+// Purpose: Finds PsExec: LiteDeploy folder first, then the tools folder of
+//          LiteTask.
+// -----------------------------------------------------------------------------
+using System;
 using System.IO;
 
 namespace LiteDeploy

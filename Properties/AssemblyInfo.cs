@@ -1,4 +1,11 @@
-﻿using System.Reflection;
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    AssemblyInfo.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: Assembly identity and version (updated by bump-version.ps1).
+// -----------------------------------------------------------------------------
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Resources;

@@ -1,6 +1,14 @@
-﻿namespace LiteDeploy
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    MsiOptionsForm.Designer.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: Windows Forms designer part of MsiOptionsForm (layout and
+//          controls).
+// -----------------------------------------------------------------------------
+namespace LiteDeploy
 {
-    partial class MSIOps
+    partial class MsiOptionsForm
     {
         /// <summary>
         /// Required designer variable.
@@ -28,7 +36,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MSIOps));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MsiOptionsForm));
             this.label1 = new System.Windows.Forms.Label();
             this.installer = new System.Windows.Forms.TextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
@@ -281,7 +289,7 @@
             this.label3.TabIndex = 13;
             this.label3.Text = "Version:";
             // 
-            // MSIOps
+            // MsiOptionsForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -300,7 +308,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.Name = "MSIOps";
+            this.Name = "MsiOptionsForm";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;

@@ -1,4 +1,12 @@
-﻿using System;
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    OptionsForm.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: Options window (update folder, logging folder, Active Directory
+//          refresh at start-up).
+// -----------------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -11,20 +19,20 @@ using System.Xml.Serialization;
 
 namespace LiteDeploy
 {
-    public partial class SettingsManager : Form
+    public partial class OptionsForm : Form
     {
         private String UserSavePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\LiteDeploy\\";
 
-        public SettingsManager()
+        public OptionsForm()
         {
             InitializeComponent();
         }
 
-        private void SettingsManager_Load(object sender, EventArgs e)
+        private void OptionsForm_Load(object sender, EventArgs e)
         {
-            LocalUpdateDirDisplay.Text = Settings.LOCAL_UPDATE_DIR;
-            AutoUpADOnStartCheckBox.Checked = Settings.AUTO_UPDATE_AD_ON_STARTUP;
-            LogDirDisplay.Text = Settings.LOGGING_DIR;
+            LocalUpdateDirDisplay.Text = AppSettings.LOCAL_UPDATE_DIR;
+            AutoUpADOnStartCheckBox.Checked = AppSettings.AUTO_UPDATE_AD_ON_STARTUP;
+            LogDirDisplay.Text = AppSettings.LOGGING_DIR;
             groupBox2.Select();
 
             if (!Directory.Exists(UserSavePath))

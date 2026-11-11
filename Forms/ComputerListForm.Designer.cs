@@ -1,6 +1,14 @@
-﻿namespace LiteDeploy
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    ComputerListForm.Designer.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: Windows Forms designer part of ComputerListForm (layout and
+//          controls).
+// -----------------------------------------------------------------------------
+namespace LiteDeploy
 {
-    partial class PCListDesigner
+    partial class ComputerListForm
     {
         /// <summary>
         /// Required designer variable.
@@ -29,7 +37,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PCListDesigner));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ComputerListForm));
             this.addSelected = new System.Windows.Forms.Button();
             this.remSelected = new System.Windows.Forms.Button();
             this.addAll = new System.Windows.Forms.Button();
@@ -623,7 +631,7 @@
             // 
             this.columnHeader1.Width = 200;
             // 
-            // PCListDesigner
+            // ComputerListForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -643,11 +651,11 @@
             this.MainMenuStrip = this.menuStrip1;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.Name = "PCListDesigner";
+            this.Name = "ComputerListForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Lite Deploy - Computers";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.PCListDesigner_FormClosing);
-            this.Load += new System.EventHandler(this.PCListDesigner_Load);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ComputerListForm_FormClosing);
+            this.Load += new System.EventHandler(this.ComputerListForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.octet1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.octet2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.octet3)).EndInit();

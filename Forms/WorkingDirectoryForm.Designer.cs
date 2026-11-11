@@ -1,6 +1,14 @@
-﻿namespace LiteDeploy
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    WorkingDirectoryForm.Designer.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: Windows Forms designer part of WorkingDirectoryForm (layout and
+//          controls).
+// -----------------------------------------------------------------------------
+namespace LiteDeploy
 {
-    partial class WorkingDirSet
+    partial class WorkingDirectoryForm
     {
         /// <summary>
         /// Required designer variable.
@@ -28,7 +36,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(WorkingDirSet));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(WorkingDirectoryForm));
             this.label1 = new System.Windows.Forms.Label();
             this.enteredPath = new System.Windows.Forms.TextBox();
             this.okBtn = new System.Windows.Forms.Button();
@@ -63,7 +71,7 @@
             this.okBtn.Click += new System.EventHandler(this.okBtn_Click);
             this.okBtn.KeyDown += new System.Windows.Forms.KeyEventHandler(this.okBtn_KeyDown);
             // 
-            // WorkingDirSet
+            // WorkingDirectoryForm
             // 
             this.AccessibleRole = System.Windows.Forms.AccessibleRole.Dialog;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -76,13 +84,13 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.Name = "WorkingDirSet";
+            this.Name = "WorkingDirectoryForm";
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Enter Working Directory";
             this.TopMost = true;
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.WorkingDirSet_FormClosing);
-            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.WorkingDirSet_KeyDown);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.WorkingDirectoryForm_FormClosing);
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.WorkingDirectoryForm_KeyDown);
             this.ResumeLayout(false);
             this.PerformLayout();
 
