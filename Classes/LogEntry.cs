@@ -21,6 +21,22 @@ namespace LiteDeploy
         public String HostIP;
         public String LogLineOriginalMesasge;
 
+        // Icons of the process report (state image list of ProcessReportsForm.log)
+        public const int IconStarted = 0;
+        public const int IconUnreachable = 1;
+        public const int IconOther = 2;
+        public const int IconDeployment = 3;
+        public const int IconAuthentication = 4;
+
+        /// <summary>Icon of the line, chosen when the line is created (never from its translated text).</summary>
+        public int Icon = IconOther;
+
+        public LogEntry(DateTime t, String hI, String originatingMessage, String message, int icon)
+            : this(t, hI, originatingMessage, message)
+        {
+            Icon = icon;
+        }
+
         public LogEntry(DateTime t, String hI, String originatingMessage, String message)
         {
             LoggedTime = t;

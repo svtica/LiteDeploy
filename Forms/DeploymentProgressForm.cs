@@ -19,6 +19,13 @@ namespace LiteDeploy
 {
     public partial class DeploymentProgressForm : Form
     {
+        /// <summary>Text sent by ProcessManager when the deployment is over (hides the window; never shown).</summary>
+        public const String DoneSignal = "Done!";
+
+        static String FormatTime(String key, String english, int[] t)
+        {
+            return Localization.F(key, english, String.Format("{0:00}:{1:00}:{2:00}", t[0], t[1], t[2]));
+        }
         const bool MORE_INFO = false;
         const bool LESS_INFO = true;
         bool ViewMode = LESS_INFO;
@@ -33,6 +40,7 @@ namespace LiteDeploy
         public DeploymentProgressForm()
         {
             InitializeComponent();
+            Localization.Apply(this);
         }
 
         private void progressBar_Click(object sender, EventArgs e)
@@ -57,13 +65,13 @@ namespace LiteDeploy
                 progressBar.Maximum = Max;
                 progressBar.Value = 0;
                 percentage.Text = "0%";
-                currentStatus.Text = "Initializing...";
-                CurrentTime.Text = "Current Time: 00:00:00";
-                TotalTime.Text = "Total Time: 00:00:00";
+                currentStatus.Text = Localization.T("DeploymentProgressForm.Initializing", "Initializing...");
+                CurrentTime.Text = FormatTime("DeploymentProgressForm.CurrentTime", "Current Time: {0}", new int[3]);
+                TotalTime.Text = FormatTime("DeploymentProgressForm.TotalTime", "Total Time: {0}", new int[3]);
                 Skip.Enabled = true;
                 StopAll.Enabled = true;
-                Skip.Text = "Skip";
-                StopAll.Text = "Stop All";
+                Skip.Text = Localization.T("DeploymentProgressForm.Skip.Text", "Skip");
+                StopAll.Text = Localization.T("DeploymentProgressForm.StopAll.Text", "Stop All");
                 TotalInts = new int[3] { 0, 0, 0 };
                 CurrentInts = new int[3] { 0, 0, 0 };
                 totalTimer.Enabled = true;
@@ -84,7 +92,7 @@ namespace LiteDeploy
             {
                 currentTimer.Enabled = false;
                 CurrentInts = new int[3] { 0, 0, 0 };
-                CurrentTime.Text = "Current Time: 00:00:00";
+                CurrentTime.Text = FormatTime("DeploymentProgressForm.CurrentTime", "Current Time: {0}", new int[3]);
                 progressBar.Value += 1;
 
                 if (progressBar.Value == progressBar.Maximum)
@@ -95,8 +103,8 @@ namespace LiteDeploy
                 Skip.Enabled = true;
                 StopAll.Enabled = true;
                 currentTimer.Enabled = true;
-                Skip.Text = "Skip";
-                StopAll.Text = "Stop All";
+                Skip.Text = Localization.T("DeploymentProgressForm.Skip.Text", "Skip");
+                StopAll.Text = Localization.T("DeploymentProgressForm.StopAll.Text", "Stop All");
             }
         }
 
@@ -115,7 +123,7 @@ namespace LiteDeploy
                 currentStatus.Text = s;
                 Next.Text = s2;
 
-                if (s == "Done!")
+                if (s == DoneSignal)
                 {
                     totalTimer.Enabled = false;
                     currentTimer.Enabled = false;
@@ -128,7 +136,7 @@ namespace LiteDeploy
         {
             Skip.Enabled = false;
             StopAll.Enabled = false;
-            StopAll.Text = "Wait";
+            StopAll.Text = Localization.T("DeploymentProgressForm.Wait", "Wait");
             ProcessManager.KillAll();
             MainFormAccess.mainForm.reEnableExitOps();
             Hide();
@@ -138,7 +146,7 @@ namespace LiteDeploy
         {
             Skip.Enabled = false;
             StopAll.Enabled = false;
-            Skip.Text = "Wait";
+            Skip.Text = Localization.T("DeploymentProgressForm.Wait", "Wait");
             ProcessManager.KillCurrentProcess();
         }
 
@@ -192,7 +200,7 @@ namespace LiteDeploy
         {
             e.Cancel = true;
 
-            DialogResult result = MessageBox.Show("Are you sure you want to cancel this deployment?", "Confirm Cancel", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            DialogResult result = MessageBox.Show(Localization.T("DeploymentProgressForm.ConfirmCancel", "Are you sure you want to cancel this deployment?"), Localization.T("DeploymentProgressForm.ConfirmCancel.Title", "Confirm Cancel"), MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             
             if (result == System.Windows.Forms.DialogResult.Yes)
             {
@@ -216,10 +224,7 @@ namespace LiteDeploy
                 CurrentInts[MINUTES] = 0;
             }
 
-            CurrentTime.Text = "Current Time: " + (CurrentInts[HOURS] < 10 ? ("0" + CurrentInts[HOURS]).ToString() : CurrentInts[HOURS].ToString()) + ":" +
-                                                  (CurrentInts[MINUTES] < 10 ? ("0" + CurrentInts[MINUTES]).ToString() : CurrentInts[MINUTES].ToString()) + ":" +
-                                                  (CurrentInts[SECONDS] < 10 ? ("0" + CurrentInts[SECONDS]).ToString() : CurrentInts[SECONDS].ToString()); 
-        
+            CurrentTime.Text = FormatTime("DeploymentProgressForm.CurrentTime", "Current Time: {0}", CurrentInts);
         }
 
         private void totalTimer_Tick(object sender, EventArgs e)
@@ -238,9 +243,7 @@ namespace LiteDeploy
                 TotalInts[MINUTES] = 0;
             }
 
-            TotalTime.Text = "Total Time: " + (TotalInts[HOURS] < 10 ? ("0" + TotalInts[HOURS]).ToString() : TotalInts[HOURS].ToString()) + ":" +
-                                              (TotalInts[MINUTES] < 10 ? ("0" + TotalInts[MINUTES]).ToString() : TotalInts[MINUTES].ToString()) + ":" +
-                                              (TotalInts[SECONDS] < 10 ? ("0" + TotalInts[SECONDS]).ToString() : TotalInts[SECONDS].ToString()); 
+            TotalTime.Text = FormatTime("DeploymentProgressForm.TotalTime", "Total Time: {0}", TotalInts);
         }
     }
 }

@@ -23,6 +23,7 @@ namespace LiteDeploy
         public WorkingDirectoryForm(MainForm p, String current)
         {
             InitializeComponent();
+            Localization.Apply(this);
             enteredPath.Text = current;
             enteredPath.SelectAll();
             parent = p;
@@ -36,13 +37,13 @@ namespace LiteDeploy
                     enteredPath.Text = enteredPath.Text.Remove(enteredPath.Text.Length - 1 , 1);
 
                 parent.workPath = enteredPath.Text;
-                AppConsole.WriteLine("Working Directory Set: " + enteredPath.Text);
+                AppConsole.WriteLine(Localization.F("WorkingDirectoryForm.Set", "Working directory set: {0}", enteredPath.Text));
                 Close();
             }
 
             else
             {
-                MessageBox.Show("Working path cannot be empty! Please enter a working directory path.", "Enter Working Path", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                MessageBox.Show(Localization.T("WorkingDirectoryForm.Empty", "Working path cannot be empty! Please enter a working directory path."), Localization.T("WorkingDirectoryForm.Empty.Title", "Enter Working Path"), MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
             }
         }

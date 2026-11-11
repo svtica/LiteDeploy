@@ -134,13 +134,13 @@ namespace LiteDeploy
 
             else if (cacheFound && !AppSettings.AUTO_UPDATE_AD_ON_STARTUP)
             {
-                AppConsole.WriteLine("Cached AD was loaded.");
+                AppConsole.WriteLine(Localization.T("ActiveDirectory.CacheLoaded", "Cached Active Directory list was loaded."));
             }
 
             else
             {
                 if (adUpToDate)
-                    MessageBox.Show("Please wait!\n\nError: Cahced AD was not found.\n\nClick OK to continue. This process can take several minutes.", "Active Directory Updating", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(Localization.T("ActiveDirectory.NoCache", "Please wait!\n\nThe cached Active Directory list was not found.\n\nClick OK to continue. This process can take several minutes."), Localization.T("ActiveDirectory.NoCache.Title", "Active Directory Updating"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
                 BeginADDownload();
             }
@@ -150,7 +150,7 @@ namespace LiteDeploy
         {
             if (DCAvailable)
             {
-                AppConsole.WriteLine("Active Directory started updating.");
+                AppConsole.WriteLine(Localization.T("ActiveDirectory.Updating", "Active Directory started updating."));
                 adUpToDate = false;
                 adUpdating = true;
 
@@ -202,8 +202,8 @@ namespace LiteDeploy
 
                 catch (Exception e)
                 {
-                    MessageBox.Show("Active Directory update failed. " + e.Message, "Active Directory Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    AppConsole.WriteLine("Active Directory update failed.");
+                    MessageBox.Show(Localization.F("ActiveDirectory.UpdateFailedDetail", "Active Directory update failed. {0}", e.Message), Localization.T("ActiveDirectory.UpdateFailed.Title", "Active Directory Error"), MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    AppConsole.WriteLine(Localization.T("ActiveDirectory.UpdateFailed", "Active Directory update failed."));
 
                     if (cacheFound)
                     {
@@ -218,12 +218,12 @@ namespace LiteDeploy
 
                 adUpdating = false;
                 adUpToDate = true;
-                AppConsole.WriteLine("Active Directory finished updating.");
+                AppConsole.WriteLine(Localization.T("ActiveDirectory.Updated", "Active Directory finished updating."));
             }
 
             else
             {
-                AppConsole.WriteLine("Domain controller could not be reached. Cached AD was loaded.");
+                AppConsole.WriteLine(Localization.T("ActiveDirectory.NoDc", "Domain controller could not be reached. Cached Active Directory list was loaded."));
             }
         }
 

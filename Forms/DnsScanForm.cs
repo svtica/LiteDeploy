@@ -30,6 +30,7 @@ namespace LiteDeploy
         public DnsScanForm( String s)
         {
             InitializeComponent();
+            Localization.Apply(this);
             Subnet = s;
             Hosts = new List<String>();
             lookUpThreads = new List<Thread>();
@@ -96,7 +97,7 @@ namespace LiteDeploy
 
             if (currentAddress == 256)
             {
-                label1.Text = "Waiting for threads to exit...";
+                label1.Text = Localization.T("DnsScanForm.Waiting", "Waiting for threads to exit...");
                 bool working = false;
 
                 foreach (Thread th in lookUpThreads)

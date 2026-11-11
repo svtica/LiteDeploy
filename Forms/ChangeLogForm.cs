@@ -21,6 +21,7 @@ namespace LiteDeploy
         public ChangeLogForm()
         {
             InitializeComponent();
+            Localization.Apply(this);
         }
     }
 }

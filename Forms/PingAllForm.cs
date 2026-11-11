@@ -42,6 +42,7 @@ namespace LiteDeploy
         public PingAllForm()
         {
             InitializeComponent();
+            Localization.Apply(this);
 
             // The window is created at start-up and stays hidden most of the time:
             // only refresh the running thread count while it is shown (the timer
@@ -84,10 +85,10 @@ namespace LiteDeploy
 
         private void ResetStats()
         {
-            totalStat.Text = "Total: 0";
-            okStat.Text = "Ok: 0";
-            failStat.Text = "Fail: 0";
-            errorStat.Text = "Error: 0";
+            totalStat.Text = Localization.F("PingAllForm.Total", "Total: {0}", 0);
+            okStat.Text = Localization.F("PingAllForm.Ok", "Ok: {0}", 0);
+            failStat.Text = Localization.F("PingAllForm.Fail", "Fail: {0}", 0);
+            errorStat.Text = Localization.F("PingAllForm.Error", "Error: {0}", 0);
             okStatI = failStatI = errorStatI = 0;
             run = 0;
         }
@@ -98,7 +99,7 @@ namespace LiteDeploy
             stopSignal = false;
             done.Enabled = false;
             progressBar1.Value = 0;
-            ChangeStopButtonText("Abort");
+            ChangeStopButtonText(Localization.T("PingAllForm.Abort", "Abort"));
         }
 
         public void loadSelectedComputers(bool checkedOnly)
@@ -146,7 +147,7 @@ namespace LiteDeploy
             totalNum = hosts.Count;
             fraction.Text = "0/" + totalNum;
             progressBar1.Maximum = hosts.Count;
-            totalStat.Text = "Total: " + totalNum.ToString();
+            totalStat.Text = Localization.F("PingAllForm.Total", "Total: {0}", totalNum);
             run = totalNum;
             runningThreadCount = 0;
 
@@ -261,11 +262,11 @@ namespace LiteDeploy
             {
                 if (nextComp == "Done" || nextComp == "Aborted")
                 {                                                        
-                    okStat.Text = "Ok: " + okStatI.ToString();
-                    errorStat.Text = "Error: " + errorStatI.ToString();
-                    failStat.Text = "Fail: " + failStatI.ToString();
+                    okStat.Text = Localization.F("PingAllForm.Ok", "Ok: {0}", okStatI);
+                    errorStat.Text = Localization.F("PingAllForm.Error", "Error: {0}", errorStatI);
+                    failStat.Text = Localization.F("PingAllForm.Fail", "Fail: {0}", failStatI);
                     pingRunning = false;
-                    ChangeStopButtonText("Restart");
+                    ChangeStopButtonText(Localization.T("PingAllForm.Restart", "Restart"));
                     stop.Enabled = true;
                     done.Enabled = true;                    
                 }
@@ -296,21 +297,21 @@ namespace LiteDeploy
                 {
                     pingList.Items[i].StateImageIndex = 0;
                     okStatI++;
-                    okStat.Text = "Ok: " + okStatI.ToString();
+                    okStat.Text = Localization.F("PingAllForm.Ok", "Ok: {0}", okStatI);
                 }
 
                 else if (result == "ERROR")
                 {
                     pingList.Items[i].StateImageIndex = 1;
                     errorStatI++;
-                    errorStat.Text = "Error: " + errorStatI.ToString();
+                    errorStat.Text = Localization.F("PingAllForm.Error", "Error: {0}", errorStatI);
                 }
 
                 else if (result == "FAIL")
                 {
                     pingList.Items[i].StateImageIndex = 2;
                     failStatI++;
-                    failStat.Text = "Fail: " + failStatI.ToString();
+                    failStat.Text = Localization.F("PingAllForm.Fail", "Fail: {0}", failStatI);
                 }
 
                 else if (result == "")
@@ -452,7 +453,7 @@ namespace LiteDeploy
 
         private void timer1_Tick( object sender, EventArgs e )
         {
-            runningThreads.Text = "Threads Running: " + runningThreadCount.ToString();
+            runningThreads.Text = Localization.F("PingAllForm.Threads", "Threads Running: {0}", runningThreadCount);
         }
 
         private void ThreadStartTimer_Tick(object sender, EventArgs e)

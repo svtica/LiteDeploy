@@ -26,12 +26,17 @@ namespace LiteDeploy
             // (LiteTask, shortcut, command line).
             Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
 
+            // Settings of the user, then the interface language (English, or lang\fr.xml)
+            UserSettings.Load();
+            Localization.Initialize(UserSettings.Current.Language);
+
             if (PsExecLocator.Find(AppDomain.CurrentDomain.BaseDirectory) == null)
             {
-                MessageBox.Show("PsExec is missing. The application cannot continue.\n\n" +
-                                "Put PsExec.exe (Sysinternals) next to LiteDeploy.exe, or install LiteDeploy from LiteTask (Tools menu), " +
-                                "which provides PsExec64.exe in its tools folder.",
-                                "File Missing", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(Localization.T("Program.PsExecMissing",
+                                    "PsExec is missing. The application cannot continue.\n\n" +
+                                    "Put PsExec.exe (Sysinternals) next to LiteDeploy.exe, or install LiteDeploy from LiteTask (Tools menu), " +
+                                    "which provides PsExec64.exe in its tools folder."),
+                                Localization.T("Program.PsExecMissing.Title", "File Missing"), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
             else

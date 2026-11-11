@@ -24,6 +24,7 @@ namespace LiteDeploy
         public DeploymentPrepForm()
         {
             InitializeComponent();
+            Localization.Apply(this);
         }
 
         Thread PrepThread;
@@ -33,7 +34,7 @@ namespace LiteDeploy
         {
             progressBar1.Maximum = ProcessManager.deployNameList.Count;
             progressBar1.Value = 0;
-            StatusLabel.Text = "Verifying Directories : " + ProcessManager.deployNameList[0];
+            StatusLabel.Text = Localization.F("DeploymentPrepForm.Verifying", "Verifying directories: {0}", ProcessManager.deployNameList[0]);
             cancelled = false;
 
             PrepThread = new Thread(new ThreadStart(PrepFunc));
@@ -111,7 +112,7 @@ namespace LiteDeploy
                     prepPercent.Text = ((int)(((double)progressBar1.Value / (double)progressBar1.Maximum) * 100)).ToString() + "%";
 
                     if (progressBar1.Value < progressBar1.Maximum - 1)
-                        StatusLabel.Text = "Verifying Directories : " + ProcessManager.deployNameList[progressBar1.Value];
+                        StatusLabel.Text = Localization.F("DeploymentPrepForm.Verifying", "Verifying directories: {0}", ProcessManager.deployNameList[progressBar1.Value]);
 
                     if (progressBar1.Value == progressBar1.Maximum)
                     {

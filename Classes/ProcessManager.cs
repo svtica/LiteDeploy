@@ -54,7 +54,7 @@ namespace LiteDeploy
             if (MainFormAccess.mainForm.PConsoleAccess().MSIDeployment)
             {
                 MainFormAccess.mainForm.PConsoleAccess().msiLogPollingTimer.Enabled = true;
-                MainFormAccess.mainForm.PConsoleAccess().AddLogEntry("Deployment", "MSI logging has been initiated.");
+                MainFormAccess.mainForm.PConsoleAccess().AddLogEntry(ProcessReportsForm.DeploymentHost, Localization.T("ProcessManager.MsiLoggingStarted", "MSI logging has been initiated."));
             }
 
             lock (instances)
@@ -62,7 +62,7 @@ namespace LiteDeploy
                 instances.Clear();
             }
 
-            AppConsole.WriteLine("Deployment Processing Started.");
+            AppConsole.WriteLine(Localization.T("ProcessManager.Started", "Deployment processing started."));
             StartProcessWindow();
             mainThread = new Thread(new ThreadStart(ProcessThreadFunction));
             mainThread.Start();
@@ -86,9 +86,9 @@ namespace LiteDeploy
 
         static void EndProcessWindow()
         {
-            MainForm.prepareWindow.SetIncrementString("Done!", "Done!");
-            AppConsole.WriteLine("Processing Completed.");
-            MainFormAccess.mainForm.PConsoleAccess().AddLogEntry("Deployment", "Deployment finished.");
+            MainForm.prepareWindow.SetIncrementString(DeploymentProgressForm.DoneSignal, DeploymentProgressForm.DoneSignal);
+            AppConsole.WriteLine(Localization.T("ProcessManager.Completed", "Processing completed."));
+            MainFormAccess.mainForm.PConsoleAccess().AddLogEntry(ProcessReportsForm.DeploymentHost, Localization.T("ProcessManager.Finished", "Deployment finished."));
 
             processing = false;
             MainFormAccess.mainForm.EnableStart();
@@ -99,8 +99,8 @@ namespace LiteDeploy
 
             if (MainFormAccess.mainForm.PConsoleAccess().MSIDeployment)
             {
-                MessageBox.Show("Easy Deploy has finished starting all processes for this MSI Deployment. " +
-                                "MSI Logging will stop once all packages have finished running.", "Easy Deploy - MSI Deployment", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                MessageBox.Show(Localization.T("ProcessManager.MsiAllStarted", "LiteDeploy has finished starting all processes for this MSI deployment. MSI logging will stop once all packages have finished running."),
+                                Localization.T("ProcessManager.MsiAllStarted.Title", "LiteDeploy - MSI Deployment"), MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             }
         }
         
@@ -123,7 +123,7 @@ namespace LiteDeploy
             }
             catch (Exception e)
             {
-                MessageBox.Show("Output data could not be written to the data collection directory.\n\nDetails\n\n" + e.Message + "\n\n" + file, "Data Collection Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(Localization.F("ProcessManager.OutputWriteError", "Output data could not be written to the data collection directory.\n\nDetails\n\n{0}\n\n{1}", e.Message, file), Localization.T("ProcessManager.OutputWriteError.Title", "Data Collection Error"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -141,7 +141,7 @@ namespace LiteDeploy
                         instances.Add(p);
                     }
 
-                    AppConsole.WriteLine("Executing: " + Path.GetFileName(PsExecLocator.Path) + " " + processList[i].Arguments);
+                    AppConsole.WriteLine(Localization.F("ProcessManager.Executing", "Executing: {0} {1}", Path.GetFileName(PsExecLocator.Path), processList[i].Arguments));
                     incrementString = "Deploying to: " + deployNameList[i];
                     incrementString2 = "Next: " + ((i + 1) < deployNameList.Count ? deployNameList[i + 1] : "");
                     SetDeployingToString();
@@ -174,7 +174,7 @@ namespace LiteDeploy
         {
             if (processing)
             {
-                AppConsole.WriteLine("Stopping all processing.");
+                AppConsole.WriteLine(Localization.T("ProcessManager.Stopping", "Stopping all processing."));
                 processing = false;
                 Process p = null;
 
@@ -194,19 +194,19 @@ namespace LiteDeploy
                     }
                     catch (Exception e)
                     {
-                        AppConsole.WriteLine("Process could not be aborted. " + e.Message.ToString());
+                        AppConsole.WriteLine(Localization.F("ProcessManager.AbortFailedDetail", "Process could not be aborted. {0}", e.Message));
                     }
                 }
 
                 mainThread.Abort();
 
-                AppConsole.WriteLine("Deployment was manually aborted by user.");
-                MainFormAccess.mainForm.PConsoleAccess().AddLogEntry("Deployment", "Deployment was manually aborted by user.");
+                AppConsole.WriteLine(Localization.T("ProcessManager.Aborted", "Deployment was manually aborted by user."));
+                MainFormAccess.mainForm.PConsoleAccess().AddLogEntry(ProcessReportsForm.DeploymentHost, Localization.T("ProcessManager.Aborted", "Deployment was manually aborted by user."));
             }
 
             else
             {
-                AppConsole.WriteLine("No deployment to stop.");
+                AppConsole.WriteLine(Localization.T("ProcessManager.NothingToStop", "No deployment to stop."));
             }
         }
 
@@ -226,20 +226,20 @@ namespace LiteDeploy
                     try
                     {
                         PsExec[0].Kill();
-                        AppConsole.WriteLine("Process was manually aborted by user.");
+                        AppConsole.WriteLine(Localization.T("ProcessManager.ProcessAborted", "Process was manually aborted by user."));
 
                         if ( currentHost != "" )
-                            MainFormAccess.mainForm.PConsoleAccess().AddLogEntry(currentHost, "Process manually aborted by user.");
+                            MainFormAccess.mainForm.PConsoleAccess().AddLogEntry(currentHost, ProcessReportsForm.ManualAbortSignal);
                     }
                     catch
                     {
-                        AppConsole.WriteLine("Process could not be aborted.");
+                        AppConsole.WriteLine(Localization.T("ProcessManager.AbortFailed", "Process could not be aborted."));
                     }
                 }
 
                 else
                 {
-                    AppConsole.WriteLine("No process running.");
+                    AppConsole.WriteLine(Localization.T("ProcessManager.NoProcess", "No process running."));
                 }
             }
 

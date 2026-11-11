@@ -35,13 +35,13 @@ namespace LiteDeploy
                         reply = pingSender.Send(host, 5000);
                     }
 
-                    MessageBox.Show(reply.Status == IPStatus.Success ? "Ping OK." : "Ping failed.", "Ping: " + host, MessageBoxButtons.OK,
+                    MessageBox.Show(reply.Status == IPStatus.Success ? Localization.T("RemoteActions.PingOk", "Ping OK.") : Localization.T("RemoteActions.PingFailed", "Ping failed."), "Ping: " + host, MessageBoxButtons.OK,
                                     reply.Status == IPStatus.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
                 }
 
                 catch
                 {
-                    MessageBox.Show("Network device could not be found.", "Ping Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(Localization.T("RemoteActions.NotFound", "Network device could not be found."), Localization.T("RemoteActions.PingError.Title", "Ping Error"), MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             });
         }
@@ -58,7 +58,7 @@ namespace LiteDeploy
 
             if (!File.Exists(msc))
             {
-                MessageBox.Show("RemoteManagement.msc was not found next to LiteDeploy.exe:\n" + msc, "Management Console", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(Localization.F("RemoteActions.MscMissing", "RemoteManagement.msc was not found next to LiteDeploy.exe:\n{0}", msc), Localization.T("RemoteActions.MscMissing.Title", "Management Console"), MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -77,7 +77,7 @@ namespace LiteDeploy
             {
                 if (!IsAvailable(host))
                 {
-                    MessageBox.Show(host + " is not available. Try again later.", "Host Not Available", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    MessageBox.Show(Localization.F("RemoteActions.HostUnavailable", "{0} is not available. Try again later.", host), Localization.T("RemoteActions.HostUnavailable.Title", "Host Not Available"), MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     return;
                 }
 

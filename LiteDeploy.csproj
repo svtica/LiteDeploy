@@ -126,6 +126,7 @@
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Classes\LocalNetworkSettings.cs" />
+    <Compile Include="Classes\Localization.cs" />
     <Compile Include="Classes\LogEntry.cs" />
     <Compile Include="Classes\MainFormAccess.cs" />
     <Compile Include="Forms\MsiOptionsForm.cs">
@@ -155,6 +156,7 @@
     <Compile Include="Classes\ProcessManager.cs" />
     <Compile Include="Classes\PsExecLocator.cs" />
     <Compile Include="Classes\RemoteActions.cs" />
+    <Compile Include="Classes\UserSettings.cs" />
     <Compile Include="Classes\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Forms\SplashForm.cs">
@@ -241,6 +243,10 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="icon.ico" />
+    <!-- Translations of the user interface (docs/conventions.md) -->
+    <Content Include="lang\fr.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <!-- Third-party tool, not in the repository (*.exe is ignored): copied
          to the output only when the developer put it next to the project. -->
     <Content Include="PsExec.exe" Condition="Exists('PsExec.exe')">

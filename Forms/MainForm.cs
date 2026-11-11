@@ -48,6 +48,7 @@ namespace LiteDeploy
         public MainForm()
         {            
             InitializeComponent();
+            Localization.Apply(this);
 
             // Computer counters in the status bar follow the list (they were refreshed by a 100 ms timer)
             selectedComputers.ItemCheck += (s, e) => BeginInvoke(new MethodInvoker(UpdateComputerCounts));
@@ -210,7 +211,7 @@ namespace LiteDeploy
 
             if (executable.Text.Length == 0 && arguments.Text.Length == 0)
             {
-                MessageBox.Show("You have not selected a file to execute or provided a command.", "Nothing to Execute", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                MessageBox.Show(Localization.T("MainForm.NothingToExecute", "You have not selected a file to execute or provided a command."), Localization.T("MainForm.NothingToExecute.Title", "Nothing to Execute"), MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 selectFileToExecute.Focus();
                 return;
             }
@@ -219,14 +220,14 @@ namespace LiteDeploy
             {
                 if (username.Text.Length < 1)
                 {
-                    MessageBox.Show("Please enter your user name.", "Credentials Missing", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    MessageBox.Show(Localization.T("MainForm.UserNameMissing", "Please enter your user name."), Localization.T("MainForm.CredentialsMissing.Title", "Credentials Missing"), MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     username.Focus();
                     return;
                 }
 
                 else if (password.Text.Length < 1)
                 {
-                    MessageBox.Show("Please enter your password.", "Credentials Missing", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    MessageBox.Show(Localization.T("MainForm.PasswordMissing", "Please enter your password."), Localization.T("MainForm.CredentialsMissing.Title", "Credentials Missing"), MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     password.Focus();
                     return;
                 }
@@ -234,7 +235,7 @@ namespace LiteDeploy
 
             if (selectedComputers.CheckedItems.Count == 0)
             {
-                MessageBox.Show("Please check at least one computer from the computer list.", "Computer Not Selected", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                MessageBox.Show(Localization.T("MainForm.NoComputerChecked", "Please check at least one computer from the computer list."), Localization.T("MainForm.NoComputerChecked.Title", "Computer Not Selected"), MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 selectedComputers.Focus();
                 return;
             }
@@ -277,7 +278,7 @@ namespace LiteDeploy
                 ProcessReportsForm.currentExecutableOrCommand = (executable.Text.Length > 0 ? executable.Text + " " + arguments.Text : arguments.Text);
                 ProcessManager.StartProcessing();
 
-                processConsole.AddLogEntry("Deployment", "Deployment started.");
+                processConsole.AddLogEntry(ProcessReportsForm.DeploymentHost, Localization.T("MainForm.DeploymentStarted", "Deployment started."));
 
                 ControlBox = false;
                 exitToolStripMenuItem.Enabled = false;
@@ -285,7 +286,7 @@ namespace LiteDeploy
 
             else
             {
-                processConsole.AddLogEntry("Deployment", "Deployment cancelled.");
+                processConsole.AddLogEntry(ProcessReportsForm.DeploymentHost, Localization.T("MainForm.DeploymentCancelled", "Deployment cancelled."));
             }
         }
 
@@ -481,7 +482,7 @@ namespace LiteDeploy
             PConsoleAccess().ClearMSI();
             SetOpsForRestartShutdownCmd();
             arguments.Text = "shutdown -r -t 0";
-            MessageBox.Show("Click \"Start Deploy\" to execute command.", "Restart Command Ready", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(Localization.T("MainForm.CommandReady", "Click \"Start Deploy\" to execute command."), Localization.T("MainForm.RestartReady.Title", "Restart Command Ready"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             startDeploy.Focus();
         }
 
@@ -490,7 +491,7 @@ namespace LiteDeploy
             PConsoleAccess().ClearMSI();
             SetOpsForRestartShutdownCmd();
             arguments.Text = "shutdown -s -t 0";
-            MessageBox.Show("Click \"Start Deploy\" to execute command.", "Shutdown Command Ready", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(Localization.T("MainForm.CommandReady", "Click \"Start Deploy\" to execute command."), Localization.T("MainForm.ShutdownReady.Title", "Shutdown Command Ready"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             startDeploy.Focus();
         }
 
@@ -521,8 +522,8 @@ namespace LiteDeploy
         private void interactive_CheckedChanged(object sender, EventArgs e)
         {
             if (interactive.Checked)
-                MessageBox.Show("Interactive process requires a local account on the remote machine. Make sure to use the proper credentials.",
-                                "Interactive Process", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(Localization.T("MainForm.InteractiveAccount", "Interactive process requires a local account on the remote machine. Make sure to use the proper credentials."),
+                                Localization.T("MainForm.InteractiveAccount.Title", "Interactive Process"), MessageBoxButtons.OK, MessageBoxIcon.Information);
 
         }
 
@@ -560,7 +561,7 @@ namespace LiteDeploy
         {
             if (ProcessManager.processing)
             {
-                DialogResult result = MessageBox.Show("A deployment is currently in progress. Are you sure you want to close the application?", "Confirm Close", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                DialogResult result = MessageBox.Show(Localization.T("MainForm.ConfirmClose", "A deployment is currently in progress. Are you sure you want to close the application?"), Localization.T("MainForm.ConfirmClose.Title", "Confirm Close"), MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                 if (result == System.Windows.Forms.DialogResult.No)
                 {               

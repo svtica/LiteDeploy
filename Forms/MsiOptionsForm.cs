@@ -25,6 +25,7 @@ namespace LiteDeploy
         public MsiOptionsForm(String msiP)
         {
             InitializeComponent();
+            Localization.Apply(this);
 
             logDirectory.Text = AppSettings.LOGGING_DIR + "\\MSI\\";
             installer.Text = msiP;

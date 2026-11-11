@@ -486,7 +486,7 @@ namespace LiteDeploy
             // 
             this.mangementConsoleToolStripMenuItem.Name = "mangementConsoleToolStripMenuItem";
             this.mangementConsoleToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
-            this.mangementConsoleToolStripMenuItem.Text = "Mangement Console";
+            this.mangementConsoleToolStripMenuItem.Text = "Management Console";
             this.mangementConsoleToolStripMenuItem.Click += new System.EventHandler(this.mangementConsoleToolStripMenuItem_Click);
             // 
             // openAdminShareToolStripMenuItem
