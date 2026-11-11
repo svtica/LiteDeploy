@@ -53,6 +53,15 @@ jobs:
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
 
+    - name: Placeholders for third-party tools
+      working-directory: src
+      shell: powershell
+      run: |
+        # Older revisions (e.g. main) reference PsExec.exe and RDPWInst.exe,
+        # which are not in the repository; the soak replaces PsExec.exe by
+        # a stand-in anyway.
+        foreach ($f in 'PsExec.exe', 'RDPWInst.exe') { if (-not (Test-Path $f)) { New-Item -ItemType File -Path $f | Out-Null } }
+
     - name: Build
       working-directory: src
       shell: powershell

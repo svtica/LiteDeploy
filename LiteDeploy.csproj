@@ -285,10 +285,14 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="icon.ico" />
-    <Content Include="PsExec.exe">
+    <!-- Third-party tool, not in the repository (*.exe is ignored): copied
+         to the output only when the developer put it next to the project. -->
+    <Content Include="PsExec.exe" Condition="Exists('PsExec.exe')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="RDPWInst.exe">
+    <!-- Third-party tool, not in the repository (*.exe is ignored): copied
+         to the output only when the developer put it next to the project. -->
+    <Content Include="RDPWInst.exe" Condition="Exists('RDPWInst.exe')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="Resources\computer.ico" />
