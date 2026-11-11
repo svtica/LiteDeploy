@@ -28,6 +28,8 @@ namespace LiteDeploy
         CheckedListBox UseList;
         private bool searchInProgress = false;
         private volatile int runningPingThreads = 0;
+        private String baseTitle;    // window title without the Active Directory state
+        private String baseStatus;   // status label without "Ping running"
         private List<int> timeSinceLastChecked;
         private Object pingThreadCountLock;
         private bool abortPing = false;
@@ -35,6 +37,9 @@ namespace LiteDeploy
         public ComputerListForm()
         {
             InitializeComponent();
+            Localization.Apply(this);
+            baseTitle = Text;
+            baseStatus = label2.Text;
 
             // Created at start-up and hidden most of the time: only refresh the
             // status (title, counters) while the window is shown.
@@ -217,7 +222,7 @@ namespace LiteDeploy
                 selected.Items.ContainsKey(manualPC.Text.ToLower()) ||
                 selected.Items.ContainsKey(manualPC.Text))
             {
-                MessageBox.Show("Computer is already in one of the lists.", "Computer Exists ", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                MessageBox.Show(Localization.T("ComputerListForm.ComputerExists", "Computer is already in one of the lists."), Localization.T("ComputerListForm.ComputerExists.Title", "Computer Exists "), MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 SearchGroup.Enabled = true;
                 Cursor = Cursors.Default;
                 manualPC.Focus();
@@ -231,7 +236,7 @@ namespace LiteDeploy
                     !CompInDomain(manualPC.Text.ToLower()) &&
                     !CompInDomain(manualPC.Text.ToUpper()))
                 {
-                    MessageBox.Show("Computer account was not found in AD.", "Computer Not Found", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    MessageBox.Show(Localization.T("ComputerListForm.NotInAd", "Computer account was not found in AD."), Localization.T("ComputerListForm.NotInAd.Title", "Computer Not Found"), MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     SearchGroup.Enabled = true;
                     Cursor = Cursors.Default;
                     manualPC.Focus();
@@ -272,7 +277,7 @@ namespace LiteDeploy
         {
             if (selected.Items.Count == 0)
             {
-                MessageBox.Show("There are no computers in the list. Add computers to your list.", "No Computers Selected", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                MessageBox.Show(Localization.T("ComputerListForm.ListEmpty", "There are no computers in the list. Add computers to your list."), Localization.T("ComputerListForm.ListEmpty.Title", "No Computers Selected"), MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
             }
 
@@ -293,7 +298,7 @@ namespace LiteDeploy
 
             catch
             {
-                MessageBox.Show("An error happened while trying to save your file. Please make sure you have the proper permissions to write to the directory.", "Error Saving", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(Localization.T("ComputerListForm.SaveError", "An error happened while trying to save your file. Please make sure you have the proper permissions to write to the directory."), Localization.T("ComputerListForm.SaveError.Title", "Error Saving"), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -304,7 +309,7 @@ namespace LiteDeploy
 
             if ( UseList.Items.Count > 0 )
             {
-                DialogResult result = MessageBox.Show( "This will clear the Selected Computers List in the main form. Continue?", "Clear List", MessageBoxButtons.YesNo, MessageBoxIcon.Question );
+                DialogResult result = MessageBox.Show( Localization.T("ComputerListForm.ConfirmClear", "This will clear the Selected Computers List in the main form. Continue?"), Localization.T("ComputerListForm.ConfirmClear.Title", "Clear List"), MessageBoxButtons.YesNo, MessageBoxIcon.Question );
                 if (result == System.Windows.Forms.DialogResult.No)
                     clearOk = false;
             }
@@ -485,8 +490,9 @@ namespace LiteDeploy
 
             if (ActiveDirectoryCache.adUpdating)
             {
-                MessageBox.Show( "Results acquired from Active Directory cache created on " + ActiveDirectoryCache.LastUpdate.ToShortDateString() +
-                                " at " + ActiveDirectoryCache.LastUpdate.ToShortTimeString() + ".", "Search Results", MessageBoxButtons.OK, MessageBoxIcon.Information );
+                MessageBox.Show( Localization.F("ComputerListForm.FromCache", "Results acquired from the Active Directory cache created on {0} at {1}.",
+                                ActiveDirectoryCache.LastUpdate.ToShortDateString(), ActiveDirectoryCache.LastUpdate.ToShortTimeString()),
+                                Localization.T("ComputerListForm.FromCache.Title", "Search Results"), MessageBoxButtons.OK, MessageBoxIcon.Information );
             }            
         }
 
@@ -564,40 +570,35 @@ namespace LiteDeploy
 
         private void timer_Tick(object sender, EventArgs e)
         {
+            // Title: base title (translated) + Active Directory state; never compared as text
+            String adState = "";
+
             if (!ActiveDirectoryCache.adNotAvailable)
             {
                 if (ActiveDirectoryCache.adUpdating)
                 {
-                    if (Text == "Computers" || Text == "Computers - AD Last Update: " + ActiveDirectoryCache.LastUpdate.ToShortDateString() + " " + ActiveDirectoryCache.LastUpdate.ToShortTimeString())
-                        Text = "Computers - AD Updating";
-
-                    else
-                        Text = "Computers";
-
+                    adState = Localization.T("ComputerListForm.AdUpdating", "AD updating");
                     updateToolStripMenuItem.Enabled = false;
                 }
 
-                if (ActiveDirectoryCache.adUpToDate || !ActiveDirectoryCache.DCAvailable)
+                else if (ActiveDirectoryCache.adUpToDate || !ActiveDirectoryCache.DCAvailable)
                 {
-                    if (Text == "Computers" || Text == "Computers - AD Updating")
-                    {
-                        Text = "Computers - AD Last Update: " + ActiveDirectoryCache.LastUpdate.ToShortDateString() + " " + ActiveDirectoryCache.LastUpdate.ToShortTimeString();
-                    }
-
-                    if (updateToolStripMenuItem.Enabled == false)
-                    {
-                        updateToolStripMenuItem.Enabled = true;
-                    }
+                    adState = Localization.F("ComputerListForm.AdLastUpdate", "AD last update: {0} {1}",
+                                             ActiveDirectoryCache.LastUpdate.ToShortDateString(), ActiveDirectoryCache.LastUpdate.ToShortTimeString());
+                    updateToolStripMenuItem.Enabled = true;
                 }
             }
 
             else
             {
-                Text = "Computers";
                 adSearchGroup.Enabled = false;
                 adCheck.Enabled = false;
                 activeDirectoryToolStripMenuItem.Enabled = false;
             }
+
+            String title = adState.Length > 0 ? baseTitle + " - " + adState : baseTitle;
+            if (Text != title)
+                Text = title;
 
             if (!LocalNetworkSettings.DnsOK)
             {
@@ -613,17 +614,11 @@ namespace LiteDeploy
                 }
             }
 
-            if (runningPingThreads > 0)
-            {
-                if (!label2.Text.Contains("Ping Running"))
-                    label2.Text += " - Ping Running";
-            }
-
-            else
-            {
-                if (label2.Text.Contains("Ping Running"))
-                    label2.Text = label2.Text.Remove(label2.Text.LastIndexOf(" - Ping Running"), 15);
-            }
+            String status = runningPingThreads > 0
+                ? baseStatus + " - " + Localization.T("ComputerListForm.PingRunning", "Ping running")
+                : baseStatus;
+            if (label2.Text != status)
+                label2.Text = status;
 
             NumSelectedComps.Text = selected.Items.Count.ToString();
         }
@@ -855,7 +850,7 @@ namespace LiteDeploy
         {
             if (runningPingThreads > 0)
             {
-                DialogResult r = MessageBox.Show("Easy Deploy is still checking for host availability. Try again in a few seconds.", "Easy Deploy", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                DialogResult r = MessageBox.Show(Localization.T("ComputerListForm.StillPinging", "LiteDeploy is still checking for host availability. Try again in a few seconds."), "LiteDeploy", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 

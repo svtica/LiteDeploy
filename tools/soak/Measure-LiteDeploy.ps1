@@ -269,6 +269,8 @@ $hosts = @('127.0.0.1', 'localhost') +
          (1..3  | ForEach-Object { 'SOAK-ERR{0:D2}' -f $_ })
 
 $workExe = Join-Path $work (Split-Path $exe -Leaf)
+# Windows are found by their English titles and menu names: English interface whatever the runner language
+$env:LITEDEPLOY_LANG = 'en'
 Write-Host "Starting $workExe (cwd $work)"
 $proc = Start-Process -FilePath $workExe -WorkingDirectory $work -PassThru
 $procId = $proc.Id

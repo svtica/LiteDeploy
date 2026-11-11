@@ -37,105 +37,91 @@ namespace LiteDeploy
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(OptionsForm));
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.languageLabel = new System.Windows.Forms.Label();
+            this.languageCombo = new System.Windows.Forms.ComboBox();
             this.button3 = new System.Windows.Forms.Button();
             this.label4 = new System.Windows.Forms.Label();
             this.LogDirDisplay = new System.Windows.Forms.TextBox();
             this.AutoUpADOnStartCheckBox = new System.Windows.Forms.CheckBox();
-            this.button1 = new System.Windows.Forms.Button();
-            this.label5 = new System.Windows.Forms.Label();
-            this.LocalUpdateDirDisplay = new System.Windows.Forms.TextBox();
             this.DirectoryBrowser = new System.Windows.Forms.FolderBrowserDialog();
             this.ApplyButton = new System.Windows.Forms.Button();
+            this.cancelButton = new System.Windows.Forms.Button();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.languageLabel);
+            this.groupBox2.Controls.Add(this.languageCombo);
             this.groupBox2.Controls.Add(this.button3);
             this.groupBox2.Controls.Add(this.label4);
             this.groupBox2.Controls.Add(this.LogDirDisplay);
             this.groupBox2.Controls.Add(this.AutoUpADOnStartCheckBox);
-            this.groupBox2.Controls.Add(this.button1);
-            this.groupBox2.Controls.Add(this.label5);
-            this.groupBox2.Controls.Add(this.LocalUpdateDirDisplay);
             this.groupBox2.Location = new System.Drawing.Point(12, 12);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(417, 232);
+            this.groupBox2.Size = new System.Drawing.Size(417, 190);
             this.groupBox2.TabIndex = 1;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "User";
             // 
-            // button3
+            // languageLabel
             // 
-            this.button3.Enabled = false;
-            this.button3.Location = new System.Drawing.Point(324, 140);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(75, 23);
-            this.button3.TabIndex = 12;
-            this.button3.Text = "Select";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
+            this.languageLabel.AutoSize = true;
+            this.languageLabel.Location = new System.Drawing.Point(17, 28);
+            this.languageLabel.Name = "languageLabel";
+            this.languageLabel.Size = new System.Drawing.Size(58, 13);
+            this.languageLabel.TabIndex = 0;
+            this.languageLabel.Text = "Language:";
+            // 
+            // languageCombo
+            // 
+            this.languageCombo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.languageCombo.FormattingEnabled = true;
+            this.languageCombo.Items.AddRange(new object[] {
+            "Automatic (Windows display language)",
+            "English",
+            "Français"});
+            this.languageCombo.Location = new System.Drawing.Point(20, 44);
+            this.languageCombo.Name = "languageCombo";
+            this.languageCombo.Size = new System.Drawing.Size(379, 21);
+            this.languageCombo.TabIndex = 1;
             // 
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Enabled = false;
-            this.label4.Location = new System.Drawing.Point(17, 98);
+            this.label4.Location = new System.Drawing.Point(17, 82);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(93, 13);
-            this.label4.TabIndex = 11;
-            this.label4.Text = "Logging Directory:";
+            this.label4.Size = new System.Drawing.Size(121, 13);
+            this.label4.TabIndex = 2;
+            this.label4.Text = "MSI Logging Directory:";
             // 
             // LogDirDisplay
             // 
             this.LogDirDisplay.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
             this.LogDirDisplay.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.AllSystemSources;
-            this.LogDirDisplay.Enabled = false;
-            this.LogDirDisplay.Location = new System.Drawing.Point(20, 114);
+            this.LogDirDisplay.Location = new System.Drawing.Point(20, 98);
             this.LogDirDisplay.Name = "LogDirDisplay";
-            this.LogDirDisplay.Size = new System.Drawing.Size(379, 20);
-            this.LogDirDisplay.TabIndex = 10;
+            this.LogDirDisplay.Size = new System.Drawing.Size(298, 20);
+            this.LogDirDisplay.TabIndex = 3;
+            // 
+            // button3
+            // 
+            this.button3.Location = new System.Drawing.Point(324, 96);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(75, 23);
+            this.button3.TabIndex = 4;
+            this.button3.Text = "Select";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
             // 
             // AutoUpADOnStartCheckBox
             // 
-            this.AutoUpADOnStartCheckBox.Enabled = false;
-            this.AutoUpADOnStartCheckBox.Location = new System.Drawing.Point(20, 185);
+            this.AutoUpADOnStartCheckBox.Location = new System.Drawing.Point(20, 140);
             this.AutoUpADOnStartCheckBox.Name = "AutoUpADOnStartCheckBox";
-            this.AutoUpADOnStartCheckBox.Size = new System.Drawing.Size(254, 17);
-            this.AutoUpADOnStartCheckBox.TabIndex = 9;
-            this.AutoUpADOnStartCheckBox.Text = "Auto update active directory on application start.\r\n";
+            this.AutoUpADOnStartCheckBox.Size = new System.Drawing.Size(379, 30);
+            this.AutoUpADOnStartCheckBox.TabIndex = 5;
+            this.AutoUpADOnStartCheckBox.Text = "Update the Active Directory computer list when the application starts";
             this.AutoUpADOnStartCheckBox.UseVisualStyleBackColor = true;
-            // 
-            // button1
-            // 
-            this.button1.Enabled = false;
-            this.button1.Location = new System.Drawing.Point(324, 70);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 7;
-            this.button1.Text = "Select";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Enabled = false;
-            this.label5.Location = new System.Drawing.Point(17, 28);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(119, 13);
-            this.label5.TabIndex = 6;
-            this.label5.Text = "Local Update Directory:";
-            // 
-            // LocalUpdateDirDisplay
-            // 
-            this.LocalUpdateDirDisplay.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
-            this.LocalUpdateDirDisplay.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.AllSystemSources;
-            this.LocalUpdateDirDisplay.Enabled = false;
-            this.LocalUpdateDirDisplay.Location = new System.Drawing.Point(20, 44);
-            this.LocalUpdateDirDisplay.Name = "LocalUpdateDirDisplay";
-            this.LocalUpdateDirDisplay.Size = new System.Drawing.Size(379, 20);
-            this.LocalUpdateDirDisplay.TabIndex = 5;
             // 
             // DirectoryBrowser
             // 
@@ -144,19 +130,32 @@ namespace LiteDeploy
             // 
             // ApplyButton
             // 
-            this.ApplyButton.Location = new System.Drawing.Point(336, 252);
+            this.ApplyButton.Location = new System.Drawing.Point(237, 212);
             this.ApplyButton.Name = "ApplyButton";
             this.ApplyButton.Size = new System.Drawing.Size(93, 23);
-            this.ApplyButton.TabIndex = 2;
-            this.ApplyButton.Text = "Close";
+            this.ApplyButton.TabIndex = 6;
+            this.ApplyButton.Text = "Save";
             this.ApplyButton.UseVisualStyleBackColor = true;
             this.ApplyButton.Click += new System.EventHandler(this.ApplyButton_Click);
             // 
+            // cancelButton
+            // 
+            this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            this.cancelButton.Location = new System.Drawing.Point(336, 212);
+            this.cancelButton.Name = "cancelButton";
+            this.cancelButton.Size = new System.Drawing.Size(93, 23);
+            this.cancelButton.TabIndex = 7;
+            this.cancelButton.Text = "Cancel";
+            this.cancelButton.UseVisualStyleBackColor = true;
+            // 
             // OptionsForm
             // 
+            this.AcceptButton = this.ApplyButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(445, 287);
+            this.CancelButton = this.cancelButton;
+            this.ClientSize = new System.Drawing.Size(445, 247);
+            this.Controls.Add(this.cancelButton);
             this.Controls.Add(this.ApplyButton);
             this.Controls.Add(this.groupBox2);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
@@ -176,14 +175,14 @@ namespace LiteDeploy
         #endregion
 
         private System.Windows.Forms.GroupBox groupBox2;
-        private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.TextBox LocalUpdateDirDisplay;
+        private System.Windows.Forms.Label languageLabel;
+        private System.Windows.Forms.ComboBox languageCombo;
         private System.Windows.Forms.CheckBox AutoUpADOnStartCheckBox;
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.TextBox LogDirDisplay;
         private System.Windows.Forms.FolderBrowserDialog DirectoryBrowser;
         private System.Windows.Forms.Button ApplyButton;
+        private System.Windows.Forms.Button cancelButton;
     }
 }

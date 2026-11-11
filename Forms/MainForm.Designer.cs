@@ -101,7 +101,6 @@ namespace LiteDeploy
             this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
             this.copyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.removeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.openEasyFile = new System.Windows.Forms.OpenFileDialog();
             this.label6 = new System.Windows.Forms.Label();
             this.timeOut = new System.Windows.Forms.NumericUpDown();
             this.copy = new System.Windows.Forms.CheckBox();
@@ -643,7 +642,7 @@ namespace LiteDeploy
             // 
             this.mangementConsoleToolStripMenuItem.Name = "mangementConsoleToolStripMenuItem";
             this.mangementConsoleToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
-            this.mangementConsoleToolStripMenuItem.Text = "Mangement Console";
+            this.mangementConsoleToolStripMenuItem.Text = "Management Console";
             this.mangementConsoleToolStripMenuItem.Click += new System.EventHandler(this.mangementConsoleToolStripMenuItem_Click);
             // 
             // openAdminShareToolStripMenuItem
@@ -696,11 +695,6 @@ namespace LiteDeploy
             this.removeToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
             this.removeToolStripMenuItem.Text = "Remove";
             this.removeToolStripMenuItem.Click += new System.EventHandler(this.removeToolStripMenuItem_Click);
-            // 
-            // openEasyFile
-            // 
-            this.openEasyFile.Filter = "XML|*.xml";
-            this.openEasyFile.Title = "Open Application Deploy Settings List";
             // 
             // label6
             // 
@@ -954,7 +948,6 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripMenuItem shutdownToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem mangementConsoleToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
-        private System.Windows.Forms.OpenFileDialog openEasyFile;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.NumericUpDown timeOut;
         private System.Windows.Forms.CheckBox copy;

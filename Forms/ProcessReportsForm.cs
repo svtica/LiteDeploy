@@ -23,6 +23,16 @@ namespace LiteDeploy
 {
     public partial class ProcessReportsForm : Form
     {
+        /// <summary>Host name used for the lines about the whole deployment (not a computer).</summary>
+        public const String DeploymentHost = "Deployment";
+
+        /// <summary>Line sent by ProcessManager when the user stops the current process (not translated: it is matched).</summary>
+        public const String ManualAbortSignal = "Process manually aborted by user.";
+
+        static String DeploymentHostDisplay
+        {
+            get { return Localization.T("ProcessReportsForm.DeploymentHost", "Deployment"); }
+        }
         public static List<LogEntry> logEntries = new List<LogEntry>();
         public static String currentExecutableOrCommand = "";
         private ListViewColumnSorter lvwColumnSorter;
@@ -47,6 +57,7 @@ namespace LiteDeploy
         public ProcessReportsForm()
         {
             InitializeComponent();
+            Localization.Apply(this);
             lvwColumnSorter = new ListViewColumnSorter();
             log.ListViewItemSorter = lvwColumnSorter;
             MSILogFiles = new List<String>();
@@ -83,7 +94,7 @@ namespace LiteDeploy
 
                 catch
                 {
-                    MessageBox.Show("Error openening output file.", "File Read Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(Localization.T("ProcessReportsForm.OutputReadError", "Error opening the output file."), Localization.T("ProcessReportsForm.OutputReadError.Title", "File Read Error"), MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -116,7 +127,7 @@ namespace LiteDeploy
 
         private void MSIProcessStarted(String HostName)
         {
-            MSIStatSet(HostName, "Process has been started. Waiting for process to finish.", "WAITING");
+            MSIStatSet(HostName, Localization.T("ProcessReportsForm.MsiWaiting", "Process has been started. Waiting for process to finish."), "WAITING");
 
             if (!MSILogFiles.Contains(MSILoggingDir + "\\" + HostName) )
                 MSILogFiles.Add(MSILoggingDir.Replace("%computername%", HostName) + "\\" + HostName);
@@ -124,7 +135,7 @@ namespace LiteDeploy
 
         private void MSIProcessCouldNotBeStarted(String HostName)
         {
-            MSIStatSet(HostName, "Process could not be started.", "FAIL");
+            MSIStatSet(HostName, Localization.T("ProcessReportsForm.MsiNotStarted", "Process could not be started."), "FAIL");
         }
 
         private delegate void AddLogEntryDel(String Host, String S);
@@ -144,14 +155,14 @@ namespace LiteDeploy
                 string currentLine = reader.ReadLine();
                 while (currentLine != null)
                 {
-                    if (Host == "Deployment")
+                    if (Host == DeploymentHost)
                     {
-                        queueToAdd.Add(new LogEntry(DateTime.Now, Host, S, S));
+                        queueToAdd.Add(new LogEntry(DateTime.Now, Host, S, S, LogEntry.IconDeployment));
                     }
 
                     else if (currentLine.Contains("started on " + Host))
                     {
-                        queueToAdd.Add(new LogEntry(DateTime.Now, Host, S, (MSIDeployment ? "MSI - " + MSIProductName : currentExecutableOrCommand) + " started with process ID " + currentLine.Substring(currentLine.LastIndexOf(' ') + 1, currentLine.Length - currentLine.LastIndexOf(' ') - 1)));
+                        queueToAdd.Add(new LogEntry(DateTime.Now, Host, S, Localization.F("ProcessReportsForm.Started", "{0} started with process ID {1}", MSIDeployment ? "MSI - " + MSIProductName : currentExecutableOrCommand, currentLine.Substring(currentLine.LastIndexOf(' ') + 1, currentLine.Length - currentLine.LastIndexOf(' ') - 1)), LogEntry.IconStarted));
 
                         if (MSIDeployment)
                             MSIProcessStarted(Host);
@@ -159,7 +170,7 @@ namespace LiteDeploy
 
                     else if (currentLine.Contains("Timeout accessing"))
                     {
-                        queueToAdd.Add(new LogEntry(DateTime.Now, Host, S, "Connection timed out."));
+                        queueToAdd.Add(new LogEntry(DateTime.Now, Host, S, Localization.T("ProcessReportsForm.Timeout", "Connection timed out.")));
 
                         if (MSIDeployment)
                             MSIProcessCouldNotBeStarted(Host);
@@ -167,12 +178,12 @@ namespace LiteDeploy
 
                     else if (currentLine.Contains("is an incompatible version"))
                     {
-                        queueToAdd.Add(new LogEntry(DateTime.Now, Host, S, "Incompatible PsExec Version. " + reader.ReadLine() + " " + reader.ReadLine()));
+                        queueToAdd.Add(new LogEntry(DateTime.Now, Host, S, Localization.F("ProcessReportsForm.IncompatiblePsExec", "Incompatible PsExec version. {0} {1}", reader.ReadLine(), reader.ReadLine())));
                     }
 
                     else if (currentLine.Contains("Couldn't access " + Host))
                     {
-                        queueToAdd.Add(new LogEntry(DateTime.Now, Host, S, "Host is inaccessible. Could not start PsExec service on remote computer."));
+                        queueToAdd.Add(new LogEntry(DateTime.Now, Host, S, Localization.T("ProcessReportsForm.Unreachable", "Host is inaccessible. Could not start PsExec service on remote computer."), LogEntry.IconUnreachable));
 
                         if (MSIDeployment)
                             MSIProcessCouldNotBeStarted(Host);
@@ -180,20 +191,20 @@ namespace LiteDeploy
 
                     else if (currentLine.Contains("unknown user name or bad password"))
                     {
-                        queueToAdd.Add(new LogEntry(DateTime.Now, Host, S, "Authentication failed. Invalid username or password."));
+                        queueToAdd.Add(new LogEntry(DateTime.Now, Host, S, Localization.T("ProcessReportsForm.BadPassword", "Authentication failed. Invalid username or password."), LogEntry.IconAuthentication));
 
                         if (MSIDeployment)
                             MSIProcessCouldNotBeStarted(Host);
                     }
 
-                    else if (currentLine == "Process manually aborted by user.")
+                    else if (currentLine == ManualAbortSignal)
                     {
-                        queueToAdd.Add(new LogEntry(DateTime.Now, Host, S, "Process manually aborted by user."));
+                        queueToAdd.Add(new LogEntry(DateTime.Now, Host, S, Localization.T("ProcessReportsForm.ManualAbort", "Process manually aborted by user.")));
                     }
 
                     else if (currentLine.Contains("Logon failure: account currently disabled."))
                     {
-                        queueToAdd.Add(new LogEntry(DateTime.Now, Host, S, "Authentication failed. The user account is disabled."));
+                        queueToAdd.Add(new LogEntry(DateTime.Now, Host, S, Localization.T("ProcessReportsForm.AccountDisabled", "Authentication failed. The user account is disabled."), LogEntry.IconAuthentication));
 
                         if (MSIDeployment)
                             MSIProcessCouldNotBeStarted(Host);
@@ -201,7 +212,7 @@ namespace LiteDeploy
 
                     else if (currentLine == "Access is denied.")
                     {
-                        queueToAdd.Add(new LogEntry(DateTime.Now, Host, S, "Unable to establish connection. Access was denied."));
+                        queueToAdd.Add(new LogEntry(DateTime.Now, Host, S, Localization.T("ProcessReportsForm.AccessDenied", "Unable to establish connection. Access was denied.")));
 
                         if (MSIDeployment)
                             MSIProcessCouldNotBeStarted(Host);
@@ -209,7 +220,7 @@ namespace LiteDeploy
 
                     else if (currentLine.Contains("cannot find the path specified"))
                     {
-                        queueToAdd.Add(new LogEntry(DateTime.Now, Host, S, "Process could not be started. Specified path not found."));
+                        queueToAdd.Add(new LogEntry(DateTime.Now, Host, S, Localization.T("ProcessReportsForm.PathNotFound", "Process could not be started. Specified path not found.")));
 
                         if (MSIDeployment)
                             MSIProcessCouldNotBeStarted(Host);
@@ -220,7 +231,7 @@ namespace LiteDeploy
 
                 if (queueToAdd.Count == 0)
                 {
-                    queueToAdd.Add(new LogEntry(DateTime.Now, Host, S, "No Log Data Found"));
+                    queueToAdd.Add(new LogEntry(DateTime.Now, Host, S, Localization.T("ProcessReportsForm.NoLogData", "No log data found")));
 
                     if (MSIDeployment)
                         MSIProcessCouldNotBeStarted(Host);
@@ -237,33 +248,9 @@ namespace LiteDeploy
                 LogEntry e = queueToAdd[i];
                 log.Items.Add( e.LoggedTime.ToLongTimeString() + " " + e.LoggedTime.ToShortDateString());
                 int count = log.Items.Count;
-                log.Items[count -1].SubItems.Add(e.HostIP);
+                log.Items[count -1].SubItems.Add(e.HostIP == DeploymentHost ? DeploymentHostDisplay : e.HostIP);
                 log.Items[count - 1].SubItems.Add( e.LogLineMessage );
-
-                if (e.LogLineMessage.Contains("started with process ID"))
-                {
-                    log.Items[count - 1].StateImageIndex = 0;
-                }
-
-                else if (e.LogLineMessage.Contains("Host is inaccessible. Could not start PsExec"))
-                {
-                    log.Items[count - 1].StateImageIndex = 1;
-                }
-
-                else if (e.HostIP == "Deployment")
-                {
-                    log.Items[count - 1].StateImageIndex = 3;
-                }
-
-                else if (e.LogLineMessage.Contains("Authentication failed."))
-                {
-                    log.Items[count - 1].StateImageIndex = 4;
-                }
-
-                else
-                {
-                    log.Items[count - 1].StateImageIndex = 2;
-                }
+                log.Items[count - 1].StateImageIndex = e.Icon;
             }
         }
 
@@ -303,8 +290,8 @@ namespace LiteDeploy
 
             else
             {
-                MessageBox.Show("A deployement is currently in progress. Sorting options will be available once the deployment is complete.",
-                                 "Deployment in Progress", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(Localization.T("ProcessReportsForm.SortBusy", "A deployment is currently in progress. Sorting will be available once the deployment is complete."),
+                                 Localization.T("ProcessReportsForm.SortBusy.Title", "Deployment in Progress"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
@@ -353,7 +340,7 @@ namespace LiteDeploy
             if (!ProcessManager.processing && MSILogFiles.Count == 0)
             {
                 msiLogPollingTimer.Enabled = false;
-                AddLogEntry("Deployment", "MSI logging has stopped.");
+                AddLogEntry(DeploymentHost, Localization.T("ProcessReportsForm.MsiLoggingStopped", "MSI logging has stopped."));
                 return;
             }
 
@@ -462,7 +449,7 @@ namespace LiteDeploy
                                     {
                                         if (line.Contains("Success") || line.Contains("success") )
                                         {
-                                            MSIStatSet(thisLogHostName, "Package was successfully installed.", "OK");
+                                            MSIStatSet(thisLogHostName, Localization.T("ProcessReportsForm.MsiInstalled", "Package was successfully installed."), "OK");
                                         }
 
                                         else if (line.Contains("fail") || line.Contains("Fail") || line.Contains("error") || line.Contains("Error") || line.Contains("Disk full: Out of disk space"))
@@ -476,14 +463,14 @@ namespace LiteDeploy
 
                                                 if (line.Contains("Windows Installer reconfigured") && line.Contains("Reconfiguration success or error status: 1638"))
                                                 {
-                                                    MSIStatSet(thisLogHostName, "Another version of this product is already installed. Installation cannot continue.", "ERROR");
+                                                    MSIStatSet(thisLogHostName, Localization.T("ProcessReportsForm.MsiOtherVersion", "Another version of this product is already installed. Installation cannot continue."), "ERROR");
                                                     errorCode = true;
                                                     break;
                                                 }
                                             }
 
                                             if ( !errorCode)
-                                                MSIStatSet(thisLogHostName, "Package installation failed." + (line.Contains("Disk full: Out of disk space") ? " Disk out of space." : ""), "ERROR");
+                                                MSIStatSet(thisLogHostName, line.Contains("Disk full: Out of disk space") ? Localization.T("ProcessReportsForm.MsiDiskFull", "Package installation failed. Disk out of space.") : Localization.T("ProcessReportsForm.MsiFailed", "Package installation failed."), "ERROR");
                                         }
 
                                         MSILogFiles.Remove(thisLogFile.Replace(".txt", ""));
@@ -494,7 +481,7 @@ namespace LiteDeploy
 
                                     else if (line.Contains("Failed to connect to server"))
                                     {
-                                        MSIStatSet(thisLogHostName, "Package installation failed.", "ERROR");
+                                        MSIStatSet(thisLogHostName, Localization.T("ProcessReportsForm.MsiFailed", "Package installation failed."), "ERROR");
 
                                         MSILogFiles.Remove(thisLogFile.Replace(".txt", ""));
                                         i--;
@@ -504,7 +491,7 @@ namespace LiteDeploy
 
                                     else if (line.Contains("Failed to grab mutex for logging"))
                                     {
-                                        MSIStatSet(thisLogHostName, "Package installation failed.", "ERROR");
+                                        MSIStatSet(thisLogHostName, Localization.T("ProcessReportsForm.MsiFailed", "Package installation failed."), "ERROR");
 
                                         MSILogFiles.Remove(thisLogFile.Replace(".txt", ""));
                                         i--;
@@ -516,7 +503,7 @@ namespace LiteDeploy
 
                             if (indeterminate)
                             {
-                                MSIStatSet(thisLogHostName, "Indeterminate log was found.", "FAIL");
+                                MSIStatSet(thisLogHostName, Localization.T("ProcessReportsForm.MsiIndeterminate", "Indeterminate log was found."), "FAIL");
                                 MSILogFiles.Remove(thisLogFile.Replace(".txt", ""));
                                 i--;
                             }
@@ -560,27 +547,27 @@ namespace LiteDeploy
 
                         else
                         {
-                            ActualMSILog.Text = "Log not availble.";
+                            ActualMSILog.Text = Localization.T("ProcessReportsForm.LogNotAvailable", "Log not available.");
                             OpenLog.Enabled = false;
                         }
                     }
                     catch
                     {
-                        ActualMSILog.Text = "Log file is currently in use. Try again.";
+                        ActualMSILog.Text = Localization.T("ProcessReportsForm.LogInUse", "Log file is currently in use. Try again.");
                         OpenLog.Enabled = false;
                     }
                 }
 
                 else
                 {
-                    ActualMSILog.Text = "Error accessing log. Try again.";
+                    ActualMSILog.Text = Localization.T("ProcessReportsForm.LogError", "Error accessing log. Try again.");
                     OpenLog.Enabled = false;
                 }
 
             }
             else
             {
-                ActualMSILog.Text = "No Hostname or IP selected.";
+                ActualMSILog.Text = Localization.T("ProcessReportsForm.NoHostSelected", "No host name or IP address selected.");
                 OpenLog.Enabled = false;
             }
         }        
@@ -597,7 +584,7 @@ namespace LiteDeploy
                         {
                             String theHIPname = log.Items[log.SelectedIndices[0]].SubItems[1].Text;
 
-                            if (theHIPname != "Deployment")
+                            if (theHIPname != DeploymentHostDisplay)
                             {
                                 hostName.Text = theHIPname;
                                 contextMenu.Show(MousePosition);
@@ -635,7 +622,7 @@ namespace LiteDeploy
                         {
                             String theHIPname = MSILogList.Items[MSILogList.SelectedIndices[0]].Text;
 
-                            if (theHIPname != "Deployment")
+                            if (theHIPname != DeploymentHostDisplay)
                             {
                                 hostName.Text = theHIPname;
                                 contextMenu.Show(MousePosition);

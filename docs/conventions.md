@@ -52,8 +52,24 @@ Same model as LiteTask: English texts live in the code and the designer files;
 ```xml
 <translations>
   <translation key="MainForm.startDeploy.Text">Démarrer le déploiement</translation>
+  <translation key="MainForm.NothingToExecute">Vous n'avez choisi aucun fichier...</translation>
 </translations>
 ```
+
+- Window texts: `Localization.Apply(this)` right after `InitializeComponent()`
+  translates the title (`<Form>.Text`) and every control, menu item, column
+  header and dialog held in a field (`<Form>.<field>.Text`, `.Items.<n>` for
+  combo boxes, `.Title` / `.Description` for dialogs).
+- Texts in the code: `Localization.T("<Class>.<Name>", "English text")`, or
+  `Localization.F(...)` with `{0}` placeholders; never build a sentence by
+  concatenating translated pieces.
+- Never test a displayed text: use a constant or a field (for example
+  `ProcessReportsForm.DeploymentHost`, `LogEntry.Icon`).
+- French texts follow the Quebec conventions: non-breaking space before
+  `:`, `?`, `!` and `;`.
+- Language: the user's choice in *App > Options* (Automatic follows the
+  Windows display language), saved in `%LOCALAPPDATA%\LiteDeploy\settings.xml`;
+  the `LITEDEPLOY_LANG` environment variable overrides it (tests).
 
 A missing key falls back to the English text, so a partial translation never
 breaks the interface.

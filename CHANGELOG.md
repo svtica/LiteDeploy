@@ -40,6 +40,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- French user interface: English stays the default, French is used when
+  Windows displays French or when chosen in *App > Options* (`lang/fr.xml`,
+  same format as LiteTask; Quebec typography).
+- Options window that saves its settings per user
+  (`%LOCALAPPDATA%\LiteDeploy\settings.xml`): language, MSI logging folder,
+  Active Directory refresh at start-up. It previously saved nothing.
 - Memory soak test (`tools/soak/Measure-LiteDeploy.ps1` and the
   **Memory soak** workflow): builds the base branch and the pull request side
   by side and drives each one for 30 or 180 minutes.
@@ -65,6 +71,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The computer list window keeps a stable title (with the Active Directory
+  state appended) instead of alternating between two titles; the splash
+  screen shows the real version.
 - Lighter start-up: the About, Change Log and Ping windows are created when
   opened and disposed when closed, the computer list window when first
   opened; the status bar counters follow the computer list instead of a

@@ -25,6 +25,8 @@ namespace LiteDeploy
         public SplashForm(MainForm p)
         {
             InitializeComponent();
+            Localization.Apply(this);
+            label4.Text = Localization.F("SplashForm.Version", "version {0}", Application.ProductVersion);
             parent = p;
         }
 
