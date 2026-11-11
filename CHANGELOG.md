@@ -32,6 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   working directory, options, DNS scan, splash screen) are disposed when
   closed; processes started for the remote session, the management console,
   the admin shares and the logs are released.
+- Build from a clean clone: `PsExec.exe` and `RDPWInst.exe` (third-party,
+  not in the repository) are only copied to the output when present, instead
+  of failing the build.
 - DNS scan: the host list is no longer filled by several threads at once
   without a lock.
 
