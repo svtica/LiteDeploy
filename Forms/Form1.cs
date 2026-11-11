@@ -421,7 +421,7 @@ namespace LiteDeploy
 
         private void stopPsExecToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Process[] PsExec = Process.GetProcessesByName("PsExec");
+            Process[] PsExec = Process.GetProcessesByName(PsExecLocator.ProcessName);
 
             try
             {

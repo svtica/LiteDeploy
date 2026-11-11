@@ -44,3 +44,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   **Memory soak** workflow): builds the base branch and the pull request side
   by side and drives each one for 30 or 180 minutes.
 - Build workflow on pushes and pull requests to `main`.
+- Release package `LiteDeploy.zip` built by CI: `LiteDeploy.exe`, its
+  `.config` and `RemoteManagement.msc` at the zip root, with README, LICENSE
+  and CHANGELOG. A CI step checks the LiteTask contract (asset name,
+  `LiteDeploy.exe` and its dependencies at the root of the zip).
+- Authenticode signing of `LiteDeploy.exe` in CI (`tools/ci/Sign-Binaries.ps1`,
+  SHA-256, RFC 3161 timestamp, `signtool verify /pa`) with the
+  `SIGNING_CERTIFICATE` and `CERTIFICATE_PASSWORD` secrets. Without them the
+  package is unsigned (warning on tags) and the signing script is still
+  tested with a throw-away self-signed certificate.
+
+### Changed
+
+- PsExec is looked for next to `LiteDeploy.exe` (`PsExec.exe`, then
+  `PsExec64.exe`), then in the parent folder: when LiteDeploy is installed
+  by LiteTask (`LiteTaskData\tools\LiteDeploy\`), it uses the
+  `PsExec64.exe` that LiteTask extracts to `LiteTaskData\tools\`. PsExec is
+  still not shipped in the package (Sysinternals license). The working
+  folder is now always the LiteDeploy folder, whatever folder LiteDeploy is
+  started from.
+
+### Removed
+
+- Build output (`bin/`, `obj/`) and Visual Studio user file from the
+  repository, including a cached list of Active Directory computer names
+  (`adcache.xml`). `.gitignore` now excludes them, along with `*.pfx` and
+  other key files.
+- Reference to a temporary ClickOnce signing key (`.pfx`, never committed)
+  from the project file.
