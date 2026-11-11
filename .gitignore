@@ -70,3 +70,6 @@ LiteDeploy.zip
 # Runtime data written next to LiteDeploy.exe (Active Directory computer list)
 adcache.xml
 selectedComputers.txt
+
+# PDQ entry point of MAJ-Logiciels (the C template above ignores *.cmd)
+!MAJ-Logiciels/Paquet/winget-upgrade.cmd
