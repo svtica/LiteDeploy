@@ -69,6 +69,14 @@ jobs:
         msbuild LiteDeploy.sln --% -restore /p:Configuration=Release /p:Platform=x64 /v:minimal
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+    - name: Unit tests
+      shell: powershell
+      run: |
+        msbuild tests\LiteDeploy.Tests\LiteDeploy.Tests.csproj --% -restore /p:Configuration=Release /v:minimal
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        dotnet test tests\LiteDeploy.Tests\bin\Release\LiteDeploy.Tests.dll --logger "console;verbosity=normal"
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
     - name: Assemble package folder
       shell: powershell
       run: |

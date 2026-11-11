@@ -35,13 +35,16 @@
 ## Cost outside the code
 
 - **Runtime**: .NET Framework 4.8 ships with Windows 10 and 11 and follows their lifecycle. A
-  `net10.0-windows` application needs the **.NET Desktop Runtime 10** on every admin workstation, or a
-  self-contained publish of about 60 to 150 MB instead of about 1 MB today.
+  `net10.0-windows` application needs the **.NET Desktop Runtime 10**, or a self-contained publish of
+  about 60 to 150 MB instead of about 1 MB today. *Correction (same day):* LiteTask itself already
+  targets `net10.0-windows` (LiteTask 1.3), so the runtime is present on every computer where LiteTask
+  installs LiteDeploy; the cost only remains for manual installs.
 - **Support**: .NET 10 LTS is supported until November 2028, so another migration (.NET 12 or later)
   would follow about two years later. .NET Framework 4.8 has no announced end of support outside the
   Windows lifecycle.
-- **Suite**: LiteTask and LitePM are .NET Framework 4.8 too. Moving LiteDeploy alone adds one more
-  runtime to the workstations, with no benefit for the suite.
+- **Suite**: LiteTask is on .NET 10 LTS, LitePM on .NET Framework 4.8. Moving LiteDeploy to .NET 10
+  aligns it with LiteTask (same runtime, code such as `PsExecCommandBuilder` shared more easily, same
+  test framework setup).
 - **Tests**: no automated tests; a full manual pass (deployment, MSI, AD, ping, DNS scan, reports) and
   a run of the lot 1 soak test are needed.
 
@@ -57,10 +60,15 @@
 
 ## Recommendation
 
-**Do not migrate to .NET 10 now.** The benefit is small for a lightly developed admin tool used on a
-few workstations (comparable WinForms performance, no expected feature that needs it), and the cost is
-real: a runtime to deploy or a 60-150 times larger package, another migration when .NET 10 support
-ends, and divergence from LiteTask and LitePM.
+**Not now, but plan it.** The first version of this assessment said "do not migrate" on the grounds
+of runtime deployment and divergence from LiteTask; both were wrong, LiteTask being on .NET 10 already.
+The remaining cost is the code work above (4 to 6 days) and another migration when .NET 10 support
+ends. Since LiteDeploy is about to gain native software updates, migrating in the middle of that work
+would mix two risks. Recommended order:
+
+1. finish the native features on `net48`;
+2. remove the three `Thread.Abort` calls and the COM reference (valid on `net48` too);
+3. then switch `TargetFramework` to `net10.0-windows` and run the soak test, like LiteTask did.
 
 Instead:
 

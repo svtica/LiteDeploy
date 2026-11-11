@@ -37,9 +37,6 @@ namespace LiteDeploy
         //Static Reference to Start Button
         static Button StartRef = null;
 
-        // Command Handling
-        List<String> commandList;
-
         // Relative working path (if set)
         public String workPath = "";
 
@@ -96,7 +93,6 @@ namespace LiteDeploy
 
             LocalNetworkSettings.CheckForLocalDNSServers();
             AppConsole.Init(consoleDisplay, this);         
-            commandList = new List<String>();
             username.Text = Environment.UserDomainName + "\\" + Environment.UserName;
             username.Select(username.Text.Length, 0);
             priority.SelectedIndex = 2;
@@ -126,63 +122,26 @@ namespace LiteDeploy
             executable.Text = openExecutable.FileName;            
         }
 
-        private String buildMultiProcessCommand(String pc)
+        // PsExec options of the main window for one target computer (PsExecCommandBuilder)
+        private PsExecOptions buildPsExecOptions(String pc)
         {
-            String command = "";
-
-            command += "\\\\" + pc + " ";
-            ProcessManager.deployNameList.Add(pc);
-
-            command += "-h ";
-
-            if (interactive.Checked)
-                command += "-i " + isessionNum.Value.ToString() + " ";
-
-            if (wait.Checked)
-                command += "-d ";
-
-            if (relWorkingPath.Checked)
-                command += "-w \"" + workPath + "\" ";
-
-            if (copy.Checked)
-                command += "-c ";
-
-            if (forceCopy.Checked)
-                command += "-f ";
-
-            if (timeOut.Value > 0)
-                command += "-n " + timeOut.Value + " ";
-
-            if (credentials.Checked)
-                command += "-u " + username.Text + " -p " + password.Text + " ";
-
-            else if (systemAccount.Checked)
-                command += "-s ";
-
-            if (priority.SelectedIndex != 2)
-            {
-                if (priority.SelectedIndex == 0) // LOW
-                    command += "-low ";
-
-                else if (priority.SelectedIndex == 1) // BELOW NORMAL
-                    command += "-belownormal ";
-
-                else if (priority.SelectedIndex == 3) // ABOVE NORMAL
-                    command += "-abovenormal ";
-
-                else if (priority.SelectedIndex == 4) // HIGH
-                    command += "-high ";
-
-                else if (priority.SelectedIndex == 5) // REALTIME
-                    command += "-realtime ";
-            }
-
-            if (executable.Text.Length > 0)
-                command += "\"" + executable.Text + "\" ";
-
-            command += arguments.Text.Replace("%computername%", pc);
-
-            return command;
+            PsExecOptions o = new PsExecOptions();
+            o.Computer = pc;
+            o.Interactive = interactive.Checked;
+            o.Session = (int)isessionNum.Value;
+            o.DontWait = wait.Checked;
+            o.WorkingDirectory = relWorkingPath.Checked ? workPath : null;
+            o.CopyExecutable = copy.Checked;
+            o.OverwriteExisting = forceCopy.Checked;
+            o.ConnectionTimeout = (int)timeOut.Value;
+            o.UseCredentials = credentials.Checked;
+            o.UserName = username.Text;
+            o.Password = password.Text;
+            o.RunAsSystem = systemAccount.Checked;
+            o.PriorityIndex = priority.SelectedIndex;
+            o.Executable = executable.Text;
+            o.Arguments = arguments.Text.Replace("%computername%", pc);
+            return o;
         }
 
         private delegate void ClearAllLists();
@@ -196,10 +155,10 @@ namespace LiteDeploy
 
             else
             {
-                commandList.Clear();
                 processConsole.processList.Items.Clear();
                 ProcessReportsForm.logEntries.Clear();
                 ProcessManager.processList.Clear();
+                ProcessManager.displayList.Clear();
                 ProcessManager.outputList.Clear();
                 ProcessManager.deployNameList.Clear();
             }            
@@ -240,17 +199,12 @@ namespace LiteDeploy
                 return;
             }
 
-            commandList.Clear();
-
             for (int i = 0; i < selectedComputers.CheckedItems.Count; i++)
             {
                 String computer = selectedComputers.CheckedItems[i].ToString();
-                commandList.Add(buildMultiProcessCommand(computer));
-            }
-
-            for (int i = 0; i < commandList.Count; i++)
-            {
-                ProcessManager.AddProcess(commandList[i]);
+                PsExecOptions options = buildPsExecOptions(computer);
+                ProcessManager.deployNameList.Add(computer);
+                ProcessManager.AddProcess(PsExecCommandBuilder.BuildArguments(options), PsExecCommandBuilder.DisplayArguments(options));
             }
 
             bool MSIPrepCancelled = false;

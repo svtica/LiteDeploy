@@ -40,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Unit tests (MSTest, `tests/LiteDeploy.Tests`, run in CI): PsExec command
+  line, localization, translation keys still in use.
 - French user interface: English stays the default, French is used when
   Windows displays French or when chosen in *App > Options* (`lang/fr.xml`,
   same format as LiteTask; Quebec typography).
@@ -71,6 +73,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- PsExec command line built by `PsExecCommandBuilder` (ported from
+  LiteTask): `-accepteula -nobanner`, user name and password quoted with the
+  Windows rules (a password with spaces or quotes no longer breaks the
+  command), password masked in the console.
 - The computer list window keeps a stable title (with the Active Directory
   state appended) instead of alternating between two titles; the splash
   screen shows the real version.
