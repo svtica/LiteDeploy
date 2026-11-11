@@ -84,6 +84,7 @@ function Get-TypeRefName($md, $handle) {
 
 function Get-AssemblyFacts([string] $path) {
     $facts = New-Object System.Collections.Generic.List[string]
+    $fileBytes = [IO.File]::ReadAllBytes($path)
     $stream = [IO.File]::OpenRead($path)
     $pe = [System.Reflection.PortableExecutable.PEReader]::new($stream)
     try {
@@ -122,32 +123,31 @@ function Get-AssemblyFacts([string] $path) {
                 $mdef = $md.GetMethodDefinition($m)
                 $il = ''
                 if ($mdef.RelativeVirtualAddress -ne 0) {
-                    $body = $pe.GetMethodBody($mdef.RelativeVirtualAddress)
+                    $body = [System.Reflection.Metadata.PEReaderExtensions]::GetMethodBody($pe, $mdef.RelativeVirtualAddress)   # extension method
                     $il = Get-Sha ([byte[]]$body.GetILBytes())
                 }
                 $facts.Add("method: $tn::$($md.GetString($mdef.Name)) $($mdef.Attributes) sig=$(Get-Hex $md.GetBlobBytes($mdef.Signature)) il=$il")
             }
         }
 
+        # Embedded resources: read from the file, at the file offset of the CLR resources directory
         $resDir = $h.CorHeader.ResourcesDirectory
-        $resBytes = $null
-        if ($resDir.Size -gt 0) {
-            $resBytes = [System.Linq.Enumerable]::ToArray($pe.GetSectionData($resDir.RelativeVirtualAddress).GetContent())
-        }
+        $resStart = 0
+        if ($resDir.Size -gt 0 -and -not $h.TryGetDirectoryOffset($resDir, [ref]$resStart)) { throw "resources directory not found in $path" }
         foreach ($r in $md.ManifestResources) {
             $res = $md.GetManifestResource($r)
-            $off = [int]$res.Offset
-            $len = [BitConverter]::ToInt32($resBytes, $off)
+            $off = $resStart + [int]$res.Offset
+            $len = [BitConverter]::ToInt32($fileBytes, $off)
             $data = New-Object byte[] $len
-            [Array]::Copy($resBytes, $off + 4, $data, 0, $len)
+            [Array]::Copy($fileBytes, $off + 4, $data, 0, $len)
             $facts.Add("resource: $($md.GetString($res.Name)) $($res.Attributes) length=$len sha=$(Get-Sha $data)")
         }
 
         foreach ($s in $h.SectionHeaders) {
             if ($s.Name -eq '.rsrc') {
-                $raw = [System.Linq.Enumerable]::ToArray($pe.GetSectionData($s.VirtualAddress).GetContent())
-                $data = New-Object byte[] $s.VirtualSize
-                [Array]::Copy($raw, 0, $data, 0, [Math]::Min($raw.Length, $s.VirtualSize))
+                $size = [Math]::Min($s.VirtualSize, $s.SizeOfRawData)
+                $data = New-Object byte[] $size
+                [Array]::Copy($fileBytes, $s.PointerToRawData, $data, 0, $size)
                 $facts.Add("win32 resources: length=$($s.VirtualSize) sha=$(Get-Sha $data)")
             }
         }
