@@ -80,9 +80,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The computer list window keeps a stable title (with the Active Directory
   state appended) instead of alternating between two titles; the splash
   screen shows the real version.
-- Lighter start-up: the About, Change Log and Ping windows are created when
-  opened and disposed when closed, the computer list window when first
-  opened; the status bar counters follow the computer list instead of a
+- Lighter start-up: the About and Change Log windows are created when
+  opened and disposed when closed, the Ping and computer list windows when
+  first opened (then reused: a new Ping window per run leaked GDI objects); the status bar counters follow the computer list instead of a
   100 ms timer.
 - Right-click actions on a computer (ping, remote desktop, management
   console, admin share, public folders) shared by the main window and the
