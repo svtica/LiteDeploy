@@ -134,7 +134,6 @@
     </Compile>
     <Compile Include="Classes\LocalNetworkSettings.cs" />
     <Compile Include="Classes\LogEntry.cs" />
-    <Compile Include="Classes\MajLogiciels.cs" />
     <Compile Include="Classes\MainFormAccess.cs" />
     <Compile Include="Forms\MSIOps.cs">
       <SubType>Form</SubType>

@@ -51,26 +51,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   workflow) and **Release** workflow, which runs it and then calls the build
   (`workflow_call` with the tag, `secrets: inherit`) to publish
   `LiteDeploy.zip`.
-- **MAJ-Logiciels** by Patrick Bédard (`MAJ-Logiciels/`, shipped in the
-  package next to `LiteDeploy.exe`, menu *App > Software updates*): keeps
-  third-party software up to date on the fleet through winget, with a WinForms
-  panel (status per computer, network and identity check, deployment,
-  schedules, queue, Wake-on-LAN, restart and message to the user, software
-  catalog), an unattended agent, optional Adobe Reader and 1Password modules,
-  and site profiles. Integrated with these changes:
-  - work folder of the files run as SYSTEM on the workstations moved from
-    `C:\Windows\Temp` to `C:\ProgramData\MAJ-Logiciels`, created with a
-    protected ACL (any user could create the folder first and swap the files);
-  - Adobe patches and the 1Password MSI used only with a valid Authenticode
-    signature from the expected publisher, before publishing them on the share
-    and again before installing them;
-  - "Installer un logiciel" runs a fixed script fed with data: catalog entries
-    are no longer pasted into code run as SYSTEM;
-  - the package is started as SYSTEM by default (computer account on the
-    share, no password on the workstations); `LaunchAs: DeployAccount` keeps
-    the former mode;
-  - site-specific references removed; PDQ entry point `winget-upgrade.cmd`
-    added; Pester tests in CI; scripts signed with the package.
 - `docs/dotnet-migration.md`: blockers, effort and recommendation for a
   migration to .NET 10.
 - Release package `LiteDeploy.zip` built by CI: `LiteDeploy.exe`, its

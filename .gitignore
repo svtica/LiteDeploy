@@ -71,5 +71,3 @@ LiteDeploy.zip
 adcache.xml
 selectedComputers.txt
 
-# PDQ entry point of MAJ-Logiciels (the C template above ignores *.cmd)
-!MAJ-Logiciels/Paquet/winget-upgrade.cmd

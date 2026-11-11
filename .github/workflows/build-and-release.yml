@@ -49,28 +49,7 @@ env:
   CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
 
 jobs:
-  # MAJ-Logiciels (PowerShell tools shipped in the package): Pester tests under Windows PowerShell 5.1
-  maj-logiciels-tests:
-    runs-on: windows-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ inputs.tag || github.ref }}
-
-    - name: Pester
-      shell: powershell
-      run: |
-        Install-Module Pester -MinimumVersion 5.5.0 -Force -SkipPublisherCheck -Scope CurrentUser
-        Import-Module Pester -MinimumVersion 5.5.0
-        $cfg = New-PesterConfiguration
-        $cfg.Run.Path = 'tests'
-        $cfg.Run.Exit = $true
-        $cfg.Output.Verbosity = 'Detailed'
-        Invoke-Pester -Configuration $cfg
-
   build:
-    needs: maj-logiciels-tests
     runs-on: windows-latest
     permissions:
       contents: write
@@ -102,9 +81,6 @@ jobs:
         Copy-Item "$buildPath\*.dll" -Destination $publishPath -ErrorAction SilentlyContinue
 
         Copy-Item "README.md", "LICENSE", "CHANGELOG.md" -Destination $publishPath -ErrorAction SilentlyContinue
-
-        # MAJ-Logiciels (third-party software updates through winget), next to LiteDeploy.exe
-        Copy-Item "MAJ-Logiciels" -Destination $publishPath -Recurse
         Get-ChildItem $publishPath | Format-Table Name, Length
 
     - name: Decode certificate
@@ -177,8 +153,7 @@ jobs:
         $exes = @($names | Where-Object { ($_ -split '/')[-1] -eq 'LiteDeploy.exe' } | Sort-Object Length)
         if ($exes.Count -eq 0) { Write-Error "LiteDeploy.exe not found in the zip"; exit 1 }
         if ($exes[0] -ne 'LiteDeploy.exe') { Write-Error "LiteDeploy.exe must be at the zip root (found $($exes[0]))"; exit 1 }
-        $required = 'LiteDeploy.exe', 'LiteDeploy.exe.config', 'RemoteManagement.msc',
-                    'MAJ-Logiciels/Installer.ps1', 'MAJ-Logiciels/Paquet/winget-upgrade.cmd', 'MAJ-Logiciels/Paquet/maj-secure.ps1'
+        $required = 'LiteDeploy.exe', 'LiteDeploy.exe.config', 'RemoteManagement.msc'
         $missing = $required | Where-Object { $names -notcontains $_ }
         if ($missing) { Write-Error "Missing next to LiteDeploy.exe in the zip: $($missing -join ', ')"; exit 1 }
         # Every DLL of the build output must ship next to the exe
