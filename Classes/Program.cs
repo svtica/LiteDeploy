@@ -1,4 +1,11 @@
-﻿using System;
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    Program.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: Entry point: working folder, PsExec lookup, main window.
+// -----------------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
@@ -32,11 +39,11 @@ namespace LiteDeploy
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
 #if DEBUG
-                Application.Run(new Form1());                
+                Application.Run(new MainForm());                
 #else
                 try
                 {
-                    Application.Run(new Form1());
+                    Application.Run(new MainForm());
                 }
 
                 catch (Exception e)

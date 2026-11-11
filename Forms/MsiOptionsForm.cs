@@ -1,4 +1,12 @@
-﻿using System;
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    MsiOptionsForm.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: msiexec options of an MSI deployment (install, repair, uninstall,
+//          restart, logging).
+// -----------------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -12,13 +20,13 @@ using WindowsInstaller;
 
 namespace LiteDeploy
 {
-    public partial class MSIOps : Form
+    public partial class MsiOptionsForm : Form
     {
-        public MSIOps(String msiP)
+        public MsiOptionsForm(String msiP)
         {
             InitializeComponent();
 
-            logDirectory.Text = Settings.LOGGING_DIR + "\\MSI\\";
+            logDirectory.Text = AppSettings.LOGGING_DIR + "\\MSI\\";
             installer.Text = msiP;
 
             // The Windows Installer COM objects are released as soon as the two

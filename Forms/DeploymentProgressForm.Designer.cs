@@ -1,6 +1,14 @@
-﻿namespace LiteDeploy
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    DeploymentProgressForm.Designer.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: Windows Forms designer part of DeploymentProgressForm (layout and
+//          controls).
+// -----------------------------------------------------------------------------
+namespace LiteDeploy
 {
-    partial class BatchProcessWindow
+    partial class DeploymentProgressForm
     {
         /// <summary>
         /// Required designer variable.
@@ -29,7 +37,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(BatchProcessWindow));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DeploymentProgressForm));
             this.progressBar = new System.Windows.Forms.ProgressBar();
             this.percentage = new System.Windows.Forms.Label();
             this.currentStatus = new System.Windows.Forms.Label();
@@ -166,7 +174,7 @@
             this.TotalTime.TabIndex = 1;
             this.TotalTime.Text = "Total Time:";
             // 
-            // BatchProcessWindow
+            // DeploymentProgressForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -183,10 +191,10 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.Name = "BatchProcessWindow";
+            this.Name = "DeploymentProgressForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Lite Deploy - Processing Deployment";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.BatchProcessWindow_FormClosing);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.DeploymentProgressForm_FormClosing);
             this.dBox.ResumeLayout(false);
             this.dBox.PerformLayout();
             this.ResumeLayout(false);

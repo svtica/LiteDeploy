@@ -1,4 +1,11 @@
-﻿using System;
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    SplashForm.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: Splash screen shown while the Active Directory computer list loads.
+// -----------------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -10,12 +17,12 @@ using System.Threading;
 
 namespace LiteDeploy
 {
-    public partial class Splash : Form
+    public partial class SplashForm : Form
     {
         Thread adLoadThread;
-        Form1 parent;
+        MainForm parent;
 
-        public Splash(Form1 p)
+        public SplashForm(MainForm p)
         {
             InitializeComponent();
             parent = p;
@@ -26,11 +33,11 @@ namespace LiteDeploy
 
         }
 
-        private void Splash_Load(object sender, EventArgs e)
+        private void SplashForm_Load(object sender, EventArgs e)
         {
             timer1.Enabled = true;
 
-            adLoadThread = new Thread(new ThreadStart(ActiveDir.GetComputers));
+            adLoadThread = new Thread(new ThreadStart(ActiveDirectoryCache.GetComputers));
             adLoadThread.Start();
         }
 

@@ -86,136 +86,136 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Classes\ListViewColumnSorter.cs" />
-    <Compile Include="Classes\Settings.cs" />
-    <Compile Include="Forms\AboutBox1.cs">
+    <Compile Include="Classes\AppSettings.cs" />
+    <Compile Include="Forms\AboutForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\AboutBox1.Designer.cs">
-      <DependentUpon>AboutBox1.cs</DependentUpon>
+    <Compile Include="Forms\AboutForm.Designer.cs">
+      <DependentUpon>AboutForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Classes\ActiveDir.cs" />
+    <Compile Include="Classes\ActiveDirectoryCache.cs" />
     <Compile Include="Classes\AppConsole.cs" />
-    <Compile Include="Forms\ADTree.cs">
+    <Compile Include="Forms\ActiveDirectoryTreeForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\ADTree.Designer.cs">
-      <DependentUpon>ADTree.cs</DependentUpon>
+    <Compile Include="Forms\ActiveDirectoryTreeForm.Designer.cs">
+      <DependentUpon>ActiveDirectoryTreeForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\BatchProcessWindow.cs">
+    <Compile Include="Forms\DeploymentProgressForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\BatchProcessWindow.Designer.cs">
-      <DependentUpon>BatchProcessWindow.cs</DependentUpon>
+    <Compile Include="Forms\DeploymentProgressForm.Designer.cs">
+      <DependentUpon>DeploymentProgressForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\ChangeLog.cs">
+    <Compile Include="Forms\ChangeLogForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\ChangeLog.Designer.cs">
-      <DependentUpon>ChangeLog.cs</DependentUpon>
+    <Compile Include="Forms\ChangeLogForm.Designer.cs">
+      <DependentUpon>ChangeLogForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Classes\DeploySettings.cs" />
-    <Compile Include="Forms\Deployment Prep.cs">
+    <Compile Include="Forms\DeploymentPrepForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\Deployment Prep.Designer.cs">
-      <DependentUpon>Deployment Prep.cs</DependentUpon>
+    <Compile Include="Forms\DeploymentPrepForm.Designer.cs">
+      <DependentUpon>DeploymentPrepForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\DNSScanner.cs">
+    <Compile Include="Forms\DnsScanForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\DNSScanner.Designer.cs">
-      <DependentUpon>DNSScanner.cs</DependentUpon>
+    <Compile Include="Forms\DnsScanForm.Designer.cs">
+      <DependentUpon>DnsScanForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\Form1.cs">
+    <Compile Include="Forms\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\Form1.Designer.cs">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <Compile Include="Forms\MainForm.Designer.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Classes\LocalNetworkSettings.cs" />
     <Compile Include="Classes\LogEntry.cs" />
     <Compile Include="Classes\MainFormAccess.cs" />
-    <Compile Include="Forms\MSIOps.cs">
+    <Compile Include="Forms\MsiOptionsForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\MSIOps.Designer.cs">
-      <DependentUpon>MSIOps.cs</DependentUpon>
+    <Compile Include="Forms\MsiOptionsForm.Designer.cs">
+      <DependentUpon>MsiOptionsForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\PCListDesigner.cs">
+    <Compile Include="Forms\ComputerListForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\PCListDesigner.Designer.cs">
-      <DependentUpon>PCListDesigner.cs</DependentUpon>
+    <Compile Include="Forms\ComputerListForm.Designer.cs">
+      <DependentUpon>ComputerListForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\PingAll.cs">
+    <Compile Include="Forms\PingAllForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\PingAll.Designer.cs">
-      <DependentUpon>PingAll.cs</DependentUpon>
+    <Compile Include="Forms\PingAllForm.Designer.cs">
+      <DependentUpon>PingAllForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\ProcessConsole.cs">
+    <Compile Include="Forms\ProcessReportsForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\ProcessConsole.Designer.cs">
-      <DependentUpon>ProcessConsole.cs</DependentUpon>
+    <Compile Include="Forms\ProcessReportsForm.Designer.cs">
+      <DependentUpon>ProcessReportsForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Classes\ProcessManager.cs" />
     <Compile Include="Classes\PsExecLocator.cs" />
     <Compile Include="Classes\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Forms\Splash.cs">
+    <Compile Include="Forms\SplashForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\Splash.Designer.cs">
-      <DependentUpon>Splash.cs</DependentUpon>
+    <Compile Include="Forms\SplashForm.Designer.cs">
+      <DependentUpon>SplashForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\WorkingDirSet.cs">
+    <Compile Include="Forms\WorkingDirectoryForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\WorkingDirSet.Designer.cs">
-      <DependentUpon>WorkingDirSet.cs</DependentUpon>
+    <Compile Include="Forms\WorkingDirectoryForm.Designer.cs">
+      <DependentUpon>WorkingDirectoryForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\SettingsManager.cs">
+    <Compile Include="Forms\OptionsForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\SettingsManager.Designer.cs">
-      <DependentUpon>SettingsManager.cs</DependentUpon>
+    <Compile Include="Forms\OptionsForm.Designer.cs">
+      <DependentUpon>OptionsForm.cs</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="Forms\AboutBox1.resx">
-      <DependentUpon>AboutBox1.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\AboutForm.resx">
+      <DependentUpon>AboutForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Forms\ADTree.resx">
-      <DependentUpon>ADTree.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\ActiveDirectoryTreeForm.resx">
+      <DependentUpon>ActiveDirectoryTreeForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Forms\BatchProcessWindow.resx">
-      <DependentUpon>BatchProcessWindow.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\DeploymentProgressForm.resx">
+      <DependentUpon>DeploymentProgressForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Forms\ChangeLog.resx">
-      <DependentUpon>ChangeLog.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\ChangeLogForm.resx">
+      <DependentUpon>ChangeLogForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Forms\Deployment Prep.resx">
-      <DependentUpon>Deployment Prep.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\DeploymentPrepForm.resx">
+      <DependentUpon>DeploymentPrepForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Forms\DNSScanner.resx">
-      <DependentUpon>DNSScanner.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\DnsScanForm.resx">
+      <DependentUpon>DnsScanForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Forms\Form1.resx">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\MainForm.resx">
+      <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Forms\MSIOps.resx">
-      <DependentUpon>MSIOps.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\MsiOptionsForm.resx">
+      <DependentUpon>MsiOptionsForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Forms\PCListDesigner.resx">
-      <DependentUpon>PCListDesigner.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\ComputerListForm.resx">
+      <DependentUpon>ComputerListForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Forms\PingAll.resx">
-      <DependentUpon>PingAll.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\PingAllForm.resx">
+      <DependentUpon>PingAllForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Forms\ProcessConsole.resx">
-      <DependentUpon>ProcessConsole.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\ProcessReportsForm.resx">
+      <DependentUpon>ProcessReportsForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Forms\SettingsManager.resx">
-      <DependentUpon>SettingsManager.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\OptionsForm.resx">
+      <DependentUpon>OptionsForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -227,11 +227,11 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <EmbeddedResource Include="Forms\Splash.resx">
-      <DependentUpon>Splash.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\SplashForm.resx">
+      <DependentUpon>SplashForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Forms\WorkingDirSet.resx">
-      <DependentUpon>WorkingDirSet.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\WorkingDirectoryForm.resx">
+      <DependentUpon>WorkingDirectoryForm.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="app.config" />
     <None Include="Properties\app.manifest" />

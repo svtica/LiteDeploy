@@ -1,6 +1,14 @@
-﻿namespace LiteDeploy.Forms
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    ActiveDirectoryTreeForm.Designer.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: Windows Forms designer part of ActiveDirectoryTreeForm (layout and
+//          controls).
+// -----------------------------------------------------------------------------
+namespace LiteDeploy
 {
-    partial class ADTree
+    partial class ActiveDirectoryTreeForm
     {
         /// <summary>
         /// Required designer variable.
@@ -28,7 +36,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ADTree));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ActiveDirectoryTreeForm));
             this.treeView1 = new System.Windows.Forms.TreeView();
             this.SuspendLayout();
             // 
@@ -39,16 +47,16 @@
             this.treeView1.Size = new System.Drawing.Size(541, 451);
             this.treeView1.TabIndex = 0;
             // 
-            // ADTree
+            // ActiveDirectoryTreeForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(565, 475);
             this.Controls.Add(this.treeView1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Name = "ADTree";
-            this.Text = "ADTree";
-            this.Load += new System.EventHandler(this.ADTree_Load);
+            this.Name = "ActiveDirectoryTreeForm";
+            this.Text = "ActiveDirectoryTreeForm";
+            this.Load += new System.EventHandler(this.ActiveDirectoryTreeForm_Load);
             this.ResumeLayout(false);
 
         }

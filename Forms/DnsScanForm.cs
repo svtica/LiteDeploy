@@ -1,4 +1,11 @@
-﻿using System;
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    DnsScanForm.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: Reverse DNS scan of a /24 subnet.
+// -----------------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -9,9 +16,9 @@ using System.Windows.Forms;
 using System.Threading;
 using System.Net;
 
-namespace LiteDeploy.Forms
+namespace LiteDeploy
 {
-    public partial class DNSScanner : Form
+    public partial class DnsScanForm : Form
     {
         private String Subnet;
         private int currentAddress;
@@ -20,7 +27,7 @@ namespace LiteDeploy.Forms
         static public bool abort;
         private Object HostNumLock;
 
-        public DNSScanner( String s)
+        public DnsScanForm( String s)
         {
             InitializeComponent();
             Subnet = s;
@@ -39,7 +46,7 @@ namespace LiteDeploy.Forms
             }
         }
 
-        private void DNSScanner_Load(object sender, EventArgs e)
+        private void DnsScanForm_Load(object sender, EventArgs e)
         {
             
         }

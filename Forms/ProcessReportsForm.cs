@@ -1,4 +1,12 @@
-﻿using System;
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    ProcessReportsForm.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: Process reports: PsExec output per computer, parsed log, MSI
+//          deployment status.
+// -----------------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -13,7 +21,7 @@ using System.Diagnostics;
 
 namespace LiteDeploy
 {
-    public partial class ProcessConsole : Form
+    public partial class ProcessReportsForm : Form
     {
         public static List<LogEntry> logEntries = new List<LogEntry>();
         public static String currentExecutableOrCommand = "";
@@ -38,7 +46,7 @@ namespace LiteDeploy
 
         String pingHostString = "";
 
-        public ProcessConsole()
+        public ProcessReportsForm()
         {
             InitializeComponent();
             lvwColumnSorter = new ListViewColumnSorter();
@@ -104,7 +112,7 @@ namespace LiteDeploy
             }
         }
 
-        private void ProcessConsole_VisibleChanged(object sender, EventArgs e)
+        private void ProcessReportsForm_VisibleChanged(object sender, EventArgs e)
         {
         }
 
@@ -261,7 +269,7 @@ namespace LiteDeploy
             }
         }
 
-        private void ProcessConsole_FormClosing(object sender, FormClosingEventArgs e)
+        private void ProcessReportsForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             e.Cancel = true;
             Hide();
@@ -524,7 +532,7 @@ namespace LiteDeploy
             }
         }
 
-        private void ProcessConsole_Load(object sender, EventArgs e)
+        private void ProcessReportsForm_Load(object sender, EventArgs e)
         {
 
         }
@@ -679,7 +687,7 @@ namespace LiteDeploy
             {
                 try
                 {
-                    File.Copy(Settings.LOCAL_UPDATE_DIR + "\\RemoteManagement.msc", Directory.GetCurrentDirectory() + "\\RemoteManagement.msc");
+                    File.Copy(AppSettings.LOCAL_UPDATE_DIR + "\\RemoteManagement.msc", Directory.GetCurrentDirectory() + "\\RemoteManagement.msc");
                 }
 
                 catch (Exception ex)

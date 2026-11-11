@@ -65,6 +65,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Source files and classes renamed to a standard (`Form1` -> `MainForm`,
+  `PCListDesigner` -> `ComputerListForm`, `ProcessConsole` ->
+  `ProcessReportsForm`, `ActiveDir` -> `ActiveDirectoryCache`...), one
+  `LiteDeploy` namespace, a standard header in every source file
+  (`docs/conventions.md`). Window titles, control names and the
+  `adcache.xml` format are unchanged.
 - Project converted to the SDK format, still on .NET Framework 4.8 (explicit
   file lists, existing `AssemblyInfo.cs`, same output folders). Build with
   `msbuild LiteDeploy.sln -restore`. A migration to .NET 10 was evaluated and

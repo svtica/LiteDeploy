@@ -1,4 +1,12 @@
-﻿using System;
+﻿// -----------------------------------------------------------------------------
+// LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
+// File:    PingAllForm.cs
+// Author:  LiteDeploy contributors
+// Date:    2025-05-30
+// Purpose: Pings every computer of the list in parallel and updates the
+//          selection.
+// -----------------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -12,7 +20,7 @@ using System.Net.NetworkInformation;
 
 namespace LiteDeploy
 {
-    public partial class PingAll : Form
+    public partial class PingAllForm : Form
     {
         private const int MAX_NUM_THREADS = 255;
         private const int PING_TIMEOUT = 1100;
@@ -31,7 +39,7 @@ namespace LiteDeploy
         private static int runningThreadCount;
         private static Object CounterLock = new Object();
 
-        public PingAll()
+        public PingAllForm()
         {
             InitializeComponent();
 
@@ -40,7 +48,7 @@ namespace LiteDeploy
             // used to tick every millisecond for the whole session).
             timer1.Enabled = false;
             timer1.Interval = 250;
-            VisibleChanged += PingAll_VisibleChanged;
+            VisibleChanged += PingAllForm_VisibleChanged;
 
             hosts = new List<String>();
             indexes = new List<int>();
@@ -49,11 +57,11 @@ namespace LiteDeploy
             firstInit = true;
         }
 
-        private void PingAll_Load(object sender, EventArgs e)
+        private void PingAllForm_Load(object sender, EventArgs e)
         {
         }
 
-        private void PingAll_VisibleChanged(object sender, EventArgs e)
+        private void PingAllForm_VisibleChanged(object sender, EventArgs e)
         {
             timer1.Enabled = Visible;
         }
@@ -427,12 +435,12 @@ namespace LiteDeploy
             }            
         }
 
-        private void PingAll_Resize(object sender, EventArgs e)
+        private void PingAllForm_Resize(object sender, EventArgs e)
         {
 
         }
 
-        private void PingAll_FormClosing(object sender, FormClosingEventArgs e)
+        private void PingAllForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (pingRunning)
             {
