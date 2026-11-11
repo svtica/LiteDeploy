@@ -29,17 +29,15 @@ static public class ActiveDir
     static public bool DCAvailable = false;
     static public DateTime LastUpdate;
     static private Thread UpdateThread = new Thread( new ThreadStart(BeginADDownload) );
-    static public bool Abort = false;
+    static public volatile bool Abort = false;
 
     static private ActiveDirCacheFile LoadCacheFile()
     {
-        ActiveDirCacheFile cache;
-        FileStream file = new FileStream(Directory.GetCurrentDirectory() + "\\adcache.xml", FileMode.Open, FileAccess.Read);
-        XmlSerializer serializer = new XmlSerializer(typeof(ActiveDirCacheFile));
-        cache = (ActiveDirCacheFile)serializer.Deserialize(file);
-        file.Close();
-
-        return cache;
+        using (FileStream file = new FileStream(Directory.GetCurrentDirectory() + "\\adcache.xml", FileMode.Open, FileAccess.Read))
+        {
+            XmlSerializer serializer = new XmlSerializer(typeof(ActiveDirCacheFile));
+            return (ActiveDirCacheFile)serializer.Deserialize(file);
+        }
     }
 
     static private void WriteCacheFile()
@@ -48,10 +46,11 @@ static public class ActiveDir
         cache.DomainName = Environment.UserDomainName;
         cache.Computers = Computers;
 
-        FileStream file = new FileStream(Directory.GetCurrentDirectory() + "\\adcache.xml", FileMode.Create, FileAccess.Write);
-        XmlSerializer serializer = new XmlSerializer(typeof(ActiveDirCacheFile));
-        serializer.Serialize(file, cache);
-        file.Close();
+        using (FileStream file = new FileStream(Directory.GetCurrentDirectory() + "\\adcache.xml", FileMode.Create, FileAccess.Write))
+        {
+            XmlSerializer serializer = new XmlSerializer(typeof(ActiveDirCacheFile));
+            serializer.Serialize(file, cache);
+        }
     }
 
     static public void GetComputers()
@@ -67,26 +66,32 @@ static public class ActiveDir
         try
         {
             // get root of the directory data tree on a directory server
-            DirectoryEntry dirEntry = new DirectoryEntry("LDAP://rootDSE");
-            // get the hostname of the directory server of your root (I'm assuming that's what you want)
-            string dnsHostname = dirEntry.Properties["dnsHostname"].Value.ToString();
+            string dnsHostname;
+
+            using (DirectoryEntry dirEntry = new DirectoryEntry("LDAP://rootDSE"))
+            {
+                // get the hostname of the directory server of your root (I'm assuming that's what you want)
+                dnsHostname = dirEntry.Properties["dnsHostname"].Value.ToString();
+            }
+
             IPAddress[] ipAddresses = Dns.GetHostAddresses(dnsHostname);
 
-            Ping pingSender = new Ping();
-            
-            for (int i = 0; i < ipAddresses.Count(); i++)
+            using (Ping pingSender = new Ping())
             {
-                try
+                for (int i = 0; i < ipAddresses.Count(); i++)
                 {
-                    PingReply reply = pingSender.Send(ipAddresses[i].ToString(), 1000);
-                    if ( reply.Status == IPStatus.Success )
+                    try
                     {
-                        DCAvailable = true;
-                        break;
+                        PingReply reply = pingSender.Send(ipAddresses[i].ToString(), 1000);
+                        if ( reply.Status == IPStatus.Success )
+                        {
+                            DCAvailable = true;
+                            break;
+                        }
                     }
-                }
 
-                catch {}
+                    catch {}
+                }
             }
         }
 
@@ -144,48 +149,40 @@ static public class ActiveDir
                 Computers.Clear();
                 OUs.Clear();
 
-                DirectoryEntry entry = new DirectoryEntry("LDAP://" + Environment.UserDomainName);
-                DirectorySearcher mySearcher = new DirectorySearcher(entry);
-                mySearcher.Asynchronous = true;
-                mySearcher.Filter = ("(objectClass=computer)");
-                mySearcher.SizeLimit = int.MaxValue;
-                mySearcher.PageSize = int.MaxValue;
-                SearchResultCollection FoundResults = mySearcher.FindAll();
-
-                foreach (SearchResult resEnt in FoundResults)
+                // SearchResultCollection must be disposed explicitly (it holds the
+                // unmanaged ADSI search handle), and so must every DirectoryEntry.
+                // The computer name is read from the search result itself instead
+                // of binding one DirectoryEntry per computer.
+                using (DirectoryEntry entry = new DirectoryEntry("LDAP://" + Environment.UserDomainName))
+                using (DirectorySearcher mySearcher = new DirectorySearcher(entry))
                 {
-                    if (Abort)
-                        return;
+                    mySearcher.Asynchronous = true;
+                    mySearcher.Filter = ("(objectClass=computer)");
+                    mySearcher.SizeLimit = int.MaxValue;
+                    mySearcher.PageSize = int.MaxValue;
+                    mySearcher.PropertiesToLoad.Add("name");
 
-                    DirectoryEntry p = resEnt.GetDirectoryEntry();
-                    String ComputerName = p.Name;
-
-                    if (ComputerName.StartsWith("CN="))
+                    using (SearchResultCollection FoundResults = mySearcher.FindAll())
                     {
-                        ComputerName = ComputerName.Remove(0, 3);
+                        foreach (SearchResult resEnt in FoundResults)
+                        {
+                            if (Abort)
+                                return;
+
+                            if (resEnt.Properties["name"].Count == 0)
+                                continue;
+
+                            String ComputerName = resEnt.Properties["name"][0].ToString();
+
+                            if (ComputerName.StartsWith("CN="))
+                            {
+                                ComputerName = ComputerName.Remove(0, 3);
+                            }
+
+                            Computers.Add(ComputerName);
+                        }
                     }
-                    
-                    /*
-                    OUs.Add(new List<string>());
-                    OUs[OUs.Count - 1].Add(ComputerName);
-                    while (true)
-                    {
-                        String pName = p.Parent.Name.Remove(0, 3);
-
-                        OUs[OUs.Count - 1].Add(pName);
-
-                        if (pName.ToUpper() == Environment.UserDomainName)
-                            break;
-
-                        p = p.Parent;
-                    }
-                    */
-
-                    Computers.Add(ComputerName);                    
                 }
-
-                mySearcher.Dispose();
-                entry.Dispose();
 
                 Computers.Sort();
 

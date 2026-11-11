@@ -1,0 +1,47 @@
+# .github/workflows/build-and-release.yml
+# GitHub Actions workflow for LiteDeploy (.NET Framework 4.8, C#, WinForms)
+#
+# Builds the solution on every push and pull request to main and uploads the
+# build output as the "LiteDeploy" artifact.
+
+name: Build and Release
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Build solution
+      shell: powershell
+      run: |
+        msbuild LiteDeploy.sln --% /p:Configuration=Release /p:Platform=x64 /v:minimal
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+    - name: Collect build output
+      shell: powershell
+      run: |
+        $buildPath = "bin\x64\Release"
+        New-Item -ItemType Directory -Force -Path publish | Out-Null
+        Copy-Item "$buildPath\LiteDeploy.exe", "$buildPath\LiteDeploy.exe.config", "$buildPath\RemoteManagement.msc" -Destination publish
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: LiteDeploy
+        path: publish/

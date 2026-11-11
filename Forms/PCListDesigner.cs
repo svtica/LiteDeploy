@@ -20,7 +20,7 @@ namespace LiteDeploy
     {
         CheckedListBox UseList;
         private bool searchInProgress = false;
-        private int runningPingThreads = 0;
+        private volatile int runningPingThreads = 0;
         private List<int> timeSinceLastChecked;
         private Object pingThreadCountLock;
         private bool abortPing = false;
@@ -28,6 +28,16 @@ namespace LiteDeploy
         public PCListDesigner()
         {
             InitializeComponent();
+
+            // Created at start-up and hidden most of the time: only refresh the
+            // status (title, counters) while the window is shown.
+            timer.Enabled = false;
+            VisibleChanged += PCListDesigner_VisibleChanged;
+        }
+
+        private void PCListDesigner_VisibleChanged(object sender, EventArgs e)
+        {
+            timer.Enabled = Visible;
         }
 
         private void PCListDesigner_Load(object sender, EventArgs e)
@@ -159,17 +169,16 @@ namespace LiteDeploy
 
         private void openListThreaded()
         {
-            FileStream file = new FileStream(openComputerList.FileName, FileMode.Open, FileAccess.Read);
-            StreamReader reader = new StreamReader(file);
-
-            BeginCandUpdate();
-            while (!reader.EndOfStream)
+            using (FileStream file = new FileStream(openComputerList.FileName, FileMode.Open, FileAccess.Read))
+            using (StreamReader reader = new StreamReader(file))
             {
-                AddCandidate(reader.ReadLine());
+                BeginCandUpdate();
+                while (!reader.EndOfStream)
+                {
+                    AddCandidate(reader.ReadLine());
+                }
+                EndCandUpdate();
             }
-            EndCandUpdate();
-            reader.Close();
-            file.Close();
 
             RunPing();
         }
@@ -267,14 +276,12 @@ namespace LiteDeploy
         {
             try
             {
-                FileStream file = new FileStream(saveFile.FileName, FileMode.Create);
-                StreamWriter writer = new StreamWriter(file);
-
-                for (int i = 0; i < selected.Items.Count; i++)
-                    writer.WriteLine(selected.Items[i].Text);
-
-                writer.Close();
-                file.Close();
+                using (FileStream file = new FileStream(saveFile.FileName, FileMode.Create))
+                using (StreamWriter writer = new StreamWriter(file))
+                {
+                    for (int i = 0; i < selected.Items.Count; i++)
+                        writer.WriteLine(selected.Items[i].Text);
+                }
             }
 
             catch
@@ -309,7 +316,16 @@ namespace LiteDeploy
         private void getSubnets()
         {
             LocalNetworkSettings.GetLocalSubnets();
-            subnetsToolStripMenuItem.DropDownItems.Clear();
+
+            // Clear() does not dispose the removed menu items (nor unhook their Click handler)
+            while (subnetsToolStripMenuItem.DropDownItems.Count > 0)
+            {
+                ToolStripItem old = subnetsToolStripMenuItem.DropDownItems[0];
+                old.Click -= subnetDropDownMenuItem_Click;
+                subnetsToolStripMenuItem.DropDownItems.RemoveAt(0);
+                old.Dispose();
+            }
+
             foreach (String s in LocalNetworkSettings.AvailableSubnets)
             {
                 subnetsToolStripMenuItem.DropDownItems.Add(s);
@@ -389,16 +405,22 @@ namespace LiteDeploy
         {
             EnableSearchKey(false);
 
-            DNSScanner dq = new DNSScanner(octet1.Value.ToString() + "." + octet2.Value.ToString() + "." + octet3.Value.ToString() + ".");
-            dq.ShowDialog();
-            
+            List<String> hosts;
+
+            // A form shown with ShowDialog is only hidden when closed: dispose it.
+            using (DNSScanner dq = new DNSScanner(octet1.Value.ToString() + "." + octet2.Value.ToString() + "." + octet3.Value.ToString() + "."))
+            {
+                dq.ShowDialog();
+                hosts = dq.GetHosts();
+            }
+
             BeginCandUpdate();
             ClearCandidates();
-            foreach (String h in dq.Hosts)
+            foreach (String h in hosts)
                 AddCandidate(h);
             EndCandUpdate();
 
-            searchResultsCount.Text = dq.Hosts.Count.ToString();
+            searchResultsCount.Text = hosts.Count.ToString();
 
             EnableSearchKey(true);
 
@@ -721,7 +743,7 @@ namespace LiteDeploy
         {
             while(runningPingThreads > 0)
             {
-                Thread.SpinWait(10);
+                Thread.Sleep(10);
             }
 
             for (int i = 0; i < candidates.Items.Count; i++)
@@ -732,7 +754,8 @@ namespace LiteDeploy
                 if (abortPing)
                     return;
 
-                while (runningPingThreads > 1024) ;
+                while (runningPingThreads > 1024)
+                    Thread.Sleep(10);
 
                 KeyValuePair<String,int> item = GetCandidate(i);
 
@@ -785,8 +808,12 @@ namespace LiteDeploy
                     runningPingThreads++;
                 }
 
-                Ping pingSender = new Ping();
-                PingReply reply = pingSender.Send(key, 100);
+                PingReply reply;
+
+                using (Ping pingSender = new Ping())
+                {
+                    reply = pingSender.Send(key, 100);
+                }
 
                 if (reply.Status == IPStatus.Success)
                 {
