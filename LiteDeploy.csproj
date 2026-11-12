@@ -261,8 +261,9 @@
   <ItemGroup>
     <!-- Components shared with LiteTask (LiteSuite.Common.dll ships next to LiteDeploy.exe) -->
     <ProjectReference Include="src\LiteSuite.Common\LiteSuite.Common.csproj" SetTargetFramework="TargetFramework=net48" />
-    <!-- LiteDeploy.Worker.exe is copied next to LiteDeploy.exe (PsExec copies it to the computers); not referenced -->
-    <ProjectReference Include="src\LiteDeploy.Worker\LiteDeploy.Worker.csproj" ReferenceOutputAssembly="false" OutputItemType="Content" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Built before LiteDeploy, not referenced: LiteDeploy.Worker.exe is copied next to LiteDeploy.exe
+         by the CopyWorker target below (PsExec copies it to the computers) -->
+    <ProjectReference Include="src\LiteDeploy.Worker\LiteDeploy.Worker.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="WindowsInstaller">
@@ -275,4 +276,8 @@
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
   </ItemGroup>
+  <Target Name="CopyWorker" AfterTargets="Build">
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\src\LiteDeploy.Worker\bin\$(Configuration)\LiteDeploy.Worker.exe"
+          DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  </Target>
 </Project>
