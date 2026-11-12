@@ -33,6 +33,8 @@ choose what to run and how, start the deployment, and follow each computer in th
 - Package list: *Package list...* searches the winget catalog
   (`%LOCALAPPDATA%\LiteDeploy\packages.txt`). State kept in
   `%LOCALAPPDATA%\LiteDeploy\updates.xml`.
+- **Update modules** for products winget does not cover: signed PowerShell scripts run as
+  SYSTEM by the worker ([docs/modules.md](docs/modules.md)).
 
 ### Process reports
 - One line per computer and event: started, unreachable, authentication failure, exit code.

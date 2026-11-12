@@ -37,6 +37,7 @@ namespace LiteDeploy
         public const string TypeUpgrade = "upgrade";   // outcome of one upgrade
         public const string TypeError = "error";       // the run could not be done (winget missing...)
         public const string TypeDone = "done";         // last line: summary
+        public const string TypeModule = "module";     // written by an update module (status, versions, message)
 
         // Package states
         public const string StatusUpToDate = "uptodate";

@@ -100,6 +100,8 @@ jobs:
         Copy-Item "$buildPath\lang" -Destination $publishPath -Recurse
         # Example package list of the software updates
         Copy-Item "$buildPath\updates" -Destination $publishPath -Recurse
+        # Update modules shipped with LiteDeploy (signed below with the package)
+        if (Test-Path "$buildPath\modules") { Copy-Item "$buildPath\modules" -Destination $publishPath -Recurse }
 
         Copy-Item "README.md", "LICENSE", "CHANGELOG.md" -Destination $publishPath -ErrorAction SilentlyContinue
         Get-ChildItem $publishPath | Format-Table Name, Length

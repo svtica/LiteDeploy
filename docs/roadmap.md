@@ -6,11 +6,8 @@ Ideas kept for later. Nothing here is planned for a given version.
 
 - **Software updates**, done: winget packages, selection of the rows to update, package list
   editor with winget search. Next steps:
-  - **update modules** (to be validated): beyond winget, a module updates one product (Adobe
-    Acrobat Reader patches, 1Password... as the MAJ-Logiciels tool does). Proposal: a module is
-    a PowerShell script signed with the LiteSuite certificate, copied to an administrators-only
-    folder of the computer (`ADMIN$`) and run by the worker as SYSTEM only when its signature
-    is valid; installers it downloads are checked with `LiteSuite.AuthenticodeVerifier`;
+  - update modules: done (docs/modules.md). Next: modules for Adobe Acrobat Reader and
+    1Password, from the MAJ-Logiciels tool;
   - a message to the logged-on user (`msg.exe`) before closing an application and after the
     update;
   - the network identity check of the MAJ-Logiciels panel (Kerberos) before connecting;

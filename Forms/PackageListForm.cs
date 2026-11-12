@@ -5,7 +5,8 @@
 // Date:    2026-11-12
 // Purpose: Editor of the software update package list: search the winget
 //          catalog (winget of this computer), add a result, set the processes
-//          to close and the label, remove a package.
+//          to close and the label, remove a package; add an update module
+//          (docs/modules.md).
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -31,6 +32,27 @@ namespace LiteDeploy
             Theme.Apply(this);
             foreach (UpdatePackage p in packages)
                 packagesGrid.Rows.Add(p.Id, String.Join(", ", p.Processes), p.Label ?? "");
+
+            foreach (UpdateModule m in UpdateModules.List())
+                modulesCombo.Items.Add(new ModuleItem { Module = m });
+            if (modulesCombo.Items.Count > 0) modulesCombo.SelectedIndex = 0;
+            addModuleButton.Enabled = modulesCombo.Items.Count > 0;
+        }
+
+        sealed class ModuleItem
+        {
+            public UpdateModule Module;
+            public override String ToString() { return Module.Label + "  (" + Module.Name + ")"; }
+        }
+
+        void addModuleButton_Click(object sender, EventArgs e)
+        {
+            ModuleItem item = modulesCombo.SelectedItem as ModuleItem;
+            UpdatePackage p = item == null ? null : item.Module.ToPackage();
+            if (p == null) return;
+            bool present = packagesGrid.Rows.Cast<DataGridViewRow>()
+                .Any(r => String.Equals(Convert.ToString(r.Cells[0].Value), p.Id, StringComparison.OrdinalIgnoreCase));
+            if (!present) packagesGrid.Rows.Add(p.Id, String.Join(", ", p.Processes), p.Label ?? "");
         }
 
         // ---- Search -----------------------------------------------------------------

@@ -29,6 +29,7 @@
   <ItemGroup>
     <!-- Entry point of LiteDeploy.Worker.exe (its other types are compiled into LiteDeploy too and reached through InternalsVisibleTo) -->
     <Compile Include="..\..\src\LiteDeploy.Worker\Program.cs" Link="Worker\Program.cs" />
+    <Compile Include="..\..\src\LiteDeploy.Worker\ModuleRunner.cs" Link="Worker\ModuleRunner.cs" />
   </ItemGroup>
 
   <ItemGroup>

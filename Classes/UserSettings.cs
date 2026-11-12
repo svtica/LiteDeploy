@@ -22,6 +22,8 @@ namespace LiteDeploy
         public bool AutoUpdateAdOnStartup = true;
         /// <summary>"auto" (Windows light or dark mode), "light" or "dark".</summary>
         public String Theme = LiteDeploy.Theme.Automatic;
+        /// <summary>Run update modules that are not signed (tests only: they run as SYSTEM on the computers).</summary>
+        public bool AllowUnsignedModules = false;
 
         static public String FilePath
         {

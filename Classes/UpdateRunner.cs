@@ -76,10 +76,16 @@ namespace LiteDeploy
         /// <summary>Worker arguments: the command, then one --package per package.</summary>
         public static String BuildWorkerArguments(String command, IEnumerable<UpdatePackage> packages)
         {
+            return BuildWorkerArguments(command, packages, false);
+        }
+
+        public static String BuildWorkerArguments(String command, IEnumerable<UpdatePackage> packages, bool allowUnsignedModules)
+        {
             StringBuilder sb = new StringBuilder(command);
             foreach (UpdatePackage p in packages)
                 sb.Append(" --package ").Append(PsExecCommandLine.QuoteArgument(p.ToArgument(), true));
             sb.Append(" --timeout ").Append(WingetTimeoutMinutes);
+            if (allowUnsignedModules && packages.Any(p => p.IsModule)) sb.Append(" --allow-unsigned-modules");
             return sb.ToString();
         }
 
@@ -93,7 +99,7 @@ namespace LiteDeploy
                 OverwriteExisting = true,
                 ConnectionTimeout = 20,
                 Executable = WorkerPath,
-                Arguments = BuildWorkerArguments(command, packages)
+                Arguments = BuildWorkerArguments(command, packages, UserSettings.Current.AllowUnsignedModules)
             };
         }
 
@@ -103,6 +109,9 @@ namespace LiteDeploy
             UpdateRunResult result = new UpdateRunResult();
             if (PsExecLocator.Path == null) { result.Failure = "PsExec not found"; return result; }
             if (!File.Exists(WorkerPath)) { result.Failure = WorkerFileName + " not found next to LiteDeploy.exe"; return result; }
+            // Update modules: copied first to the administrators-only folder of the computer
+            String copyError = UpdateModules.CopyTo(computer, packages);
+            if (copyError != null) { result.Failure = copyError; return result; }
 
             ProcessStartInfo psi = new ProcessStartInfo(PsExecLocator.Path, PsExecCommandBuilder.BuildArguments(BuildOptions(computer, command, packages)))
             {

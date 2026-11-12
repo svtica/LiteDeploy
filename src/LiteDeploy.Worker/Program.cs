@@ -7,7 +7,10 @@
 //          PsExec as SYSTEM on each target computer:
 //            LiteDeploy.Worker.exe scan    --package "Id|proc1,proc2|Label" ...
 //            LiteDeploy.Worker.exe upgrade --package "Id|proc1,proc2|Label" ...
-//                                  [--timeout <minutes per winget call>]
+//                                  [--timeout <minutes per winget call or module>]
+//                                  [--allow-unsigned-modules]
+//          A package "module:<Name>" is an update module, a PowerShell script
+//          copied by LiteDeploy to %windir%\LiteDeploy\modules (ModuleRunner).
 //          scan reports the installed and available version of each package;
 //          upgrade closes the package's processes and upgrades it when an
 //          upgrade is available. Results: WorkerProtocol lines on stdout.
@@ -35,7 +38,8 @@ namespace LiteDeploy.Worker
             string command;
             List<UpdatePackage> packages;
             int timeoutMinutes;
-            string usageError = ParseArguments(args, out command, out packages, out timeoutMinutes);
+            bool allowUnsigned;
+            string usageError = ParseArguments(args, out command, out packages, out timeoutMinutes, out allowUnsigned);
             if (usageError != null)
             {
                 Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeError, "message", usageError));
@@ -44,23 +48,30 @@ namespace LiteDeploy.Worker
             }
 
             string wingetPath = WingetClient.Locate();
+            bool needsWinget = packages.Any(p => !p.IsModule);
             Emit(WorkerProtocol.Format(
                 "type", "start",
                 "computer", Environment.MachineName,
                 "user", WindowsIdentity.GetCurrent().Name,
                 "command", command,
                 "winget", wingetPath ?? ""));
-            if (wingetPath == null)
+            if (wingetPath == null && needsWinget)
             {
                 Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeError, "message", "winget.exe not found (App Installer missing)"));
                 Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeDone, "failed", packages.Count.ToString()));
                 return ExitNoWinget;
             }
 
-            WingetClient winget = new WingetClient(wingetPath, TimeSpan.FromMinutes(timeoutMinutes));
+            WingetClient winget = wingetPath == null ? null : new WingetClient(wingetPath, TimeSpan.FromMinutes(timeoutMinutes));
             int failed = 0, upgraded = 0;
             foreach (UpdatePackage package in packages)
             {
+                if (package.IsModule)
+                {
+                    RunModule(package, command, allowUnsigned, TimeSpan.FromMinutes(timeoutMinutes), ref failed, ref upgraded);
+                    continue;
+                }
+
                 PackageState state = Check(winget, package);
                 Emit(state.ToMessage());
                 if (state.Status == WorkerProtocol.StatusError) { failed++; continue; }
@@ -97,6 +108,49 @@ namespace LiteDeploy.Worker
 
             Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeDone, "upgraded", upgraded.ToString(), "failed", failed.ToString()));
             return Math.Min(failed, 99);
+        }
+
+        // Update module: Check, then (upgrade) Update when it reports an update, then Check again
+        static void RunModule(UpdatePackage module, string command, bool allowUnsigned, TimeSpan timeout, ref int failed, ref int upgraded)
+        {
+            ModuleResult check = ModuleRunner.Run(module, "Check", allowUnsigned, timeout);
+            Emit(ModuleMessage(module, check));
+            if (check.Status == WorkerProtocol.StatusError) { failed++; return; }
+            if (command != "upgrade") return;
+
+            if (check.Status != WorkerProtocol.StatusOutdated)
+            {
+                Emit(UpgradeMessage(module, WorkerProtocol.ResultSkipped, null,
+                    check.Status == WorkerProtocol.StatusNotInstalled ? "Not installed" : "Already up to date"));
+                return;
+            }
+
+            string closeError = CloseProcesses(module);
+            if (closeError != null)
+            {
+                failed++;
+                Emit(UpgradeMessage(module, WorkerProtocol.ResultFailed, null, closeError));
+                return;
+            }
+
+            ModuleResult update = ModuleRunner.Run(module, "Update", allowUnsigned, timeout);
+            bool ok = update.Status != WorkerProtocol.StatusError;
+            if (ok) upgraded++; else failed++;
+            Emit(UpgradeMessage(module, ok ? WorkerProtocol.ResultUpgraded : WorkerProtocol.ResultFailed,
+                update.ExitCode.ToString(), update.Message ?? (ok ? "OK" : "Failed")));
+
+            Emit(ModuleMessage(module, ModuleRunner.Run(module, "Check", allowUnsigned, timeout)));
+        }
+
+        static string ModuleMessage(UpdatePackage module, ModuleResult r)
+        {
+            return WorkerProtocol.Format(
+                "type", WorkerProtocol.TypePackage,
+                "id", module.Id,
+                "status", r.Status,
+                "installed", r.Installed,
+                "available", r.Available,
+                "message", r.Message);
         }
 
         sealed class PackageState
@@ -187,11 +241,12 @@ namespace LiteDeploy.Worker
             Console.Out.Flush();
         }
 
-        internal static string ParseArguments(string[] args, out string command, out List<UpdatePackage> packages, out int timeoutMinutes)
+        internal static string ParseArguments(string[] args, out string command, out List<UpdatePackage> packages, out int timeoutMinutes, out bool allowUnsigned)
         {
             command = null;
             packages = new List<UpdatePackage>();
             timeoutMinutes = 15;
+            allowUnsigned = false;
             if (args == null || args.Length == 0) return "No command";
 
             command = args[0].ToLowerInvariant();
@@ -205,6 +260,10 @@ namespace LiteDeploy.Worker
                     UpdatePackage p = UpdatePackage.Parse(args[++i]);
                     if (p == null) return "Invalid package: " + args[i];
                     if (!packages.Any(x => string.Equals(x.Id, p.Id, StringComparison.OrdinalIgnoreCase))) packages.Add(p);
+                }
+                else if (a == "--allow-unsigned-modules")
+                {
+                    allowUnsigned = true;
                 }
                 else if (a == "--timeout" && i + 1 < args.Length)
                 {
