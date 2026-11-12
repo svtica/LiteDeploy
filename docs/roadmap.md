@@ -4,10 +4,13 @@ Ideas kept for later. Nothing here is planned for a given version.
 
 ## Next
 
-- **Software updates** (in progress): `LiteDeploy.Worker.exe`, copied and run as SYSTEM by PsExec,
-  updates the software of the checked computers (winget, signed Adobe and 1Password installers).
-  The *Software updates* view shows each computer's state, kept in a local file
-  (`%LOCALAPPDATA%\LiteDeploy`) that is rewritten only when a value changes.
+- **Software updates**, first version done (winget packages). Next steps:
+  - Adobe Acrobat Reader patches and 1Password, installers checked with
+    `LiteSuite.AuthenticodeVerifier` before they run (as the MAJ-Logiciels tool does);
+  - a message to the logged-on user (`msg.exe`) before closing an application and after the
+    update;
+  - the network identity check of the MAJ-Logiciels panel (Kerberos) before connecting;
+  - credentials other than the current user.
 
 ## Later
 

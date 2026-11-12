@@ -43,3 +43,6 @@ using System.Resources;
 [assembly: AssemblyVersion("1.0.0.1")]
 [assembly: AssemblyFileVersion("1.0.0.1")]
 [assembly: NeutralResourcesLanguageAttribute("en-US")]
+
+// Unit tests reach the internal types (worker protocol, package list)
+[assembly: InternalsVisibleTo("LiteDeploy.Tests")]

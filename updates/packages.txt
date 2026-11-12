@@ -1,0 +1,13 @@
+# LiteDeploy - software updates: winget packages to keep up to date.
+# This is the example list shipped with LiteDeploy. "Package list..." in the
+# Software Updates window copies it to %LOCALAPPDATA%\LiteDeploy\packages.txt,
+# the list LiteDeploy uses from then on.
+#
+# One package per line:  winget Id | processes to close | label
+#  - Id: exact winget package Id (winget search <name>).
+#  - Processes (names without .exe, comma-separated): closed without warning
+#    before the package is upgraded.
+#  - Label: name shown in LiteDeploy (default: the Id).
+7zip.7zip | 7zFM, 7zG | 7-Zip
+Notepad++.Notepad++ | notepad++ | Notepad++
+VideoLAN.VLC | vlc | VLC

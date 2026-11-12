@@ -75,6 +75,7 @@ namespace LiteDeploy
             this.toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
             this.pingAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pingAllCheckedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.softwareUpdatesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.restartToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.shutdownToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -469,6 +470,7 @@ namespace LiteDeploy
             this.toolStripSeparator4,
             this.pingAllToolStripMenuItem,
             this.pingAllCheckedToolStripMenuItem,
+            this.softwareUpdatesToolStripMenuItem,
             this.toolStripSeparator3,
             this.restartToolStripMenuItem,
             this.shutdownToolStripMenuItem});
@@ -501,6 +503,13 @@ namespace LiteDeploy
             this.pingAllCheckedToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
             this.pingAllCheckedToolStripMenuItem.Text = "Ping Checked";
             this.pingAllCheckedToolStripMenuItem.Click += new System.EventHandler(this.pingAllCheckedToolStripMenuItem_Click);
+            // 
+            // softwareUpdatesToolStripMenuItem
+            // 
+            this.softwareUpdatesToolStripMenuItem.Name = "softwareUpdatesToolStripMenuItem";
+            this.softwareUpdatesToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
+            this.softwareUpdatesToolStripMenuItem.Text = "Software Updates...";
+            this.softwareUpdatesToolStripMenuItem.Click += new System.EventHandler(this.softwareUpdatesToolStripMenuItem_Click);
             // 
             // toolStripSeparator3
             // 
@@ -944,6 +953,7 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem pingAllToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem pingAllCheckedToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem softwareUpdatesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem restartToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem shutdownToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem mangementConsoleToolStripMenuItem;

@@ -40,6 +40,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Software updates** (*Computers > Software Updates...*), for the checked computers:
+  - `LiteDeploy.Worker.exe`, copied and run as SYSTEM by PsExec (`-s -c -f`): no share, no
+    scheduled task and no password stored on the computers. It checks the installed and
+    available version of each winget package of the list, and on *Update* closes the
+    package's processes and upgrades it. winget is found in the App Installer folder, as in
+    the MAJ-Logiciels tool of Patrick Bédard, whose package list format it reuses.
+  - Package list: `updates/packages.txt` (example shipped with LiteDeploy), copied to
+    `%LOCALAPPDATA%\LiteDeploy\packages.txt` by *Package list...*.
+  - State of each computer in `%LOCALAPPDATA%\LiteDeploy\updates.xml`: read when the window
+    opens, written only when a version, a status, a result or an error changed.
+  - Four computers at a time; *Stop* ends the running PsExec.
+
 - `LiteSuite.Common.dll`, components shared with LiteTask (built for .NET Framework 4.8 and
   .NET 10, tested on both): PsExec command line, Authenticode verification and update signature
   policy, Mark of the Web removal, process failure messages, parameter parsing. Ported from

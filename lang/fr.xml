@@ -142,6 +142,9 @@
   <translation key="MainForm.optionsToolStripMenuItem.Text">Débogage</translation>
   <translation key="MainForm.optionsToolStripMenuItem1.Text">Options</translation>
   <translation key="MainForm.pingAllCheckedToolStripMenuItem.Text">Ping des ordinateurs cochés</translation>
+  <translation key="MainForm.softwareUpdatesToolStripMenuItem.Text">Mises à jour logicielles...</translation>
+  <translation key="MainForm.NoComputerChecked">Cochez d'abord les ordinateurs à traiter.</translation>
+  <translation key="MainForm.SoftwareUpdates.Title">Mises à jour logicielles</translation>
   <translation key="MainForm.pingAllToolStripMenuItem.Text">Ping</translation>
   <translation key="MainForm.pingHost.Text">Ping</translation>
   <translation key="MainForm.priority.Items.0">Basse</translation>
@@ -306,4 +309,34 @@
   <translation key="WorkingDirectoryForm.Text">Dossier de travail</translation>
   <translation key="WorkingDirectoryForm.label1.Text">Entrez le dossier de travail sur l'ordinateur distant.</translation>
   <translation key="WorkingDirectoryForm.okBtn.Text">OK</translation>
+  <!-- SoftwareUpdatesForm -->
+  <translation key="SoftwareUpdatesForm.Text">Lite Deploy - Mises à jour logicielles</translation>
+  <translation key="SoftwareUpdatesForm.checkButton.Text">Vérifier</translation>
+  <translation key="SoftwareUpdatesForm.checkButton.ToolTipText">Vérifier les versions installées et disponibles sur les ordinateurs cochés</translation>
+  <translation key="SoftwareUpdatesForm.updateButton.Text">Mettre à jour</translation>
+  <translation key="SoftwareUpdatesForm.updateButton.ToolTipText">Mettre à jour les paquets désuets sur les ordinateurs cochés</translation>
+  <translation key="SoftwareUpdatesForm.stopButton.Text">Arrêter</translation>
+  <translation key="SoftwareUpdatesForm.editPackagesButton.Text">Liste des paquets...</translation>
+  <translation key="SoftwareUpdatesForm.editPackagesButton.ToolTipText">Modifier la liste des paquets winget à garder à jour</translation>
+  <translation key="SoftwareUpdatesForm.computerColumn.Text">Ordinateur</translation>
+  <translation key="SoftwareUpdatesForm.packageColumn.Text">Paquet</translation>
+  <translation key="SoftwareUpdatesForm.installedColumn.Text">Installée</translation>
+  <translation key="SoftwareUpdatesForm.availableColumn.Text">Disponible</translation>
+  <translation key="SoftwareUpdatesForm.statusColumn.Text">État</translation>
+  <translation key="SoftwareUpdatesForm.resultColumn.Text">Dernier résultat</translation>
+  <translation key="SoftwareUpdatesForm.changedColumn.Text">Modifié</translation>
+  <translation key="SoftwareUpdatesForm.NotChecked">Non vérifié</translation>
+  <translation key="SoftwareUpdatesForm.Unreachable">Erreur</translation>
+  <translation key="SoftwareUpdatesForm.UpToDate">À jour</translation>
+  <translation key="SoftwareUpdatesForm.Outdated">Mise à jour disponible</translation>
+  <translation key="SoftwareUpdatesForm.NotInstalled">Non installé</translation>
+  <translation key="SoftwareUpdatesForm.Error">Erreur</translation>
+  <translation key="SoftwareUpdatesForm.Upgraded">Mis à jour {0}</translation>
+  <translation key="SoftwareUpdatesForm.Failed">Échec {0} : {1}</translation>
+  <translation key="SoftwareUpdatesForm.NoPackages">La liste des paquets est vide : cliquez sur « Liste des paquets... ».</translation>
+  <translation key="SoftwareUpdatesForm.Idle">{0} ordinateur(s), {1} paquet(s).</translation>
+  <translation key="SoftwareUpdatesForm.ConfirmUpdate">Mettre à jour les paquets désuets sur {0} ordinateur(s) ? Leurs applications seront fermées sans avertissement avant la mise à jour.</translation>
+  <translation key="SoftwareUpdatesForm.MissingTools">PsExec ou LiteDeploy.Worker.exe est absent à côté de LiteDeploy.exe.</translation>
+  <translation key="SoftwareUpdatesForm.Running">En cours : {0} ordinateur(s) sur {1} terminé(s).</translation>
+  <translation key="SoftwareUpdatesForm.ConfirmClose">Un traitement est en cours. L'arrêter et fermer ?</translation>
 </translations>
