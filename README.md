@@ -2,35 +2,37 @@
 
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-green.svg)](LICENSE)
 
-**Lightweight network deployment tool for managing remote Windows systems with credential management and file operations.**
+**Lightweight deployment tool: runs a program, a command or an MSI package on many Windows computers at once through PsExec.**
 
-LiteDeploy is a Windows Forms application designed for system administrators to manage multiple remote computers, deploy files, execute commands, and perform system maintenance tasks across networked environments.
+LiteDeploy is a Windows Forms application for system administrators. Build a list of computers,
+choose what to run and how, start the deployment, and follow each computer in the process reports.
 
 ## Features
 
-### Remote System Management
-- **Multi-Computer Support**: Manage multiple remote Windows systems from a single interface
-- **Credential Management**: Secure storage and management of authentication credentials
-- **Connection Testing**: Verify network connectivity and authentication before operations
-- **Session Management**: Maintain persistent connections to remote systems
+### Computer list
+- Add computers by name or IP address, or from an **Active Directory** search (cached locally,
+  refreshed on demand or at start-up), a **DNS scan** of a subnet or the **local subnets**.
+- Save and open lists; check the computers to deploy to.
+- **Ping** all or the checked computers before deploying.
 
-### File Operations
-- **File Deployment**: Copy files and folders to remote systems
-- **Batch Operations**: Deploy to multiple targets simultaneously
-- **Verification**: Checksum verification to ensure file integrity
-- **Progress Monitoring**: Real-time progress tracking for file operations
+### Deployment (PsExec)
+- Run an executable with arguments, or a command, on every checked computer.
+- **MSI packages**: product name and version read from the package, `msiexec` options and logging.
+- PsExec options: copy the executable, overwrite, working directory, connection time-out,
+  interactive session, run priority, don't wait for each process.
+- Identity: the current user, other **credentials** (password masked in the console and logs),
+  or the **SYSTEM** account.
+- Ready-made commands: restart, shut down.
+- Stop the current PsExec or all processing.
 
-### Remote Execution
-- **Command Execution**: Run commands and scripts on remote systems
-- **PowerShell Support**: Execute PowerShell scripts remotely
-- **Batch Processing**: Execute commands across multiple systems
-- **Output Capture**: Capture and display command output and errors
+### Process reports
+- One line per computer and event: started, unreachable, authentication failure, exit code.
+- Right-click on a computer: ping, remote desktop, management console, administrative share
+  (`C$`, public desktop, public start menu, public folders).
 
-### System Information
-- **Remote System Details**: Gather hardware and software information
-- **Service Management**: View and control Windows services remotely
-- **Process Monitoring**: Monitor running processes on remote systems
-- **Performance Metrics**: Basic system performance information
+### Interface
+- English by default, **French** offered (*App > Options*, or the Windows display language).
+- Options saved per user in `%LOCALAPPDATA%\LiteDeploy\settings.xml`.
 
 ## Installation
 
@@ -47,45 +49,23 @@ LiteDeploy is a Windows Forms application designed for system administrators to 
 
 ## Usage
 
-### Initial Setup
-1. **Add Computers**: Configure target systems in the computer list
-2. **Credentials**: Set up authentication credentials for remote access
-3. **Test Connections**: Verify connectivity before performing operations
-
-### File Deployment
-1. Select source files or folders
-2. Choose target computers from the list
-3. Specify destination paths on remote systems
-4. Monitor deployment progress and verify completion
-
-### Remote Commands
-1. Select target computers
-2. Enter commands or browse for script files
-3. Execute and monitor output from remote systems
-4. Review results and error messages
-
-## Configuration
-
-### Computer Management
-- Add computers by hostname or IP address
-- Group computers for easier management
-- Test connectivity and authentication
-
-### Credential Storage
-- Store credentials securely for different systems
-- Support for domain and local accounts
-- Credential validation before use
+1. **Computers > Edit List**: add the computers (manually, Active Directory, DNS scan), then
+   **Use List**.
+2. Choose the file to execute (or an MSI package) and its arguments, or type a command.
+3. Set the PsExec options and the identity (current user, credentials or SYSTEM).
+4. **Start Deploy**, then follow each computer in **Process Reports**.
 
 ## Technology Stack
 
 - **Platform**: .NET Framework 4.8 (Windows Forms), SDK-style project
 - **Language**: C#
 - **Remote execution**: Sysinternals PsExec; Active Directory (LDAP), ICMP ping, DNS
-- **Security**: Windows Credential Manager integration
+- **Shared components**: `LiteSuite.Common.dll` (with LiteTask), see [src/LiteSuite.Common](src/LiteSuite.Common/README.md)
 
 ## Development Status
 
-This project is **Work in Progress** and **not actively developed**. The core functionality is operational but some features may be incomplete. Moderate contributions are accepted for improvements and bug fixes.
+Actively maintained. Next: native software updates (see [docs/roadmap.md](docs/roadmap.md)).
+Conventions: [docs/conventions.md](docs/conventions.md).
 
 ## System Requirements
 
@@ -97,15 +77,18 @@ This project is **Work in Progress** and **not actively developed**. The core fu
 
 ## Security Considerations
 
-- Ensure proper network security when using remote management features
-- Use appropriate authentication methods for your environment
-- Consider firewall and group policy impacts on remote operations
-- Store credentials securely and follow organizational security policies
+- PsExec receives the password on its command line (it has no other way): a process command
+  line is readable by the same user and by local administrators. Prefer the current user or
+  SYSTEM when possible.
+- Credentials typed in LiteDeploy are not saved.
+- The Active Directory cache (`adcache.xml`) and computer lists stay on the workstation: never
+  commit them (this repository is public).
 
 ## Building and releasing
 
 - Build: `msbuild LiteDeploy.sln -restore /p:Configuration=Release /p:Platform=x64`
-  (output in `bin\x64\Release\`).
+  (output in `bin\x64\Release\`; the .NET 10 SDK is needed for `LiteSuite.Common`).
+- Tests: `tests/LiteDeploy.Tests` and `tests/LiteSuite.Common.Tests` (MSTest), run by the CI.
 - Release: *Actions > Release > Run workflow* (or `bump-version.ps1` on `main`).
   The version is bumped, tagged `v<Major.Minor.Build>`, built, signed when the
   `SIGNING_CERTIFICATE` / `CERTIFICATE_PASSWORD` secrets exist, and published as
@@ -117,9 +100,6 @@ This project is **Work in Progress** and **not actively developed**. The core fu
 
 This software is released under [The Unlicense](LICENSE) - public domain.
 
----
-
-*LiteDeploy simplifies remote Windows system management for administrators and IT professionals.*
 
 ## 🌟 Part of LiteSuite
 
