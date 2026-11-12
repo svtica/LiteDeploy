@@ -211,5 +211,27 @@ namespace LiteDeploy
             if (tool == null || tool.Path == null) return;
             using (Process.Start(new ProcessStartInfo(tool.Path) { UseShellExecute = true, WorkingDirectory = System.IO.Path.GetDirectoryName(tool.Path) })) { }
         }
+
+        /// <summary>A computer name or address LitePM accepts after -REMOTE: letters, digits, . - _ only.</summary>
+        static public bool IsValidComputerName(String computer)
+        {
+            if (String.IsNullOrWhiteSpace(computer) || computer.Length > 253) return false;
+            return computer.All(c => Char.IsLetterOrDigit(c) || c == '.' || c == '-' || c == '_');
+        }
+
+        /// <summary>Arguments that open LitePM connected to a computer through WMI, as the current
+        /// user (LitePM 'Unreleased' or later). A second LitePM may run next to a local one.</summary>
+        static public String LitePMRemoteArguments(String computer)
+        {
+            if (!IsValidComputerName(computer)) throw new ArgumentException(Localization.F("ToolManager.BadComputer", "Invalid computer name: {0}", computer));
+            return "-DONOTCHECKPREVINSTANCE -REMOTE " + computer;
+        }
+
+        /// <summary>Starts LitePM connected to a remote computer.</summary>
+        static public void OpenLitePM(ToolInfo tool, String computer)
+        {
+            if (tool == null || tool.Path == null) return;
+            using (Process.Start(new ProcessStartInfo(tool.Path, LitePMRemoteArguments(computer)) { UseShellExecute = true, WorkingDirectory = System.IO.Path.GetDirectoryName(tool.Path) })) { }
+        }
     }
 }

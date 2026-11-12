@@ -46,6 +46,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- *Software updates*, right-click a computer > *Open in LitePM*: LitePM opens connected to that
+  computer through WMI, as the current user (`LitePM.exe -DONOTCHECKPREVINSTANCE -REMOTE
+  <computer>`, needs a LitePM with `-REMOTE`). Only plain computer names or addresses are passed.
+
 - **Credentials** (*Tools > Credentials*): accounts stored in the Windows Credential Manager of
   the user (`LiteSuite.CredentialStore`, shared with LiteTask). The software updates, the
   scheduler, the computer card and the copies to `ADMIN$` use the account chosen in *Options*

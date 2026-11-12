@@ -32,6 +32,7 @@ namespace LiteDeploy
             this.cardItem = new System.Windows.Forms.ToolStripMenuItem();
             this.wakeItem = new System.Windows.Forms.ToolStripMenuItem();
             this.processesItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.litePMItem = new System.Windows.Forms.ToolStripMenuItem();
             this.logsItem = new System.Windows.Forms.ToolStripMenuItem();
             this.checkButton = new System.Windows.Forms.ToolStripButton();
             this.selectOutdatedButton = new System.Windows.Forms.ToolStripButton();
@@ -171,6 +172,7 @@ namespace LiteDeploy
             this.menuSeparator,
             this.cardItem,
             this.processesItem,
+            this.litePMItem,
             this.logsItem,
             this.wakeItem});
             this.rowMenu.Name = "rowMenu";
@@ -194,6 +196,9 @@ namespace LiteDeploy
             this.processesItem.Name = "processesItem";
             this.processesItem.Text = "Processes and handles...";
             this.processesItem.Click += new System.EventHandler(this.processesItem_Click);
+            this.litePMItem.Name = "litePMItem";
+            this.litePMItem.Text = "Open in LitePM";
+            this.litePMItem.Click += new System.EventHandler(this.litePMItem_Click);
             this.logsItem.Name = "logsItem";
             this.logsItem.Text = "Get the logs";
             this.logsItem.Click += new System.EventHandler(this.logsItem_Click);
@@ -250,6 +255,7 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripMenuItem cardItem;
         private System.Windows.Forms.ToolStripMenuItem wakeItem;
         private System.Windows.Forms.ToolStripMenuItem processesItem;
+        private System.Windows.Forms.ToolStripMenuItem litePMItem;
         private System.Windows.Forms.ToolStripMenuItem logsItem;
         private System.Windows.Forms.ToolStripButton checkButton;
         private System.Windows.Forms.ToolStripButton selectOutdatedButton;

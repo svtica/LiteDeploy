@@ -483,7 +483,7 @@ namespace LiteDeploy
             pauseItem.Enabled = selected.Any(c => !IsPaused(c));
             resumeItem.Enabled = selected.Any(IsPaused);
             nightOnlyItem.Checked = selected.All(IsNightOnly);
-            cardItem.Enabled = processesItem.Enabled = logsItem.Enabled = selected.Count == 1;
+            cardItem.Enabled = processesItem.Enabled = litePMItem.Enabled = logsItem.Enabled = selected.Count == 1;
             lock (storeLock) wakeItem.Enabled = selected.Any(c => { ComputerUpdateState s = store.Find(c); return s != null && !String.IsNullOrEmpty(s.Macs); });
         }
 
@@ -532,6 +532,21 @@ namespace LiteDeploy
             String computer = SelectedComputers().FirstOrDefault();
             if (computer == null) return;
             using (RemoteProcessesForm form = new RemoteProcessesForm(computer)) form.ShowDialog(this);
+        }
+
+        // LitePM connected to the computer through WMI, as the current user
+        void litePMItem_Click(object sender, EventArgs e)
+        {
+            String computer = SelectedComputers().FirstOrDefault();
+            if (computer == null) return;
+            ToolInfo litePM = ToolManager.List().FirstOrDefault(t => t.Id == ToolManager.LitePMId);
+            if (litePM == null || litePM.Path == null)
+            {
+                MessageBox.Show(this, Localization.T("MainForm.LitePMMissing", "LitePM is not installed: install it in Tools > Manage Tools."), "LitePM", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            try { ToolManager.OpenLitePM(litePM, computer); }
+            catch (Exception ex) { MessageBox.Show(this, ex.Message, "LitePM", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
 
         void logsItem_Click(object sender, EventArgs e)
