@@ -51,8 +51,10 @@ choose what to run and how, start the deployment, and follow each computer in th
   provided by LiteTask.
 - **Manually**: download
   [LiteDeploy.zip](https://github.com/svtica/LiteDeploy/releases/latest/download/LiteDeploy.zip),
-  extract it, put `PsExec.exe` ([Sysinternals](https://learn.microsoft.com/sysinternals/downloads/psexec),
-  not redistributed here) next to `LiteDeploy.exe` and run `LiteDeploy.exe`.
+  extract it and run `LiteDeploy.exe`. PsExec ([Sysinternals](https://learn.microsoft.com/sysinternals/downloads/psexec))
+  is not redistributed here: when it is missing, LiteDeploy offers to download `PsExec64.exe`
+  from live.sysinternals.com and keeps it only if it is signed by Microsoft. You can also put
+  `PsExec.exe` next to `LiteDeploy.exe` yourself.
 - Administrative privileges on the target computers are required for most
   remote operations.
 

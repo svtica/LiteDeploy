@@ -40,6 +40,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- PsExec missing at start-up: LiteDeploy offers to download `PsExec64.exe` from
+  live.sysinternals.com instead of only showing an error. The file is kept only when its
+  signature is valid, trusted by Windows and from Microsoft Corporation; it is saved next to
+  `LiteDeploy.exe`, or in `%LOCALAPPDATA%\LiteDeploy\tools` when that folder is read-only.
+- The Mark of the Web is removed from PsExec and `LiteDeploy.Worker.exe` at start-up (files
+  copied from a browser download), so Windows does not block them.
+
 - **Software updates** (*Computers > Software Updates...*), for the checked computers:
   - `LiteDeploy.Worker.exe`, copied and run as SYSTEM by PsExec (`-s -c -f`): no share, no
     scheduled task and no password stored on the computers. It checks the installed and

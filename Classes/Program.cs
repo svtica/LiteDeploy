@@ -3,7 +3,8 @@
 // File:    Program.cs
 // Author:  LiteDeploy contributors
 // Date:    2025-05-30
-// Purpose: Entry point: working folder, PsExec lookup, main window.
+// Purpose: Entry point: working folder, PsExec lookup (download offered when
+//          missing), main window.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -30,7 +31,7 @@ namespace LiteDeploy
             UserSettings.Load();
             Localization.Initialize(UserSettings.Current.Language);
 
-            if (PsExecLocator.Find(AppDomain.CurrentDomain.BaseDirectory) == null)
+            if (PsExecLocator.Find(AppDomain.CurrentDomain.BaseDirectory) == null && !OfferPsExecDownload())
             {
                 MessageBox.Show(Localization.T("Program.PsExecMissing",
                                     "PsExec is missing. The application cannot continue.\n\n" +
@@ -41,6 +42,11 @@ namespace LiteDeploy
 
             else
             {
+                // A PsExec or worker copied from a browser download carries the Mark of the Web: the
+                // Windows security prompt would block the deployments, so it is removed (like Unblock-File)
+                LiteSuite.MarkOfTheWeb.RemoveFromFile(PsExecLocator.Path);
+                LiteSuite.MarkOfTheWeb.RemoveFromFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, UpdateRunner.WorkerFileName));
+
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
 #if DEBUG
@@ -57,6 +63,34 @@ namespace LiteDeploy
                 }
 #endif
             }
+        }
+
+        // PsExec missing: offer to download it from live.sysinternals.com. True when it is now available.
+        static bool OfferPsExecDownload()
+        {
+            if (MessageBox.Show(Localization.T("Program.PsExecDownload",
+                                    "PsExec (Microsoft Sysinternals) is missing.\n\n" +
+                                    "Download PsExec64.exe from live.sysinternals.com now? Its signature is checked " +
+                                    "(Microsoft Corporation) before it is used. PsExec is subject to the Sysinternals license terms."),
+                                Localization.T("Program.PsExecMissing.Title", "File Missing"), MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+                return false;
+
+            try
+            {
+                Cursor.Current = Cursors.WaitCursor;
+                PsExecDownloader.Download(AppDomain.CurrentDomain.BaseDirectory);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(Localization.F("Program.PsExecDownloadFailed", "PsExec could not be downloaded: {0}", e.Message),
+                                Localization.T("Program.PsExecMissing.Title", "File Missing"), MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+            finally
+            {
+                Cursor.Current = Cursors.Default;
+            }
+            return PsExecLocator.Find(AppDomain.CurrentDomain.BaseDirectory) != null;
         }
     }
 }
