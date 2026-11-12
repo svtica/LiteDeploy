@@ -290,6 +290,9 @@
   <!-- Program -->
   <translation key="Program.PsExecMissing">PsExec est introuvable. L'application ne peut pas continuer.&#10;&#10;Placez PsExec.exe (Sysinternals) à côté de LiteDeploy.exe, ou installez LiteDeploy depuis LiteTask (menu Outils), qui fournit PsExec64.exe dans son dossier d'outils.</translation>
   <translation key="Program.PsExecMissing.Title">Fichier manquant</translation>
+  <translation key="Program.PsExecDownload">PsExec (Microsoft Sysinternals) est introuvable.&#10;&#10;Télécharger PsExec64.exe depuis live.sysinternals.com maintenant ? Sa signature (Microsoft Corporation) est vérifiée avant toute utilisation. PsExec est soumis aux conditions de licence de Sysinternals.</translation>
+  <translation key="Program.PsExecDownloadFailed">Impossible de télécharger PsExec : {0}</translation>
+  <translation key="PsExecDownloader.BadSignature">Le fichier téléchargé n'est pas signé par Microsoft ({0}). Il a été supprimé.</translation>
   <!-- RemoteActions -->
   <translation key="RemoteActions.HostUnavailable">{0} n'est pas disponible. Réessayez plus tard.</translation>
   <translation key="RemoteActions.HostUnavailable.Title">Ordinateur non disponible</translation>

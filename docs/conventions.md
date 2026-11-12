@@ -87,4 +87,5 @@ Code that LiteTask needs too goes to `src/LiteSuite.Common` (namespace `LiteSuit
 
 PsExec (Sysinternals) is the remote execution engine, as in LiteTask. It is
 never redistributed: LiteDeploy uses the copy next to `LiteDeploy.exe` or the
-`PsExec64.exe` that LiteTask extracts to its tools folder.
+`PsExec64.exe` that LiteTask extracts to its tools folder; when there is none, it offers to
+download `PsExec64.exe` from live.sysinternals.com (kept only with a valid Microsoft signature).

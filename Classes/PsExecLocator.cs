@@ -8,6 +8,7 @@
 // -----------------------------------------------------------------------------
 using System;
 using System.IO;
+using System.Linq;
 
 namespace LiteDeploy
 {
@@ -17,7 +18,9 @@ namespace LiteDeploy
     /// - the LiteDeploy folder (PsExec.exe, then PsExec64.exe);
     /// - the parent folder (PsExec64.exe, then PsExec.exe): when LiteDeploy is
     ///   installed by LiteTask (Tools menu) it lives in LiteTaskData\tools\LiteDeploy\
-    ///   and LiteTask extracts its own PsExec64.exe to LiteTaskData\tools\.
+    ///   and LiteTask extracts its own PsExec64.exe to LiteTaskData\tools\;
+    /// - %LOCALAPPDATA%\LiteDeploy\tools\PsExec64.exe, where PsExecDownloader saves it
+    ///   when the LiteDeploy folder is read-only.
     /// </summary>
     static public class PsExecLocator
     {
@@ -41,6 +44,9 @@ namespace LiteDeploy
                 ? new String[] { System.IO.Path.Combine(appDir, "PsExec.exe"), System.IO.Path.Combine(appDir, "PsExec64.exe") }
                 : new String[] { System.IO.Path.Combine(appDir, "PsExec.exe"), System.IO.Path.Combine(appDir, "PsExec64.exe"),
                                  System.IO.Path.Combine(parent, "PsExec64.exe"), System.IO.Path.Combine(parent, "PsExec.exe") };
+
+            String downloaded = System.IO.Path.Combine(PsExecDownloader.UserToolsDir, PsExecDownloader.FileName);
+            candidates = candidates.Concat(new[] { downloaded }).ToArray();
 
             Path = null;
 
