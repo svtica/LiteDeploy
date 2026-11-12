@@ -6,6 +6,7 @@
 // Purpose: Unit tests of the signature rule of the PsExec download: only a
 //          valid, trusted signature of Microsoft Corporation is accepted.
 // -----------------------------------------------------------------------------
+using System;
 using LiteSuite;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -51,6 +52,18 @@ namespace LiteDeploy.Tests
             Assert.IsFalse(ToolManager.IsSafeDownloadUrl("https://evil.example/svtica/LitePM/releases/download/v1/LitePM.zip"));
             Assert.IsFalse(ToolManager.IsSafeDownloadUrl("https://github.com/svtica/LitePM/archive/main.zip"));
             Assert.IsFalse(ToolManager.IsSafeDownloadUrl(null));
+        }
+
+        [TestMethod]
+        public void LitePMRemote_OnlyPlainComputerNames()
+        {
+            Assert.AreEqual("-DONOTCHECKPREVINSTANCE -REMOTE PC-042.domain.local", ToolManager.LitePMRemoteArguments("PC-042.domain.local"));
+            Assert.AreEqual("-DONOTCHECKPREVINSTANCE -REMOTE 10.0.0.5", ToolManager.LitePMRemoteArguments("10.0.0.5"));
+            foreach (String bad in new[] { null, "", " ", "pc 1", "pc\"-SSFILE x", "pc&calc", "\\\\pc", new String('a', 254) })
+            {
+                Assert.IsFalse(ToolManager.IsValidComputerName(bad), bad);
+                Assert.ThrowsException<ArgumentException>(() => ToolManager.LitePMRemoteArguments(bad));
+            }
         }
     }
 }

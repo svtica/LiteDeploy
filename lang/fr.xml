@@ -381,6 +381,7 @@
   <translation key="ToolManager.Installed">{0} {1} installé dans {2}.</translation>
   <translation key="ToolManager.NoAsset">La version {0} de LitePM n'a pas de LitePM.zip.</translation>
   <translation key="ToolManager.NoExe">LitePM.exe est absent du paquet téléchargé.</translation>
+  <translation key="ToolManager.BadComputer">Nom d'ordinateur non valide : {0}</translation>
   <translation key="ToolManager.BadSignature">LitePM a été refusé : {0} ({1}).</translation>
   <translation key="ToolManager.Unsigned">Attention : LitePM n'est pas signé.</translation>
   <translation key="PackageListForm.moduleLabel.Text">Module de mise à jour :</translation>
@@ -495,6 +496,7 @@ Adresses IPv4 : {6}</translation>
   <translation key="OptionsForm.CurrentUser">Utilisateur courant</translation>
   <translation key="MainForm.credentialsToolStripMenuItem.Text">Identifiants...</translation>
   <translation key="SoftwareUpdatesForm.processesItem.Text">Processus et handles...</translation>
+  <translation key="SoftwareUpdatesForm.litePMItem.Text">Ouvrir dans LitePM</translation>
   <translation key="SoftwareUpdatesForm.logsItem.Text">Récupérer les journaux</translation>
   <translation key="SoftwareUpdatesForm.FetchingLogs">Récupération des journaux de {0}...</translation>
   <translation key="SoftwareUpdatesForm.LogsFetched">{0} journal(aux) de {1} copié(s) dans {2}.</translation>

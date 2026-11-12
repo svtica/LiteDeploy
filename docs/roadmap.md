@@ -25,8 +25,9 @@ Kept, in three steps:
 - **C (done)**: credentials (Windows Credential Manager, LiteSuite.CredentialStore shared with
   LiteTask), retrieval of the logs of a computer, processes and handles of a computer, a
   `LiteDeploy` PowerShell module (docs/powershell.md).
-- Next: LiteTask uses LiteSuite.CredentialStore and LiteSuite.Common; LitePM opens a remote
-  computer from the command line (for a "Open in LitePM" of a computer).
+- Done: LiteTask reads and writes LiteSuite credentials (svtica/LiteTask#73); LitePM opens a
+  remote computer with `-REMOTE` (svtica/LitePM#12), used by *Open in LitePM* on a computer.
+- Next: LiteTask adopts LiteSuite.Common (PsExec builder, Authenticode).
 
 ## Later
 
