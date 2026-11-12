@@ -63,6 +63,12 @@ jobs:
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
 
+    # LiteSuite.Common also targets .NET 10 (for LiteTask): its SDK is needed to restore and test it
+    - name: Setup .NET 10 SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
     - name: Build solution
       shell: powershell
       run: |
@@ -75,6 +81,9 @@ jobs:
         msbuild tests\LiteDeploy.Tests\LiteDeploy.Tests.csproj --% -restore /p:Configuration=Release /v:minimal
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         dotnet test tests\LiteDeploy.Tests\bin\Release\LiteDeploy.Tests.dll --logger "console;verbosity=normal"
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        # Shared components, on .NET Framework 4.8 and on .NET 10
+        dotnet test tests\LiteSuite.Common.Tests\LiteSuite.Common.Tests.csproj -c Release --logger "console;verbosity=normal"
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
     - name: Assemble package folder
@@ -163,7 +172,7 @@ jobs:
         $exes = @($names | Where-Object { ($_ -split '/')[-1] -eq 'LiteDeploy.exe' } | Sort-Object Length)
         if ($exes.Count -eq 0) { Write-Error "LiteDeploy.exe not found in the zip"; exit 1 }
         if ($exes[0] -ne 'LiteDeploy.exe') { Write-Error "LiteDeploy.exe must be at the zip root (found $($exes[0]))"; exit 1 }
-        $required = 'LiteDeploy.exe', 'LiteDeploy.exe.config', 'RemoteManagement.msc', 'lang/fr.xml'
+        $required = 'LiteDeploy.exe', 'LiteDeploy.exe.config', 'LiteSuite.Common.dll', 'RemoteManagement.msc', 'lang/fr.xml'
         $missing = $required | Where-Object { $names -notcontains $_ }
         if ($missing) { Write-Error "Missing next to LiteDeploy.exe in the zip: $($missing -join ', ')"; exit 1 }
         # Every DLL of the build output must ship next to the exe

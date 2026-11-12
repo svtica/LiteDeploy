@@ -6,7 +6,8 @@
 // Purpose: Builds the PsExec command line of a deployment from the options of
 //          the main window. Pure string logic (unit-tested), ported from
 //          LiteTask's PsExecCommandBuilder: -accepteula -nobanner, arguments
-//          quoted with the CommandLineToArgvW rules.
+//          quoted with the CommandLineToArgvW rules (LiteSuite.PsExecCommandLine,
+//          shared with LiteTask).
 //
 //          The password is on the PsExec command line: PsExec has no other
 //          way to receive it (when -p is omitted it prompts on the console).
@@ -16,6 +17,7 @@
 // -----------------------------------------------------------------------------
 using System;
 using System.Text;
+using LiteSuite;
 
 namespace LiteDeploy
 {
@@ -112,57 +114,9 @@ namespace LiteDeploy
             return args.ToString();
         }
 
-        /// <summary>
-        /// Quotes one argument with the Windows C runtime / CommandLineToArgvW rules (backslashes are only
-        /// special before a quote), so the child receives exactly value in its argv entry. Without
-        /// forceQuotes, a value that needs no quoting is returned unchanged.
-        /// </summary>
-        static public String QuoteArgument(String value, bool forceQuotes = false)
+        static String QuoteArgument(String value, bool forceQuotes = false)
         {
-            if (value == null)
-                value = "";
-
-            bool needsQuotes = forceQuotes || value.Length == 0 || value.IndexOfAny(new char[] { ' ', '\t', '\r', '\n', '"' }) >= 0;
-            if (!needsQuotes)
-                return value;
-
-            StringBuilder sb = new StringBuilder();
-            sb.Append('"');
-            int i = 0;
-
-            while (i < value.Length)
-            {
-                int backslashes = 0;
-                while (i < value.Length && value[i] == '\\')
-                {
-                    backslashes++;
-                    i++;
-                }
-
-                if (i == value.Length)
-                {
-                    // Trailing backslashes: doubled so the closing quote stays a delimiter
-                    sb.Append('\\', backslashes * 2);
-                }
-
-                else if (value[i] == '"')
-                {
-                    // Backslashes before a quote: doubled, then the quote escaped
-                    sb.Append('\\', backslashes * 2 + 1);
-                    sb.Append('"');
-                    i++;
-                }
-
-                else
-                {
-                    sb.Append('\\', backslashes);
-                    sb.Append(value[i]);
-                    i++;
-                }
-            }
-
-            sb.Append('"');
-            return sb.ToString();
+            return PsExecCommandLine.QuoteArgument(value, forceQuotes);
         }
     }
 }

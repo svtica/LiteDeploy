@@ -266,6 +266,10 @@
     <None Include="Resources\back.jpg" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Components shared with LiteTask (LiteSuite.Common.dll ships next to LiteDeploy.exe) -->
+    <ProjectReference Include="src\LiteSuite.Common\LiteSuite.Common.csproj" SetTargetFramework="TargetFramework=net48" />
+  </ItemGroup>
+  <ItemGroup>
     <COMReference Include="WindowsInstaller">
       <Guid>{000C1092-0000-0000-C000-000000000046}</Guid>
       <VersionMajor>1</VersionMajor>
