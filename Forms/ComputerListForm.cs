@@ -326,6 +326,8 @@ namespace LiteDeploy
             }
         }
 
+        // Subnets menu: the subnets of this computer, then the saved ones (team's subnets.txt
+        // next to LiteDeploy.exe and the user's list), then Edit.
         private void getSubnets()
         {
             LocalNetworkSettings.GetLocalSubnets();
@@ -335,15 +337,26 @@ namespace LiteDeploy
             {
                 ToolStripItem old = subnetsToolStripMenuItem.DropDownItems[0];
                 old.Click -= subnetDropDownMenuItem_Click;
+                old.Click -= editSubnetsMenuItem_Click;
                 subnetsToolStripMenuItem.DropDownItems.RemoveAt(0);
                 old.Dispose();
             }
 
+            String thisComputer = Localization.T("ComputerListForm.ThisComputer", "this computer");
             foreach (String s in LocalNetworkSettings.AvailableSubnets)
+                AddSubnetItem(s, s + "0/24 - " + thisComputer);
+
+            List<SubnetEntry> saved = SubnetList.Load().Where(x => !LocalNetworkSettings.AvailableSubnets.Contains(x.Prefix)).ToList();
+            if (saved.Count > 0)
             {
-                subnetsToolStripMenuItem.DropDownItems.Add(s);
-                subnetsToolStripMenuItem.DropDownItems[subnetsToolStripMenuItem.DropDownItems.Count - 1].Click += new EventHandler(subnetDropDownMenuItem_Click);
+                subnetsToolStripMenuItem.DropDownItems.Add(new ToolStripSeparator());
+                foreach (SubnetEntry entry in saved)
+                    AddSubnetItem(entry.Prefix, entry.Display);
             }
+
+            subnetsToolStripMenuItem.DropDownItems.Add(new ToolStripSeparator());
+            ToolStripItem edit = subnetsToolStripMenuItem.DropDownItems.Add(Localization.T("ComputerListForm.EditSubnets", "Edit subnets..."));
+            edit.Click += editSubnetsMenuItem_Click;
 
             octet1.Value = LocalNetworkSettings.subnetParseOctet1;
             octet2.Value = LocalNetworkSettings.subnetParseOctet2;
@@ -353,52 +366,45 @@ namespace LiteDeploy
             LocalNetworkSettings.DnsOK = true;
             return;
 #endif
-                
-            // Check if any of the Available DNS Server are local DNS Servers
-            foreach (String s in LocalNetworkSettings.AvailableDNSServers)
+
+            // A DNS server in the network of this computer (same first octet)
+            foreach (String s in LocalNetworkSettings.AvailableDNSServers ?? new List<String>())
             {
-                for (int i = 0; i < subnetsToolStripMenuItem.DropDownItems.Count; i++)
+                String first = s.Split('.')[0] + ".";
+                if (LocalNetworkSettings.AvailableSubnets.Any(x => x.StartsWith(first, StringComparison.Ordinal)))
                 {
-                    if (s.Substring(0, octet1.Value.ToString().Length) == subnetsToolStripMenuItem.DropDownItems[i].ToString().Substring( 0, octet1.Value.ToString().Length ))
-                    {
-                        LocalNetworkSettings.DnsOK = true;
-                        break;
-                    }
+                    LocalNetworkSettings.DnsOK = true;
+                    break;
                 }
             }
         }
 
+        private void AddSubnetItem(String prefix, String text)
+        {
+            ToolStripItem item = subnetsToolStripMenuItem.DropDownItems.Add(text);
+            item.Tag = prefix;
+            item.Click += subnetDropDownMenuItem_Click;
+        }
+
         private void subnetDropDownMenuItem_Click(object sender, EventArgs e)
         {
-            string subnet = ((ToolStripMenuItem)(sender)).Text;
-            int i1 = -1;
-            int i2 = -1;
-            int i3 = -1;
+            String[] octets = ((String)((ToolStripItem)sender).Tag).TrimEnd('.').Split('.');
+            octet1.Value = Convert.ToDecimal(octets[0]);
+            octet2.Value = Convert.ToDecimal(octets[1]);
+            octet3.Value = Convert.ToDecimal(octets[2]);
+        }
 
-            for (int i = 0; i < subnet.Length; i++)
+        private void editSubnetsMenuItem_Click(object sender, EventArgs e)
+        {
+            using (SubnetsForm form = new SubnetsForm())
             {
-                if (i1 == -1)
+                if (form.ShowDialog(this) == DialogResult.OK)
                 {
-                    if (subnet[i] == '.')
-                        i1 = i;
-                }
-
-                else if (i2 == -1)
-                {
-                    if (subnet[i] == '.')
-                        i2 = i;
-                }
-
-                else if (i3 == -1)
-                {
-                    if (subnet[i] == '.')
-                        i3 = i;
+                    decimal o1 = octet1.Value, o2 = octet2.Value, o3 = octet3.Value;
+                    getSubnets();
+                    octet1.Value = o1; octet2.Value = o2; octet3.Value = o3;
                 }
             }
-
-            octet1.Value = Convert.ToDecimal(subnet.Substring(0, i1));
-            octet2.Value = Convert.ToDecimal(subnet.Substring(i1 + 1, i2 - i1 - 1));
-            octet3.Value = Convert.ToDecimal(subnet.Substring(i2 + 1, i3 - i2 - 1));
         }
 
         private void scanSubnet_Click(object sender, EventArgs e)

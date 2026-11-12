@@ -11,7 +11,11 @@ choose what to run and how, start the deployment, and follow each computer in th
 
 ### Computer list
 - Add computers by name or IP address, or from an **Active Directory** search (cached locally,
-  refreshed on demand or at start-up), a **DNS scan** of a subnet or the **local subnets**.
+  refreshed on demand or at start-up), or a **DNS scan** of a /24 subnet.
+- *Subnets* menu: the subnets of this computer and saved subnets with a name. *Edit subnets...*
+  takes one subnet per line (`10.1.2.0/24 Garage`, /20 to /22 split into /24, `#` for comments)
+  and imports a text or CSV file. A `subnets.txt` next to `LiteDeploy.exe` gives the team's
+  list; it is site data, kept out of this public repository.
 - Save and open lists; check the computers to deploy to.
 - **Ping** all or the checked computers before deploying.
 
