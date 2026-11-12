@@ -71,3 +71,15 @@ LiteDeploy.zip
 adcache.xml
 selectedComputers.txt
 
+
+# Site-specific configuration and operating data: this repository is public,
+# they stay on the workstations (LiteDeploy keeps its own in %LOCALAPPDATA%\LiteDeploy)
+settings.xml
+config.json
+*.local.json
+*.local.xml
+profils/
+profiles/
+*.log
+*.csv
+computers*.txt
