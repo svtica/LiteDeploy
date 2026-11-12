@@ -9,11 +9,14 @@
 //          click selects every outdated row) and Update checked upgrades, on
 //          each computer, only its checked packages. The work is done by
 //          LiteDeploy.Worker.exe run as SYSTEM by PsExec, a few computers at a
-//          time.
+//          time. Paused computers are skipped; "outside business hours only"
+//          computers are updated during business hours only on request. Each
+//          row shows the step in progress while its computer is processed.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -45,6 +48,8 @@ namespace LiteDeploy
         readonly Object storeLock = new Object();
         readonly List<Process> running = new List<Process>();
         readonly HashSet<String> checkedKeys = new HashSet<String>();
+        /// <summary>Step in progress, by row key (computer|package, or computer| for the computer).</summary>
+        readonly Dictionary<String, String> live = new Dictionary<String, String>();
         List<UpdatePackage> packages;
         volatile bool stopping;
         int pending;
@@ -75,6 +80,12 @@ namespace LiteDeploy
                 foreach (String computer in computers)
                 {
                     ComputerUpdateState c = store.Find(computer);
+                    if (c != null && c.Paused)
+                    {
+                        AddRow(new RowKey { Computer = computer }, new[] { computer, "", "", "", Localization.T("SoftwareUpdatesForm.Paused", "Paused"), c.PauseReason ?? "", Format(c.LastChange) }, null);
+                        updatesList.Items[updatesList.Items.Count - 1].ForeColor = SystemColors.GrayText;
+                        continue;
+                    }
                     if (packages.Count == 0 || c == null || (c.LastError != null && !packages.Any(p => c.Find(p.Id) != null)))
                     {
                         String status = c == null ? Localization.T("SoftwareUpdatesForm.NotChecked", "Not checked")
@@ -105,9 +116,19 @@ namespace LiteDeploy
 
         void AddRow(RowKey key, String[] cells, PackageUpdateState s)
         {
+            // Step in progress (live) instead of the saved status
+            String step;
+            lock (live)
+            {
+                // the package's own step ("" once it is done), else the step of its computer (connecting, started)
+                if (!live.TryGetValue(key.Key, out step) && !live.TryGetValue(new RowKey { Computer = key.Computer }.Key, out step))
+                    step = "";
+                if (step.Length > 0) cells[4] = step;
+            }
             ListViewItem item = new ListViewItem(cells) { Tag = key };
             if (s != null && s.Status == WorkerProtocol.StatusOutdated) item.ForeColor = Theme.WarningColor;
             if (s != null && (s.Status == WorkerProtocol.StatusError || s.LastResult == WorkerProtocol.ResultFailed)) item.ForeColor = Theme.ErrorColor;
+            if (cells[4] != null && cells[4].StartsWith("\u25B6", StringComparison.Ordinal)) item.ForeColor = Theme.Accent;
             // Only a package that is installed can be updated
             item.Checked = key.PackageId != null && checkedKeys.Contains(key.Key);
             updatesList.Items.Add(item);
@@ -203,14 +224,14 @@ namespace LiteDeploy
         void checkButton_Click(object sender, EventArgs e)
         {
             packages = UpdateRunner.LoadPackages();
-            Start("scan", computers.Select(c => new Job { Computer = c, Packages = packages.ToList() }).ToList());
+            Start("scan", computers.Where(c => !IsPaused(c)).Select(c => new Job { Computer = c, Packages = packages.ToList() }).ToList());
         }
 
         void updateButton_Click(object sender, EventArgs e)
         {
             // On each computer, only its checked packages
             List<Job> jobs = new List<Job>();
-            foreach (String computer in computers)
+            foreach (String computer in computers.Where(c => !IsPaused(c)))
             {
                 List<UpdatePackage> selected = packages
                     .Where(p => checkedKeys.Contains(new RowKey { Computer = computer, PackageId = p.Id }.Key))
@@ -218,6 +239,19 @@ namespace LiteDeploy
                 if (selected.Count > 0) jobs.Add(new Job { Computer = computer, Packages = selected });
             }
             if (jobs.Count == 0) return;
+
+            // "Outside business hours only" computers, during business hours: only on request
+            List<Job> night = jobs.Where(j => IsNightOnly(j.Computer)).ToList();
+            if (night.Count > 0 && UserSettings.Current.IsBusinessHours(DateTime.Now))
+            {
+                DialogResult answer = MessageBox.Show(this,
+                    Localization.F("SoftwareUpdatesForm.NightOnlyNow", "{0} computer(s) are updated outside business hours only ({1}). Update them now anyway?\n\nYes: update them now. No: skip them.",
+                        night.Count, String.Join(", ", night.Select(j => j.Computer).Take(10))),
+                    Text, MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+                if (answer == DialogResult.Cancel) return;
+                if (answer == DialogResult.No) jobs = jobs.Except(night).ToList();
+                if (jobs.Count == 0) return;
+            }
 
             if (MessageBox.Show(this,
                     Localization.F("SoftwareUpdatesForm.ConfirmUpdate", "Update {0} package(s) on {1} computer(s)? Their applications are closed without warning before the update.",
@@ -269,7 +303,11 @@ namespace LiteDeploy
                     job = queue.Dequeue();
                 }
 
-                UpdateRunResult result = UpdateRunner.Run(job.Computer, command, job.Packages, p => { lock (running) running.Add(p); });
+                SetLive(new RowKey { Computer = job.Computer }.Key, "\u25B6 " + Localization.T("SoftwareUpdatesForm.Connecting", "Connecting..."));
+                UpdateRunResult result = UpdateRunner.Run(job.Computer, command, job.Packages,
+                    p => { lock (running) running.Add(p); },
+                    m => OnWorkerMessage(job.Computer, m));
+                ClearLive(job.Computer);
                 lock (running) running.RemoveAll(p => { try { return p.HasExited; } catch (InvalidOperationException) { return true; } });
 
                 if (!stopping || result.Messages.Count > 0)
@@ -298,6 +336,73 @@ namespace LiteDeploy
             {
                 while (queue.Count > 0) { queue.Dequeue(); Done(); }
             }
+        }
+
+        // ---- Live display -------------------------------------------------------------
+
+        void OnWorkerMessage(String computer, WorkerMessage m)
+        {
+            String key = new RowKey { Computer = computer, PackageId = m["id"] }.Key;
+            switch (m.Type)
+            {
+                case "start":
+                    SetLive(new RowKey { Computer = computer }.Key, "\u25B6 " + Localization.T("SoftwareUpdatesForm.Started", "Started"));
+                    break;
+                case WorkerProtocol.TypeProgress:
+                    SetLive(key, "\u25B6 " + StepText(m["step"]));
+                    break;
+                case WorkerProtocol.TypePackage:
+                    // Shown at once, the state file is written when the computer is done
+                    lock (storeLock) store.Apply(computer, new List<WorkerMessage> { m }, null, DateTime.Now);
+                    SetLive(key, "");
+                    break;
+            }
+        }
+
+        static String StepText(String step)
+        {
+            switch (step)
+            {
+                case WorkerProtocol.StepChecking: return Localization.T("SoftwareUpdatesForm.StepChecking", "Checking...");
+                case WorkerProtocol.StepClosing: return Localization.T("SoftwareUpdatesForm.StepClosing", "Closing the application...");
+                case WorkerProtocol.StepUpgrading: return Localization.T("SoftwareUpdatesForm.StepUpgrading", "Updating...");
+                default: return step;
+            }
+        }
+
+        void SetLive(String key, String text)
+        {
+            lock (live)
+            {
+                if (text == null) live.Remove(key);
+                else live[key] = text;
+            }
+            RefreshLater();
+        }
+
+        void ClearLive(String computer)
+        {
+            String prefix = (computer + "|").ToLowerInvariant();
+            lock (live)
+            {
+                foreach (String k in live.Keys.Where(k => k.StartsWith(prefix, StringComparison.Ordinal)).ToList()) live.Remove(k);
+            }
+        }
+
+        // Several messages can arrive at once: one refresh of the list at a time
+        int refreshQueued;
+        void RefreshLater()
+        {
+            if (IsDisposed || Interlocked.Exchange(ref refreshQueued, 1) == 1) return;
+            try
+            {
+                BeginInvoke(new MethodInvoker(() =>
+                {
+                    Interlocked.Exchange(ref refreshQueued, 0);
+                    RefreshList();
+                }));
+            }
+            catch (InvalidOperationException) { }
         }
 
         void Done()
@@ -351,6 +456,65 @@ namespace LiteDeploy
                 }
                 StopAll();
             }
+        }
+
+        // ---- Pause, outside business hours ----------------------------------------------
+
+        bool IsPaused(String computer)
+        {
+            lock (storeLock) { ComputerUpdateState c = store.Find(computer); return c != null && c.Paused; }
+        }
+
+        bool IsNightOnly(String computer)
+        {
+            lock (storeLock) { ComputerUpdateState c = store.Find(computer); return c != null && c.NightOnly; }
+        }
+
+        List<String> SelectedComputers()
+        {
+            return updatesList.SelectedItems.Cast<ListViewItem>().Select(i => ((RowKey)i.Tag).Computer)
+                .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        void rowMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            List<String> selected = SelectedComputers();
+            if (selected.Count == 0 || pending > 0) { e.Cancel = true; return; }
+            pauseItem.Enabled = selected.Any(c => !IsPaused(c));
+            resumeItem.Enabled = selected.Any(IsPaused);
+            nightOnlyItem.Checked = selected.All(IsNightOnly);
+        }
+
+        void pauseItem_Click(object sender, EventArgs e)
+        {
+            List<String> selected = SelectedComputers();
+            String reason = Prompt.Show(this, Text,
+                Localization.F("SoftwareUpdatesForm.PauseReason", "Reason of the pause ({0} computer(s)):", selected.Count), "");
+            if (reason == null) return;
+            ChangeComputers(selected, c => { c.Paused = true; c.PauseReason = reason.Length > 0 ? reason : null; });
+        }
+
+        void resumeItem_Click(object sender, EventArgs e)
+        {
+            ChangeComputers(SelectedComputers(), c => { c.Paused = false; c.PauseReason = null; });
+        }
+
+        void nightOnlyItem_Click(object sender, EventArgs e)
+        {
+            List<String> selected = SelectedComputers();
+            bool value = !selected.All(IsNightOnly);
+            ChangeComputers(selected, c => c.NightOnly = value);
+        }
+
+        void ChangeComputers(List<String> selected, Action<ComputerUpdateState> change)
+        {
+            lock (storeLock)
+            {
+                foreach (String computer in selected) change(store.GetOrAdd(computer));
+                try { store.SaveIfChanged(UpdateStateStore.DefaultPath); }
+                catch (Exception ex) { MessageBox.Show(this, ex.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error); }
+            }
+            RefreshList();
         }
 
         // ---- Package list ----------------------------------------------------------

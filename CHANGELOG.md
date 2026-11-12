@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- *App > Options* reset the settings it does not show (theme, unsigned modules) when saving.
+
 - Dark mode: detail lists (process reports, software updates, computers) drawn by LiteDeploy:
   readable headers, dark grid lines and selection; dark tabs.
 - French interface: texts of the computer list window shortened, they overlapped other controls.
@@ -43,6 +45,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   without a lock.
 
 ### Added
+
+- Software updates, from the MAJ-Logiciels panel of Patrick Bédard:
+  - right-click a computer: **pause** it (with a reason; skipped by Check and Update until
+    resumed) or mark it **outside business hours only** (during business hours, LiteDeploy asks
+    before updating it);
+  - **live display**: each row shows the step in progress (connecting, checking, closing the
+    application, updating);
+  - **shared installer cache** for the modules (Adobe, 1Password), signature checked on every
+    install.
+- *App > Options*: theme (automatic, light, dark), shared cache, business hours, unsigned
+  modules (tests).
 
 - Modules from the MAJ-Logiciels tool of Patrick Bédard, shipped in `modules\`: `AdobeReader`
   (Reader and Acrobat MSP patches), `OnePassword` (per-machine MSI) and `OracleJava` (Java 8 with

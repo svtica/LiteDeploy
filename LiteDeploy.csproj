@@ -142,6 +142,7 @@
     </Compile>
     <Compile Include="Classes\ProcessManager.cs" />
     <Compile Include="Classes\PsExecCommandBuilder.cs" />
+    <Compile Include="Classes\Prompt.cs" />
     <Compile Include="Classes\PsExecDownloader.cs" />
     <Compile Include="Classes\PsExecLocator.cs" />
     <Compile Include="Classes\Theme.cs" />

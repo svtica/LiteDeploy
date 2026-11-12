@@ -24,6 +24,26 @@ namespace LiteDeploy
         public String Theme = LiteDeploy.Theme.Automatic;
         /// <summary>Run update modules that are not signed (tests only: they run as SYSTEM on the computers).</summary>
         public bool AllowUnsignedModules = false;
+        /// <summary>Shared cache of the installers of the update modules (\\server\share), empty: none.</summary>
+        public String UpdateCacheShare = "";
+        /// <summary>Business hours, Monday to Friday (HH:mm): "outside business hours only" computers are not updated then.</summary>
+        public String BusinessHoursStart = "07:00";
+        public String BusinessHoursEnd = "17:00";
+
+        /// <summary>A copy, so a window can change some settings and keep the others.</summary>
+        public UserSettings Clone()
+        {
+            return (UserSettings)MemberwiseClone();
+        }
+
+        /// <summary>True during business hours (Monday to Friday, between start and end).</summary>
+        public bool IsBusinessHours(DateTime now)
+        {
+            if (now.DayOfWeek == DayOfWeek.Saturday || now.DayOfWeek == DayOfWeek.Sunday) return false;
+            TimeSpan start, end;
+            if (!TimeSpan.TryParse(BusinessHoursStart, out start) || !TimeSpan.TryParse(BusinessHoursEnd, out end)) return false;
+            return now.TimeOfDay >= start && now.TimeOfDay < end;
+        }
 
         static public String FilePath
         {

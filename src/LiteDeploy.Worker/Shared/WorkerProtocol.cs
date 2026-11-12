@@ -38,6 +38,12 @@ namespace LiteDeploy
         public const string TypeError = "error";       // the run could not be done (winget missing...)
         public const string TypeDone = "done";         // last line: summary
         public const string TypeModule = "module";     // written by an update module (status, versions, message)
+        public const string TypeProgress = "progress"; // step in progress (live display): id, step
+
+        // Steps of a package (TypeProgress)
+        public const string StepChecking = "checking";
+        public const string StepClosing = "closing";
+        public const string StepUpgrading = "upgrading";
 
         // Package states
         public const string StatusUpToDate = "uptodate";

@@ -37,6 +37,15 @@ namespace LiteDeploy
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(OptionsForm));
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.updatesGroup = new System.Windows.Forms.GroupBox();
+            this.themeLabel = new System.Windows.Forms.Label();
+            this.themeCombo = new System.Windows.Forms.ComboBox();
+            this.cacheLabel = new System.Windows.Forms.Label();
+            this.cacheBox = new System.Windows.Forms.TextBox();
+            this.hoursLabel = new System.Windows.Forms.Label();
+            this.hoursStartBox = new System.Windows.Forms.TextBox();
+            this.hoursEndBox = new System.Windows.Forms.TextBox();
+            this.unsignedModulesCheckBox = new System.Windows.Forms.CheckBox();
             this.languageLabel = new System.Windows.Forms.Label();
             this.languageCombo = new System.Windows.Forms.ComboBox();
             this.button3 = new System.Windows.Forms.Button();
@@ -53,6 +62,8 @@ namespace LiteDeploy
             // 
             this.groupBox2.Controls.Add(this.languageLabel);
             this.groupBox2.Controls.Add(this.languageCombo);
+            this.groupBox2.Controls.Add(this.themeLabel);
+            this.groupBox2.Controls.Add(this.themeCombo);
             this.groupBox2.Controls.Add(this.button3);
             this.groupBox2.Controls.Add(this.label4);
             this.groupBox2.Controls.Add(this.LogDirDisplay);
@@ -83,7 +94,7 @@ namespace LiteDeploy
             "Français"});
             this.languageCombo.Location = new System.Drawing.Point(20, 44);
             this.languageCombo.Name = "languageCombo";
-            this.languageCombo.Size = new System.Drawing.Size(379, 21);
+            this.languageCombo.Size = new System.Drawing.Size(190, 21);
             this.languageCombo.TabIndex = 1;
             // 
             // label4
@@ -130,7 +141,7 @@ namespace LiteDeploy
             // 
             // ApplyButton
             // 
-            this.ApplyButton.Location = new System.Drawing.Point(237, 212);
+            this.ApplyButton.Location = new System.Drawing.Point(237, 390);
             this.ApplyButton.Name = "ApplyButton";
             this.ApplyButton.Size = new System.Drawing.Size(93, 23);
             this.ApplyButton.TabIndex = 6;
@@ -141,12 +152,66 @@ namespace LiteDeploy
             // cancelButton
             // 
             this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cancelButton.Location = new System.Drawing.Point(336, 212);
+            this.cancelButton.Location = new System.Drawing.Point(336, 390);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(93, 23);
             this.cancelButton.TabIndex = 7;
             this.cancelButton.Text = "Cancel";
             this.cancelButton.UseVisualStyleBackColor = true;
+            // 
+            // themeLabel / themeCombo (in groupBox2)
+            // 
+            this.themeLabel.AutoSize = true;
+            this.themeLabel.Location = new System.Drawing.Point(220, 28);
+            this.themeLabel.Name = "themeLabel";
+            this.themeLabel.Text = "Theme:";
+            this.themeCombo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.themeCombo.Items.AddRange(new object[] { "Automatic (Windows)", "Light", "Dark" });
+            this.themeCombo.Location = new System.Drawing.Point(223, 44);
+            this.themeCombo.Name = "themeCombo";
+            this.themeCombo.Size = new System.Drawing.Size(176, 21);
+            this.themeCombo.TabIndex = 10;
+            // 
+            // updatesGroup
+            // 
+            this.updatesGroup.Controls.Add(this.cacheLabel);
+            this.updatesGroup.Controls.Add(this.cacheBox);
+            this.updatesGroup.Controls.Add(this.hoursLabel);
+            this.updatesGroup.Controls.Add(this.hoursStartBox);
+            this.updatesGroup.Controls.Add(this.hoursEndBox);
+            this.updatesGroup.Controls.Add(this.unsignedModulesCheckBox);
+            this.updatesGroup.Location = new System.Drawing.Point(12, 208);
+            this.updatesGroup.Name = "updatesGroup";
+            this.updatesGroup.Size = new System.Drawing.Size(417, 170);
+            this.updatesGroup.TabIndex = 3;
+            this.updatesGroup.TabStop = false;
+            this.updatesGroup.Text = "Software updates";
+            this.cacheLabel.AutoSize = true;
+            this.cacheLabel.Location = new System.Drawing.Point(17, 24);
+            this.cacheLabel.Name = "cacheLabel";
+            this.cacheLabel.Text = "Shared installer cache (\\\\server\\share, optional):";
+            this.cacheBox.Location = new System.Drawing.Point(20, 40);
+            this.cacheBox.Name = "cacheBox";
+            this.cacheBox.Size = new System.Drawing.Size(379, 20);
+            this.cacheBox.TabIndex = 11;
+            this.hoursLabel.AutoSize = true;
+            this.hoursLabel.Location = new System.Drawing.Point(17, 74);
+            this.hoursLabel.Name = "hoursLabel";
+            this.hoursLabel.Text = "Business hours (Monday to Friday, HH:mm):";
+            this.hoursStartBox.Location = new System.Drawing.Point(20, 90);
+            this.hoursStartBox.Name = "hoursStartBox";
+            this.hoursStartBox.Size = new System.Drawing.Size(60, 20);
+            this.hoursStartBox.TabIndex = 12;
+            this.hoursEndBox.Location = new System.Drawing.Point(90, 90);
+            this.hoursEndBox.Name = "hoursEndBox";
+            this.hoursEndBox.Size = new System.Drawing.Size(60, 20);
+            this.hoursEndBox.TabIndex = 13;
+            this.unsignedModulesCheckBox.Location = new System.Drawing.Point(20, 120);
+            this.unsignedModulesCheckBox.Name = "unsignedModulesCheckBox";
+            this.unsignedModulesCheckBox.Size = new System.Drawing.Size(379, 40);
+            this.unsignedModulesCheckBox.TabIndex = 14;
+            this.unsignedModulesCheckBox.Text = "Run unsigned update modules (tests only: they run as SYSTEM on the computers)";
+            this.unsignedModulesCheckBox.UseVisualStyleBackColor = true;
             // 
             // OptionsForm
             // 
@@ -154,10 +219,11 @@ namespace LiteDeploy
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.cancelButton;
-            this.ClientSize = new System.Drawing.Size(445, 247);
+            this.ClientSize = new System.Drawing.Size(445, 425);
             this.Controls.Add(this.cancelButton);
             this.Controls.Add(this.ApplyButton);
             this.Controls.Add(this.groupBox2);
+            this.Controls.Add(this.updatesGroup);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
@@ -184,5 +250,14 @@ namespace LiteDeploy
         private System.Windows.Forms.FolderBrowserDialog DirectoryBrowser;
         private System.Windows.Forms.Button ApplyButton;
         private System.Windows.Forms.Button cancelButton;
+        private System.Windows.Forms.Label themeLabel;
+        private System.Windows.Forms.ComboBox themeCombo;
+        private System.Windows.Forms.GroupBox updatesGroup;
+        private System.Windows.Forms.Label cacheLabel;
+        private System.Windows.Forms.TextBox cacheBox;
+        private System.Windows.Forms.Label hoursLabel;
+        private System.Windows.Forms.TextBox hoursStartBox;
+        private System.Windows.Forms.TextBox hoursEndBox;
+        private System.Windows.Forms.CheckBox unsignedModulesCheckBox;
     }
 }

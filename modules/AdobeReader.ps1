@@ -11,7 +11,8 @@
     Each installed product is recognized by its MSI product code (its display
     name is misleading: "Adobe Acrobat (64-bit)" can be Reader 64-bit). The
     latest build comes from the versions winget knows; the patch of the right
-    flavor is downloaded from ardownload2.adobe.com, refused unless it is signed
+    flavor is downloaded from ardownload2.adobe.com (or taken from the shared
+    cache, LITEDEPLOY_CACHE\Adobe), refused unless it is signed
     by Adobe, and applied with msiexec /p. Outlook loads Adobe add-ins and can
     block the patch: it is not closed by this module (no warning to the user
     yet), the failure then says so. See docs/modules.md for the contract.
@@ -40,6 +41,55 @@ function Write-LiteDeployResult([string] $Status, [string] $Installed, [string] 
     if ($Available) { $fields += "available=$([uri]::EscapeDataString($Available))" }
     if ($Message)   { $fields += "message=$([uri]::EscapeDataString($Message))" }
     Write-Output ($fields -join "`t")
+}
+
+# Installer from the shared cache (LITEDEPLOY_CACHE, set by LiteDeploy) when it holds a copy with a
+# valid signature of the vendor, else downloaded; a downloaded file is copied to the cache for the
+# other computers (best effort, one writer at a time). Returns the local path, or throws.
+function Get-Installer([string] $Url, [string] $FileName, [string] $Folder, [string] $SignerPattern) {
+    $work = Join-Path $env:windir 'LiteDeploy\work'
+    New-Item -ItemType Directory -Force -Path $work | Out-Null
+    $local = Join-Path $work $FileName
+    Remove-Item $local -Force -ErrorAction SilentlyContinue
+    $cacheDir = if ($env:LITEDEPLOY_CACHE) { Join-Path $env:LITEDEPLOY_CACHE $Folder } else { $null }
+    $cached = if ($cacheDir) { Join-Path $cacheDir $FileName } else { $null }
+
+    if ($cached -and (Test-Path $cached)) {
+        try {
+            Copy-Item $cached $local -Force
+            if (Test-VendorSignature $local $SignerPattern) { return $local }
+            Remove-Item $local -Force -ErrorAction SilentlyContinue
+        } catch { }
+    }
+
+    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+    Invoke-WebRequest -Uri $Url -OutFile $local -UseBasicParsing
+    if (-not (Test-VendorSignature $local $SignerPattern)) {
+        Remove-Item $local -Force -ErrorAction SilentlyContinue
+        throw "Installer refused: not signed by the vendor ($FileName)"
+    }
+
+    if ($cacheDir) {
+        $lock = $null
+        try {
+            New-Item -ItemType Directory -Force -Path $cacheDir | Out-Null
+            $lock = [IO.File]::Open((Join-Path $cacheDir '.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
+            if (-not (Test-Path $cached)) {
+                Copy-Item $local "$cached.partial" -Force
+                Move-Item "$cached.partial" $cached -Force
+            }
+        } catch {
+            # Read-only cache or another computer writing: the cache stays as it is
+        } finally {
+            if ($lock) { $lock.Close() }
+        }
+    }
+    return $local
+}
+
+function Test-VendorSignature([string] $Path, [string] $SignerPattern) {
+    $sig = Get-AuthenticodeSignature $Path
+    return ($sig.Status -eq 'Valid' -and $sig.SignerCertificate.Subject -match $SignerPattern)
 }
 
 function Get-Winget {
@@ -113,20 +163,11 @@ try {
         exit 0
     }
 
-    $work = Join-Path $env:windir 'LiteDeploy\work'
-    New-Item -ItemType Directory -Force -Path $work | Out-Null
     $restart = $false
     foreach ($t in $todo) {
         $url = $t.Item.Flavor.Url -f $t.Latest
-        $msp = Join-Path $work (Split-Path $url -Leaf)
-        $log = Join-Path $work "adobe-$($t.Item.Flavor.Name).log"
-        Invoke-WebRequest -Uri $url -OutFile $msp -UseBasicParsing
-        $sig = Get-AuthenticodeSignature $msp
-        if ($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'O=Adobe') {
-            Remove-Item $msp -Force
-            Write-LiteDeployResult 'error' $versions $null "Patch refused: signature $($sig.Status)"
-            exit 1
-        }
+        $msp = Get-Installer $url (Split-Path $url -Leaf) 'Adobe' 'O=Adobe'
+        $log = Join-Path (Split-Path $msp) "adobe-$($t.Item.Flavor.Name).log"
         $p = Start-Process msiexec.exe -ArgumentList "/p `"$msp`" /qn /norestart /l*v `"$log`"" -Wait -PassThru
         Remove-Item $msp -Force -ErrorAction SilentlyContinue
         if ($p.ExitCode -eq 3010) { $restart = $true }

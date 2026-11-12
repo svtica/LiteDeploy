@@ -8,7 +8,7 @@
 //            LiteDeploy.Worker.exe scan    --package "Id|proc1,proc2|Label" ...
 //            LiteDeploy.Worker.exe upgrade --package "Id|proc1,proc2|Label" ...
 //                                  [--timeout <minutes per winget call or module>]
-//                                  [--allow-unsigned-modules]
+//                                  [--allow-unsigned-modules] [--cache \\server\share]
 //          A package "module:<Name>" is an update module, a PowerShell script
 //          copied by LiteDeploy to %windir%\LiteDeploy\modules (ModuleRunner).
 //          scan reports the installed and available version of each package;
@@ -39,7 +39,10 @@ namespace LiteDeploy.Worker
             List<UpdatePackage> packages;
             int timeoutMinutes;
             bool allowUnsigned;
-            string usageError = ParseArguments(args, out command, out packages, out timeoutMinutes, out allowUnsigned);
+            string cache;
+            string usageError = ParseArguments(args, out command, out packages, out timeoutMinutes, out allowUnsigned, out cache);
+            // Shared cache of the installers, for the update modules (LITEDEPLOY_CACHE, docs/modules.md)
+            if (cache != null) Environment.SetEnvironmentVariable("LITEDEPLOY_CACHE", cache);
             if (usageError != null)
             {
                 Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeError, "message", usageError));
@@ -72,6 +75,7 @@ namespace LiteDeploy.Worker
                     continue;
                 }
 
+                Progress(package, WorkerProtocol.StepChecking);
                 PackageState state = Check(winget, package);
                 Emit(state.ToMessage());
                 if (state.Status == WorkerProtocol.StatusError) { failed++; continue; }
@@ -84,6 +88,7 @@ namespace LiteDeploy.Worker
                     continue;
                 }
 
+                Progress(package, WorkerProtocol.StepClosing);
                 string closeError = CloseProcesses(package);
                 if (closeError != null)
                 {
@@ -92,6 +97,7 @@ namespace LiteDeploy.Worker
                     continue;
                 }
 
+                Progress(package, WorkerProtocol.StepUpgrading);
                 WingetResult result = winget.Upgrade(package.Id);
                 bool ok = result.ExitCode == 0;
                 bool nothing = result.ExitCode == WingetClient.NoApplicableUpgrade;
@@ -113,6 +119,7 @@ namespace LiteDeploy.Worker
         // Update module: Check, then (upgrade) Update when it reports an update, then Check again
         static void RunModule(UpdatePackage module, string command, bool allowUnsigned, TimeSpan timeout, ref int failed, ref int upgraded)
         {
+            Progress(module, WorkerProtocol.StepChecking);
             ModuleResult check = ModuleRunner.Run(module, "Check", allowUnsigned, timeout);
             Emit(ModuleMessage(module, check));
             if (check.Status == WorkerProtocol.StatusError) { failed++; return; }
@@ -125,6 +132,7 @@ namespace LiteDeploy.Worker
                 return;
             }
 
+            Progress(module, WorkerProtocol.StepClosing);
             string closeError = CloseProcesses(module);
             if (closeError != null)
             {
@@ -133,6 +141,7 @@ namespace LiteDeploy.Worker
                 return;
             }
 
+            Progress(module, WorkerProtocol.StepUpgrading);
             ModuleResult update = ModuleRunner.Run(module, "Update", allowUnsigned, timeout);
             bool ok = update.Status != WorkerProtocol.StatusError;
             if (ok) upgraded++; else failed++;
@@ -235,6 +244,18 @@ namespace LiteDeploy.Worker
             return lines.Length == 0 ? "" : ": " + string.Join(" / ", lines.Skip(Math.Max(0, lines.Length - 3)));
         }
 
+        /// <summary>A UNC path (\\server\share\...) without quotes or wildcards.</summary>
+        internal static bool IsValidCachePath(string path)
+        {
+            if (string.IsNullOrEmpty(path) || path.Length > 260 || !path.StartsWith(@"\\", StringComparison.Ordinal) || path.Length < 5) return false;
+            return path.IndexOfAny(new[] { '"', '*', '?', '<', '>', '|', '\r', '\n' }) < 0 && !path.Contains("..");
+        }
+
+        static void Progress(UpdatePackage package, string step)
+        {
+            Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeProgress, "id", package.Id, "step", step));
+        }
+
         static void Emit(string line)
         {
             Console.WriteLine(line);
@@ -243,6 +264,13 @@ namespace LiteDeploy.Worker
 
         internal static string ParseArguments(string[] args, out string command, out List<UpdatePackage> packages, out int timeoutMinutes, out bool allowUnsigned)
         {
+            string cache;
+            return ParseArguments(args, out command, out packages, out timeoutMinutes, out allowUnsigned, out cache);
+        }
+
+        internal static string ParseArguments(string[] args, out string command, out List<UpdatePackage> packages, out int timeoutMinutes, out bool allowUnsigned, out string cache)
+        {
+            cache = null;
             command = null;
             packages = new List<UpdatePackage>();
             timeoutMinutes = 15;
@@ -260,6 +288,11 @@ namespace LiteDeploy.Worker
                     UpdatePackage p = UpdatePackage.Parse(args[++i]);
                     if (p == null) return "Invalid package: " + args[i];
                     if (!packages.Any(x => string.Equals(x.Id, p.Id, StringComparison.OrdinalIgnoreCase))) packages.Add(p);
+                }
+                else if (a == "--cache" && i + 1 < args.Length)
+                {
+                    cache = args[++i];
+                    if (!IsValidCachePath(cache)) return "Invalid cache path: " + cache;
                 }
                 else if (a == "--allow-unsigned-modules")
                 {
