@@ -43,4 +43,5 @@ Tests: `tests/LiteSuite.Common.Tests`, run on both frameworks by the CI
    next to `LiteTask.exe`.
 
 Candidates for a later version (they depend on LiteTask's logger or settings today):
-`CredentialManager`, `Logger`, `TranslationManager`.
+`CredentialManager`, `Logger`, `TranslationManager`, and `ToolCatalog` / `ToolManager` for the
+tools folder (see `docs/roadmap.md`).

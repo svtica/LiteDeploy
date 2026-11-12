@@ -18,7 +18,7 @@ using System.Resources;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("LiteApps")]
 [assembly: AssemblyProduct("Lite Deploy")]
-[assembly: AssemblyCopyright("")]
+[assembly: AssemblyCopyright("Public domain (The Unlicense)")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
