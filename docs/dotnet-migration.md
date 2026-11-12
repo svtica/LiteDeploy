@@ -75,7 +75,9 @@ Instead:
 1. the project now uses the **SDK format while staying on `net48`**: readable project,
    `msbuild -restore`, ready for a future migration that will come down to changing `TargetFramework`
    and fixing the blockers above;
-2. a temporary comparison workflow proved that the build output is identical (removed before merging).
+2. a temporary comparison workflow proved that the build output is identical: compiler arguments,
+   assembly (types, IL, resources, references, attributes, PE) and output files, in x64 and x86
+   (workflow removed before merging; see pull request #1).
 
 If the migration becomes desirable (for example when the whole suite moves to .NET), start by removing
 the three `Thread.Abort` calls and the COM reference: those changes are valid under .NET Framework too
