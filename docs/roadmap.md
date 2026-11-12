@@ -13,6 +13,19 @@ Ideas kept for later. Nothing here is planned for a given version.
   - the network identity check of the MAJ-Logiciels panel (Kerberos) before connecting;
   - credentials other than the current user.
 
+## Features of the MAJ-Logiciels panel (Patrick Bédard)
+
+Kept, in three steps:
+
+- **A (done)**: pause or exclusion of a computer (with its reason), "outside business hours
+  only" computers, live display of the step of each computer, shared installer cache.
+- **B**: scheduler (internal, while LiteDeploy is open, or a Windows scheduled task that starts
+  LiteDeploy in command-line mode; an option switches between both), Wake-on-LAN, computer card
+  (logged-on user, pending restart, last restart).
+- **C**: credentials (LiteTask's CredentialManager moved to LiteSuite.Common), retrieval of the
+  logs of a computer, handle monitoring through LitePM, a `LiteDeploy` PowerShell module so the
+  scripts of the MAJ-Logiciels tool can live next to LiteDeploy.
+
 ## Later
 
 ### Tools folder (first step done: Tools > Manage Tools)

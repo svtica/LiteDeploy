@@ -22,7 +22,12 @@ namespace LiteDeploy
 
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.toolStrip = new System.Windows.Forms.ToolStrip();
+            this.rowMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.pauseItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.resumeItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.nightOnlyItem = new System.Windows.Forms.ToolStripMenuItem();
             this.checkButton = new System.Windows.Forms.ToolStripButton();
             this.selectOutdatedButton = new System.Windows.Forms.ToolStripButton();
             this.updateButton = new System.Windows.Forms.ToolStripButton();
@@ -114,6 +119,7 @@ namespace LiteDeploy
             this.resultColumn,
             this.changedColumn});
             this.updatesList.CheckBoxes = true;
+            this.updatesList.ContextMenuStrip = this.rowMenu;
             this.updatesList.Dock = System.Windows.Forms.DockStyle.Fill;
             this.updatesList.FullRowSelect = true;
             this.updatesList.HideSelection = false;
@@ -140,6 +146,24 @@ namespace LiteDeploy
             this.resultColumn.Width = 180;
             this.changedColumn.Text = "Changed";
             this.changedColumn.Width = 120;
+            //
+            // rowMenu
+            //
+            this.rowMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.pauseItem,
+            this.resumeItem,
+            this.nightOnlyItem});
+            this.rowMenu.Name = "rowMenu";
+            this.rowMenu.Opening += new System.ComponentModel.CancelEventHandler(this.rowMenu_Opening);
+            this.pauseItem.Name = "pauseItem";
+            this.pauseItem.Text = "Pause these computers...";
+            this.pauseItem.Click += new System.EventHandler(this.pauseItem_Click);
+            this.resumeItem.Name = "resumeItem";
+            this.resumeItem.Text = "Resume";
+            this.resumeItem.Click += new System.EventHandler(this.resumeItem_Click);
+            this.nightOnlyItem.Name = "nightOnlyItem";
+            this.nightOnlyItem.Text = "Outside business hours only";
+            this.nightOnlyItem.Click += new System.EventHandler(this.nightOnlyItem_Click);
             //
             // statusStrip
             //
@@ -185,6 +209,10 @@ namespace LiteDeploy
         }
 
         private System.Windows.Forms.ToolStrip toolStrip;
+        private System.Windows.Forms.ContextMenuStrip rowMenu;
+        private System.Windows.Forms.ToolStripMenuItem pauseItem;
+        private System.Windows.Forms.ToolStripMenuItem resumeItem;
+        private System.Windows.Forms.ToolStripMenuItem nightOnlyItem;
         private System.Windows.Forms.ToolStripButton checkButton;
         private System.Windows.Forms.ToolStripButton selectOutdatedButton;
         private System.Windows.Forms.ToolStripButton updateButton;

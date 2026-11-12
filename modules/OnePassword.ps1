@@ -9,7 +9,8 @@
 .DESCRIPTION
     Check: installed version (registry) against the version winget knows
     (AgileBits.1Password). Update: downloads the official MSI from
-    downloads.1password.com, refuses it unless it is signed by AgileBits,
+    downloads.1password.com (or the shared cache, LITEDEPLOY_CACHE\1Password),
+    refuses it unless it is signed by AgileBits,
     installs it with MANAGED_INSTALL=1 MANAGED_UPDATE=1. When another version
     blocks the install (1638), the old one is removed first. The MSI action
     AI_UnpinFromStartScreen can hang on the Start menu host: the host is
@@ -55,6 +56,55 @@ function Get-LatestVersion {
     return $null
 }
 
+# Installer from the shared cache (LITEDEPLOY_CACHE, set by LiteDeploy) when it holds a copy with a
+# valid signature of the vendor, else downloaded; a downloaded file is copied to the cache for the
+# other computers (best effort, one writer at a time). Returns the local path, or throws.
+function Get-Installer([string] $Url, [string] $FileName, [string] $Folder, [string] $SignerPattern) {
+    $work = Join-Path $env:windir 'LiteDeploy\work'
+    New-Item -ItemType Directory -Force -Path $work | Out-Null
+    $local = Join-Path $work $FileName
+    Remove-Item $local -Force -ErrorAction SilentlyContinue
+    $cacheDir = if ($env:LITEDEPLOY_CACHE) { Join-Path $env:LITEDEPLOY_CACHE $Folder } else { $null }
+    $cached = if ($cacheDir) { Join-Path $cacheDir $FileName } else { $null }
+
+    if ($cached -and (Test-Path $cached)) {
+        try {
+            Copy-Item $cached $local -Force
+            if (Test-VendorSignature $local $SignerPattern) { return $local }
+            Remove-Item $local -Force -ErrorAction SilentlyContinue
+        } catch { }
+    }
+
+    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+    Invoke-WebRequest -Uri $Url -OutFile $local -UseBasicParsing
+    if (-not (Test-VendorSignature $local $SignerPattern)) {
+        Remove-Item $local -Force -ErrorAction SilentlyContinue
+        throw "Installer refused: not signed by the vendor ($FileName)"
+    }
+
+    if ($cacheDir) {
+        $lock = $null
+        try {
+            New-Item -ItemType Directory -Force -Path $cacheDir | Out-Null
+            $lock = [IO.File]::Open((Join-Path $cacheDir '.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
+            if (-not (Test-Path $cached)) {
+                Copy-Item $local "$cached.partial" -Force
+                Move-Item "$cached.partial" $cached -Force
+            }
+        } catch {
+            # Read-only cache or another computer writing: the cache stays as it is
+        } finally {
+            if ($lock) { $lock.Close() }
+        }
+    }
+    return $local
+}
+
+function Test-VendorSignature([string] $Path, [string] $SignerPattern) {
+    $sig = Get-AuthenticodeSignature $Path
+    return ($sig.Status -eq 'Valid' -and $sig.SignerCertificate.Subject -match $SignerPattern)
+}
+
 function Invoke-Msi([string] $Arguments, [string] $MsiLog) {
     $proc = Start-Process msiexec.exe -ArgumentList $Arguments -PassThru
     $null = $proc.Handle
@@ -83,20 +133,10 @@ try {
         exit 0
     }
 
-    # Work folder writable by SYSTEM and administrators only (never C:\Windows\Temp)
-    $work = Join-Path $env:windir 'LiteDeploy\work'
-    New-Item -ItemType Directory -Force -Path $work | Out-Null
-    $msi = Join-Path $work '1PasswordSetup-latest.msi'
-    $log = Join-Path $work '1password.log'
-    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-    Invoke-WebRequest -Uri $url -OutFile $msi -UseBasicParsing
-
-    $sig = Get-AuthenticodeSignature $msi
-    if ($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'O=AgileBits') {
-        Remove-Item $msi -Force
-        Write-LiteDeployResult 'error' $installed.DisplayVersion $latest "MSI refused: signature $($sig.Status)"
-        exit 1
-    }
+    # Work folder writable by SYSTEM and administrators only (never C:\Windows\Temp); the MSI
+    # is cached under the version announced by winget
+    $msi = Get-Installer $url "1PasswordSetup-$latest.msi" '1Password' 'O=AgileBits'
+    $log = Join-Path (Split-Path $msi) '1password.log'
 
     $arguments = "/i `"$msi`" MANAGED_INSTALL=1 MANAGED_UPDATE=1 /qn /norestart /l*v `"$log`""
     $code = Invoke-Msi $arguments $log

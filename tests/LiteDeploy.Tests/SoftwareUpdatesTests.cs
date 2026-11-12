@@ -286,6 +286,69 @@ namespace LiteDeploy.Tests
             Assert.IsNotNull(UpdateModules.Read(path));
         }
 
+        // ---- Pause, business hours, cache, live ----------------------------------------
+
+        [TestMethod]
+        public void BusinessHours_WeekdaysBetweenStartAndEnd()
+        {
+            UserSettings s = new UserSettings { BusinessHoursStart = "07:00", BusinessHoursEnd = "17:00" };
+            Assert.IsTrue(s.IsBusinessHours(new DateTime(2026, 11, 12, 9, 0, 0)));     // Thursday
+            Assert.IsFalse(s.IsBusinessHours(new DateTime(2026, 11, 12, 17, 0, 0)));
+            Assert.IsFalse(s.IsBusinessHours(new DateTime(2026, 11, 12, 6, 59, 0)));
+            Assert.IsFalse(s.IsBusinessHours(new DateTime(2026, 11, 14, 10, 0, 0)));    // Saturday
+            Assert.IsFalse(new UserSettings { BusinessHoursStart = "bad" }.IsBusinessHours(new DateTime(2026, 11, 12, 9, 0, 0)));
+        }
+
+        [TestMethod]
+        public void Settings_Clone_KeepsEveryValue()
+        {
+            UserSettings s = new UserSettings { Theme = Theme.Dark, AllowUnsignedModules = true, UpdateCacheShare = @"\\srv\cache" };
+            UserSettings c = s.Clone();
+            c.Language = Localization.French;
+            Assert.AreEqual(Theme.Dark, c.Theme);
+            Assert.IsTrue(c.AllowUnsignedModules);
+            Assert.AreEqual(@"\\srv\cache", c.UpdateCacheShare);
+            Assert.AreNotEqual(c.Language, s.Language, "the copy is independent");
+        }
+
+        [TestMethod]
+        public void Cache_PassedToModulesOnly_AndValidated()
+        {
+            List<UpdatePackage> modules = new List<UpdatePackage> { UpdatePackage.Parse("module:AdobeReader") };
+            string args = UpdateRunner.BuildWorkerArguments("upgrade", modules, false, @"\\srv\deploy$\cache\");
+            StringAssert.Contains(args, @"--cache ""\\srv\deploy$\cache""");
+            Assert.IsFalse(UpdateRunner.BuildWorkerArguments("upgrade", new List<UpdatePackage> { UpdatePackage.Parse("A.B") }, false, @"\\srv\c").Contains("--cache"));
+
+            Assert.IsTrue(Worker.Program.IsValidCachePath(@"\\srv\deploy$\cache"));
+            Assert.IsFalse(Worker.Program.IsValidCachePath(@"C:\cache"));
+            Assert.IsFalse(Worker.Program.IsValidCachePath(@"\\srv\..\x"));
+            Assert.IsFalse(Worker.Program.IsValidCachePath(@"\\srv\a"" & calc"));
+        }
+
+        [TestMethod]
+        public void State_PauseAndNightOnly_AreSaved()
+        {
+            string dir = Path.Combine(Path.GetTempPath(), "litedeploy-pause-" + Guid.NewGuid().ToString("N"));
+            string path = Path.Combine(dir, "updates.xml");
+            try
+            {
+                UpdateStateStore store = new UpdateStateStore();
+                ComputerUpdateState c = store.GetOrAdd("PC01");
+                c.Paused = true;
+                c.PauseReason = "Salle de formation";
+                c.NightOnly = true;
+                Assert.IsTrue(store.SaveIfChanged(path));
+                ComputerUpdateState loaded = UpdateStateStore.Load(path).Find("pc01");
+                Assert.IsTrue(loaded.Paused);
+                Assert.IsTrue(loaded.NightOnly);
+                Assert.AreEqual("Salle de formation", loaded.PauseReason);
+            }
+            finally
+            {
+                try { Directory.Delete(dir, true); } catch (Exception) { }
+            }
+        }
+
         // ---- State file -------------------------------------------------------------
 
         static List<WorkerMessage> Messages(params string[] lines)

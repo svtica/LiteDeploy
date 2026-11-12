@@ -29,7 +29,15 @@ namespace LiteDeploy
             languageCombo.SelectedIndex = Math.Max(0, Array.IndexOf(Languages, current.Language));
             LogDirDisplay.Text = current.LoggingDir;
             AutoUpADOnStartCheckBox.Checked = current.AutoUpdateAdOnStartup;
+            themeCombo.SelectedIndex = Math.Max(0, Array.IndexOf(Themes, current.Theme));
+            cacheBox.Text = current.UpdateCacheShare ?? "";
+            hoursStartBox.Text = current.BusinessHoursStart;
+            hoursEndBox.Text = current.BusinessHoursEnd;
+            unsignedModulesCheckBox.Checked = current.AllowUnsignedModules;
         }
+
+        // Order of the items of themeCombo
+        static readonly String[] Themes = { Theme.Automatic, Theme.Light, Theme.Dark };
 
         private void button3_Click(object sender, EventArgs e)
         {
@@ -41,7 +49,26 @@ namespace LiteDeploy
 
         private void ApplyButton_Click(object sender, EventArgs e)
         {
-            UserSettings settings = new UserSettings();
+            // The settings that are not in this window are kept
+            UserSettings settings = UserSettings.Current.Clone();
+            String cache = cacheBox.Text.Trim();
+            TimeSpan start, end;
+            if (cache.Length > 0 && !(cache.StartsWith(@"\\") && cache.Length > 4 && cache.IndexOfAny(new[] { '"', '*', '?', '<', '>', '|' }) < 0))
+            {
+                MessageBox.Show(this, Localization.T("OptionsForm.BadCache", "The cache must be a shared folder: \\\\server\\share."), Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (!TimeSpan.TryParse(hoursStartBox.Text.Trim(), out start) || !TimeSpan.TryParse(hoursEndBox.Text.Trim(), out end) || end <= start)
+            {
+                MessageBox.Show(this, Localization.T("OptionsForm.BadHours", "Business hours: start and end as HH:mm, the end after the start."), Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            settings.UpdateCacheShare = cache;
+            settings.BusinessHoursStart = start.ToString(@"hh\:mm");
+            settings.BusinessHoursEnd = end.ToString(@"hh\:mm");
+            settings.AllowUnsignedModules = unsignedModulesCheckBox.Checked;
+            settings.Theme = Themes[Math.Max(0, themeCombo.SelectedIndex)];
+            bool themeChanged = settings.Theme != UserSettings.Current.Theme;
             settings.Language = Languages[Math.Max(0, languageCombo.SelectedIndex)];
             settings.LoggingDir = LogDirDisplay.Text.Trim().Length > 0 ? LogDirDisplay.Text.Trim() : new UserSettings().LoggingDir;
             settings.AutoUpdateAdOnStartup = AutoUpADOnStartCheckBox.Checked;
@@ -58,9 +85,9 @@ namespace LiteDeploy
                 return;
             }
 
-            if (languageChanged)
+            if (languageChanged || themeChanged)
             {
-                MessageBox.Show(this, Localization.T("OptionsForm.LanguageRestart", "The new language is used the next time LiteDeploy starts."),
+                MessageBox.Show(this, Localization.T("OptionsForm.LanguageRestart", "The new language or theme is used the next time LiteDeploy starts."),
                                 Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
 

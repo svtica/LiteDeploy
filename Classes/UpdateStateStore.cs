@@ -38,6 +38,11 @@ namespace LiteDeploy
         /// <summary>When a value of this computer last changed (not every check: see the file comment).</summary>
         public DateTime? LastChange;
         public String LastError;
+        /// <summary>Paused (or excluded): skipped by Check and Update until resumed.</summary>
+        [XmlAttribute] public bool Paused;
+        public String PauseReason;
+        /// <summary>Updated outside business hours only (UserSettings.BusinessHours*).</summary>
+        [XmlAttribute] public bool NightOnly;
         [XmlElement("Package")] public List<PackageUpdateState> Packages = new List<PackageUpdateState>();
 
         public PackageUpdateState Find(String id)

@@ -189,7 +189,7 @@
   <translation key="OptionsForm.ApplyButton.Text">Enregistrer</translation>
   <translation key="OptionsForm.AutoUpADOnStartCheckBox.Text">Mettre à jour la liste des ordinateurs Active Directory au démarrage</translation>
   <translation key="OptionsForm.DirectoryBrowser.Description">Choisir un dossier</translation>
-  <translation key="OptionsForm.LanguageRestart">La nouvelle langue sera utilisée au prochain démarrage de LiteDeploy.</translation>
+  <translation key="OptionsForm.LanguageRestart">La nouvelle langue ou le nouveau thème sera utilisé au prochain démarrage de LiteDeploy.</translation>
   <translation key="OptionsForm.SaveFailed">Les options n'ont pas pu être enregistrées :&#10;{0}</translation>
   <translation key="OptionsForm.Text">Lite Deploy - Options</translation>
   <translation key="OptionsForm.button3.Text">Choisir</translation>
@@ -387,4 +387,29 @@
   <translation key="PackageListForm.addModuleButton.Text">Ajouter le module</translation>
   <translation key="UpdateModules.Missing">Module {0} introuvable dans {1} ni dans {2}.</translation>
   <translation key="UpdateModules.CopyFailed">Impossible de copier les modules dans {0} : {1}</translation>
+  <translation key="SoftwareUpdatesForm.Paused">En pause</translation>
+  <translation key="SoftwareUpdatesForm.NightOnlyNow">{0} ordinateur(s) ne sont mis à jour qu'en dehors des heures ouvrables ({1}). Les mettre à jour maintenant quand même ?
+
+Oui : les mettre à jour maintenant. Non : les ignorer.</translation>
+  <translation key="SoftwareUpdatesForm.Connecting">Connexion...</translation>
+  <translation key="SoftwareUpdatesForm.Started">Démarré</translation>
+  <translation key="SoftwareUpdatesForm.StepChecking">Vérification...</translation>
+  <translation key="SoftwareUpdatesForm.StepClosing">Fermeture de l'application...</translation>
+  <translation key="SoftwareUpdatesForm.StepUpgrading">Mise à jour...</translation>
+  <translation key="SoftwareUpdatesForm.PauseReason">Raison de la pause ({0} ordinateur(s)) :</translation>
+  <translation key="SoftwareUpdatesForm.pauseItem.Text">Mettre ces ordinateurs en pause...</translation>
+  <translation key="SoftwareUpdatesForm.resumeItem.Text">Reprendre</translation>
+  <translation key="SoftwareUpdatesForm.nightOnlyItem.Text">Hors heures ouvrables seulement</translation>
+  <translation key="Prompt.Ok">OK</translation>
+  <translation key="Prompt.Cancel">Annuler</translation>
+  <translation key="OptionsForm.themeLabel.Text">Thème :</translation>
+  <translation key="OptionsForm.themeCombo.Items.0">Automatique (Windows)</translation>
+  <translation key="OptionsForm.themeCombo.Items.1">Clair</translation>
+  <translation key="OptionsForm.themeCombo.Items.2">Sombre</translation>
+  <translation key="OptionsForm.updatesGroup.Text">Mises à jour logicielles</translation>
+  <translation key="OptionsForm.cacheLabel.Text">Cache partagé des installeurs (\\serveur\partage, facultatif) :</translation>
+  <translation key="OptionsForm.hoursLabel.Text">Heures ouvrables (lundi au vendredi, HH:mm) :</translation>
+  <translation key="OptionsForm.unsignedModulesCheckBox.Text">Exécuter les modules non signés (tests seulement : ils tournent en SYSTEM sur les ordinateurs)</translation>
+  <translation key="OptionsForm.BadCache">Le cache doit être un dossier partagé : \\serveur\partage.</translation>
+  <translation key="OptionsForm.BadHours">Heures ouvrables : début et fin au format HH:mm, la fin après le début.</translation>
 </translations>

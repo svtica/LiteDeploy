@@ -49,6 +49,19 @@ The winget packages of the same tool (7-Zip, Notepad++, VLC) are in the example 
 They are signed with the release. Until the release is signed (`SIGNING_CERTIFICATE` secret),
 the worker refuses them, except with `AllowUnsignedModules` for a test.
 
+## Shared installer cache
+
+Optional (*App > Options > Software updates*): a shared folder, `\\server\share`. The worker
+gives it to the modules (`LITEDEPLOY_CACHE`); `AdobeReader` and `OnePassword` take their
+installer from `<cache>\Adobe` or `<cache>\1Password` when a copy is there, and put the one
+they download there for the other computers (one writer at a time, `.lock`). The signature of
+the vendor is checked before every install, whether the file comes from the cache or from the
+Internet, so a file changed in the cache is refused.
+
+The modules run as SYSTEM: on the computers they use the **computer account**
+(`DOMAIN\COMPUTER$`). Give *Domain Computers* read access to the share, and write access only if
+the computers should fill the cache themselves.
+
 ## Writing a module
 
 Start from [modules/Template-Module.ps1](modules/Template-Module.ps1).

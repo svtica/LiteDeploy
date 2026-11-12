@@ -81,11 +81,19 @@ namespace LiteDeploy
 
         public static String BuildWorkerArguments(String command, IEnumerable<UpdatePackage> packages, bool allowUnsignedModules)
         {
+            return BuildWorkerArguments(command, packages, allowUnsignedModules, null);
+        }
+
+        /// <summary>With <paramref name="cacheShare"/>: the shared cache of the installers of the modules (--cache).</summary>
+        public static String BuildWorkerArguments(String command, IEnumerable<UpdatePackage> packages, bool allowUnsignedModules, String cacheShare)
+        {
             StringBuilder sb = new StringBuilder(command);
             foreach (UpdatePackage p in packages)
                 sb.Append(" --package ").Append(PsExecCommandLine.QuoteArgument(p.ToArgument(), true));
             sb.Append(" --timeout ").Append(WingetTimeoutMinutes);
             if (allowUnsignedModules && packages.Any(p => p.IsModule)) sb.Append(" --allow-unsigned-modules");
+            if (!String.IsNullOrWhiteSpace(cacheShare) && packages.Any(p => p.IsModule))
+                sb.Append(" --cache ").Append(PsExecCommandLine.QuoteArgument(cacheShare.Trim().TrimEnd('\\'), true));
             return sb.ToString();
         }
 
@@ -99,12 +107,18 @@ namespace LiteDeploy
                 OverwriteExisting = true,
                 ConnectionTimeout = 20,
                 Executable = WorkerPath,
-                Arguments = BuildWorkerArguments(command, packages, UserSettings.Current.AllowUnsignedModules)
+                Arguments = BuildWorkerArguments(command, packages, UserSettings.Current.AllowUnsignedModules, UserSettings.Current.UpdateCacheShare)
             };
         }
 
         /// <summary>Runs the worker on one computer. <paramref name="started"/> receives the PsExec process (to stop it).</summary>
         public static UpdateRunResult Run(String computer, String command, IList<UpdatePackage> packages, Action<Process> started)
+        {
+            return Run(computer, command, packages, started, null);
+        }
+
+        /// <summary><paramref name="onMessage"/> receives each worker message as soon as it arrives (live display).</summary>
+        public static UpdateRunResult Run(String computer, String command, IList<UpdatePackage> packages, Action<Process> started, Action<WorkerMessage> onMessage)
         {
             UpdateRunResult result = new UpdateRunResult();
             if (PsExecLocator.Path == null) { result.Failure = "PsExec not found"; return result; }
@@ -129,7 +143,22 @@ namespace LiteDeploy
             using (Process p = Process.Start(psi))
             {
                 if (started != null) started(p);
-                Task<String> stdout = p.StandardOutput.ReadToEndAsync();
+                // Read line by line: the worker flushes each message, PsExec relays it as it comes
+                Task<String> stdout = Task.Run(() =>
+                {
+                    StringBuilder all = new StringBuilder();
+                    String line;
+                    while ((line = p.StandardOutput.ReadLine()) != null)
+                    {
+                        all.AppendLine(line);
+                        WorkerMessage m = WorkerProtocol.Parse(line);
+                        if (m != null && onMessage != null)
+                        {
+                            try { onMessage(m); } catch (Exception) { }
+                        }
+                    }
+                    return all.ToString();
+                });
                 Task<String> stderr = p.StandardError.ReadToEndAsync();
                 bool exited = p.WaitForExit(timeoutMs);
                 if (!exited)
