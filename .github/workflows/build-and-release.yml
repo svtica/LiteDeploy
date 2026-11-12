@@ -75,6 +75,22 @@ jobs:
         msbuild LiteDeploy.sln --% -restore /p:Configuration=Release /v:minimal
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+    - name: Check PowerShell scripts (syntax, ASCII)
+      shell: powershell
+      run: |
+        $files = @(Get-ChildItem modules, docs\modules, tools -Recurse -Filter *.ps1 -ErrorAction SilentlyContinue)
+        $bad = 0
+        foreach ($f in $files) {
+          $tokens = $null; $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$tokens, [ref]$errors)
+          foreach ($e in $errors) { Write-Host "::error file=$($f.FullName),line=$($e.Extent.StartLineNumber)::$($e.Message)"; $bad++ }
+          if ([IO.File]::ReadAllBytes($f.FullName) | Where-Object { $_ -ge 0x80 } | Select-Object -First 1) {
+            Write-Host "::error file=$($f.FullName)::not ASCII (Windows PowerShell 5.1 reads it as ANSI)"; $bad++
+          }
+        }
+        Write-Host "$($files.Count) script(s) checked, $bad problem(s)"
+        if ($bad -gt 0) { exit 1 }
+
     - name: Unit tests
       shell: powershell
       run: |
