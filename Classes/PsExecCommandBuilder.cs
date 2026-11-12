@@ -36,6 +36,8 @@ namespace LiteDeploy
         public String UserName;
         public String Password;
         public bool RunAsSystem;              // -s
+        /// <summary>With credentials: authenticate with them and still run as SYSTEM (-u -p -s; software updates).</summary>
+        public bool SystemWithCredentials;
         public int PriorityIndex = 2;         // 0 low, 1 below normal, 2 normal, 3 above normal, 4 high, 5 realtime
         public String Executable;             // quoted; empty: the arguments are the command
         public String Arguments;              // appended as typed
@@ -94,6 +96,8 @@ namespace LiteDeploy
                 // Always quoted: spaces and metacharacters survive; an empty password is ""
                 // so PsExec does not prompt on the console
                 args.Append(" -p ").Append(maskPassword ? MaskedPassword : QuoteArgument(o.Password ?? "", true));
+                if (o.SystemWithCredentials)
+                    args.Append(" -s");
             }
 
             else if (o.RunAsSystem)

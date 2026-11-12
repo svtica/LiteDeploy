@@ -22,9 +22,11 @@ Kept, in three steps:
 - **B (done)**: scheduler (internal, while LiteDeploy is open, or Windows scheduled tasks that
   start `LiteDeploy.exe /schedule <name>`; switched in the window), Wake-on-LAN, computer card
   (logged-on users, pending restart, last restart).
-- **C**: credentials (LiteTask's CredentialManager moved to LiteSuite.Common), retrieval of the
-  logs of a computer, handle monitoring through LitePM, a `LiteDeploy` PowerShell module so the
-  scripts of the MAJ-Logiciels tool can live next to LiteDeploy.
+- **C (done)**: credentials (Windows Credential Manager, LiteSuite.CredentialStore shared with
+  LiteTask), retrieval of the logs of a computer, processes and handles of a computer, a
+  `LiteDeploy` PowerShell module (docs/powershell.md).
+- Next: LiteTask uses LiteSuite.CredentialStore and LiteSuite.Common; LitePM opens a remote
+  computer from the command line (for a "Open in LitePM" of a computer).
 
 ## Later
 

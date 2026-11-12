@@ -46,6 +46,10 @@ choose what to run and how, start the deployment, and follow each computer in th
   (`C$`, public desktop, public start menu, public folders).
 
 ### Tools
+- *Tools > Credentials*: accounts in the Windows Credential Manager (shared with LiteTask), for
+  the software updates (*App > Options*).
+- Right-click a computer in Software Updates: processes and handles, get the logs.
+- PowerShell module `powershell\LiteDeploy` for scripts ([docs/powershell.md](docs/powershell.md)).
 - *Tools > Manage Tools*: download or update PsExec (Microsoft signature required) and LitePM
   (LiteSuite release); *Tools > LitePM* opens it.
 

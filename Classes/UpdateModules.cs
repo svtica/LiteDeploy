@@ -112,24 +112,36 @@ namespace LiteDeploy
         /// </summary>
         static public String CopyTo(String computer, IEnumerable<UpdatePackage> packages)
         {
+            return CopyTo(computer, packages, null);
+        }
+
+        /// <summary>With <paramref name="credential"/>: the share is opened with that account (Tools > Credentials).</summary>
+        static public String CopyTo(String computer, IEnumerable<UpdatePackage> packages, LiteSuite.StoredCredential credential)
+        {
             List<UpdatePackage> modules = packages.Where(p => p.IsModule).ToList();
             if (modules.Count == 0) return null;
             String target = @"\\" + computer.Trim() + @"\ADMIN$\LiteDeploy\modules";
             try
             {
-                Directory.CreateDirectory(target);
-                foreach (UpdatePackage p in modules)
-                {
-                    UpdateModule m = Find(p.ModuleName);
-                    if (m == null) return Localization.F("UpdateModules.Missing", "Module {0} not found in {1} or {2}.", p.ModuleName, ShippedDir, UserDir);
-                    File.Copy(m.Path, System.IO.Path.Combine(target, m.Name + ".ps1"), true);
-                }
-                return null;
+                using (new NetworkShare(@"\\" + computer.Trim() + @"\ADMIN$", credential))
+                    return CopyModules(modules, target);
             }
             catch (Exception ex)
             {
                 return Localization.F("UpdateModules.CopyFailed", "Could not copy the modules to {0}: {1}", target, ex.Message);
             }
+        }
+
+        static String CopyModules(List<UpdatePackage> modules, String target)
+        {
+            Directory.CreateDirectory(target);
+            foreach (UpdatePackage p in modules)
+            {
+                UpdateModule m = Find(p.ModuleName);
+                if (m == null) return Localization.F("UpdateModules.Missing", "Module {0} not found in {1} or {2}.", p.ModuleName, ShippedDir, UserDir);
+                File.Copy(m.Path, System.IO.Path.Combine(target, m.Name + ".ps1"), true);
+            }
+            return null;
         }
     }
 }

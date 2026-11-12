@@ -23,6 +23,44 @@ namespace LiteDeploy.Worker
     internal static class ComputerInfo
     {
         public const string TypeInfo = "info";
+        public const string TypeProcess = "process";
+
+        /// <summary>
+        /// "LiteDeploy.Worker.exe processes": one message per process, the most handles first (handle
+        /// and memory monitoring of a computer, as LitePM shows them locally), then the totals.
+        /// </summary>
+        public static List<string> Processes(int top)
+        {
+            List<string> lines = new List<string>();
+            List<System.Diagnostics.Process> all = System.Diagnostics.Process.GetProcesses().ToList();
+            long totalHandles = 0;
+            List<Tuple<string, int, int, long, int>> rows = new List<Tuple<string, int, int, long, int>>();
+            foreach (System.Diagnostics.Process p in all)
+            {
+                using (p)
+                {
+                    try
+                    {
+                        int handles = p.HandleCount;
+                        totalHandles += handles;
+                        rows.Add(Tuple.Create(p.ProcessName, p.Id, handles, p.PrivateMemorySize64, p.Threads.Count));
+                    }
+                    catch (Exception) { }   // process ended meanwhile, or protected
+                }
+            }
+            foreach (Tuple<string, int, int, long, int> r in rows.OrderByDescending(r => r.Item3).Take(top))
+            {
+                lines.Add(WorkerProtocol.Format(
+                    "type", TypeProcess,
+                    "name", r.Item1,
+                    "pid", r.Item2.ToString(),
+                    "handles", r.Item3.ToString(),
+                    "privatemb", Math.Round(r.Item4 / 1048576.0, 1).ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    "threads", r.Item5.ToString()));
+            }
+            lines.Add(WorkerProtocol.Format("type", "processes", "count", rows.Count.ToString(), "handles", totalHandles.ToString()));
+            return lines;
+        }
 
         public static string Collect()
         {

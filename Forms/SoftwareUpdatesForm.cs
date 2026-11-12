@@ -483,7 +483,7 @@ namespace LiteDeploy
             pauseItem.Enabled = selected.Any(c => !IsPaused(c));
             resumeItem.Enabled = selected.Any(IsPaused);
             nightOnlyItem.Checked = selected.All(IsNightOnly);
-            cardItem.Enabled = selected.Count == 1;
+            cardItem.Enabled = processesItem.Enabled = logsItem.Enabled = selected.Count == 1;
             lock (storeLock) wakeItem.Enabled = selected.Any(c => { ComputerUpdateState s = store.Find(c); return s != null && !String.IsNullOrEmpty(s.Macs); });
         }
 
@@ -523,6 +523,41 @@ namespace LiteDeploy
                         Empty(info["users"], none), info["lastboot"], info["pendingrestart"] == "yes" ? Localization.T("SoftwareUpdatesForm.Yes", "yes") : Localization.T("SoftwareUpdatesForm.No", "no"),
                         info["os"], info["freec"], Empty(info["macs"], none), Empty(info["ips"], none));
                     MessageBox.Show(this, text, Localization.F("SoftwareUpdatesForm.CardTitle", "Computer card - {0}", computer), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }));
+            }) { IsBackground = true }.Start();
+        }
+
+        void processesItem_Click(object sender, EventArgs e)
+        {
+            String computer = SelectedComputers().FirstOrDefault();
+            if (computer == null) return;
+            using (RemoteProcessesForm form = new RemoteProcessesForm(computer)) form.ShowDialog(this);
+        }
+
+        void logsItem_Click(object sender, EventArgs e)
+        {
+            String computer = SelectedComputers().FirstOrDefault();
+            if (computer == null) return;
+            statusLabel.Text = Localization.F("SoftwareUpdatesForm.FetchingLogs", "Getting the logs of {0}...", computer);
+            Cursor = Cursors.WaitCursor;
+            new Thread(() =>
+            {
+                String folder = null, error = null;
+                int count = 0;
+                try { folder = RemoteLogs.Fetch(computer, out count); }
+                catch (Exception ex) { error = ex.Message; }
+                if (IsDisposed) return;
+                BeginInvoke(new MethodInvoker(() =>
+                {
+                    Cursor = Cursors.Default;
+                    if (error != null)
+                    {
+                        SetIdleStatus();
+                        MessageBox.Show(this, error, computer, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+                    statusLabel.Text = Localization.F("SoftwareUpdatesForm.LogsFetched", "{0} log(s) of {1} copied to {2}.", count, computer, folder);
+                    try { using (Process.Start(new ProcessStartInfo(folder) { UseShellExecute = true })) { } } catch (Exception) { }
                 }));
             }) { IsBackground = true }.Start();
         }

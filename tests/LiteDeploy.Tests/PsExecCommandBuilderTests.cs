@@ -111,5 +111,15 @@ namespace LiteDeploy.Tests
             }
             catch (ArgumentException) { }
         }
+
+        [TestMethod]
+        public void Credentials_WithSystem_ForSoftwareUpdates()
+        {
+            PsExecOptions o = Options();
+            o.UseCredentials = true; o.UserName = "DOMAIN\\svc"; o.Password = "pw"; o.SystemWithCredentials = true;
+            string args = PsExecCommandBuilder.BuildArguments(o);
+            StringAssert.Contains(args, " -u DOMAIN\\svc -p \"pw\" -s");
+            Assert.IsFalse(PsExecCommandBuilder.DisplayArguments(o).Contains("pw\""));
+        }
     }
 }

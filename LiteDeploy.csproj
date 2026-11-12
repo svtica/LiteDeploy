@@ -142,6 +142,8 @@
     </Compile>
     <Compile Include="Classes\ProcessManager.cs" />
     <Compile Include="Classes\PsExecCommandBuilder.cs" />
+    <Compile Include="Classes\NetworkShare.cs" />
+    <Compile Include="Classes\RemoteLogs.cs" />
     <Compile Include="Classes\Prompt.cs" />
     <Compile Include="Classes\PsExecDownloader.cs" />
     <Compile Include="Classes\PsExecLocator.cs" />
@@ -151,6 +153,12 @@
     <Compile Include="Classes\UpdateRunner.cs" />
     <Compile Include="Classes\UpdateSchedules.cs" />
     <Compile Include="Classes\ScheduleRunner.cs" />
+    <Compile Include="Forms\CredentialsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\RemoteProcessesForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Forms\PackageListForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -284,6 +292,10 @@
     <!-- Example package list of the software updates (the user's own list is in %LOCALAPPDATA%) -->
     <!-- Update modules shipped with LiteDeploy (docs/modules.md), signed by the release -->
     <Content Include="modules\*.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <!-- PowerShell module (docs/powershell.md), signed by the release -->
+    <Content Include="powershell\LiteDeploy\LiteDeploy.psd1;powershell\LiteDeploy\LiteDeploy.psm1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="updates\packages.txt">

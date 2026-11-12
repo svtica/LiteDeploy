@@ -31,6 +31,8 @@ namespace LiteDeploy
             this.menuSeparator = new System.Windows.Forms.ToolStripSeparator();
             this.cardItem = new System.Windows.Forms.ToolStripMenuItem();
             this.wakeItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.processesItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.logsItem = new System.Windows.Forms.ToolStripMenuItem();
             this.checkButton = new System.Windows.Forms.ToolStripButton();
             this.selectOutdatedButton = new System.Windows.Forms.ToolStripButton();
             this.updateButton = new System.Windows.Forms.ToolStripButton();
@@ -168,6 +170,8 @@ namespace LiteDeploy
             this.nightOnlyItem,
             this.menuSeparator,
             this.cardItem,
+            this.processesItem,
+            this.logsItem,
             this.wakeItem});
             this.rowMenu.Name = "rowMenu";
             this.rowMenu.Opening += new System.ComponentModel.CancelEventHandler(this.rowMenu_Opening);
@@ -187,6 +191,12 @@ namespace LiteDeploy
             this.wakeItem.Name = "wakeItem";
             this.wakeItem.Text = "Wake up (Wake-on-LAN)";
             this.wakeItem.Click += new System.EventHandler(this.wakeItem_Click);
+            this.processesItem.Name = "processesItem";
+            this.processesItem.Text = "Processes and handles...";
+            this.processesItem.Click += new System.EventHandler(this.processesItem_Click);
+            this.logsItem.Name = "logsItem";
+            this.logsItem.Text = "Get the logs";
+            this.logsItem.Click += new System.EventHandler(this.logsItem_Click);
             //
             // statusStrip
             //
@@ -239,6 +249,8 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripSeparator menuSeparator;
         private System.Windows.Forms.ToolStripMenuItem cardItem;
         private System.Windows.Forms.ToolStripMenuItem wakeItem;
+        private System.Windows.Forms.ToolStripMenuItem processesItem;
+        private System.Windows.Forms.ToolStripMenuItem logsItem;
         private System.Windows.Forms.ToolStripButton checkButton;
         private System.Windows.Forms.ToolStripButton selectOutdatedButton;
         private System.Windows.Forms.ToolStripButton updateButton;
