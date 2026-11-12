@@ -76,6 +76,9 @@ namespace LiteDeploy
             this.pingAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pingAllCheckedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.softwareUpdatesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.manageToolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.litePMToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.restartToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.shutdownToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -431,6 +434,7 @@ namespace LiteDeploy
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
             this.computersToolStripMenuItem,
+            this.toolsToolStripMenuItem,
             this.processingToolStripMenuItem,
             this.optionsToolStripMenuItem,
             this.helpToolStripMenuItem});
@@ -470,7 +474,6 @@ namespace LiteDeploy
             this.toolStripSeparator4,
             this.pingAllToolStripMenuItem,
             this.pingAllCheckedToolStripMenuItem,
-            this.softwareUpdatesToolStripMenuItem,
             this.toolStripSeparator3,
             this.restartToolStripMenuItem,
             this.shutdownToolStripMenuItem});
@@ -510,6 +513,30 @@ namespace LiteDeploy
             this.softwareUpdatesToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
             this.softwareUpdatesToolStripMenuItem.Text = "Software Updates...";
             this.softwareUpdatesToolStripMenuItem.Click += new System.EventHandler(this.softwareUpdatesToolStripMenuItem_Click);
+            // 
+            // toolsToolStripMenuItem
+            // 
+            this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.softwareUpdatesToolStripMenuItem,
+            this.manageToolsToolStripMenuItem,
+            this.litePMToolStripMenuItem});
+            this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
+            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
+            this.toolsToolStripMenuItem.Text = "Tools";
+            // 
+            // manageToolsToolStripMenuItem
+            // 
+            this.manageToolsToolStripMenuItem.Name = "manageToolsToolStripMenuItem";
+            this.manageToolsToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
+            this.manageToolsToolStripMenuItem.Text = "Manage Tools...";
+            this.manageToolsToolStripMenuItem.Click += new System.EventHandler(this.manageToolsToolStripMenuItem_Click);
+            // 
+            // litePMToolStripMenuItem
+            // 
+            this.litePMToolStripMenuItem.Name = "litePMToolStripMenuItem";
+            this.litePMToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
+            this.litePMToolStripMenuItem.Text = "LitePM (Processes)";
+            this.litePMToolStripMenuItem.Click += new System.EventHandler(this.litePMToolStripMenuItem_Click);
             // 
             // toolStripSeparator3
             // 
@@ -954,6 +981,9 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripMenuItem pingAllToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem pingAllCheckedToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem softwareUpdatesToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem manageToolsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem litePMToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem restartToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem shutdownToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem mangementConsoleToolStripMenuItem;

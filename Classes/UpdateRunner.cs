@@ -61,6 +61,18 @@ namespace LiteDeploy
             return UpdatePackage.ParseFile(File.Exists(UserPackagesPath) ? UserPackagesPath : DefaultPackagesPath);
         }
 
+        /// <summary>Saves the user's package list (%LOCALAPPDATA%\LiteDeploy\packages.txt), with its format explained on top.</summary>
+        public static void SavePackages(IEnumerable<UpdatePackage> list)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("# LiteDeploy - software updates: winget packages to keep up to date.");
+            sb.AppendLine("# One package per line:  winget Id | processes to close (without .exe, comma-separated) | label");
+            foreach (UpdatePackage p in list)
+                sb.AppendLine(p.Id + " | " + String.Join(", ", p.Processes) + " | " + (p.Label ?? ""));
+            Directory.CreateDirectory(Path.GetDirectoryName(UserPackagesPath));
+            File.WriteAllText(UserPackagesPath, sb.ToString(), new UTF8Encoding(false));
+        }
+
         /// <summary>Worker arguments: the command, then one --package per package.</summary>
         public static String BuildWorkerArguments(String command, IEnumerable<UpdatePackage> packages)
         {

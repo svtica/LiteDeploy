@@ -42,5 +42,15 @@ namespace LiteDeploy.Tests
             Assert.IsFalse(PsExecDownloader.IsTrustedPublisher(Result(AuthenticodeStatus.Valid, "CN=Microsoft Corporation, O=Evil Corp, C=US")));
             Assert.IsFalse(PsExecDownloader.IsTrustedPublisher(Result(AuthenticodeStatus.Valid, "CN=Contoso, O=Microsoft Corporation Fake, C=US")));
         }
+
+        [TestMethod]
+        public void ToolDownloads_OnlyGitHubReleaseLinksOverHttps()
+        {
+            Assert.IsTrue(ToolManager.IsSafeDownloadUrl("https://github.com/svtica/LitePM/releases/download/v1.2.0/LitePM.zip"));
+            Assert.IsFalse(ToolManager.IsSafeDownloadUrl("http://github.com/svtica/LitePM/releases/download/v1.2.0/LitePM.zip"));
+            Assert.IsFalse(ToolManager.IsSafeDownloadUrl("https://evil.example/svtica/LitePM/releases/download/v1/LitePM.zip"));
+            Assert.IsFalse(ToolManager.IsSafeDownloadUrl("https://github.com/svtica/LitePM/archive/main.zip"));
+            Assert.IsFalse(ToolManager.IsSafeDownloadUrl(null));
+        }
     }
 }

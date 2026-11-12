@@ -20,6 +20,8 @@ namespace LiteDeploy
         public String Language = Localization.Automatic;
         public String LoggingDir = "\\\\%computername%\\C$\\LiteDeploy";
         public bool AutoUpdateAdOnStartup = true;
+        /// <summary>"auto" (Windows light or dark mode), "light" or "dark".</summary>
+        public String Theme = LiteDeploy.Theme.Automatic;
 
         static public String FilePath
         {
@@ -70,6 +72,8 @@ namespace LiteDeploy
         {
             AppSettings.LOGGING_DIR = Current.LoggingDir;
             AppSettings.AUTO_UPDATE_AD_ON_STARTUP = Current.AutoUpdateAdOnStartup;
+            LiteDeploy.Theme.Preference = Current.Theme ?? LiteDeploy.Theme.Automatic;
+            LiteDeploy.Theme.Reset();
         }
     }
 }

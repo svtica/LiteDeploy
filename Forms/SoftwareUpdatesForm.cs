@@ -4,9 +4,12 @@
 // Author:  LiteDeploy contributors
 // Date:    2026-11-12
 // Purpose: Software Updates window: state of the winget packages of the package
-//          list on the checked computers (from the local state file), check
-//          and update through LiteDeploy.Worker.exe run as SYSTEM by PsExec,
-//          a few computers at a time.
+//          list on the computers (from the local state file). Check reads the
+//          versions on every computer; the rows to update are checked (one
+//          click selects every outdated row) and Update checked upgrades, on
+//          each computer, only its checked packages. The work is done by
+//          LiteDeploy.Worker.exe run as SYSTEM by PsExec, a few computers at a
+//          time.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -23,21 +26,39 @@ namespace LiteDeploy
         /// <summary>Computers processed at the same time.</summary>
         const int Parallelism = 4;
 
+        /// <summary>One package to work on, on one computer.</summary>
+        sealed class RowKey
+        {
+            public String Computer;
+            public String PackageId;      // null: the computer has no package row yet
+            public String Key { get { return (Computer + "|" + PackageId).ToLowerInvariant(); } }
+        }
+
+        sealed class Job
+        {
+            public String Computer;
+            public List<UpdatePackage> Packages;
+        }
+
         readonly List<String> computers;
         readonly UpdateStateStore store;
         readonly Object storeLock = new Object();
         readonly List<Process> running = new List<Process>();
+        readonly HashSet<String> checkedKeys = new HashSet<String>();
         List<UpdatePackage> packages;
         volatile bool stopping;
         int pending;
+        bool refreshing;
 
         public SoftwareUpdatesForm(IEnumerable<String> computers)
         {
             InitializeComponent();
             Localization.Apply(this);
+            Theme.Apply(this);
             this.computers = computers.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             store = UpdateStateStore.Load(UpdateStateStore.DefaultPath);
             packages = UpdateRunner.LoadPackages();
+            updatesList.ItemChecked += updatesList_ItemChecked;
             RefreshList();
             SetIdleStatus();
         }
@@ -46,6 +67,7 @@ namespace LiteDeploy
 
         void RefreshList()
         {
+            refreshing = true;
             updatesList.BeginUpdate();
             updatesList.Items.Clear();
             lock (storeLock)
@@ -53,21 +75,17 @@ namespace LiteDeploy
                 foreach (String computer in computers)
                 {
                     ComputerUpdateState c = store.Find(computer);
-                    if (packages.Count == 0 || c == null)
+                    if (packages.Count == 0 || c == null || (c.LastError != null && !packages.Any(p => c.Find(p.Id) != null)))
                     {
-                        ListViewItem item = new ListViewItem(new[] { computer, "", "", "", c == null ? Localization.T("SoftwareUpdatesForm.NotChecked", "Not checked") : "", c?.LastError ?? "", Format(c?.LastChange) });
-                        updatesList.Items.Add(item);
-                        continue;
-                    }
-                    if (c.LastError != null && !packages.Any(p => c.Find(p.Id) != null))
-                    {
-                        updatesList.Items.Add(new ListViewItem(new[] { computer, "", "", "", Localization.T("SoftwareUpdatesForm.Unreachable", "Error"), c.LastError, Format(c.LastChange) }));
+                        String status = c == null ? Localization.T("SoftwareUpdatesForm.NotChecked", "Not checked")
+                                      : c.LastError != null ? Localization.T("SoftwareUpdatesForm.Unreachable", "Error") : "";
+                        AddRow(new RowKey { Computer = computer }, new[] { computer, "", "", "", status, c?.LastError ?? "", Format(c?.LastChange) }, null);
                         continue;
                     }
                     foreach (UpdatePackage p in packages)
                     {
                         PackageUpdateState s = c.Find(p.Id);
-                        ListViewItem item = new ListViewItem(new[]
+                        AddRow(new RowKey { Computer = computer, PackageId = p.Id }, new[]
                         {
                             computer,
                             p.DisplayName,
@@ -76,14 +94,38 @@ namespace LiteDeploy
                             StatusText(s?.Status),
                             ResultText(s),
                             Format(c.LastChange)
-                        });
-                        if (s != null && s.Status == WorkerProtocol.StatusOutdated) item.ForeColor = System.Drawing.Color.DarkOrange;
-                        if (s != null && (s.Status == WorkerProtocol.StatusError || s.LastResult == WorkerProtocol.ResultFailed)) item.ForeColor = System.Drawing.Color.Firebrick;
-                        updatesList.Items.Add(item);
+                        }, s);
                     }
                 }
             }
             updatesList.EndUpdate();
+            refreshing = false;
+            UpdateButtons();
+        }
+
+        void AddRow(RowKey key, String[] cells, PackageUpdateState s)
+        {
+            ListViewItem item = new ListViewItem(cells) { Tag = key };
+            if (s != null && s.Status == WorkerProtocol.StatusOutdated) item.ForeColor = Theme.WarningColor;
+            if (s != null && (s.Status == WorkerProtocol.StatusError || s.LastResult == WorkerProtocol.ResultFailed)) item.ForeColor = Theme.ErrorColor;
+            // Only a package that is installed can be updated
+            item.Checked = key.PackageId != null && checkedKeys.Contains(key.Key);
+            updatesList.Items.Add(item);
+        }
+
+        void updatesList_ItemChecked(object sender, ItemCheckedEventArgs e)
+        {
+            if (refreshing) return;
+            RowKey key = (RowKey)e.Item.Tag;
+            if (key.PackageId == null)
+            {
+                // A computer without package rows: check it to update... nothing; keep unchecked
+                if (e.Item.Checked) e.Item.Checked = false;
+                return;
+            }
+            if (e.Item.Checked) checkedKeys.Add(key.Key);
+            else checkedKeys.Remove(key.Key);
+            UpdateButtons();
         }
 
         static String Format(DateTime? time)
@@ -122,26 +164,72 @@ namespace LiteDeploy
                 : Localization.F("SoftwareUpdatesForm.Idle", "{0} computer(s), {1} package(s).", computers.Count, packages.Count);
         }
 
+        void UpdateButtons()
+        {
+            bool idle = pending == 0;
+            checkButton.Enabled = idle && packages.Count > 0 && computers.Count > 0;
+            selectOutdatedButton.Enabled = idle;
+            updateButton.Enabled = idle && checkedKeys.Count > 0;
+            editPackagesButton.Enabled = idle;
+            stopButton.Enabled = !idle;
+        }
+
+        // ---- Selection --------------------------------------------------------------
+
+        void selectOutdatedButton_Click(object sender, EventArgs e)
+        {
+            checkedKeys.Clear();
+            lock (storeLock)
+            {
+                foreach (String computer in computers)
+                {
+                    ComputerUpdateState c = store.Find(computer);
+                    if (c == null) continue;
+                    foreach (UpdatePackage p in packages)
+                    {
+                        PackageUpdateState s = c.Find(p.Id);
+                        if (s != null && s.Status == WorkerProtocol.StatusOutdated)
+                            checkedKeys.Add(new RowKey { Computer = computer, PackageId = p.Id }.Key);
+                    }
+                }
+            }
+            RefreshList();
+            if (checkedKeys.Count == 0)
+                statusLabel.Text = Localization.T("SoftwareUpdatesForm.NothingOutdated", "No update available: click \"Check\" first if the list is not up to date.");
+        }
+
         // ---- Runs -------------------------------------------------------------------
 
         void checkButton_Click(object sender, EventArgs e)
         {
-            Start("scan");
+            packages = UpdateRunner.LoadPackages();
+            Start("scan", computers.Select(c => new Job { Computer = c, Packages = packages.ToList() }).ToList());
         }
 
         void updateButton_Click(object sender, EventArgs e)
         {
+            // On each computer, only its checked packages
+            List<Job> jobs = new List<Job>();
+            foreach (String computer in computers)
+            {
+                List<UpdatePackage> selected = packages
+                    .Where(p => checkedKeys.Contains(new RowKey { Computer = computer, PackageId = p.Id }.Key))
+                    .ToList();
+                if (selected.Count > 0) jobs.Add(new Job { Computer = computer, Packages = selected });
+            }
+            if (jobs.Count == 0) return;
+
             if (MessageBox.Show(this,
-                    Localization.F("SoftwareUpdatesForm.ConfirmUpdate", "Update the outdated packages on {0} computer(s)? Their applications are closed without warning before the update.", computers.Count),
+                    Localization.F("SoftwareUpdatesForm.ConfirmUpdate", "Update {0} package(s) on {1} computer(s)? Their applications are closed without warning before the update.",
+                        jobs.Sum(j => j.Packages.Count), jobs.Count),
                     Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
-            Start("upgrade");
+            Start("upgrade", jobs);
         }
 
-        void Start(String command)
+        void Start(String command, List<Job> jobs)
         {
-            packages = UpdateRunner.LoadPackages();
-            if (packages.Count == 0 || computers.Count == 0)
+            if (jobs.Count == 0 || packages.Count == 0)
             {
                 SetIdleStatus();
                 RefreshList();
@@ -156,48 +244,56 @@ namespace LiteDeploy
             }
 
             stopping = false;
-            pending = computers.Count;
-            SetRunning(true);
-            progressBar.Maximum = computers.Count;
+            pending = jobs.Count;
+            UpdateButtons();
+            progressBar.Maximum = jobs.Count;
             progressBar.Value = 0;
             UpdateProgressText();
 
-            List<UpdatePackage> list = packages.ToList();
-            Queue<String> queue = new Queue<String>(computers);
-            for (int i = 0; i < Math.Min(Parallelism, computers.Count); i++)
+            Queue<Job> queue = new Queue<Job>(jobs);
+            for (int i = 0; i < Math.Min(Parallelism, jobs.Count); i++)
             {
-                Thread t = new Thread(() => Work(queue, command, list)) { IsBackground = true, Name = "Software updates" };
+                Thread t = new Thread(() => Work(queue, command)) { IsBackground = true, Name = "Software updates" };
                 t.Start();
             }
         }
 
-        void Work(Queue<String> queue, String command, List<UpdatePackage> list)
+        void Work(Queue<Job> queue, String command)
         {
             while (true)
             {
-                String computer;
+                Job job;
                 lock (queue)
                 {
                     if (queue.Count == 0 || stopping) break;
-                    computer = queue.Dequeue();
+                    job = queue.Dequeue();
                 }
 
-                UpdateRunResult result = UpdateRunner.Run(computer, command, list, p => { lock (running) running.Add(p); });
+                UpdateRunResult result = UpdateRunner.Run(job.Computer, command, job.Packages, p => { lock (running) running.Add(p); });
                 lock (running) running.RemoveAll(p => { try { return p.HasExited; } catch (InvalidOperationException) { return true; } });
 
                 if (!stopping || result.Messages.Count > 0)
                 {
                     lock (storeLock)
                     {
-                        store.Apply(computer, result.Messages, result.Failure, DateTime.Now);
+                        store.Apply(job.Computer, result.Messages, result.Failure, DateTime.Now);
                         try { store.SaveIfChanged(UpdateStateStore.DefaultPath); }
                         catch (Exception ex) { AppConsole.WriteLine("Software updates: could not save " + UpdateStateStore.DefaultPath + ": " + ex.Message); }
+                    }
+                }
+                if (command == "upgrade")
+                {
+                    // Updated rows are unchecked
+                    foreach (UpdatePackage p in job.Packages)
+                    {
+                        String key = new RowKey { Computer = job.Computer, PackageId = p.Id }.Key;
+                        lock (checkedKeys) checkedKeys.Remove(key);
                     }
                 }
                 Done();
             }
 
-            // Computers left in the queue after Stop
+            // Jobs left in the queue after Stop
             lock (queue)
             {
                 while (queue.Count > 0) { queue.Dequeue(); Done(); }
@@ -214,15 +310,8 @@ namespace LiteDeploy
                 {
                     progressBar.Value = Math.Min(progressBar.Maximum, progressBar.Maximum - left);
                     RefreshList();
-                    if (left == 0)
-                    {
-                        SetRunning(false);
-                        SetIdleStatus();
-                    }
-                    else
-                    {
-                        UpdateProgressText();
-                    }
+                    if (left == 0) SetIdleStatus();
+                    else UpdateProgressText();
                 }));
             }
             catch (InvalidOperationException) { }   // window closed meanwhile
@@ -231,14 +320,6 @@ namespace LiteDeploy
         void UpdateProgressText()
         {
             statusLabel.Text = Localization.F("SoftwareUpdatesForm.Running", "Working: {0} of {1} computer(s) done.", progressBar.Maximum - pending, progressBar.Maximum);
-        }
-
-        void SetRunning(bool isRunning)
-        {
-            checkButton.Enabled = !isRunning;
-            updateButton.Enabled = !isRunning;
-            editPackagesButton.Enabled = !isRunning;
-            stopButton.Enabled = isRunning;
         }
 
         void stopButton_Click(object sender, EventArgs e)
@@ -276,38 +357,22 @@ namespace LiteDeploy
 
         void editPackagesButton_Click(object sender, EventArgs e)
         {
-            String path = UpdateRunner.UserPackagesPath;
-            try
+            using (PackageListForm editor = new PackageListForm(packages))
             {
-                if (!File.Exists(path))
+                if (editor.ShowDialog(this) != DialogResult.OK) return;
+                try
                 {
-                    Directory.CreateDirectory(Path.GetDirectoryName(path));
-                    if (File.Exists(UpdateRunner.DefaultPackagesPath)) File.Copy(UpdateRunner.DefaultPackagesPath, path);
-                    else File.WriteAllText(path, "# winget package Id | processes to close | label\r\n");
+                    UpdateRunner.SavePackages(editor.Packages);
                 }
-                // Not waited for: the list is read again when this window is activated
-                using (Process.Start("notepad.exe", PsExecCommandLineQuote(path))) { }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(this, ex.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show(this, ex.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        protected override void OnActivated(EventArgs e)
-        {
-            base.OnActivated(e);
-            if (pending > 0) return;
-            List<UpdatePackage> reloaded = UpdateRunner.LoadPackages();
-            if (reloaded.Select(p => p.ToArgument()).SequenceEqual(packages.Select(p => p.ToArgument()))) return;
-            packages = reloaded;
+            packages = UpdateRunner.LoadPackages();
             RefreshList();
             SetIdleStatus();
-        }
-
-        static String PsExecCommandLineQuote(String path)
-        {
-            return LiteSuite.PsExecCommandLine.QuoteArgument(path, true);
         }
     }
 }

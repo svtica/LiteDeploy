@@ -84,6 +84,13 @@ namespace LiteDeploy.Worker
             return Run("list --id " + id + " -e --source winget --accept-source-agreements --disable-interactivity");
         }
 
+        /// <summary>winget search in the winget source (used by LiteDeploy to pick packages).</summary>
+        public WingetResult Search(string query)
+        {
+            string q = (query ?? "").Replace("\"", "").Trim();
+            return Run("search --query \"" + q + "\" --source winget --accept-source-agreements --disable-interactivity");
+        }
+
         public WingetResult Upgrade(string id)
         {
             return Run("upgrade --id " + id + " -e --source winget --silent --accept-package-agreements --accept-source-agreements --disable-interactivity");

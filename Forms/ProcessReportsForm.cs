@@ -58,6 +58,7 @@ namespace LiteDeploy
         {
             InitializeComponent();
             Localization.Apply(this);
+            Theme.Apply(this);
             lvwColumnSorter = new ListViewColumnSorter();
             log.ListViewItemSorter = lvwColumnSorter;
             MSILogFiles = new List<String>();

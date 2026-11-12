@@ -20,6 +20,7 @@ namespace LiteDeploy
         {
             InitializeComponent();
             Localization.Apply(this);
+            Theme.Apply(this);
         }
 
         private void OptionsForm_Load(object sender, EventArgs e)
