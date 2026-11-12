@@ -178,6 +178,45 @@ namespace LiteDeploy
             return result;
         }
 
+        /// <summary>Computer card: "LiteDeploy.Worker.exe info" on the computer (one message, or the failure).</summary>
+        public static UpdateRunResult Info(String computer)
+        {
+            UpdateRunResult result = new UpdateRunResult();
+            if (PsExecLocator.Path == null) { result.Failure = "PsExec not found"; return result; }
+            if (!File.Exists(WorkerPath)) { result.Failure = WorkerFileName + " not found next to LiteDeploy.exe"; return result; }
+            PsExecOptions o = new PsExecOptions
+            {
+                Computer = computer,
+                RunAsSystem = true,
+                CopyExecutable = true,
+                OverwriteExisting = true,
+                ConnectionTimeout = 20,
+                Executable = WorkerPath,
+                Arguments = "info"
+            };
+            ProcessStartInfo psi = new ProcessStartInfo(PsExecLocator.Path, PsExecCommandBuilder.BuildArguments(o))
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8
+            };
+            using (Process p = Process.Start(psi))
+            {
+                Task<String> stdout = p.StandardOutput.ReadToEndAsync();
+                Task<String> stderr = p.StandardError.ReadToEndAsync();
+                if (!p.WaitForExit(120000)) { try { p.Kill(); } catch (Exception) { } }
+                Task.WaitAll(new Task[] { stdout, stderr }, 10000);
+                String output = stdout.IsCompleted ? stdout.Result : "";
+                result.Messages = WorkerProtocol.ParseAll(output);
+                if (result.Messages.Count == 0)
+                    result.Failure = DescribeFailure(p.HasExited ? p.ExitCode : -1, (stderr.IsCompleted ? stderr.Result : "") + "\n" + output);
+            }
+            return result;
+        }
+
         // PsExec's own message (last meaningful line of its output), e.g. "The network path was not found."
         static String DescribeFailure(int exitCode, String text)
         {

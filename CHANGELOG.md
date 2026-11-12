@@ -46,6 +46,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Scheduled updates** (*Tools > Scheduled Updates*, or *Schedule...* in Software Updates), from
+  the agent of the MAJ-Logiciels panel: a check or an update of a list of computers, once or on
+  some days at a time, Wake-on-LAN first if asked. Paused computers are skipped, and during
+  business hours the "outside business hours only" ones. Two engines, switched in the window:
+  internal (while LiteDeploy is open; a run missed while it was closed is not caught up) or
+  Windows scheduled tasks (folder `\LiteDeploy`, `LiteDeploy.exe /schedule <name>` as the
+  logged-on user, no stored password). Log per day in `%LOCALAPPDATA%\LiteDeploy\logs`.
+- **Computer card** (right-click in Software Updates): logged-on users, last restart, pending
+  restart, Windows version, free space on C:, network adapters (`LiteDeploy.Worker.exe info`).
+- **Wake-on-LAN** (right-click): magic packets to the MAC addresses the worker reported, kept in
+  the state file while the computer is off.
+
 - Software updates, from the MAJ-Logiciels panel of Patrick Bédard:
   - right-click a computer: **pause** it (with a reason; skipped by Check and Update until
     resumed) or mark it **outside business hours only** (during business hours, LiteDeploy asks

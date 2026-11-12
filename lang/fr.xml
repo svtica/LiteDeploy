@@ -412,4 +412,67 @@ Oui : les mettre à jour maintenant. Non : les ignorer.</translation>
   <translation key="OptionsForm.unsignedModulesCheckBox.Text">Exécuter les modules non signés (tests seulement : ils tournent en SYSTEM sur les ordinateurs)</translation>
   <translation key="OptionsForm.BadCache">Le cache doit être un dossier partagé : \\serveur\partage.</translation>
   <translation key="OptionsForm.BadHours">Heures ouvrables : début et fin au format HH:mm, la fin après le début.</translation>
+  <translation key="SoftwareUpdatesForm.cardItem.Text">Fiche du poste...</translation>
+  <translation key="SoftwareUpdatesForm.wakeItem.Text">Réveiller (Wake-on-LAN)</translation>
+  <translation key="SoftwareUpdatesForm.ReadingCard">Lecture de la fiche de {0}...</translation>
+  <translation key="SoftwareUpdatesForm.CardNone">(aucun)</translation>
+  <translation key="SoftwareUpdatesForm.Card">Utilisateurs connectés : {0}
+Dernier redémarrage : {1}
+Redémarrage en attente : {2}
+Windows : {3}
+Espace libre sur C:  {4}
+Cartes réseau (Wake-on-LAN) : {5}
+Adresses IPv4 : {6}</translation>
+  <translation key="SoftwareUpdatesForm.Yes">oui</translation>
+  <translation key="SoftwareUpdatesForm.No">non</translation>
+  <translation key="SoftwareUpdatesForm.CardTitle">Fiche du poste - {0}</translation>
+  <translation key="SoftwareUpdatesForm.WakeSent">Wake-on-LAN envoyé à {0} ordinateur(s). Ils peuvent prendre quelques minutes à démarrer.</translation>
+  <translation key="SoftwareUpdatesForm.scheduleButton.Text">Planifier...</translation>
+  <translation key="SoftwareUpdatesForm.scheduleButton.ToolTipText">Planifier une vérification ou une mise à jour de ces ordinateurs</translation>
+  <translation key="MainForm.schedulesToolStripMenuItem.Text">Mises à jour planifiées...</translation>
+  <translation key="MainForm.ScheduleStarted">Mise à jour planifiée « {0} » démarrée.</translation>
+  <translation key="MainForm.ScheduleFinished">Mise à jour planifiée « {0} » terminée (voir les journaux dans Outils &gt; Mises à jour planifiées).</translation>
+  <translation key="ScheduleEditForm.Text">Lite Deploy - Planification</translation>
+  <translation key="ScheduleEditForm.nameLabel.Text">Nom :</translation>
+  <translation key="ScheduleEditForm.actionLabel.Text">Action :</translation>
+  <translation key="ScheduleEditForm.actionCombo.Items.0">Vérifier les versions</translation>
+  <translation key="ScheduleEditForm.actionCombo.Items.1">Mettre à jour les paquets désuets</translation>
+  <translation key="ScheduleEditForm.onceRadio.Text">Une fois :</translation>
+  <translation key="ScheduleEditForm.weeklyRadio.Text">Chaque semaine :</translation>
+  <translation key="ScheduleEditForm.timeLabel.Text">À :</translation>
+  <translation key="ScheduleEditForm.wakeCheck.Text">Réveiller d'abord les ordinateurs (Wake-on-LAN)</translation>
+  <translation key="ScheduleEditForm.enabledCheck.Text">Activée</translation>
+  <translation key="ScheduleEditForm.computersLabel.Text">Ordinateurs (un par ligne) :</translation>
+  <translation key="ScheduleEditForm.okButton.Text">Enregistrer</translation>
+  <translation key="ScheduleEditForm.cancelButton.Text">Annuler</translation>
+  <translation key="ScheduleEditForm.BadName">Nom : lettres, chiffres, espaces et . - _ seulement (64 au plus).</translation>
+  <translation key="ScheduleEditForm.NameUsed">Une autre planification porte ce nom.</translation>
+  <translation key="ScheduleEditForm.NoDay">Cochez au moins un jour.</translation>
+  <translation key="ScheduleEditForm.PastDate">Choisissez une date et une heure à venir.</translation>
+  <translation key="ScheduleEditForm.NoComputer">Ajoutez au moins un ordinateur.</translation>
+  <translation key="SchedulesForm.Text">Lite Deploy - Mises à jour planifiées</translation>
+  <translation key="SchedulesForm.nameColumn.Text">Nom</translation>
+  <translation key="SchedulesForm.actionColumn.Text">Action</translation>
+  <translation key="SchedulesForm.whenColumn.Text">Quand</translation>
+  <translation key="SchedulesForm.computersColumn.Text">Ordinateurs</translation>
+  <translation key="SchedulesForm.nextColumn.Text">Prochaine</translation>
+  <translation key="SchedulesForm.lastColumn.Text">Dernière exécution</translation>
+  <translation key="SchedulesForm.addButton.Text">Ajouter...</translation>
+  <translation key="SchedulesForm.editButton.Text">Modifier...</translation>
+  <translation key="SchedulesForm.deleteButton.Text">Supprimer</translation>
+  <translation key="SchedulesForm.runButton.Text">Exécuter</translation>
+  <translation key="SchedulesForm.logButton.Text">Journaux</translation>
+  <translation key="SchedulesForm.engineGroup.Text">Moteur</translation>
+  <translation key="SchedulesForm.internalRadio.Text">Interne : les planifications tournent pendant que LiteDeploy est ouvert</translation>
+  <translation key="SchedulesForm.windowsRadio.Text">Tâches planifiées Windows : elles tournent quand vous êtes connecté, même LiteDeploy fermé</translation>
+  <translation key="SchedulesForm.closeButton.Text">Fermer</translation>
+  <translation key="SchedulesForm.Update">Mise à jour</translation>
+  <translation key="SchedulesForm.Check">Vérification</translation>
+  <translation key="SchedulesForm.Disabled">Désactivée</translation>
+  <translation key="SchedulesForm.ConfirmDelete">Supprimer la planification « {0} » ?</translation>
+  <translation key="SchedulesForm.TasksUpdated">Tâches planifiées Windows mises à jour (dossier \LiteDeploy).</translation>
+  <translation key="SchedulesForm.Saved">Enregistré. Les planifications tournent pendant que LiteDeploy est ouvert.</translation>
+  <translation key="SchedulesForm.ConfirmRun">Exécuter « {0} » maintenant ? Les paquets désuets de {1} ordinateur(s) seront mis à jour et leurs applications fermées.</translation>
+  <translation key="SchedulesForm.Running">« {0} » est en cours (voir Journaux)...</translation>
+  <translation key="SchedulesForm.InternalOn">Moteur interne : les tâches Windows de LiteDeploy ont été retirées.</translation>
 </translations>

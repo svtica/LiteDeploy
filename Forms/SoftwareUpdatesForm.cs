@@ -483,6 +483,69 @@ namespace LiteDeploy
             pauseItem.Enabled = selected.Any(c => !IsPaused(c));
             resumeItem.Enabled = selected.Any(IsPaused);
             nightOnlyItem.Checked = selected.All(IsNightOnly);
+            cardItem.Enabled = selected.Count == 1;
+            lock (storeLock) wakeItem.Enabled = selected.Any(c => { ComputerUpdateState s = store.Find(c); return s != null && !String.IsNullOrEmpty(s.Macs); });
+        }
+
+        // ---- Computer card, Wake-on-LAN (MAJ-Logiciels panel) ----------------------------
+
+        void cardItem_Click(object sender, EventArgs e)
+        {
+            String computer = SelectedComputers().FirstOrDefault();
+            if (computer == null) return;
+            statusLabel.Text = Localization.F("SoftwareUpdatesForm.ReadingCard", "Reading the computer card of {0}...", computer);
+            Cursor = Cursors.WaitCursor;
+            new Thread(() =>
+            {
+                UpdateRunResult r = UpdateRunner.Info(computer);
+                WorkerMessage info = r.Messages.FirstOrDefault(m => m.Type == "info");
+                if (info != null)
+                {
+                    lock (storeLock)
+                    {
+                        store.Apply(computer, r.Messages, null, DateTime.Now);
+                        try { store.SaveIfChanged(UpdateStateStore.DefaultPath); } catch (Exception) { }
+                    }
+                }
+                if (IsDisposed) return;
+                BeginInvoke(new MethodInvoker(() =>
+                {
+                    Cursor = Cursors.Default;
+                    SetIdleStatus();
+                    if (info == null)
+                    {
+                        MessageBox.Show(this, r.Failure ?? "?", computer, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+                    String none = Localization.T("SoftwareUpdatesForm.CardNone", "(none)");
+                    String text = Localization.F("SoftwareUpdatesForm.Card",
+                        "Logged-on users: {0}\nLast restart: {1}\nRestart pending: {2}\nWindows: {3}\nFree space on C: {4}\nAdapters (Wake-on-LAN): {5}\nIPv4 addresses: {6}",
+                        Empty(info["users"], none), info["lastboot"], info["pendingrestart"] == "yes" ? Localization.T("SoftwareUpdatesForm.Yes", "yes") : Localization.T("SoftwareUpdatesForm.No", "no"),
+                        info["os"], info["freec"], Empty(info["macs"], none), Empty(info["ips"], none));
+                    MessageBox.Show(this, text, Localization.F("SoftwareUpdatesForm.CardTitle", "Computer card - {0}", computer), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }));
+            }) { IsBackground = true }.Start();
+        }
+
+        static String Empty(String value, String none)
+        {
+            return String.IsNullOrEmpty(value) ? none : value;
+        }
+
+        void wakeItem_Click(object sender, EventArgs e)
+        {
+            int computersWoken = 0, packets = 0;
+            lock (storeLock)
+            {
+                foreach (String computer in SelectedComputers())
+                {
+                    ComputerUpdateState c = store.Find(computer);
+                    if (c == null || String.IsNullOrEmpty(c.Macs)) continue;
+                    int sent = WakeOnLan.Wake(c.Macs, c.Ips);
+                    if (sent > 0) { computersWoken++; packets += sent; }
+                }
+            }
+            statusLabel.Text = Localization.F("SoftwareUpdatesForm.WakeSent", "Wake-on-LAN sent to {0} computer(s). They can take a few minutes to start.", computersWoken);
         }
 
         void pauseItem_Click(object sender, EventArgs e)
@@ -515,6 +578,14 @@ namespace LiteDeploy
                 catch (Exception ex) { MessageBox.Show(this, ex.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error); }
             }
             RefreshList();
+        }
+
+        void scheduleButton_Click(object sender, EventArgs e)
+        {
+            using (SchedulesForm schedules = new SchedulesForm(computers))
+            {
+                schedules.ShowDialog(this);
+            }
         }
 
         // ---- Package list ----------------------------------------------------------

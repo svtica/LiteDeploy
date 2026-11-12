@@ -149,11 +149,25 @@
     <Compile Include="Classes\ToolManager.cs" />
     <Compile Include="Classes\UpdateModules.cs" />
     <Compile Include="Classes\UpdateRunner.cs" />
+    <Compile Include="Classes\UpdateSchedules.cs" />
+    <Compile Include="Classes\ScheduleRunner.cs" />
     <Compile Include="Forms\PackageListForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\PackageListForm.Designer.cs">
       <DependentUpon>PackageListForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\ScheduleEditForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\ScheduleEditForm.Designer.cs">
+      <DependentUpon>ScheduleEditForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\SchedulesForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\SchedulesForm.Designer.cs">
+      <DependentUpon>SchedulesForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\ToolsForm.cs">
       <SubType>Form</SubType>
@@ -162,6 +176,7 @@
       <DependentUpon>ToolsForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Classes\UpdateStateStore.cs" />
+    <Compile Include="Classes\WakeOnLan.cs" />
     <Compile Include="Forms\SoftwareUpdatesForm.cs">
       <SubType>Form</SubType>
     </Compile>
