@@ -71,7 +71,13 @@ jobs:
       working-directory: src
       shell: powershell
       run: |
-        msbuild LiteDeploy.sln --% -restore /p:Configuration=Release /p:Platform=x64 /v:minimal
+        # Before the 64-bit only layout (base branch), the solution had x86/x64 platforms
+        # and the output went to bin\x64\Release
+        if (Select-String -Path LiteDeploy.sln -Pattern 'Release\|Any CPU' -Quiet) {
+          msbuild LiteDeploy.sln --% -restore /p:Configuration=Release /v:minimal
+        } else {
+          msbuild LiteDeploy.sln --% -restore /p:Configuration=Release /p:Platform=x64 /v:minimal
+        }
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
     - name: Soak (${{ matrix.variant }})
@@ -80,8 +86,10 @@ jobs:
         $duration = '${{ inputs.duration_minutes }}'
         if (-not $duration) { $duration = '180' }
         if ('${{ github.event.label.name }}' -eq 'soak-quick') { $duration = '30' }
+        $exe = @('src\bin\Release\LiteDeploy.exe', 'src\bin\x64\Release\LiteDeploy.exe') | Where-Object { Test-Path $_ } | Select-Object -First 1
+        if (-not $exe) { Write-Error "LiteDeploy.exe not found in the build output"; exit 1 }
         & tooling\tools\soak\Measure-LiteDeploy.ps1 `
-            -ExePath src\bin\x64\Release\LiteDeploy.exe `
+            -ExePath $exe `
             -DurationMinutes ([int]$duration) `
             -Label '${{ matrix.variant }}' `
             -OutCsv soak-${{ matrix.variant }}.csv `

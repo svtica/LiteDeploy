@@ -79,6 +79,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- 64-bit only: one platform in the solution and the project (the x86 configurations are gone),
+  build output in `bin\Release\` instead of `bin\x64\Release\`.
+
 - PsExec command line built by `PsExecCommandBuilder` (ported from
   LiteTask): `-accepteula -nobanner`, user name and password quoted with the
   Windows rules (a password with spaces or quotes no longer breaks the

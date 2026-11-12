@@ -86,8 +86,8 @@ Conventions: [docs/conventions.md](docs/conventions.md).
 
 ## Building and releasing
 
-- Build: `msbuild LiteDeploy.sln -restore /p:Configuration=Release /p:Platform=x64`
-  (output in `bin\x64\Release\`; the .NET 10 SDK is needed for `LiteSuite.Common`).
+- Build: `msbuild LiteDeploy.sln -restore /p:Configuration=Release`
+  (64-bit, output in `bin\Release\`; the .NET 10 SDK is needed for `LiteSuite.Common`).
 - Tests: `tests/LiteDeploy.Tests` and `tests/LiteSuite.Common.Tests` (MSTest), run by the CI.
 - Release: *Actions > Release > Run workflow* (or `bump-version.ps1` on `main`).
   The version is bumped, tagged `v<Major.Minor.Build>`, built, signed when the

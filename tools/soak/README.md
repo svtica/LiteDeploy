@@ -38,7 +38,7 @@ and shows both summaries.
 Locally (Windows, PowerShell 5.1+, interactive desktop session):
 
 ```powershell
-.\tools\soak\Measure-LiteDeploy.ps1 -ExePath .\bin\x64\Release\LiteDeploy.exe -DurationMinutes 240
+.\tools\soak\Measure-LiteDeploy.ps1 -ExePath .\bin\Release\LiteDeploy.exe -DurationMinutes 240
 ```
 
 The script never runs the real PsExec and never contacts the `SOAK-*`
