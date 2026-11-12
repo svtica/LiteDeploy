@@ -507,7 +507,7 @@ namespace LiteDeploy
             // 
             this.subnetsToolStripMenuItem.Name = "subnetsToolStripMenuItem";
             this.subnetsToolStripMenuItem.Size = new System.Drawing.Size(92, 20);
-            this.subnetsToolStripMenuItem.Text = "Local Subnets";
+            this.subnetsToolStripMenuItem.Text = "Subnets";
             // 
             // hostsToolStripMenuItem
             // 

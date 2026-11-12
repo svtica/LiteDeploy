@@ -46,6 +46,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Computer list > *Subnets*: besides the subnets of this computer, saved subnets with a name
+  (`10.1.2.0/24 Garage`; /20 to /22 split into /24). *Edit subnets...* edits the list of the
+  user (`%LOCALAPPDATA%\LiteDeploy\subnets.txt`) and imports a text or CSV file; a
+  `subnets.txt` next to `LiteDeploy.exe` gives the team's list.
+
 - *Software updates*, right-click a computer > *Open in LitePM*: LitePM opens connected to that
   computer through WMI, as the current user (`LitePM.exe -DONOTCHECKPREVINSTANCE -REMOTE
   <computer>`, needs a LitePM with `-REMOTE`). Only plain computer names or addresses are passed.

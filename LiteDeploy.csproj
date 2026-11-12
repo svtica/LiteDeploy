@@ -153,7 +153,11 @@
     <Compile Include="Classes\UpdateRunner.cs" />
     <Compile Include="Classes\UpdateSchedules.cs" />
     <Compile Include="Classes\ScheduleRunner.cs" />
+    <Compile Include="Classes\SubnetList.cs" />
     <Compile Include="Forms\CredentialsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\SubnetsForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\RemoteProcessesForm.cs">

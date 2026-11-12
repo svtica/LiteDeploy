@@ -83,3 +83,4 @@ profiles/
 *.log
 *.csv
 computers*.txt
+subnets.txt
