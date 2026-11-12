@@ -113,6 +113,12 @@ namespace LiteDeploy
             }
             if (!IsDark) return;
 
+            ListView list = c as ListView;
+            if (list != null && list.View == View.Details) DarkDetailsView(list);
+
+            TabControl tabs = c as TabControl;
+            if (tabs != null) DarkTabs(tabs);
+
             if (c is TextBoxBase || c is ListBox || c is ComboBox || c is ListView || c is TreeView || c is NumericUpDown)
             {
                 c.BackColor = Surface;
@@ -165,6 +171,104 @@ namespace LiteDeploy
                 drop.DropDown.ForeColor = Text;
                 foreach (ToolStripItem sub in drop.DropDownItems) ApplyTo(sub);
             }
+        }
+
+        // A details list drawn by Windows keeps white grid lines and light headers in dark mode:
+        // it is drawn here (headers, rows, selection, check boxes, state images, grid lines)
+        static void DarkDetailsView(ListView list)
+        {
+            bool gridLines = list.GridLines;
+            list.GridLines = false;
+            list.OwnerDraw = true;
+
+            list.DrawColumnHeader += (s, e) =>
+            {
+                using (SolidBrush back = new SolidBrush(Window))
+                    e.Graphics.FillRectangle(back, e.Bounds);
+                using (Pen line = new Pen(Border))
+                {
+                    e.Graphics.DrawLine(line, e.Bounds.Right - 1, e.Bounds.Top + 3, e.Bounds.Right - 1, e.Bounds.Bottom - 4);
+                    e.Graphics.DrawLine(line, e.Bounds.Left, e.Bounds.Bottom - 1, e.Bounds.Right, e.Bounds.Bottom - 1);
+                }
+                Rectangle text = new Rectangle(e.Bounds.X + 6, e.Bounds.Y, e.Bounds.Width - 8, e.Bounds.Height);
+                TextRenderer.DrawText(e.Graphics, e.Header.Text, list.Font, text, Text,
+                    TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+            };
+
+            list.DrawItem += (s, e) => { };   // everything is drawn per sub-item
+
+            list.DrawSubItem += (s, e) =>
+            {
+                ListViewItem item = e.Item;
+                Rectangle bounds = e.Bounds;
+                Color back = item.Selected ? Color.FromArgb(110, Accent) : Surface;
+                using (SolidBrush brush = new SolidBrush(Surface)) e.Graphics.FillRectangle(brush, bounds);
+                if (item.Selected) using (SolidBrush brush = new SolidBrush(back)) e.Graphics.FillRectangle(brush, bounds);
+
+                int x = bounds.X + 4;
+                if (e.ColumnIndex == 0)
+                {
+                    if (list.CheckBoxes)
+                    {
+                        Point box = new Point(x, bounds.Y + (bounds.Height - 13) / 2);
+                        System.Windows.Forms.VisualStyles.CheckBoxState state = item.Checked
+                            ? System.Windows.Forms.VisualStyles.CheckBoxState.CheckedNormal
+                            : System.Windows.Forms.VisualStyles.CheckBoxState.UncheckedNormal;
+                        CheckBoxRenderer.DrawCheckBox(e.Graphics, box, state);
+                        x += 17;
+                    }
+                    ImageList images = list.StateImageList;
+                    int index = item.StateImageIndex;
+                    if ((images == null || index < 0) && list.SmallImageList != null && item.ImageIndex >= 0)
+                    {
+                        images = list.SmallImageList;
+                        index = item.ImageIndex;
+                    }
+                    if (images != null && index >= 0 && index < images.Images.Count)
+                    {
+                        e.Graphics.DrawImage(images.Images[index], x, bounds.Y + (bounds.Height - images.ImageSize.Height) / 2,
+                            images.ImageSize.Width, images.ImageSize.Height);
+                        x += images.ImageSize.Width + 3;
+                    }
+                }
+
+                Color fore = e.SubItem.ForeColor;
+                if (e.ColumnIndex == 0 || item.UseItemStyleForSubItems) fore = item.ForeColor;
+                if (fore == SystemColors.WindowText || fore == SystemColors.ControlText || fore.IsEmpty) fore = Text;
+                Rectangle text = new Rectangle(x, bounds.Y, Math.Max(0, bounds.Right - x - 2), bounds.Height);
+                TextRenderer.DrawText(e.Graphics, e.SubItem.Text, item.Font ?? list.Font, text, fore,
+                    TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+
+                if (gridLines)
+                {
+                    using (Pen line = new Pen(Border))
+                    {
+                        e.Graphics.DrawLine(line, bounds.Left, bounds.Bottom - 1, bounds.Right, bounds.Bottom - 1);
+                        e.Graphics.DrawLine(line, bounds.Right - 1, bounds.Top, bounds.Right - 1, bounds.Bottom);
+                    }
+                }
+            };
+
+            // Windows still handles the click on the check box: only the row is redrawn
+            if (list.CheckBoxes)
+                list.ItemChecked += (s, e) => list.Invalidate(e.Item.Bounds);
+        }
+
+        // Tabs drawn by Windows stay light in dark mode
+        static void DarkTabs(TabControl tabs)
+        {
+            tabs.DrawMode = TabDrawMode.OwnerDrawFixed;
+            tabs.DrawItem += (s, e) =>
+            {
+                bool selected = e.Index == tabs.SelectedIndex;
+                using (SolidBrush back = new SolidBrush(selected ? Surface : Window))
+                    e.Graphics.FillRectangle(back, e.Bounds);
+                if (selected)
+                    using (Pen accent = new Pen(Accent, 2))
+                        e.Graphics.DrawLine(accent, e.Bounds.Left + 2, e.Bounds.Bottom - 1, e.Bounds.Right - 2, e.Bounds.Bottom - 1);
+                TextRenderer.DrawText(e.Graphics, tabs.TabPages[e.Index].Text, tabs.Font, e.Bounds, Text,
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix);
+            };
         }
 
         // Selection in menus and tool bars: the accent color (both modes); dark menus in dark mode

@@ -33,6 +33,22 @@ never in production, the script runs as SYSTEM on every computer of the run.
 A file is a module when one of its first 20 lines is `# LiteDeploy-Module`. Its name (file
 name without `.ps1`) has letters, digits and `. - _` only.
 
+## Shipped modules
+
+From the MAJ-Logiciels tool of Patrick Bédard:
+
+| Module | Product | How |
+|---|---|---|
+| `AdobeReader` | Adobe Acrobat Reader and Acrobat (MSI installs, 32 and 64-bit, MUI) | Product recognized by its MSI product code; latest build among the versions winget knows; MSP patch from `ardownload2.adobe.com`, signed by Adobe, applied with `msiexec /p`. Outlook (Adobe add-ins) is not closed: when it blocks the patch, the message says so |
+| `OnePassword` | 1Password installed per machine | Latest version from winget; official MSI from `downloads.1password.com`, signed by AgileBits; `MANAGED_INSTALL=1 MANAGED_UPDATE=1`; old version removed first on 1638; Start menu host restarted if the MSI hangs on `AI_UnpinFromStartScreen` |
+| `OracleJava` | Oracle Java 8 (winget `Oracle.JavaRuntimeEnvironment`) | Stops only the system Java (bundled Java runtimes are left alone), upgrades with winget, checks that `java8path` still answers, asks for a restart (3010) when it stopped Java |
+
+The winget packages of the same tool (7-Zip, Notepad++, VLC) are in the example package list,
+`updates/packages.txt`.
+
+They are signed with the release. Until the release is signed (`SIGNING_CERTIFICATE` secret),
+the worker refuses them, except with `AllowUnsignedModules` for a test.
+
 ## Writing a module
 
 Start from [modules/Template-Module.ps1](modules/Template-Module.ps1).

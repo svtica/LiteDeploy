@@ -267,6 +267,18 @@ namespace LiteDeploy.Tests
         }
 
         [TestMethod]
+        public void ShippedModules_AreAsciiModules()
+        {
+            string[] files = Directory.GetFiles(Path.Combine(RepoRoot(), "modules"), "*.ps1");
+            CollectionAssert.IsSubsetOf(new[] { "AdobeReader.ps1", "OnePassword.ps1", "OracleJava.ps1" }, files.Select(Path.GetFileName).ToArray());
+            foreach (string path in files)
+            {
+                Assert.IsTrue(File.ReadAllBytes(path).All(b => b < 0x80), path + " must be ASCII only");
+                Assert.IsNotNull(UpdateModules.Read(path), path + " is not a module");
+            }
+        }
+
+        [TestMethod]
         public void ModuleTemplate_IsAsciiAndAModule()
         {
             string path = Path.Combine(RepoRoot(), "docs", "modules", "Template-Module.ps1");

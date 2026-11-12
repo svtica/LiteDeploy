@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Dark mode: detail lists (process reports, software updates, computers) drawn by LiteDeploy:
+  readable headers, dark grid lines and selection; dark tabs.
+- French interface: texts of the computer list window shortened, they overlapped other controls.
+
 - Console of the main window: it kept every message since start-up and
   rewrote the whole text at each new line, so memory and CPU grew with every
   deployment. It now keeps the last 500 messages.
@@ -39,6 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   without a lock.
 
 ### Added
+
+- Modules from the MAJ-Logiciels tool of Patrick Bédard, shipped in `modules\`: `AdobeReader`
+  (Reader and Acrobat MSP patches), `OnePassword` (per-machine MSI) and `OracleJava` (Java 8 with
+  the system Java stopped and checked).
 
 - **Update modules** (docs/modules.md): signed PowerShell scripts that update a product winget
   does not cover (inspired by the Adobe and 1Password modules of the MAJ-Logiciels tool).
