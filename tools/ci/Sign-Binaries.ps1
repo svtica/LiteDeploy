@@ -3,8 +3,8 @@
     Authenticode-signs the LiteDeploy binaries of a folder and verifies them.
 
 .DESCRIPTION
-    Signs, in -Dir, the files produced by the solution (LiteDeploy.exe, the
-    LiteSuite.*.dll libraries and every PowerShell script shipped in the
+    Signs, in -Dir, the files produced by the solution (LiteDeploy.exe,
+    LiteDeploy.Worker.exe, the LiteSuite.*.dll libraries and every PowerShell script shipped in the
     package) with the
     newest signtool.exe found in the Windows SDKs, SHA-256 file digest and an
     RFC 3161 timestamp, then checks each signature with "signtool verify /pa".
@@ -19,7 +19,7 @@ param(
     [Parameter(Mandatory = $true)] [string] $CertPath,
     [string]   $PasswordEnvVar = 'CERTIFICATE_PASSWORD',
     [string]   $TimestampUrl = 'http://timestamp.digicert.com',
-    # Paths relative to -Dir; default: LiteDeploy.exe, LiteSuite.*.dll and every *.ps1 below -Dir
+    # Paths relative to -Dir; default: LiteDeploy.exe, LiteDeploy.Worker.exe, LiteSuite.*.dll and every *.ps1 below -Dir
     [string[]] $Names
 )
 $ErrorActionPreference = 'Stop'
@@ -50,7 +50,7 @@ $password = [Environment]::GetEnvironmentVariable($PasswordEnvVar)
 
 if (-not $Names) {
     $root = (Resolve-Path $Dir).Path
-    $Names = @('LiteDeploy.exe') +
+    $Names = @('LiteDeploy.exe', 'LiteDeploy.Worker.exe') +
         @(Get-ChildItem -Path $root -File -Filter 'LiteSuite.*.dll' | ForEach-Object Name) +
         @(Get-ChildItem -Path $root -Recurse -File -Filter *.ps1 | ForEach-Object { $_.FullName.Substring($root.Length).TrimStart('\') })
 }

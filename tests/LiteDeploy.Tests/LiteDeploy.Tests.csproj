@@ -27,6 +27,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Pure logic of LiteDeploy.Worker.exe (its other types come from LiteDeploy through InternalsVisibleTo) -->
+    <Compile Include="..\..\src\LiteDeploy.Worker\WingetListParser.cs" Link="Worker\WingetListParser.cs" />
+    <Compile Include="..\..\src\LiteDeploy.Worker\WingetClient.cs" Link="Worker\WingetClient.cs" />
+    <Compile Include="..\..\src\LiteDeploy.Worker\Program.cs" Link="Worker\Program.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Same location as next to LiteDeploy.exe: lang\fr.xml -->
     <Content Include="..\..\lang\fr.xml" Link="lang\fr.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

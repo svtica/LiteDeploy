@@ -25,6 +25,15 @@ choose what to run and how, start the deployment, and follow each computer in th
 - Ready-made commands: restart, shut down.
 - Stop the current PsExec or all processing.
 
+### Software updates
+- *Computers > Software Updates...*: installed and available versions of a list of winget
+  packages on the checked computers, and their update.
+- `LiteDeploy.Worker.exe` is copied and run as SYSTEM by PsExec: nothing to install on the
+  computers, no share, no scheduled task, no stored password.
+- Package list: *Package list...* (`%LOCALAPPDATA%\LiteDeploy\packages.txt`, one
+  `winget Id | processes to close | label` per line). State kept in
+  `%LOCALAPPDATA%\LiteDeploy\updates.xml`.
+
 ### Process reports
 - One line per computer and event: started, unreachable, authentication failure, exit code.
 - Right-click on a computer: ping, remote desktop, management console, administrative share

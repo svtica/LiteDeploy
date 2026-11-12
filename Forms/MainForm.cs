@@ -418,6 +418,21 @@ namespace LiteDeploy
             ShowPingAll(true);
         }
 
+        // Software updates of the checked computers
+        private void softwareUpdatesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            List<String> checkedComputers = selectedComputers.CheckedItems.Cast<object>().Select(o => o.ToString()).ToList();
+            if (checkedComputers.Count == 0)
+            {
+                MessageBox.Show(Localization.T("MainForm.NoComputerChecked", "Check the computers to work on first."), Localization.T("MainForm.SoftwareUpdates.Title", "Software Updates"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            using (SoftwareUpdatesForm updates = new SoftwareUpdatesForm(checkedComputers))
+            {
+                updates.ShowDialog(this);
+            }
+        }
+
         // Ping window: created on first use, then reused. Creating one per use leaked about
         // three GDI objects per ping run (fonts and icon of the designer), measured by the soak test.
         private PingAllForm pingAllWindow;

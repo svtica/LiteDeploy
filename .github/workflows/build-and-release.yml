@@ -94,10 +94,12 @@ jobs:
         New-Item -ItemType Directory -Force -Path $publishPath | Out-Null
 
         # LiteDeploy.exe and everything it needs next to it
-        Copy-Item "$buildPath\LiteDeploy.exe", "$buildPath\LiteDeploy.exe.config", "$buildPath\RemoteManagement.msc" -Destination $publishPath
+        Copy-Item "$buildPath\LiteDeploy.exe", "$buildPath\LiteDeploy.exe.config", "$buildPath\LiteDeploy.Worker.exe", "$buildPath\RemoteManagement.msc" -Destination $publishPath
         Copy-Item "$buildPath\*.dll" -Destination $publishPath -ErrorAction SilentlyContinue
         # Translations of the user interface
         Copy-Item "$buildPath\lang" -Destination $publishPath -Recurse
+        # Example package list of the software updates
+        Copy-Item "$buildPath\updates" -Destination $publishPath -Recurse
 
         Copy-Item "README.md", "LICENSE", "CHANGELOG.md" -Destination $publishPath -ErrorAction SilentlyContinue
         Get-ChildItem $publishPath | Format-Table Name, Length
@@ -172,7 +174,7 @@ jobs:
         $exes = @($names | Where-Object { ($_ -split '/')[-1] -eq 'LiteDeploy.exe' } | Sort-Object Length)
         if ($exes.Count -eq 0) { Write-Error "LiteDeploy.exe not found in the zip"; exit 1 }
         if ($exes[0] -ne 'LiteDeploy.exe') { Write-Error "LiteDeploy.exe must be at the zip root (found $($exes[0]))"; exit 1 }
-        $required = 'LiteDeploy.exe', 'LiteDeploy.exe.config', 'LiteSuite.Common.dll', 'RemoteManagement.msc', 'lang/fr.xml'
+        $required = 'LiteDeploy.exe', 'LiteDeploy.exe.config', 'LiteDeploy.Worker.exe', 'LiteSuite.Common.dll', 'RemoteManagement.msc', 'lang/fr.xml', 'updates/packages.txt'
         $missing = $required | Where-Object { $names -notcontains $_ }
         if ($missing) { Write-Error "Missing next to LiteDeploy.exe in the zip: $($missing -join ', ')"; exit 1 }
         # Every DLL of the build output must ship next to the exe
