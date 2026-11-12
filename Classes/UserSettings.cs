@@ -33,6 +33,8 @@ namespace LiteDeploy
         public String SchedulerEngine = UpdateSchedules.Internal;
         /// <summary>Stored credential (Tools > Credentials) used by the software updates; empty: the current user.</summary>
         public String UpdateCredential = "";
+        /// <summary>How the worker is started: "WinRM" (scheduled task as SYSTEM, default) or "PsExec".</summary>
+        public String RemoteMethod = RemoteRunner.WinRm;
 
         /// <summary>A copy, so a window can change some settings and keep the others.</summary>
         public UserSettings Clone()

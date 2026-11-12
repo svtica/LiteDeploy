@@ -3,10 +3,10 @@
 // File:    UpdateRunner.cs
 // Author:  LiteDeploy contributors
 // Date:    2026-11-12
-// Purpose: Runs LiteDeploy.Worker.exe on one computer through PsExec, as SYSTEM
-//          (-s), the worker being copied by PsExec (-c -f): no share, no
-//          scheduled task and no stored password on the computer. Returns the
-//          worker messages, or why the computer could not be reached.
+// Purpose: Runs LiteDeploy.Worker.exe on one computer as SYSTEM, through WinRM
+//          and a one-time scheduled task (default) or PsExec (RemoteRunner):
+//          no stored password on the computer. Returns the worker messages,
+//          or why the computer could not be reached.
 //          Also: where the package list and the worker are.
 // -----------------------------------------------------------------------------
 using System;
@@ -142,8 +142,8 @@ namespace LiteDeploy
         public static UpdateRunResult Run(String computer, String command, IList<UpdatePackage> packages, Action<Process> started, Action<WorkerMessage> onMessage)
         {
             UpdateRunResult result = new UpdateRunResult();
-            if (PsExecLocator.Path == null) { result.Failure = "PsExec not found"; return result; }
-            if (!File.Exists(WorkerPath)) { result.Failure = WorkerFileName + " not found next to LiteDeploy.exe"; return result; }
+            String missing = RemoteRunner.Prerequisite();
+            if (missing != null) { result.Failure = missing; return result; }
             StoredCredential credential;
             try { credential = UpdateCredential(); }
             catch (Exception ex) { result.Failure = ex.Message; return result; }
@@ -152,20 +152,16 @@ namespace LiteDeploy
             String copyError = UpdateModules.CopyTo(computer, packages, credential);
             if (copyError != null) { result.Failure = copyError; return result; }
 
-            ProcessStartInfo psi = new ProcessStartInfo(PsExecLocator.Path, PsExecCommandBuilder.BuildArguments(WithCredential(BuildOptions(computer, command, packages), credential)))
-            {
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                StandardOutputEncoding = Encoding.UTF8,
-                StandardErrorEncoding = Encoding.UTF8
-            };
-
             // Enough for every winget call of every package (list, upgrade, list), plus the copy
-            int timeoutMs = (int)TimeSpan.FromMinutes(5 + packages.Count * WingetTimeoutMinutes * (command == "upgrade" ? 3 : 1)).TotalMilliseconds;
+            int timeoutMinutes = 5 + packages.Count * WingetTimeoutMinutes * (command == "upgrade" ? 3 : 1);
+            int timeoutMs = (int)TimeSpan.FromMinutes(timeoutMinutes + 2).TotalMilliseconds;
+            PsExecOptions options = WithCredential(BuildOptions(computer, command, packages), credential);
+            String method = RemoteRunner.Method;
 
-            using (Process p = Process.Start(psi))
+            Process startedProcess;
+            try { startedProcess = RemoteRunner.Start(computer, options.Arguments, credential, timeoutMinutes, options); }
+            catch (Exception ex) { result.Failure = ex.Message; return result; }
+            using (Process p = startedProcess)
             {
                 if (started != null) started(p);
                 // Read line by line: the worker flushes each message, PsExec relays it as it comes
@@ -198,7 +194,7 @@ namespace LiteDeploy
                 if (!exited)
                     result.Failure = "Timed out";
                 else if (result.Messages.Count == 0)
-                    result.Failure = DescribeFailure(p.ExitCode, errors + "\n" + output);
+                    result.Failure = RemoteRunner.DescribeFailure(method, p.ExitCode, errors + "\n" + output);
             }
             return result;
         }
@@ -218,8 +214,8 @@ namespace LiteDeploy
         static UpdateRunResult RunSimple(String computer, String workerCommand)
         {
             UpdateRunResult result = new UpdateRunResult();
-            if (PsExecLocator.Path == null) { result.Failure = "PsExec not found"; return result; }
-            if (!File.Exists(WorkerPath)) { result.Failure = WorkerFileName + " not found next to LiteDeploy.exe"; return result; }
+            String missing = RemoteRunner.Prerequisite();
+            if (missing != null) { result.Failure = missing; return result; }
             StoredCredential credential;
             try { credential = UpdateCredential(); }
             catch (Exception ex) { result.Failure = ex.Message; return result; }
@@ -233,38 +229,22 @@ namespace LiteDeploy
                 Executable = WorkerPath,
                 Arguments = workerCommand
             }, credential);
-            ProcessStartInfo psi = new ProcessStartInfo(PsExecLocator.Path, PsExecCommandBuilder.BuildArguments(o))
-            {
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                StandardOutputEncoding = Encoding.UTF8,
-                StandardErrorEncoding = Encoding.UTF8
-            };
-            using (Process p = Process.Start(psi))
+            String method = RemoteRunner.Method;
+            Process started;
+            try { started = RemoteRunner.Start(computer, workerCommand, credential, 2, o); }
+            catch (Exception ex) { result.Failure = ex.Message; return result; }
+            using (Process p = started)
             {
                 Task<String> stdout = p.StandardOutput.ReadToEndAsync();
                 Task<String> stderr = p.StandardError.ReadToEndAsync();
-                if (!p.WaitForExit(120000)) { try { p.Kill(); } catch (Exception) { } }
+                if (!p.WaitForExit(240000)) { try { p.Kill(); } catch (Exception) { } }
                 Task.WaitAll(new Task[] { stdout, stderr }, 10000);
                 String output = stdout.IsCompleted ? stdout.Result : "";
                 result.Messages = WorkerProtocol.ParseAll(output);
                 if (result.Messages.Count == 0)
-                    result.Failure = DescribeFailure(p.HasExited ? p.ExitCode : -1, (stderr.IsCompleted ? stderr.Result : "") + "\n" + output);
+                    result.Failure = RemoteRunner.DescribeFailure(method, p.HasExited ? p.ExitCode : -1, (stderr.IsCompleted ? stderr.Result : "") + "\n" + output);
             }
             return result;
-        }
-
-        // PsExec's own message (last meaningful line of its output), e.g. "The network path was not found."
-        static String DescribeFailure(int exitCode, String text)
-        {
-            String last = text.Split('\n')
-                .Select(l => l.Trim())
-                .Where(l => l.Length > 0 && !PsExecCommandLine.IsStatusLine(l) && !l.StartsWith("PsExec v", StringComparison.OrdinalIgnoreCase)
-                            && l.IndexOf("Sysinternals", StringComparison.OrdinalIgnoreCase) < 0 && !l.StartsWith("Copyright", StringComparison.OrdinalIgnoreCase))
-                .LastOrDefault();
-            return "PsExec exit code " + exitCode + (last != null ? ": " + last : "");
         }
     }
 }

@@ -32,11 +32,20 @@ choose what to run and how, start the deployment, and follow each computer in th
 ### Software updates
 - *Tools > Software Updates...*: installed and available versions of a list of winget
   packages on the checked computers (or the whole list); check the rows to update.
-- `LiteDeploy.Worker.exe` is copied and run as SYSTEM by PsExec: nothing to install on the
-  computers, no share, no scheduled task, no stored password.
+- `LiteDeploy.Worker.exe` runs as SYSTEM on the computer, started by one of two methods
+  (*App > Options*), with nothing to install and no stored password:
+  - **WinRM + SYSTEM task** (default, the method of the MAJ-Logiciels tool): the worker is copied
+    to `%windir%\LiteDeploy` (`ADMIN$`), a PowerShell session registers a one-time scheduled
+    task as SYSTEM in `\LiteDeploy\`, relays the messages the worker writes in
+    `%windir%\LiteDeploy\work`, then deletes the task and the file (leftovers of a stopped run
+    are deleted at the next run). Needs WinRM on the computers.
+  - **PsExec** (`-s -c -f`): the worker is copied and started by PsExec.
 - Package list: *Package list...* searches the winget catalog
   (`%LOCALAPPDATA%\LiteDeploy\packages.txt`). State kept in
   `%LOCALAPPDATA%\LiteDeploy\updates.xml`.
+- The account is the current user or a stored credential (*Tools > Credentials*), chosen in
+  *App > Options*. The deployment credentials of the main window (*Saved...*) come from the
+  same store.
 - Right-click a computer: pause it, outside business hours only, computer card (logged-on
   users, pending restart...), Wake-on-LAN. Each row shows the step in progress.
 - *Tools > Scheduled Updates*: check or update on a schedule, with the internal engine (while
