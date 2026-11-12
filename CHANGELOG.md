@@ -40,6 +40,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `LiteSuite.Common.dll`, components shared with LiteTask (built for .NET Framework 4.8 and
+  .NET 10, tested on both): PsExec command line, Authenticode verification and update signature
+  policy, Mark of the Web removal, process failure messages, parameter parsing. Ported from
+  LiteTask; LiteDeploy's PsExec quoting now comes from it. The DLL ships next to `LiteDeploy.exe`
+  and is signed with it.
+
 - Unit tests (MSTest, `tests/LiteDeploy.Tests`, run in CI): PsExec command
   line, localization, translation keys still in use.
 - French user interface: English stays the default, French is used when

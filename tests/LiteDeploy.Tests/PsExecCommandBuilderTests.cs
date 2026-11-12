@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------------
+﻿// -----------------------------------------------------------------------------
 // LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
 // File:    PsExecCommandBuilderTests.cs
 // Author:  LiteDeploy contributors
@@ -110,30 +110,6 @@ namespace LiteDeploy.Tests
                 Assert.Fail("no exception");
             }
             catch (ArgumentException) { }
-        }
-
-        [TestMethod]
-        public void QuoteArgument_PlainValue_Unchanged()
-        {
-            Assert.AreEqual("simple", PsExecCommandBuilder.QuoteArgument("simple"));
-        }
-
-        [TestMethod]
-        public void QuoteArgument_BackslashesBeforeQuote_AreDoubled()
-        {
-            Assert.AreEqual("\"a\\\\\\\"b\"", PsExecCommandBuilder.QuoteArgument("a\\\"b"));
-        }
-
-        [TestMethod]
-        public void QuoteArgument_TrailingBackslash_IsDoubled()
-        {
-            Assert.AreEqual("\"abc\\\\\"", PsExecCommandBuilder.QuoteArgument("abc\\", true));
-        }
-
-        [TestMethod]
-        public void QuoteArgument_InternalBackslashes_LeftAlone()
-        {
-            Assert.AreEqual("\"C:\\dir\\file.exe\"", PsExecCommandBuilder.QuoteArgument("C:\\dir\\file.exe", true));
         }
     }
 }
