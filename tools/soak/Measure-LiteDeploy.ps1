@@ -23,7 +23,7 @@
     warm-up) to SummaryPath.
 
 .EXAMPLE
-    .\Measure-LiteDeploy.ps1 -ExePath ..\..\bin\x64\Release\LiteDeploy.exe -DurationMinutes 180
+    .\Measure-LiteDeploy.ps1 -ExePath ..\..\bin\Release\LiteDeploy.exe -DurationMinutes 180
 #>
 param(
     [Parameter(Mandatory = $true)] [string] $ExePath,

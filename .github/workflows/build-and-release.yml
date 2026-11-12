@@ -72,7 +72,7 @@ jobs:
     - name: Build solution
       shell: powershell
       run: |
-        msbuild LiteDeploy.sln --% -restore /p:Configuration=Release /p:Platform=x64 /v:minimal
+        msbuild LiteDeploy.sln --% -restore /p:Configuration=Release /v:minimal
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
     - name: Unit tests
@@ -89,7 +89,7 @@ jobs:
     - name: Assemble package folder
       shell: powershell
       run: |
-        $buildPath = "bin\x64\Release"
+        $buildPath = "bin\Release"
         $publishPath = "publish"
         New-Item -ItemType Directory -Force -Path $publishPath | Out-Null
 
@@ -176,7 +176,7 @@ jobs:
         $missing = $required | Where-Object { $names -notcontains $_ }
         if ($missing) { Write-Error "Missing next to LiteDeploy.exe in the zip: $($missing -join ', ')"; exit 1 }
         # Every DLL of the build output must ship next to the exe
-        $dlls = Get-ChildItem "bin\x64\Release\*.dll" -ErrorAction SilentlyContinue | ForEach-Object Name
+        $dlls = Get-ChildItem "bin\Release\*.dll" -ErrorAction SilentlyContinue | ForEach-Object Name
         $missingDll = $dlls | Where-Object { $names -notcontains $_ }
         if ($missingDll) { Write-Error "Build DLLs missing from the zip: $($missingDll -join ', ')"; exit 1 }
         Write-Host "Package OK: $($names.Count) entries, LiteDeploy.exe and its dependencies at the zip root."

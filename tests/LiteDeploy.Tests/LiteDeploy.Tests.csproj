@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <!--
     Unit tests of LiteDeploy (MSTest, as in LiteTask). Build with MSBuild (the main project has a
     COM reference), then run the test assembly:
@@ -23,7 +23,7 @@
 
   <ItemGroup>
     <Reference Include="System.Windows.Forms" />
-    <ProjectReference Include="..\..\LiteDeploy.csproj" SetPlatform="Platform=x64" />
+    <ProjectReference Include="..\..\LiteDeploy.csproj" />
   </ItemGroup>
 
   <ItemGroup>
