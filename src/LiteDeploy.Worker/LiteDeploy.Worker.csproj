@@ -23,6 +23,9 @@
     <Deterministic>true</Deterministic>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="System.Management" />
+  </ItemGroup>
+  <ItemGroup>
     <!-- Signature check of the update modules (source of LiteSuite.Common: the worker stays a single file) -->
     <Compile Include="..\LiteSuite.Common\AuthenticodeVerifier.cs" Link="Shared\AuthenticodeVerifier.cs" />
   </ItemGroup>

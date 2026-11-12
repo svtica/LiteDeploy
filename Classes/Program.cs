@@ -4,7 +4,8 @@
 // Author:  LiteDeploy contributors
 // Date:    2025-05-30
 // Purpose: Entry point: working folder, PsExec lookup (download offered when
-//          missing), main window.
+//          missing), main window; "/schedule <name>" runs a scheduled update
+//          without a window (Windows task of the scheduler).
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -30,6 +31,18 @@ namespace LiteDeploy
             // Settings of the user, then the interface language (English, or lang\fr.xml)
             UserSettings.Load();
             Localization.Initialize(UserSettings.Current.Language);
+
+            // "LiteDeploy.exe /schedule <name>": scheduled run started by the Windows task, no window
+            if (args.Length == 2 && args[0].Equals("/schedule", StringComparison.OrdinalIgnoreCase))
+            {
+                if (PsExecLocator.Find(AppDomain.CurrentDomain.BaseDirectory) == null)
+                {
+                    ScheduleRunner.Log("PsExec not found: schedule \"" + args[1] + "\" not run");
+                    Environment.Exit(2);
+                }
+                int failed = ScheduleRunner.RunByName(args[1]);
+                Environment.Exit(failed < 0 ? 1 : Math.Min(failed, 99));
+            }
 
             if (PsExecLocator.Find(AppDomain.CurrentDomain.BaseDirectory) == null && !OfferPsExecDownload())
             {

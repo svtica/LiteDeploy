@@ -28,12 +28,16 @@ namespace LiteDeploy
             this.pauseItem = new System.Windows.Forms.ToolStripMenuItem();
             this.resumeItem = new System.Windows.Forms.ToolStripMenuItem();
             this.nightOnlyItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuSeparator = new System.Windows.Forms.ToolStripSeparator();
+            this.cardItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.wakeItem = new System.Windows.Forms.ToolStripMenuItem();
             this.checkButton = new System.Windows.Forms.ToolStripButton();
             this.selectOutdatedButton = new System.Windows.Forms.ToolStripButton();
             this.updateButton = new System.Windows.Forms.ToolStripButton();
             this.stopButton = new System.Windows.Forms.ToolStripButton();
             this.separator1 = new System.Windows.Forms.ToolStripSeparator();
             this.editPackagesButton = new System.Windows.Forms.ToolStripButton();
+            this.scheduleButton = new System.Windows.Forms.ToolStripButton();
             this.updatesList = new System.Windows.Forms.ListView();
             this.computerColumn = new System.Windows.Forms.ColumnHeader();
             this.packageColumn = new System.Windows.Forms.ColumnHeader();
@@ -58,7 +62,8 @@ namespace LiteDeploy
             this.updateButton,
             this.stopButton,
             this.separator1,
-            this.editPackagesButton});
+            this.editPackagesButton,
+            this.scheduleButton});
             this.toolStrip.Location = new System.Drawing.Point(0, 0);
             this.toolStrip.Name = "toolStrip";
             this.toolStrip.Size = new System.Drawing.Size(884, 25);
@@ -108,6 +113,14 @@ namespace LiteDeploy
             this.editPackagesButton.ToolTipText = "Choose the winget packages to keep up to date";
             this.editPackagesButton.Click += new System.EventHandler(this.editPackagesButton_Click);
             //
+            // scheduleButton
+            //
+            this.scheduleButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.scheduleButton.Name = "scheduleButton";
+            this.scheduleButton.Text = "Schedule...";
+            this.scheduleButton.ToolTipText = "Schedule a check or an update of these computers";
+            this.scheduleButton.Click += new System.EventHandler(this.scheduleButton_Click);
+            //
             // updatesList
             //
             this.updatesList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
@@ -152,7 +165,10 @@ namespace LiteDeploy
             this.rowMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.pauseItem,
             this.resumeItem,
-            this.nightOnlyItem});
+            this.nightOnlyItem,
+            this.menuSeparator,
+            this.cardItem,
+            this.wakeItem});
             this.rowMenu.Name = "rowMenu";
             this.rowMenu.Opening += new System.ComponentModel.CancelEventHandler(this.rowMenu_Opening);
             this.pauseItem.Name = "pauseItem";
@@ -164,6 +180,13 @@ namespace LiteDeploy
             this.nightOnlyItem.Name = "nightOnlyItem";
             this.nightOnlyItem.Text = "Outside business hours only";
             this.nightOnlyItem.Click += new System.EventHandler(this.nightOnlyItem_Click);
+            this.menuSeparator.Name = "menuSeparator";
+            this.cardItem.Name = "cardItem";
+            this.cardItem.Text = "Computer card...";
+            this.cardItem.Click += new System.EventHandler(this.cardItem_Click);
+            this.wakeItem.Name = "wakeItem";
+            this.wakeItem.Text = "Wake up (Wake-on-LAN)";
+            this.wakeItem.Click += new System.EventHandler(this.wakeItem_Click);
             //
             // statusStrip
             //
@@ -213,12 +236,16 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripMenuItem pauseItem;
         private System.Windows.Forms.ToolStripMenuItem resumeItem;
         private System.Windows.Forms.ToolStripMenuItem nightOnlyItem;
+        private System.Windows.Forms.ToolStripSeparator menuSeparator;
+        private System.Windows.Forms.ToolStripMenuItem cardItem;
+        private System.Windows.Forms.ToolStripMenuItem wakeItem;
         private System.Windows.Forms.ToolStripButton checkButton;
         private System.Windows.Forms.ToolStripButton selectOutdatedButton;
         private System.Windows.Forms.ToolStripButton updateButton;
         private System.Windows.Forms.ToolStripButton stopButton;
         private System.Windows.Forms.ToolStripSeparator separator1;
         private System.Windows.Forms.ToolStripButton editPackagesButton;
+        private System.Windows.Forms.ToolStripButton scheduleButton;
         private System.Windows.Forms.ListView updatesList;
         private System.Windows.Forms.ColumnHeader computerColumn;
         private System.Windows.Forms.ColumnHeader packageColumn;

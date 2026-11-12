@@ -33,6 +33,10 @@ choose what to run and how, start the deployment, and follow each computer in th
 - Package list: *Package list...* searches the winget catalog
   (`%LOCALAPPDATA%\LiteDeploy\packages.txt`). State kept in
   `%LOCALAPPDATA%\LiteDeploy\updates.xml`.
+- Right-click a computer: pause it, outside business hours only, computer card (logged-on
+  users, pending restart...), Wake-on-LAN. Each row shows the step in progress.
+- *Tools > Scheduled Updates*: check or update on a schedule, with the internal engine (while
+  LiteDeploy is open) or Windows scheduled tasks (`LiteDeploy.exe /schedule <name>`).
 - **Update modules** for products winget does not cover: signed PowerShell scripts run as
   SYSTEM by the worker ([docs/modules.md](docs/modules.md)).
 

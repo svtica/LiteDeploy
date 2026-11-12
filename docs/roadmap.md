@@ -19,9 +19,9 @@ Kept, in three steps:
 
 - **A (done)**: pause or exclusion of a computer (with its reason), "outside business hours
   only" computers, live display of the step of each computer, shared installer cache.
-- **B**: scheduler (internal, while LiteDeploy is open, or a Windows scheduled task that starts
-  LiteDeploy in command-line mode; an option switches between both), Wake-on-LAN, computer card
-  (logged-on user, pending restart, last restart).
+- **B (done)**: scheduler (internal, while LiteDeploy is open, or Windows scheduled tasks that
+  start `LiteDeploy.exe /schedule <name>`; switched in the window), Wake-on-LAN, computer card
+  (logged-on users, pending restart, last restart).
 - **C**: credentials (LiteTask's CredentialManager moved to LiteSuite.Common), retrieval of the
   logs of a computer, handle monitoring through LitePM, a `LiteDeploy` PowerShell module so the
   scripts of the MAJ-Logiciels tool can live next to LiteDeploy.

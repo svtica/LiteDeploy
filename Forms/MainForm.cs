@@ -98,6 +98,7 @@ namespace LiteDeploy
             username.Select(username.Text.Length, 0);
             priority.SelectedIndex = 2;
             UpdateComputerCounts();
+            StartInternalScheduler();
         }        
 
         private void selectFileToExecute_Click(object sender, EventArgs e)
@@ -434,6 +435,53 @@ namespace LiteDeploy
             using (SoftwareUpdatesForm updates = new SoftwareUpdatesForm(computers))
             {
                 updates.ShowDialog(this);
+            }
+        }
+
+        private void schedulesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            IEnumerable<object> source = selectedComputers.CheckedItems.Count > 0
+                ? selectedComputers.CheckedItems.Cast<object>()
+                : selectedComputers.Items.Cast<object>();
+            using (SchedulesForm schedules = new SchedulesForm(source.Select(o => o.ToString())))
+            {
+                schedules.ShowDialog(this);
+            }
+        }
+
+        // ---- Internal scheduler: the schedules due while LiteDeploy is open --------------
+
+        readonly DateTime startedAt = DateTime.Now;
+        readonly HashSet<String> runningSchedules = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
+        System.Windows.Forms.Timer schedulerTimer;
+
+        void StartInternalScheduler()
+        {
+            schedulerTimer = new System.Windows.Forms.Timer { Interval = 60000 };
+            schedulerTimer.Tick += (s, e) => RunDueSchedules();
+            schedulerTimer.Start();
+        }
+
+        void RunDueSchedules()
+        {
+            if (UserSettings.Current.SchedulerEngine != UpdateSchedules.Internal) return;
+            DateTime now = DateTime.Now;
+            // Only what became due since LiteDeploy started: an update missed during the night is
+            // not started the next morning, during business hours
+            foreach (UpdateSchedule s in UpdateSchedules.Load().Items.Where(x => x.IsDue(now, startedAt)))
+            {
+                lock (runningSchedules)
+                {
+                    if (!runningSchedules.Add(s.Name)) continue;
+                }
+                AppConsole.WriteLine(Localization.F("MainForm.ScheduleStarted", "Scheduled update \"{0}\" started.", s.Name));
+                UpdateSchedule schedule = s;
+                new Thread(() =>
+                {
+                    try { ScheduleRunner.Run(schedule); }
+                    finally { lock (runningSchedules) runningSchedules.Remove(schedule.Name); }
+                    AppConsole.WriteLine(Localization.F("MainForm.ScheduleFinished", "Scheduled update \"{0}\" finished (see the logs of Tools > Scheduled Updates).", schedule.Name));
+                }) { IsBackground = true, Name = "Schedule " + s.Name }.Start();
             }
         }
 

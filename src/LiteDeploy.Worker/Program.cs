@@ -14,6 +14,7 @@
 //          scan reports the installed and available version of each package;
 //          upgrade closes the package's processes and upgrades it when an
 //          upgrade is available. Results: WorkerProtocol lines on stdout.
+//            LiteDeploy.Worker.exe info    (computer card: ComputerInfo)
 //          Exit code: number of failures (0: everything went well).
 // -----------------------------------------------------------------------------
 using System;
@@ -35,6 +36,12 @@ namespace LiteDeploy.Worker
         {
             Console.OutputEncoding = new UTF8Encoding(false);
 
+            if (args != null && args.Length == 1 && args[0].Equals("info", StringComparison.OrdinalIgnoreCase))
+            {
+                Emit(ComputerInfo.Collect());
+                return 0;
+            }
+
             string command;
             List<UpdatePackage> packages;
             int timeoutMinutes;
@@ -52,12 +59,16 @@ namespace LiteDeploy.Worker
 
             string wingetPath = WingetClient.Locate();
             bool needsWinget = packages.Any(p => !p.IsModule);
+            List<string> macs, ips;
+            ComputerInfo.Network(out macs, out ips);
             Emit(WorkerProtocol.Format(
                 "type", "start",
                 "computer", Environment.MachineName,
                 "user", WindowsIdentity.GetCurrent().Name,
                 "command", command,
-                "winget", wingetPath ?? ""));
+                "winget", wingetPath ?? "",
+                "macs", string.Join(" ", macs),
+                "ips", string.Join(" ", ips)));
             if (wingetPath == null && needsWinget)
             {
                 Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeError, "message", "winget.exe not found (App Installer missing)"));

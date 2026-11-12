@@ -29,6 +29,8 @@ namespace LiteDeploy
         /// <summary>Business hours, Monday to Friday (HH:mm): "outside business hours only" computers are not updated then.</summary>
         public String BusinessHoursStart = "07:00";
         public String BusinessHoursEnd = "17:00";
+        /// <summary>Scheduler: "internal" (while LiteDeploy is open) or "windows" (Windows scheduled tasks).</summary>
+        public String SchedulerEngine = UpdateSchedules.Internal;
 
         /// <summary>A copy, so a window can change some settings and keep the others.</summary>
         public UserSettings Clone()

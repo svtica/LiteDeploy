@@ -43,6 +43,9 @@ namespace LiteDeploy
         public String PauseReason;
         /// <summary>Updated outside business hours only (UserSettings.BusinessHours*).</summary>
         [XmlAttribute] public bool NightOnly;
+        /// <summary>MAC addresses of its physical adapters (Wake-on-LAN) and last IPv4 addresses, space-separated.</summary>
+        [XmlAttribute] public String Macs;
+        [XmlAttribute] public String Ips;
         [XmlElement("Package")] public List<PackageUpdateState> Packages = new List<PackageUpdateState>();
 
         public PackageUpdateState Find(String id)
@@ -120,6 +123,12 @@ namespace LiteDeploy
                         u.LastMessage = m["message"];
                         u.LastUpgrade = now;
                         if (u.LastResult == WorkerProtocol.ResultFailed) errors.Add(id + ": " + m["message"]);
+                        break;
+                    case "start":
+                    case "info":
+                        // Kept for Wake-on-LAN: the adapters of a computer that is now off are still known
+                        if (!String.IsNullOrEmpty(m["macs"])) c.Macs = m["macs"];
+                        if (!String.IsNullOrEmpty(m["ips"])) c.Ips = m["ips"];
                         break;
                     case WorkerProtocol.TypeError:
                         errors.Add(m["message"]);
