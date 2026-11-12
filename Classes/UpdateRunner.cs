@@ -97,6 +97,27 @@ namespace LiteDeploy
             return sb.ToString();
         }
 
+        /// <summary>The credential chosen in Options for the software updates; null: the current user.</summary>
+        public static StoredCredential UpdateCredential()
+        {
+            String name = UserSettings.Current.UpdateCredential;
+            if (String.IsNullOrWhiteSpace(name)) return null;
+            StoredCredential c = CredentialStore.Read(name);
+            if (c == null) throw new InvalidOperationException(Localization.F("UpdateRunner.NoCredential", "The credential \"{0}\" no longer exists (Tools > Credentials).", name));
+            return c;
+        }
+
+        // Authenticate with the stored credential and still run the worker as SYSTEM
+        static PsExecOptions WithCredential(PsExecOptions o, StoredCredential credential)
+        {
+            if (credential == null) return o;
+            o.UseCredentials = true;
+            o.UserName = credential.UserName;
+            o.Password = credential.Password;
+            o.SystemWithCredentials = true;
+            return o;
+        }
+
         public static PsExecOptions BuildOptions(String computer, String command, IList<UpdatePackage> packages)
         {
             return new PsExecOptions
@@ -123,11 +144,15 @@ namespace LiteDeploy
             UpdateRunResult result = new UpdateRunResult();
             if (PsExecLocator.Path == null) { result.Failure = "PsExec not found"; return result; }
             if (!File.Exists(WorkerPath)) { result.Failure = WorkerFileName + " not found next to LiteDeploy.exe"; return result; }
+            StoredCredential credential;
+            try { credential = UpdateCredential(); }
+            catch (Exception ex) { result.Failure = ex.Message; return result; }
+
             // Update modules: copied first to the administrators-only folder of the computer
-            String copyError = UpdateModules.CopyTo(computer, packages);
+            String copyError = UpdateModules.CopyTo(computer, packages, credential);
             if (copyError != null) { result.Failure = copyError; return result; }
 
-            ProcessStartInfo psi = new ProcessStartInfo(PsExecLocator.Path, PsExecCommandBuilder.BuildArguments(BuildOptions(computer, command, packages)))
+            ProcessStartInfo psi = new ProcessStartInfo(PsExecLocator.Path, PsExecCommandBuilder.BuildArguments(WithCredential(BuildOptions(computer, command, packages), credential)))
             {
                 UseShellExecute = false,
                 CreateNoWindow = true,
@@ -181,10 +206,24 @@ namespace LiteDeploy
         /// <summary>Computer card: "LiteDeploy.Worker.exe info" on the computer (one message, or the failure).</summary>
         public static UpdateRunResult Info(String computer)
         {
+            return RunSimple(computer, "info");
+        }
+
+        /// <summary>Processes of the computer, the most handles first ("LiteDeploy.Worker.exe processes").</summary>
+        public static UpdateRunResult Processes(String computer)
+        {
+            return RunSimple(computer, "processes");
+        }
+
+        static UpdateRunResult RunSimple(String computer, String workerCommand)
+        {
             UpdateRunResult result = new UpdateRunResult();
             if (PsExecLocator.Path == null) { result.Failure = "PsExec not found"; return result; }
             if (!File.Exists(WorkerPath)) { result.Failure = WorkerFileName + " not found next to LiteDeploy.exe"; return result; }
-            PsExecOptions o = new PsExecOptions
+            StoredCredential credential;
+            try { credential = UpdateCredential(); }
+            catch (Exception ex) { result.Failure = ex.Message; return result; }
+            PsExecOptions o = WithCredential(new PsExecOptions
             {
                 Computer = computer,
                 RunAsSystem = true,
@@ -192,8 +231,8 @@ namespace LiteDeploy
                 OverwriteExisting = true,
                 ConnectionTimeout = 20,
                 Executable = WorkerPath,
-                Arguments = "info"
-            };
+                Arguments = workerCommand
+            }, credential);
             ProcessStartInfo psi = new ProcessStartInfo(PsExecLocator.Path, PsExecCommandBuilder.BuildArguments(o))
             {
                 UseShellExecute = false,

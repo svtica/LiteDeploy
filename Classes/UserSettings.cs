@@ -31,6 +31,8 @@ namespace LiteDeploy
         public String BusinessHoursEnd = "17:00";
         /// <summary>Scheduler: "internal" (while LiteDeploy is open) or "windows" (Windows scheduled tasks).</summary>
         public String SchedulerEngine = UpdateSchedules.Internal;
+        /// <summary>Stored credential (Tools > Credentials) used by the software updates; empty: the current user.</summary>
+        public String UpdateCredential = "";
 
         /// <summary>A copy, so a window can change some settings and keep the others.</summary>
         public UserSettings Clone()

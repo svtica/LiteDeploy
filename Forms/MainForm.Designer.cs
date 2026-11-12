@@ -79,6 +79,7 @@ namespace LiteDeploy
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.manageToolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.schedulesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.credentialsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.litePMToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.restartToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -520,6 +521,7 @@ namespace LiteDeploy
             this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.softwareUpdatesToolStripMenuItem,
             this.schedulesToolStripMenuItem,
+            this.credentialsToolStripMenuItem,
             this.manageToolsToolStripMenuItem,
             this.litePMToolStripMenuItem});
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
@@ -532,6 +534,13 @@ namespace LiteDeploy
             this.schedulesToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
             this.schedulesToolStripMenuItem.Text = "Scheduled Updates...";
             this.schedulesToolStripMenuItem.Click += new System.EventHandler(this.schedulesToolStripMenuItem_Click);
+            // 
+            // credentialsToolStripMenuItem
+            // 
+            this.credentialsToolStripMenuItem.Name = "credentialsToolStripMenuItem";
+            this.credentialsToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
+            this.credentialsToolStripMenuItem.Text = "Credentials...";
+            this.credentialsToolStripMenuItem.Click += new System.EventHandler(this.credentialsToolStripMenuItem_Click);
             // 
             // manageToolsToolStripMenuItem
             // 
@@ -993,6 +1002,7 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem manageToolsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem schedulesToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem credentialsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem litePMToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem restartToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem shutdownToolStripMenuItem;

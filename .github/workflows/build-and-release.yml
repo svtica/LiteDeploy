@@ -78,7 +78,7 @@ jobs:
     - name: Check PowerShell scripts (syntax, ASCII)
       shell: powershell
       run: |
-        $files = @(Get-ChildItem modules, docs\modules, tools -Recurse -Filter *.ps1 -ErrorAction SilentlyContinue)
+        $files = @(Get-ChildItem modules, docs\modules, tools, powershell -Recurse -Include *.ps1, *.psm1, *.psd1 -ErrorAction SilentlyContinue)
         $bad = 0
         foreach ($f in $files) {
           $tokens = $null; $errors = $null
@@ -90,6 +90,17 @@ jobs:
         }
         Write-Host "$($files.Count) script(s) checked, $bad problem(s)"
         if ($bad -gt 0) { exit 1 }
+
+    - name: PowerShell module smoke test
+      shell: powershell
+      run: |
+        Import-Module .\powershell\LiteDeploy -Force
+        $commands = @(Get-Command -Module LiteDeploy)
+        if ($commands.Count -ne 6) { Write-Error "6 functions expected, $($commands.Count) exported"; exit 1 }
+        $m = "LDW1`ttype=package`tid=7zip.7zip`tstatus=outdated`tmessage=a%20b" | ConvertFrom-LiteDeployMessage -ComputerName PC01
+        if ($m.ComputerName -ne 'PC01' -or $m.Id -ne '7zip.7zip' -or $m.Status -ne 'outdated' -or $m.Message -ne 'a b') { Write-Error "ConvertFrom-LiteDeployMessage: $($m | Out-String)"; exit 1 }
+        if (@('noise' | ConvertFrom-LiteDeployMessage).Count -ne 0) { Write-Error 'non-message lines must be ignored'; exit 1 }
+        Write-Host "LiteDeploy module OK: $($commands.Name -join ', ')"
 
     - name: Unit tests
       shell: powershell
@@ -118,6 +129,8 @@ jobs:
         Copy-Item "$buildPath\updates" -Destination $publishPath -Recurse
         # Update modules shipped with LiteDeploy (signed below with the package)
         if (Test-Path "$buildPath\modules") { Copy-Item "$buildPath\modules" -Destination $publishPath -Recurse }
+        # PowerShell module
+        Copy-Item "$buildPath\powershell" -Destination $publishPath -Recurse
 
         Copy-Item "README.md", "LICENSE", "CHANGELOG.md" -Destination $publishPath -ErrorAction SilentlyContinue
         Get-ChildItem $publishPath | Format-Table Name, Length
@@ -192,7 +205,7 @@ jobs:
         $exes = @($names | Where-Object { ($_ -split '/')[-1] -eq 'LiteDeploy.exe' } | Sort-Object Length)
         if ($exes.Count -eq 0) { Write-Error "LiteDeploy.exe not found in the zip"; exit 1 }
         if ($exes[0] -ne 'LiteDeploy.exe') { Write-Error "LiteDeploy.exe must be at the zip root (found $($exes[0]))"; exit 1 }
-        $required = 'LiteDeploy.exe', 'LiteDeploy.exe.config', 'LiteDeploy.Worker.exe', 'LiteSuite.Common.dll', 'RemoteManagement.msc', 'lang/fr.xml', 'updates/packages.txt'
+        $required = 'LiteDeploy.exe', 'LiteDeploy.exe.config', 'LiteDeploy.Worker.exe', 'LiteSuite.Common.dll', 'RemoteManagement.msc', 'lang/fr.xml', 'updates/packages.txt', 'powershell/LiteDeploy/LiteDeploy.psm1'
         $missing = $required | Where-Object { $names -notcontains $_ }
         if ($missing) { Write-Error "Missing next to LiteDeploy.exe in the zip: $($missing -join ', ')"; exit 1 }
         # Every DLL of the build output must ship next to the exe

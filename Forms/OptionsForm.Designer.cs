@@ -46,6 +46,8 @@ namespace LiteDeploy
             this.hoursStartBox = new System.Windows.Forms.TextBox();
             this.hoursEndBox = new System.Windows.Forms.TextBox();
             this.unsignedModulesCheckBox = new System.Windows.Forms.CheckBox();
+            this.accountLabel = new System.Windows.Forms.Label();
+            this.accountCombo = new System.Windows.Forms.ComboBox();
             this.languageLabel = new System.Windows.Forms.Label();
             this.languageCombo = new System.Windows.Forms.ComboBox();
             this.button3 = new System.Windows.Forms.Button();
@@ -141,7 +143,7 @@ namespace LiteDeploy
             // 
             // ApplyButton
             // 
-            this.ApplyButton.Location = new System.Drawing.Point(237, 390);
+            this.ApplyButton.Location = new System.Drawing.Point(237, 435);
             this.ApplyButton.Name = "ApplyButton";
             this.ApplyButton.Size = new System.Drawing.Size(93, 23);
             this.ApplyButton.TabIndex = 6;
@@ -152,7 +154,7 @@ namespace LiteDeploy
             // cancelButton
             // 
             this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cancelButton.Location = new System.Drawing.Point(336, 390);
+            this.cancelButton.Location = new System.Drawing.Point(336, 435);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(93, 23);
             this.cancelButton.TabIndex = 7;
@@ -180,9 +182,11 @@ namespace LiteDeploy
             this.updatesGroup.Controls.Add(this.hoursStartBox);
             this.updatesGroup.Controls.Add(this.hoursEndBox);
             this.updatesGroup.Controls.Add(this.unsignedModulesCheckBox);
+            this.updatesGroup.Controls.Add(this.accountLabel);
+            this.updatesGroup.Controls.Add(this.accountCombo);
             this.updatesGroup.Location = new System.Drawing.Point(12, 208);
             this.updatesGroup.Name = "updatesGroup";
-            this.updatesGroup.Size = new System.Drawing.Size(417, 170);
+            this.updatesGroup.Size = new System.Drawing.Size(417, 215);
             this.updatesGroup.TabIndex = 3;
             this.updatesGroup.TabStop = false;
             this.updatesGroup.Text = "Software updates";
@@ -212,6 +216,15 @@ namespace LiteDeploy
             this.unsignedModulesCheckBox.TabIndex = 14;
             this.unsignedModulesCheckBox.Text = "Run unsigned update modules (tests only: they run as SYSTEM on the computers)";
             this.unsignedModulesCheckBox.UseVisualStyleBackColor = true;
+            this.accountLabel.AutoSize = true;
+            this.accountLabel.Location = new System.Drawing.Point(17, 166);
+            this.accountLabel.Name = "accountLabel";
+            this.accountLabel.Text = "Account (Tools > Credentials):";
+            this.accountCombo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.accountCombo.Location = new System.Drawing.Point(20, 182);
+            this.accountCombo.Name = "accountCombo";
+            this.accountCombo.Size = new System.Drawing.Size(379, 21);
+            this.accountCombo.TabIndex = 15;
             // 
             // OptionsForm
             // 
@@ -219,7 +232,7 @@ namespace LiteDeploy
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.cancelButton;
-            this.ClientSize = new System.Drawing.Size(445, 425);
+            this.ClientSize = new System.Drawing.Size(445, 470);
             this.Controls.Add(this.cancelButton);
             this.Controls.Add(this.ApplyButton);
             this.Controls.Add(this.groupBox2);
@@ -259,5 +272,7 @@ namespace LiteDeploy
         private System.Windows.Forms.TextBox hoursStartBox;
         private System.Windows.Forms.TextBox hoursEndBox;
         private System.Windows.Forms.CheckBox unsignedModulesCheckBox;
+        private System.Windows.Forms.Label accountLabel;
+        private System.Windows.Forms.ComboBox accountCombo;
     }
 }

@@ -485,6 +485,14 @@ namespace LiteDeploy
             }
         }
 
+        private void credentialsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (CredentialsForm credentials = new CredentialsForm())
+            {
+                credentials.ShowDialog(this);
+            }
+        }
+
         private void manageToolsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using (ToolsForm tools = new ToolsForm())

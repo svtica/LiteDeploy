@@ -46,6 +46,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Credentials** (*Tools > Credentials*): accounts stored in the Windows Credential Manager of
+  the user (`LiteSuite.CredentialStore`, shared with LiteTask). The software updates, the
+  scheduler, the computer card and the copies to `ADMIN$` use the account chosen in *Options*
+  (PsExec `-u -p -s`: the worker still runs as SYSTEM).
+- **Get the logs** (right-click): logs of the modules, newest winget logs of SYSTEM and logs of
+  the MAJ-Logiciels tool, copied to `%LOCALAPPDATA%\LiteDeploy\logs\<computer>\<date>`.
+- **Processes and handles** (right-click): processes of a computer, the most handles first,
+  with private memory and threads (`LiteDeploy.Worker.exe processes`).
+- **PowerShell module** `powershell\LiteDeploy` (docs/powershell.md): state, package list,
+  worker, pause, Wake-on-LAN from scripts, for the MAJ-Logiciels tool to live next to
+  LiteDeploy. Signed with the release; CI imports it and checks it.
+
 - **Scheduled updates** (*Tools > Scheduled Updates*, or *Schedule...* in Software Updates), from
   the agent of the MAJ-Logiciels panel: a check or an update of a list of computers, once or on
   some days at a time, Wake-on-LAN first if asked. Paused computers are skipped, and during

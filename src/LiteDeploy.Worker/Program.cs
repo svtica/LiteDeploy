@@ -15,6 +15,7 @@
 //          upgrade closes the package's processes and upgrades it when an
 //          upgrade is available. Results: WorkerProtocol lines on stdout.
 //            LiteDeploy.Worker.exe info    (computer card: ComputerInfo)
+//            LiteDeploy.Worker.exe processes  (processes, handles and memory)
 //          Exit code: number of failures (0: everything went well).
 // -----------------------------------------------------------------------------
 using System;
@@ -39,6 +40,11 @@ namespace LiteDeploy.Worker
             if (args != null && args.Length == 1 && args[0].Equals("info", StringComparison.OrdinalIgnoreCase))
             {
                 Emit(ComputerInfo.Collect());
+                return 0;
+            }
+            if (args != null && args.Length == 1 && args[0].Equals("processes", StringComparison.OrdinalIgnoreCase))
+            {
+                foreach (string line in ComputerInfo.Processes(60)) Emit(line);
                 return 0;
             }
 

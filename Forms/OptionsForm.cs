@@ -34,6 +34,17 @@ namespace LiteDeploy
             hoursStartBox.Text = current.BusinessHoursStart;
             hoursEndBox.Text = current.BusinessHoursEnd;
             unsignedModulesCheckBox.Checked = current.AllowUnsignedModules;
+
+            // Account of the software updates: the current user or a stored credential
+            accountCombo.Items.Add(Localization.T("OptionsForm.CurrentUser", "Current user"));
+            try
+            {
+                foreach (LiteSuite.StoredCredential c in LiteSuite.CredentialStore.List())
+                    accountCombo.Items.Add(c.Name);
+            }
+            catch (Exception) { }
+            int index = accountCombo.Items.IndexOf(current.UpdateCredential ?? "");
+            accountCombo.SelectedIndex = index > 0 ? index : 0;
         }
 
         // Order of the items of themeCombo
@@ -67,6 +78,7 @@ namespace LiteDeploy
             settings.BusinessHoursStart = start.ToString(@"hh\:mm");
             settings.BusinessHoursEnd = end.ToString(@"hh\:mm");
             settings.AllowUnsignedModules = unsignedModulesCheckBox.Checked;
+            settings.UpdateCredential = accountCombo.SelectedIndex > 0 ? (String)accountCombo.SelectedItem : "";
             settings.Theme = Themes[Math.Max(0, themeCombo.SelectedIndex)];
             bool themeChanged = settings.Theme != UserSettings.Current.Theme;
             settings.Language = Languages[Math.Max(0, languageCombo.SelectedIndex)];
