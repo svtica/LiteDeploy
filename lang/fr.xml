@@ -383,4 +383,8 @@
   <translation key="ToolManager.NoExe">LitePM.exe est absent du paquet téléchargé.</translation>
   <translation key="ToolManager.BadSignature">LitePM a été refusé : {0} ({1}).</translation>
   <translation key="ToolManager.Unsigned">Attention : LitePM n'est pas signé.</translation>
+  <translation key="PackageListForm.moduleLabel.Text">Module de mise à jour :</translation>
+  <translation key="PackageListForm.addModuleButton.Text">Ajouter le module</translation>
+  <translation key="UpdateModules.Missing">Module {0} introuvable dans {1} ni dans {2}.</translation>
+  <translation key="UpdateModules.CopyFailed">Impossible de copier les modules dans {0} : {1}</translation>
 </translations>

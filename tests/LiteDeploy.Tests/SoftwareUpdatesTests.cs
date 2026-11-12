@@ -143,10 +143,11 @@ namespace LiteDeploy.Tests
         [TestMethod]
         public void Worker_ParseArguments_ScanWithPackages()
         {
-            string command; List<UpdatePackage> packages; int timeout;
+            string command; List<UpdatePackage> packages; int timeout; bool unsigned;
             string error = Worker.Program.ParseArguments(new[] { "scan", "--package", "A.B|p1,p2|Label", "--package", "C.D||", "--timeout", "20" },
-                out command, out packages, out timeout);
+                out command, out packages, out timeout, out unsigned);
             Assert.IsNull(error);
+            Assert.IsFalse(unsigned);
             Assert.AreEqual("scan", command);
             CollectionAssert.AreEqual(new[] { "A.B", "C.D" }, packages.Select(p => p.Id).ToArray());
             CollectionAssert.AreEqual(new[] { "p1", "p2" }, packages[0].Processes);
@@ -156,12 +157,12 @@ namespace LiteDeploy.Tests
         [TestMethod]
         public void Worker_ParseArguments_Errors()
         {
-            string command; List<UpdatePackage> packages; int timeout;
-            Assert.IsNotNull(Worker.Program.ParseArguments(new string[0], out command, out packages, out timeout));
-            Assert.IsNotNull(Worker.Program.ParseArguments(new[] { "install", "--package", "A.B" }, out command, out packages, out timeout));
-            Assert.IsNotNull(Worker.Program.ParseArguments(new[] { "scan" }, out command, out packages, out timeout));
-            Assert.IsNotNull(Worker.Program.ParseArguments(new[] { "scan", "--package", "bad id" }, out command, out packages, out timeout));
-            Assert.IsNotNull(Worker.Program.ParseArguments(new[] { "scan", "--package", "A.B", "--timeout", "0" }, out command, out packages, out timeout));
+            string command; List<UpdatePackage> packages; int timeout; bool unsigned;
+            Assert.IsNotNull(Worker.Program.ParseArguments(new string[0], out command, out packages, out timeout, out unsigned));
+            Assert.IsNotNull(Worker.Program.ParseArguments(new[] { "install", "--package", "A.B" }, out command, out packages, out timeout, out unsigned));
+            Assert.IsNotNull(Worker.Program.ParseArguments(new[] { "scan" }, out command, out packages, out timeout, out unsigned));
+            Assert.IsNotNull(Worker.Program.ParseArguments(new[] { "scan", "--package", "bad id" }, out command, out packages, out timeout, out unsigned));
+            Assert.IsNotNull(Worker.Program.ParseArguments(new[] { "scan", "--package", "A.B", "--timeout", "0" }, out command, out packages, out timeout, out unsigned));
         }
 
         [TestMethod]
@@ -182,6 +183,95 @@ namespace LiteDeploy.Tests
             StringAssert.Contains(psexec, " -f");
             StringAssert.Contains(psexec, " -s");
             Assert.IsFalse(psexec.Contains(" -u "), psexec);
+        }
+
+        // ---- Update modules ---------------------------------------------------------
+
+        [TestMethod]
+        public void Module_Ids_AreSafeFileNames()
+        {
+            UpdatePackage p = UpdatePackage.Parse("module:Adobe-Reader | Acrobat, AcroRd32 | Adobe Acrobat Reader");
+            Assert.IsTrue(p.IsModule);
+            Assert.AreEqual("Adobe-Reader", p.ModuleName);
+            Assert.IsNull(UpdatePackage.Parse("module:..\\evil"));
+            Assert.IsNull(UpdatePackage.Parse("module:a/b"));
+            Assert.IsNull(UpdatePackage.Parse("module:.hidden"));
+            Assert.IsNull(UpdatePackage.Parse("module:"));
+            Assert.IsFalse(UpdatePackage.Parse("7zip.7zip").IsModule);
+        }
+
+        [TestMethod]
+        public void Module_Header_LabelAndProcesses()
+        {
+            UpdateModule m = UpdateModules.Parse("AdobeReader", new[]
+            {
+                "\uFEFF# LiteDeploy-Module",
+                "# Label: Adobe Acrobat Reader",
+                "# Processes: Acrobat, AcroRd32, bad\"name",
+                "param([string] $Action)"
+            }, "x.ps1");
+            Assert.AreEqual("Adobe Acrobat Reader", m.Label);
+            CollectionAssert.AreEqual(new[] { "Acrobat", "AcroRd32" }, m.Processes);
+            Assert.AreEqual("module:AdobeReader|Acrobat,AcroRd32|Adobe Acrobat Reader", m.ToPackage().ToArgument());
+        }
+
+        [TestMethod]
+        public void Module_WithoutMarkerOrBadName_IsIgnored()
+        {
+            Assert.IsNull(UpdateModules.Parse("Script", new[] { "# Label: x", "Write-Output 1" }, "x.ps1"));
+            Assert.IsNull(UpdateModules.Parse("bad name", new[] { "# LiteDeploy-Module" }, "x.ps1"));
+        }
+
+        [TestMethod]
+        public void Module_SignatureRule()
+        {
+            Assert.IsTrue(ModuleRunner.MayRun(LiteSuite.UpdateSignatureVerdict.Accepted, false));
+            Assert.IsFalse(ModuleRunner.MayRun(LiteSuite.UpdateSignatureVerdict.RejectedUnsigned, false));
+            Assert.IsFalse(ModuleRunner.MayRun(LiteSuite.UpdateSignatureVerdict.AcceptedUnsignedDevBuild, false));
+            Assert.IsTrue(ModuleRunner.MayRun(LiteSuite.UpdateSignatureVerdict.RejectedUnsigned, true));
+            // Never, even when unsigned modules are allowed
+            Assert.IsFalse(ModuleRunner.MayRun(LiteSuite.UpdateSignatureVerdict.RejectedTampered, true));
+            Assert.IsFalse(ModuleRunner.MayRun(LiteSuite.UpdateSignatureVerdict.RejectedPublisherMismatch, true));
+            Assert.IsFalse(ModuleRunner.MayRun(LiteSuite.UpdateSignatureVerdict.RejectedInvalidSignature, true));
+        }
+
+        [TestMethod]
+        public void Module_Interpret_ResultLineAndExitCode()
+        {
+            string line = WorkerProtocol.Format("type", "module", "status", "outdated", "installed", "1.0", "available", "1.1");
+            ModuleResult r = ModuleRunner.Interpret(0, "noise\r\n" + line + "\r\n", "");
+            Assert.AreEqual("outdated", r.Status);
+            Assert.AreEqual("1.1", r.Available);
+
+            ModuleResult restart = ModuleRunner.Interpret(3010, WorkerProtocol.Format("type", "module", "status", "uptodate", "installed", "1.1"), "");
+            Assert.AreEqual("uptodate", restart.Status);
+            StringAssert.Contains(restart.Message, "Restart");
+
+            Assert.AreEqual("error", ModuleRunner.Interpret(1, line, "boom").Status);
+            Assert.AreEqual("error", ModuleRunner.Interpret(0, "no result line", "").Status);
+            Assert.AreEqual("error", ModuleRunner.Interpret(0, WorkerProtocol.Format("type", "module", "status", "weird"), "").Status);
+        }
+
+        [TestMethod]
+        public void Worker_ParseArguments_AllowUnsignedModules()
+        {
+            string command; List<UpdatePackage> packages; int timeout; bool unsigned;
+            Assert.IsNull(Worker.Program.ParseArguments(new[] { "upgrade", "--package", "module:Example||", "--allow-unsigned-modules" },
+                out command, out packages, out timeout, out unsigned));
+            Assert.IsTrue(unsigned);
+            Assert.IsTrue(packages[0].IsModule);
+
+            string args = UpdateRunner.BuildWorkerArguments("upgrade", packages, true);
+            StringAssert.Contains(args, "--allow-unsigned-modules");
+            Assert.IsFalse(UpdateRunner.BuildWorkerArguments("upgrade", new List<UpdatePackage> { UpdatePackage.Parse("A.B") }, true).Contains("unsigned"));
+        }
+
+        [TestMethod]
+        public void ModuleTemplate_IsAsciiAndAModule()
+        {
+            string path = Path.Combine(RepoRoot(), "docs", "modules", "Template-Module.ps1");
+            Assert.IsTrue(File.ReadAllBytes(path).All(b => b < 0x80), "the template must be ASCII only");
+            Assert.IsNotNull(UpdateModules.Read(path));
         }
 
         // ---- State file -------------------------------------------------------------

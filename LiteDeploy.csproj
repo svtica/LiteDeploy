@@ -146,6 +146,7 @@
     <Compile Include="Classes\PsExecLocator.cs" />
     <Compile Include="Classes\Theme.cs" />
     <Compile Include="Classes\ToolManager.cs" />
+    <Compile Include="Classes\UpdateModules.cs" />
     <Compile Include="Classes\UpdateRunner.cs" />
     <Compile Include="Forms\PackageListForm.cs">
       <SubType>Form</SubType>
@@ -265,6 +266,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <!-- Example package list of the software updates (the user's own list is in %LOCALAPPDATA%) -->
+    <!-- Update modules shipped with LiteDeploy (docs/modules.md), signed by the release -->
+    <Content Include="modules\*.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="updates\packages.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

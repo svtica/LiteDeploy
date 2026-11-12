@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <!--
     LiteDeploy.Worker.exe: runs on the target computer, as SYSTEM, copied there by PsExec (-s -c).
     Stand-alone on purpose: PsExec copies the exe only, so it references nothing outside the
@@ -22,4 +22,8 @@
     <Description>LiteDeploy software update worker (runs on the target computer as SYSTEM).</Description>
     <Deterministic>true</Deterministic>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- Signature check of the update modules (source of LiteSuite.Common: the worker stays a single file) -->
+    <Compile Include="..\LiteSuite.Common\AuthenticodeVerifier.cs" Link="Shared\AuthenticodeVerifier.cs" />
+  </ItemGroup>
 </Project>

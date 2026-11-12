@@ -40,6 +40,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Update modules** (docs/modules.md): signed PowerShell scripts that update a product winget
+  does not cover (inspired by the Adobe and 1Password modules of the MAJ-Logiciels tool).
+  LiteDeploy copies them to `%windir%\LiteDeploy\modules` on the computer (administrators
+  only) and the worker runs them as SYSTEM only when their Authenticode signature is valid and
+  from the LiteSuite publisher; *Add module* in the package list editor. Template:
+  `docs/modules/Template-Module.ps1`.
+
 - **Tools** menu: *Software Updates...*, *Manage Tools...* and *LitePM*.
 - Software updates: the rows are checked to choose what to update (*Select outdated* checks
   every row with an update), and *Update checked* updates on each computer only its checked

@@ -6,6 +6,8 @@
 // Purpose: A package of the software update catalog (packages.txt), same format
 //          as the MAJ-Logiciels tool: Id | processes to close | label | ignored.
 //          The worker receives each package as one --package argument.
+//          An Id "module:<Name>" is an update module (signed PowerShell script,
+//          docs/modules.md) instead of a winget package.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -23,7 +25,15 @@ namespace LiteDeploy
         /// <summary>Name shown to the user; the Id when empty.</summary>
         public string Label;
 
+        public const string ModulePrefix = "module:";
+
         public string DisplayName { get { return string.IsNullOrEmpty(Label) ? Id : Label; } }
+
+        /// <summary>True for an update module (Id "module:Name").</summary>
+        public bool IsModule { get { return Id != null && Id.StartsWith(ModulePrefix, StringComparison.OrdinalIgnoreCase); } }
+
+        /// <summary>Name of the module (file name without .ps1); null for a winget package.</summary>
+        public string ModuleName { get { return IsModule ? Id.Substring(ModulePrefix.Length) : null; } }
 
         /// <summary>Parses "Id | proc1, proc2 | label [| anything]"; null for a blank or comment line or an invalid Id.</summary>
         public static UpdatePackage Parse(string line)
@@ -60,10 +70,16 @@ namespace LiteDeploy
             return list;
         }
 
-        // A winget Id: letters, digits and . - _ + only (it ends up on a command line run as SYSTEM)
+        // A winget Id: letters, digits and . - _ + only (it ends up on a command line run as SYSTEM).
+        // A module: "module:" then a name of letters, digits and . - _ (it becomes a file name)
         public static bool IsValidId(string id)
         {
             if (string.IsNullOrEmpty(id) || id.Length > 128) return false;
+            if (id.StartsWith(ModulePrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                string name = id.Substring(ModulePrefix.Length);
+                return name.Length > 0 && name[0] != '.' && name.All(c => char.IsLetterOrDigit(c) || c == '.' || c == '-' || c == '_');
+            }
             return id.All(c => char.IsLetterOrDigit(c) || c == '.' || c == '-' || c == '_' || c == '+');
         }
 

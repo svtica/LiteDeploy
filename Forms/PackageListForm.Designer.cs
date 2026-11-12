@@ -30,6 +30,9 @@ namespace LiteDeploy
             this.resultIdColumn = new System.Windows.Forms.ColumnHeader();
             this.resultVersionColumn = new System.Windows.Forms.ColumnHeader();
             this.addButton = new System.Windows.Forms.Button();
+            this.moduleLabel = new System.Windows.Forms.Label();
+            this.modulesCombo = new System.Windows.Forms.ComboBox();
+            this.addModuleButton = new System.Windows.Forms.Button();
             this.listLabel = new System.Windows.Forms.Label();
             this.packagesGrid = new System.Windows.Forms.DataGridView();
             this.idColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -99,10 +102,36 @@ namespace LiteDeploy
             this.addButton.Text = "Add to list";
             this.addButton.Click += new System.EventHandler(this.addButton_Click);
             //
+            // moduleLabel
+            //
+            this.moduleLabel.AutoSize = true;
+            this.moduleLabel.Location = new System.Drawing.Point(12, 203);
+            this.moduleLabel.Name = "moduleLabel";
+            this.moduleLabel.Text = "Update module:";
+            //
+            // modulesCombo
+            //
+            this.modulesCombo.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.modulesCombo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.modulesCombo.Location = new System.Drawing.Point(110, 199);
+            this.modulesCombo.Name = "modulesCombo";
+            this.modulesCombo.Size = new System.Drawing.Size(460, 21);
+            this.modulesCombo.TabIndex = 7;
+            //
+            // addModuleButton
+            //
+            this.addModuleButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.addModuleButton.Location = new System.Drawing.Point(576, 198);
+            this.addModuleButton.Name = "addModuleButton";
+            this.addModuleButton.Size = new System.Drawing.Size(96, 23);
+            this.addModuleButton.TabIndex = 8;
+            this.addModuleButton.Text = "Add module";
+            this.addModuleButton.Click += new System.EventHandler(this.addModuleButton_Click);
+            //
             // listLabel
             //
             this.listLabel.AutoSize = true;
-            this.listLabel.Location = new System.Drawing.Point(12, 200);
+            this.listLabel.Location = new System.Drawing.Point(12, 230);
             this.listLabel.Name = "listLabel";
             this.listLabel.Text = "Packages kept up to date (processes: closed before the update, without .exe, comma-separated):";
             //
@@ -115,10 +144,10 @@ namespace LiteDeploy
             this.idColumn,
             this.processesColumn,
             this.labelColumn});
-            this.packagesGrid.Location = new System.Drawing.Point(12, 218);
+            this.packagesGrid.Location = new System.Drawing.Point(12, 248);
             this.packagesGrid.Name = "packagesGrid";
             this.packagesGrid.RowHeadersWidth = 24;
-            this.packagesGrid.Size = new System.Drawing.Size(660, 200);
+            this.packagesGrid.Size = new System.Drawing.Size(660, 170);
             this.packagesGrid.TabIndex = 4;
             this.idColumn.HeaderText = "winget Id";
             this.idColumn.Name = "idColumn";
@@ -159,6 +188,9 @@ namespace LiteDeploy
             this.Controls.Add(this.searchButton);
             this.Controls.Add(this.resultsList);
             this.Controls.Add(this.addButton);
+            this.Controls.Add(this.moduleLabel);
+            this.Controls.Add(this.modulesCombo);
+            this.Controls.Add(this.addModuleButton);
             this.Controls.Add(this.listLabel);
             this.Controls.Add(this.packagesGrid);
             this.Controls.Add(this.okButton);
@@ -183,6 +215,9 @@ namespace LiteDeploy
         private System.Windows.Forms.ColumnHeader resultIdColumn;
         private System.Windows.Forms.ColumnHeader resultVersionColumn;
         private System.Windows.Forms.Button addButton;
+        private System.Windows.Forms.Label moduleLabel;
+        private System.Windows.Forms.ComboBox modulesCombo;
+        private System.Windows.Forms.Button addModuleButton;
         private System.Windows.Forms.Label listLabel;
         private System.Windows.Forms.DataGridView packagesGrid;
         private System.Windows.Forms.DataGridViewTextBoxColumn idColumn;
