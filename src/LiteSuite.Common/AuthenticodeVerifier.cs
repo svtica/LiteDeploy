@@ -145,7 +145,11 @@ namespace LiteSuite
             {
                 try
                 {
+                    // SYSLIB0057 (.NET 9+): X509CertificateLoader has no equivalent that reads the
+                    // signer of a signed file, so this call stays on both frameworks
+#pragma warning disable SYSLIB0057
                     using (X509Certificate signer = X509Certificate.CreateFromSignedFile(filePath))
+#pragma warning restore SYSLIB0057
                     using (X509Certificate2 cert = new X509Certificate2(signer))
                     {
                         result.SignerThumbprint = NormalizeThumbprint(cert.Thumbprint);
