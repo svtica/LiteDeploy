@@ -40,6 +40,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Tools** menu: *Software Updates...*, *Manage Tools...* and *LitePM*.
+- Software updates: the rows are checked to choose what to update (*Select outdated* checks
+  every row with an update), and *Update checked* updates on each computer only its checked
+  packages. Without checked computers, the window works on the whole list.
+- Package list editor: search the winget catalog, add a result, set the processes to close
+  and the label (instead of editing the file in Notepad).
+- *Manage Tools*: version and location of PsExec and LitePM; download or update them
+  (PsExec from live.sysinternals.com with a Microsoft signature; LitePM from its GitHub
+  release with the LiteSuite signature policy of LiteTask), open LitePM. LitePM provided by
+  LiteTask (its tools folder) is found too.
+- Windows theme: light or dark mode of Windows and its accent color, dark title bar, menus and
+  lists (setting `Theme` in `settings.xml`: auto, light or dark).
+
 - PsExec missing at start-up: LiteDeploy offers to download `PsExec64.exe` from
   live.sysinternals.com instead of only showing an error. The file is kept only when its
   signature is valid, trusted by Windows and from Microsoft Corporation; it is saved next to

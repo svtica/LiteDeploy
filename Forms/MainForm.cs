@@ -46,6 +46,7 @@ namespace LiteDeploy
         {            
             InitializeComponent();
             Localization.Apply(this);
+            Theme.Apply(this);
 
             // Computer counters in the status bar follow the list (they were refreshed by a 100 ms timer)
             selectedComputers.ItemCheck += (s, e) => BeginInvoke(new MethodInvoker(UpdateComputerCounts));
@@ -418,19 +419,43 @@ namespace LiteDeploy
             ShowPingAll(true);
         }
 
-        // Software updates of the checked computers
+        // Software updates of the checked computers, or of the whole list when none is checked
         private void softwareUpdatesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            List<String> checkedComputers = selectedComputers.CheckedItems.Cast<object>().Select(o => o.ToString()).ToList();
-            if (checkedComputers.Count == 0)
+            IEnumerable<object> source = selectedComputers.CheckedItems.Count > 0
+                ? selectedComputers.CheckedItems.Cast<object>()
+                : selectedComputers.Items.Cast<object>();
+            List<String> computers = source.Select(o => o.ToString()).ToList();
+            if (computers.Count == 0)
             {
-                MessageBox.Show(Localization.T("MainForm.NoComputerChecked", "Check the computers to work on first."), Localization.T("MainForm.SoftwareUpdates.Title", "Software Updates"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(Localization.T("MainForm.NoComputer", "Add computers to the list first (Computers > Edit List)."), Localization.T("MainForm.SoftwareUpdates.Title", "Software Updates"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-            using (SoftwareUpdatesForm updates = new SoftwareUpdatesForm(checkedComputers))
+            using (SoftwareUpdatesForm updates = new SoftwareUpdatesForm(computers))
             {
                 updates.ShowDialog(this);
             }
+        }
+
+        private void manageToolsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (ToolsForm tools = new ToolsForm())
+            {
+                tools.ShowDialog(this);
+            }
+        }
+
+        // LitePM: installed by Tools > Manage Tools (or provided by LiteTask)
+        private void litePMToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ToolInfo litePM = ToolManager.List().FirstOrDefault(t => t.Id == ToolManager.LitePMId);
+            if (litePM == null || litePM.Path == null)
+            {
+                MessageBox.Show(Localization.T("MainForm.LitePMMissing", "LitePM is not installed: install it in Tools > Manage Tools."), "LitePM", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            try { ToolManager.Open(litePM); }
+            catch (Exception ex) { MessageBox.Show(ex.Message, "LitePM", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
 
         // Ping window: created on first use, then reused. Creating one per use leaked about

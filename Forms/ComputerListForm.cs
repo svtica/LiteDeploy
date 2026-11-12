@@ -38,6 +38,7 @@ namespace LiteDeploy
         {
             InitializeComponent();
             Localization.Apply(this);
+            Theme.Apply(this);
             baseTitle = Text;
             baseStatus = label2.Text;
 

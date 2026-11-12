@@ -4,9 +4,13 @@ Ideas kept for later. Nothing here is planned for a given version.
 
 ## Next
 
-- **Software updates**, first version done (winget packages). Next steps:
-  - Adobe Acrobat Reader patches and 1Password, installers checked with
-    `LiteSuite.AuthenticodeVerifier` before they run (as the MAJ-Logiciels tool does);
+- **Software updates**, done: winget packages, selection of the rows to update, package list
+  editor with winget search. Next steps:
+  - **update modules** (to be validated): beyond winget, a module updates one product (Adobe
+    Acrobat Reader patches, 1Password... as the MAJ-Logiciels tool does). Proposal: a module is
+    a PowerShell script signed with the LiteSuite certificate, copied to an administrators-only
+    folder of the computer (`ADMIN$`) and run by the worker as SYSTEM only when its signature
+    is valid; installers it downloads are checked with `LiteSuite.AuthenticodeVerifier`;
   - a message to the logged-on user (`msg.exe`) before closing an application and after the
     update;
   - the network identity check of the MAJ-Logiciels panel (Kerberos) before connecting;
@@ -14,7 +18,7 @@ Ideas kept for later. Nothing here is planned for a given version.
 
 ## Later
 
-### Tools folder
+### Tools folder (first step done: Tools > Manage Tools)
 
 Same idea as LiteTask's tools folder (`LiteTaskData\tools`, catalog in `ToolCatalog`): a `tools\`
 folder next to `LiteDeploy.exe` where optional third-party tools are dropped or downloaded, each

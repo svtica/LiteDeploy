@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------------
+﻿// -----------------------------------------------------------------------------
 // LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
 // File:    LocalizationTests.cs
 // Author:  LiteDeploy contributors
@@ -72,6 +72,16 @@ namespace LiteDeploy.Tests
             Environment.SetEnvironmentVariable("LITEDEPLOY_LANG", "en");
             Localization.Initialize(Localization.French);
             Assert.AreEqual(Localization.English, Localization.Language);
+        }
+
+        [TestMethod]
+        public void FrenchKeys_AreUnique()
+        {
+            XmlDocument doc = new XmlDocument();
+            doc.Load(Path.Combine(RepoRoot(), "lang", "fr.xml"));
+            List<String> duplicates = doc.SelectNodes("/translations/translation").Cast<XmlNode>()
+                .GroupBy(n => n.Attributes["key"].Value).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
+            Assert.AreEqual(0, duplicates.Count, "Keys defined twice in fr.xml: " + String.Join(", ", duplicates));
         }
 
         [TestMethod]

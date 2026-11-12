@@ -31,6 +31,7 @@ namespace LiteDeploy
         {
             InitializeComponent();
             Localization.Apply(this);
+            Theme.Apply(this);
             Subnet = s;
             Hosts = new List<String>();
             lookUpThreads = new List<Thread>();

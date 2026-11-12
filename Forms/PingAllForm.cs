@@ -43,6 +43,7 @@ namespace LiteDeploy
         {
             InitializeComponent();
             Localization.Apply(this);
+            Theme.Apply(this);
 
             // The window is created at start-up and stays hidden most of the time:
             // only refresh the running thread count while it is shown (the timer

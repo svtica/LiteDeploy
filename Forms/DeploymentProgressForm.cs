@@ -41,6 +41,7 @@ namespace LiteDeploy
         {
             InitializeComponent();
             Localization.Apply(this);
+            Theme.Apply(this);
         }
 
         private void progressBar_Click(object sender, EventArgs e)

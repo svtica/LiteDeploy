@@ -24,6 +24,7 @@ namespace LiteDeploy
         {
             this.toolStrip = new System.Windows.Forms.ToolStrip();
             this.checkButton = new System.Windows.Forms.ToolStripButton();
+            this.selectOutdatedButton = new System.Windows.Forms.ToolStripButton();
             this.updateButton = new System.Windows.Forms.ToolStripButton();
             this.stopButton = new System.Windows.Forms.ToolStripButton();
             this.separator1 = new System.Windows.Forms.ToolStripSeparator();
@@ -48,6 +49,7 @@ namespace LiteDeploy
             this.toolStrip.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.toolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.checkButton,
+            this.selectOutdatedButton,
             this.updateButton,
             this.stopButton,
             this.separator1,
@@ -65,12 +67,20 @@ namespace LiteDeploy
             this.checkButton.ToolTipText = "Check the installed and available versions on the checked computers";
             this.checkButton.Click += new System.EventHandler(this.checkButton_Click);
             //
+            // selectOutdatedButton
+            //
+            this.selectOutdatedButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.selectOutdatedButton.Name = "selectOutdatedButton";
+            this.selectOutdatedButton.Text = "Select outdated";
+            this.selectOutdatedButton.ToolTipText = "Check every row that has an update available";
+            this.selectOutdatedButton.Click += new System.EventHandler(this.selectOutdatedButton_Click);
+            //
             // updateButton
             //
             this.updateButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.updateButton.Name = "updateButton";
-            this.updateButton.Text = "Update";
-            this.updateButton.ToolTipText = "Update the outdated packages on the checked computers";
+            this.updateButton.Text = "Update checked";
+            this.updateButton.ToolTipText = "Update the checked packages on their computers";
             this.updateButton.Click += new System.EventHandler(this.updateButton_Click);
             //
             // stopButton
@@ -90,7 +100,7 @@ namespace LiteDeploy
             this.editPackagesButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.editPackagesButton.Name = "editPackagesButton";
             this.editPackagesButton.Text = "Package list...";
-            this.editPackagesButton.ToolTipText = "Edit the list of winget packages to keep up to date";
+            this.editPackagesButton.ToolTipText = "Choose the winget packages to keep up to date";
             this.editPackagesButton.Click += new System.EventHandler(this.editPackagesButton_Click);
             //
             // updatesList
@@ -103,6 +113,7 @@ namespace LiteDeploy
             this.statusColumn,
             this.resultColumn,
             this.changedColumn});
+            this.updatesList.CheckBoxes = true;
             this.updatesList.Dock = System.Windows.Forms.DockStyle.Fill;
             this.updatesList.FullRowSelect = true;
             this.updatesList.HideSelection = false;
@@ -175,6 +186,7 @@ namespace LiteDeploy
 
         private System.Windows.Forms.ToolStrip toolStrip;
         private System.Windows.Forms.ToolStripButton checkButton;
+        private System.Windows.Forms.ToolStripButton selectOutdatedButton;
         private System.Windows.Forms.ToolStripButton updateButton;
         private System.Windows.Forms.ToolStripButton stopButton;
         private System.Windows.Forms.ToolStripSeparator separator1;

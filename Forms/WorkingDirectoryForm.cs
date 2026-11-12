@@ -24,6 +24,7 @@ namespace LiteDeploy
         {
             InitializeComponent();
             Localization.Apply(this);
+            Theme.Apply(this);
             enteredPath.Text = current;
             enteredPath.SelectAll();
             parent = p;

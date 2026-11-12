@@ -27,9 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Pure logic of LiteDeploy.Worker.exe (its other types come from LiteDeploy through InternalsVisibleTo) -->
-    <Compile Include="..\..\src\LiteDeploy.Worker\WingetListParser.cs" Link="Worker\WingetListParser.cs" />
-    <Compile Include="..\..\src\LiteDeploy.Worker\WingetClient.cs" Link="Worker\WingetClient.cs" />
+    <!-- Entry point of LiteDeploy.Worker.exe (its other types are compiled into LiteDeploy too and reached through InternalsVisibleTo) -->
     <Compile Include="..\..\src\LiteDeploy.Worker\Program.cs" Link="Worker\Program.cs" />
   </ItemGroup>
 
