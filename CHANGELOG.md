@@ -117,6 +117,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Unused files: duplicate icons at the root (`iconSmall.ico`, `termIcon.ico`, `termIconSmall.ico`),
+  14 icons of `Resources/` used nowhere, and `Resources/Scs.xml` (documentation of an unrelated library).
+
 - RDP Wrapper install and remove (`RDPWInst.exe`: flagged as a hacking tool
   by antivirus software and against the Windows client license).
 - Windows XP shortcuts of the right-click menus ("Windows 7" renamed
