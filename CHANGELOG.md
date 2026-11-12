@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Messages of PsExec with garbled accents (French Windows): its error output is read in the OEM
+  code page. An exit code 2 of PsExec (file not found after the copy, often an antivirus)
+  now suggests the WinRM method.
+
 - *App > Options* reset the settings it does not show (theme, unsigned modules) when saving.
 
 - Dark mode: detail lists (process reports, software updates, computers) drawn by LiteDeploy:
@@ -171,6 +175,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tested with a throw-away self-signed certificate.
 
 ### Changed
+
+- Software updates, computer card, processes: the worker is started by **WinRM and a
+  one-time scheduled task as SYSTEM** by default, the method of the MAJ-Logiciels tool
+  (worker copied to `%windir%\LiteDeploy`, messages relayed from `%windir%\LiteDeploy\work`,
+  task and file deleted at the end). PsExec stays available in *App > Options*.
+- Main window: the credentials group is titled *Credentials (standalone deployments)*;
+  *Saved...* fills the user name and password from a stored credential (*Tools > Credentials*).
 
 - 64-bit only: one platform in the solution and the project (the x86 configurations are gone),
   build output in `bin\Release\` instead of `bin\x64\Release\`.

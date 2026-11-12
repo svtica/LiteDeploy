@@ -131,7 +131,7 @@
   <translation key="MainForm.exitToolStripMenuItem.Text">Quitter</translation>
   <translation key="MainForm.fileToolStripMenuItem.Text">Application</translation>
   <translation key="MainForm.forceCopy.Text">Remplacer l'existant</translation>
-  <translation key="MainForm.groupBox1.Text">Identifiants</translation>
+  <translation key="MainForm.groupBox1.Text">Identifiants (déploiements autonomes)</translation>
   <translation key="MainForm.groupBox2.Text">Déploiement</translation>
   <translation key="MainForm.groupBox3.Text">Paramètres</translation>
   <translation key="MainForm.helpToolStripMenuItem.Text">Aide</translation>
@@ -520,4 +520,13 @@ Adresses IPv4 : {6}</translation>
   <translation key="RemoteProcessesForm.Refresh">Actualiser</translation>
   <translation key="RemoteProcessesForm.Reading">Lecture des processus...</translation>
   <translation key="RemoteProcessesForm.Totals">{0} processus, {1} handles au total ({2:HH:mm:ss}). Les 60 processus qui ont le plus de handles sont affichés.</translation>
+  <translation key="MainForm.savedCredentialButton.Text">Enregistrés...</translation>
+  <translation key="MainForm.NoSavedCredential">(aucun)</translation>
+  <translation key="MainForm.ManageCredentials">Gérer les identifiants...</translation>
+  <translation key="OptionsForm.methodLabel.Text">Méthode à distance :</translation>
+  <translation key="OptionsForm.MethodWinRm">WinRM + tâche SYSTEM (recommandé)</translation>
+  <translation key="OptionsForm.MethodPsExec">PsExec</translation>
+  <translation key="RemoteRunner.CopyFailed">Impossible de copier le worker dans {0} : {1}</translation>
+  <translation key="RemoteRunner.ExitCode">code de sortie</translation>
+  <translation key="RemoteRunner.PsExecFileNotFound">PsExec a copié le worker, mais Windows n'a pas pu le lancer (un antivirus retire souvent un exécutable déposé dans ADMIN$). Essayez la méthode WinRM (App &gt; Options).</translation>
 </translations>

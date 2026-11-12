@@ -16,6 +16,9 @@
 //          upgrade is available. Results: WorkerProtocol lines on stdout.
 //            LiteDeploy.Worker.exe info    (computer card: ComputerInfo)
 //            LiteDeploy.Worker.exe processes  (processes, handles and memory)
+//          --output <file> (any command): the messages are also written to
+//          that file, flushed line by line. Used by the WinRM method, where the
+//          worker runs in a scheduled task without a console to read.
 //          Exit code: number of failures (0: everything went well).
 // -----------------------------------------------------------------------------
 using System;
@@ -36,6 +39,13 @@ namespace LiteDeploy.Worker
         static int Main(string[] args)
         {
             Console.OutputEncoding = new UTF8Encoding(false);
+            string outputError;
+            args = TakeOutputOption(args, out outputError);
+            if (outputError != null)
+            {
+                Console.Error.WriteLine(outputError);
+                return ExitUsage;
+            }
 
             if (args != null && args.Length == 1 && args[0].Equals("info", StringComparison.OrdinalIgnoreCase))
             {
@@ -273,10 +283,39 @@ namespace LiteDeploy.Worker
             Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeProgress, "id", package.Id, "step", step));
         }
 
+        static System.IO.StreamWriter output;
+
         static void Emit(string line)
         {
             Console.WriteLine(line);
             Console.Out.Flush();
+            if (output != null)
+            {
+                output.WriteLine(line);
+                output.Flush();
+            }
+        }
+
+        /// <summary>Removes "--output file" from the arguments and opens that file (readable while written).</summary>
+        internal static string[] TakeOutputOption(string[] args, out string error)
+        {
+            error = null;
+            if (args == null) return null;
+            List<string> rest = new List<string>();
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (!args[i].Equals("--output", StringComparison.OrdinalIgnoreCase)) { rest.Add(args[i]); continue; }
+                if (i + 1 >= args.Length) { error = "--output needs a file"; return rest.ToArray(); }
+                string path = args[++i];
+                try
+                {
+                    System.IO.FileStream stream = new System.IO.FileStream(path, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.ReadWrite | System.IO.FileShare.Delete);
+                    output = new System.IO.StreamWriter(stream, new UTF8Encoding(false));
+                    output.AutoFlush = true;
+                }
+                catch (Exception ex) { error = "--output " + path + ": " + ex.Message; }
+            }
+            return rest.ToArray();
         }
 
         internal static string ParseArguments(string[] args, out string command, out List<UpdatePackage> packages, out int timeoutMinutes, out bool allowUnsigned)

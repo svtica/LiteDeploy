@@ -39,6 +39,7 @@ namespace LiteDeploy
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.systemAccount = new System.Windows.Forms.CheckBox();
+            this.savedCredentialButton = new System.Windows.Forms.Button();
             this.credentials = new System.Windows.Forms.CheckBox();
             this.password = new System.Windows.Forms.TextBox();
             this.username = new System.Windows.Forms.TextBox();
@@ -135,6 +136,7 @@ namespace LiteDeploy
             // groupBox1
             // 
             this.groupBox1.Controls.Add(this.systemAccount);
+            this.groupBox1.Controls.Add(this.savedCredentialButton);
             this.groupBox1.Controls.Add(this.credentials);
             this.groupBox1.Controls.Add(this.password);
             this.groupBox1.Controls.Add(this.username);
@@ -145,7 +147,17 @@ namespace LiteDeploy
             this.groupBox1.Size = new System.Drawing.Size(255, 157);
             this.groupBox1.TabIndex = 1;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Credentials";
+            this.groupBox1.Text = "Credentials (standalone deployments)";
+            // 
+            // savedCredentialButton
+            // 
+            this.savedCredentialButton.Location = new System.Drawing.Point(150, 16);
+            this.savedCredentialButton.Name = "savedCredentialButton";
+            this.savedCredentialButton.Size = new System.Drawing.Size(94, 23);
+            this.savedCredentialButton.TabIndex = 6;
+            this.savedCredentialButton.Text = "Saved...";
+            this.savedCredentialButton.UseVisualStyleBackColor = true;
+            this.savedCredentialButton.Click += new System.EventHandler(this.savedCredentialButton_Click);
             // 
             // systemAccount
             // 
@@ -954,6 +966,7 @@ namespace LiteDeploy
         private System.Windows.Forms.TextBox username;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Button savedCredentialButton;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.Button selectFileToExecute;

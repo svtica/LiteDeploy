@@ -10,7 +10,7 @@ on the computers through `LiteDeploy.Worker.exe`, as SYSTEM, like the winget pac
    package list (processes and label come from the module header).
 2. *Check* or *Update checked*: LiteDeploy copies the module to
    `\\<computer>\ADMIN$\LiteDeploy\modules\<Name>.ps1` (`%windir%\LiteDeploy\modules`, a folder
-   only administrators and SYSTEM can write to), then starts the worker with PsExec (`-s`).
+   only administrators and SYSTEM can write to), then starts the worker as SYSTEM (WinRM and a one-time scheduled task, or PsExec `-s`).
 3. The worker checks the **Authenticode signature** of the script. It runs it only if the
    signature is valid and from the LiteSuite publisher (the certificate that signs the
    LiteDeploy releases, pinned like in LiteTask) or from the signer of the worker itself.

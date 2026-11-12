@@ -48,6 +48,8 @@ namespace LiteDeploy
             this.unsignedModulesCheckBox = new System.Windows.Forms.CheckBox();
             this.accountLabel = new System.Windows.Forms.Label();
             this.accountCombo = new System.Windows.Forms.ComboBox();
+            this.methodLabel = new System.Windows.Forms.Label();
+            this.methodCombo = new System.Windows.Forms.ComboBox();
             this.languageLabel = new System.Windows.Forms.Label();
             this.languageCombo = new System.Windows.Forms.ComboBox();
             this.button3 = new System.Windows.Forms.Button();
@@ -143,7 +145,7 @@ namespace LiteDeploy
             // 
             // ApplyButton
             // 
-            this.ApplyButton.Location = new System.Drawing.Point(237, 435);
+            this.ApplyButton.Location = new System.Drawing.Point(237, 485);
             this.ApplyButton.Name = "ApplyButton";
             this.ApplyButton.Size = new System.Drawing.Size(93, 23);
             this.ApplyButton.TabIndex = 6;
@@ -154,7 +156,7 @@ namespace LiteDeploy
             // cancelButton
             // 
             this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cancelButton.Location = new System.Drawing.Point(336, 435);
+            this.cancelButton.Location = new System.Drawing.Point(336, 485);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(93, 23);
             this.cancelButton.TabIndex = 7;
@@ -184,9 +186,11 @@ namespace LiteDeploy
             this.updatesGroup.Controls.Add(this.unsignedModulesCheckBox);
             this.updatesGroup.Controls.Add(this.accountLabel);
             this.updatesGroup.Controls.Add(this.accountCombo);
+            this.updatesGroup.Controls.Add(this.methodLabel);
+            this.updatesGroup.Controls.Add(this.methodCombo);
             this.updatesGroup.Location = new System.Drawing.Point(12, 208);
             this.updatesGroup.Name = "updatesGroup";
-            this.updatesGroup.Size = new System.Drawing.Size(417, 215);
+            this.updatesGroup.Size = new System.Drawing.Size(417, 265);
             this.updatesGroup.TabIndex = 3;
             this.updatesGroup.TabStop = false;
             this.updatesGroup.Text = "Software updates";
@@ -225,6 +229,15 @@ namespace LiteDeploy
             this.accountCombo.Name = "accountCombo";
             this.accountCombo.Size = new System.Drawing.Size(379, 21);
             this.accountCombo.TabIndex = 15;
+            this.methodLabel.AutoSize = true;
+            this.methodLabel.Location = new System.Drawing.Point(17, 214);
+            this.methodLabel.Name = "methodLabel";
+            this.methodLabel.Text = "Remote method:";
+            this.methodCombo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.methodCombo.Location = new System.Drawing.Point(20, 230);
+            this.methodCombo.Name = "methodCombo";
+            this.methodCombo.Size = new System.Drawing.Size(379, 21);
+            this.methodCombo.TabIndex = 16;
             // 
             // OptionsForm
             // 
@@ -232,7 +245,7 @@ namespace LiteDeploy
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.cancelButton;
-            this.ClientSize = new System.Drawing.Size(445, 470);
+            this.ClientSize = new System.Drawing.Size(445, 520);
             this.Controls.Add(this.cancelButton);
             this.Controls.Add(this.ApplyButton);
             this.Controls.Add(this.groupBox2);
@@ -274,5 +287,7 @@ namespace LiteDeploy
         private System.Windows.Forms.CheckBox unsignedModulesCheckBox;
         private System.Windows.Forms.Label accountLabel;
         private System.Windows.Forms.ComboBox accountCombo;
+        private System.Windows.Forms.Label methodLabel;
+        private System.Windows.Forms.ComboBox methodCombo;
     }
 }

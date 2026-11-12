@@ -48,7 +48,7 @@ namespace LiteDeploy
             startInfo.ErrorDialog = true;
             startInfo.WorkingDirectory = Directory.GetCurrentDirectory();
             startInfo.StandardOutputEncoding = Encoding.UTF8;
-            startInfo.StandardErrorEncoding = Encoding.UTF8;
+            startInfo.StandardErrorEncoding = RemoteRunner.OemEncoding();   // PsExec writes its own messages in the OEM code page
             processList.Add(startInfo);
         }
 

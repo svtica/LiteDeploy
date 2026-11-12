@@ -97,6 +97,12 @@ namespace LiteDeploy
             }
         }
 
+        /// <summary>A menu built after the form was themed (context menu filled on demand).</summary>
+        static public void Apply(ToolStrip strip)
+        {
+            if (strip != null) ApplyTo((Control)strip);
+        }
+
         static void ApplyTo(Control c)
         {
             ToolStrip strip = c as ToolStrip;

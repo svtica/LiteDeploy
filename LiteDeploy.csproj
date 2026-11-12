@@ -154,6 +154,7 @@
     <Compile Include="Classes\UpdateSchedules.cs" />
     <Compile Include="Classes\ScheduleRunner.cs" />
     <Compile Include="Classes\SubnetList.cs" />
+    <Compile Include="Classes\RemoteRunner.cs" />
     <Compile Include="Forms\CredentialsForm.cs">
       <SubType>Form</SubType>
     </Compile>

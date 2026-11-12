@@ -270,6 +270,51 @@ namespace LiteDeploy
             }
         }
 
+        // Saved... : fills the user name and password from a stored credential
+        // (Tools > Credentials, shared with LiteTask and the software updates)
+        private ContextMenuStrip savedCredentialsMenu;
+
+        private void savedCredentialButton_Click(object sender, EventArgs e)
+        {
+            if (savedCredentialsMenu == null)
+            {
+                savedCredentialsMenu = new ContextMenuStrip();
+                components.Add(savedCredentialsMenu);
+            }
+            while (savedCredentialsMenu.Items.Count > 0)
+            {
+                ToolStripItem old = savedCredentialsMenu.Items[0];
+                savedCredentialsMenu.Items.RemoveAt(0);
+                old.Dispose();
+            }
+
+            List<LiteSuite.StoredCredential> stored = new List<LiteSuite.StoredCredential>();
+            try { stored = LiteSuite.CredentialStore.List().ToList(); }
+            catch (Exception) { }
+            foreach (LiteSuite.StoredCredential c in stored)
+            {
+                String name = c.Name;
+                savedCredentialsMenu.Items.Add(name + " (" + c.UserName + ")", null, (s, a) => UseStoredCredential(name));
+            }
+            if (stored.Count == 0)
+                savedCredentialsMenu.Items.Add(Localization.T("MainForm.NoSavedCredential", "(none)")).Enabled = false;
+            savedCredentialsMenu.Items.Add(new ToolStripSeparator());
+            savedCredentialsMenu.Items.Add(Localization.T("MainForm.ManageCredentials", "Manage credentials..."), null, credentialsToolStripMenuItem_Click);
+            Theme.Apply(savedCredentialsMenu);
+            savedCredentialsMenu.Show(savedCredentialButton, 0, savedCredentialButton.Height);
+        }
+
+        private void UseStoredCredential(String name)
+        {
+            LiteSuite.StoredCredential c = null;
+            try { c = LiteSuite.CredentialStore.Read(name); }
+            catch (Exception ex) { MessageBox.Show(this, ex.Message, name, MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+            if (c == null) return;
+            username.Text = c.UserName;
+            password.Text = c.Password;
+            credentials.Checked = true;
+        }
+
         private void credentials_CheckedChanged(object sender, EventArgs e)
         {
             if (credentials.Checked)

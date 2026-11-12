@@ -45,6 +45,11 @@ namespace LiteDeploy
             catch (Exception) { }
             int index = accountCombo.Items.IndexOf(current.UpdateCredential ?? "");
             accountCombo.SelectedIndex = index > 0 ? index : 0;
+
+            // Same order as RemoteRunner.Methods
+            methodCombo.Items.Add(Localization.T("OptionsForm.MethodWinRm", "WinRM + SYSTEM task (recommended)"));
+            methodCombo.Items.Add(Localization.T("OptionsForm.MethodPsExec", "PsExec"));
+            methodCombo.SelectedIndex = Math.Max(0, Array.IndexOf(RemoteRunner.Methods, current.RemoteMethod));
         }
 
         // Order of the items of themeCombo
@@ -79,6 +84,7 @@ namespace LiteDeploy
             settings.BusinessHoursEnd = end.ToString(@"hh\:mm");
             settings.AllowUnsignedModules = unsignedModulesCheckBox.Checked;
             settings.UpdateCredential = accountCombo.SelectedIndex > 0 ? (String)accountCombo.SelectedItem : "";
+            settings.RemoteMethod = RemoteRunner.Methods[Math.Max(0, methodCombo.SelectedIndex)];
             settings.Theme = Themes[Math.Max(0, themeCombo.SelectedIndex)];
             bool themeChanged = settings.Theme != UserSettings.Current.Theme;
             settings.Language = Languages[Math.Max(0, languageCombo.SelectedIndex)];
