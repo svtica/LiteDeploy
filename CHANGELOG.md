@@ -176,6 +176,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **PsExec is optional.** LiteDeploy starts without it; the software updates, the computer card,
+  the processes and the schedules need it only with the PsExec method (WinRM by default). The
+  standalone deployments of the main window (file or command through PsExec) are **hidden by
+  default** (*App > Options > Show the standalone deployments*); PsExec is offered for download
+  when they are used. The memory soak test shows them through its settings file.
+
 - **LiteSuite.Common** moved to its own repository (svtica/LiteSuite.Common) and comes in as the
   NuGet package `LiteSuite.Common` 1.0.1 (GitHub Packages, `nuget.config` with package source
   mapping; token `LITESUITE_PACKAGES_TOKEN`). `LiteSuite.Common.dll` still ships next to

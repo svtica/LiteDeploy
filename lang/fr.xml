@@ -299,7 +299,6 @@
   <translation key="ProcessReportsForm.tabPage2.Text">Journal du déploiement</translation>
   <translation key="ProcessReportsForm.tabPage4.Text">Journalisation MSI</translation>
   <!-- Program -->
-  <translation key="Program.PsExecMissing">PsExec est introuvable. L'application ne peut pas continuer.&#10;&#10;Placez PsExec.exe (Sysinternals) à côté de LiteDeploy.exe, ou installez LiteDeploy depuis LiteTask (menu Outils), qui fournit PsExec64.exe dans son dossier d'outils.</translation>
   <translation key="Program.PsExecMissing.Title">Fichier manquant</translation>
   <translation key="Program.PsExecDownload">PsExec (Microsoft Sysinternals) est introuvable.&#10;&#10;Télécharger PsExec64.exe depuis live.sysinternals.com maintenant ? Sa signature (Microsoft Corporation) est vérifiée avant toute utilisation. PsExec est soumis aux conditions de licence de Sysinternals.</translation>
   <translation key="Program.PsExecDownloadFailed">Impossible de télécharger PsExec : {0}</translation>
@@ -529,4 +528,6 @@ Adresses IPv4 : {6}</translation>
   <translation key="RemoteRunner.CopyFailed">Impossible de copier le worker dans {0} : {1}</translation>
   <translation key="RemoteRunner.ExitCode">code de sortie</translation>
   <translation key="RemoteRunner.PsExecFileNotFound">PsExec a copié le worker, mais Windows n'a pas pu le lancer (un antivirus retire souvent un exécutable déposé dans ADMIN$). Essayez la méthode WinRM (App &gt; Options).</translation>
+  <translation key="OptionsForm.deploymentsCheckBox.Text">Afficher les déploiements autonomes (fichier ou commande par PsExec)</translation>
+  <translation key="MainForm.PsExecNeeded">Les déploiements autonomes ont besoin de PsExec : téléchargez-le dans Outils &gt; Gérer les outils, ou placez PsExec.exe à côté de LiteDeploy.exe.</translation>
 </translations>

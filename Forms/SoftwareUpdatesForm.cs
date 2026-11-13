@@ -269,7 +269,8 @@ namespace LiteDeploy
                 RefreshList();
                 return;
             }
-            if (PsExecLocator.Path == null || !File.Exists(UpdateRunner.WorkerPath))
+            // PsExec only for the PsExec method (WinRM by default)
+            if (RemoteRunner.Prerequisite() != null)
             {
                 MessageBox.Show(this,
                     Localization.T("SoftwareUpdatesForm.MissingTools", "PsExec or LiteDeploy.Worker.exe is missing next to LiteDeploy.exe."),

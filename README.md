@@ -19,7 +19,9 @@ choose what to run and how, start the deployment, and follow each computer in th
 - Save and open lists; check the computers to deploy to.
 - **Ping** all or the checked computers before deploying.
 
-### Deployment (PsExec)
+### Standalone deployments (PsExec)
+Hidden by default: *App > Options > Show the standalone deployments*. PsExec is needed only for
+them (and for the PsExec method of the software updates); it is asked for when they are used.
 - Run an executable with arguments, or a command, on every checked computer.
 - **MSI packages**: product name and version read from the package, `msiexec` options and logging.
 - PsExec options: copy the executable, overwrite, working directory, connection time-out,

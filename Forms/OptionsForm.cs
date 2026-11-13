@@ -29,6 +29,7 @@ namespace LiteDeploy
             languageCombo.SelectedIndex = Math.Max(0, Array.IndexOf(Languages, current.Language));
             LogDirDisplay.Text = current.LoggingDir;
             AutoUpADOnStartCheckBox.Checked = current.AutoUpdateAdOnStartup;
+            deploymentsCheckBox.Checked = current.ShowStandaloneDeployments;
             themeCombo.SelectedIndex = Math.Max(0, Array.IndexOf(Themes, current.Theme));
             cacheBox.Text = current.UpdateCacheShare ?? "";
             hoursStartBox.Text = current.BusinessHoursStart;
@@ -90,6 +91,7 @@ namespace LiteDeploy
             settings.Language = Languages[Math.Max(0, languageCombo.SelectedIndex)];
             settings.LoggingDir = LogDirDisplay.Text.Trim().Length > 0 ? LogDirDisplay.Text.Trim() : new UserSettings().LoggingDir;
             settings.AutoUpdateAdOnStartup = AutoUpADOnStartCheckBox.Checked;
+            settings.ShowStandaloneDeployments = deploymentsCheckBox.Checked;
             bool languageChanged = settings.Language != UserSettings.Current.Language;
 
             try

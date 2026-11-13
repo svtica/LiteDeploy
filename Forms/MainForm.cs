@@ -96,6 +96,7 @@ namespace LiteDeploy
             AppConsole.Init(consoleDisplay, this);         
             username.Text = Environment.UserDomainName + "\\" + Environment.UserName;
             username.Select(username.Text.Length, 0);
+            ApplyDeploymentsVisibility();
             priority.SelectedIndex = 2;
             UpdateComputerCounts();
             StartInternalScheduler();
@@ -169,6 +170,15 @@ namespace LiteDeploy
         private void startDeploy_Click(object sender, EventArgs e)
         {
             clearLists();
+
+            // PsExec is optional (software updates use WinRM by default): only the standalone
+            // deployments need it, so it is asked for here
+            if (PsExecLocator.Path == null && !Program.OfferPsExecDownload())
+            {
+                MessageBox.Show(Localization.T("MainForm.PsExecNeeded", "The standalone deployments need PsExec: download it in Tools > Manage Tools, or put PsExec.exe next to LiteDeploy.exe."),
+                    Localization.T("Program.PsExecMissing.Title", "File Missing"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
 
             if (executable.Text.Length == 0 && arguments.Text.Length == 0)
             {
@@ -748,6 +758,36 @@ namespace LiteDeploy
             using (OptionsForm SetWin = new OptionsForm())
             {
                 SetWin.ShowDialog();
+            }
+            ApplyDeploymentsVisibility();
+        }
+
+        // Standalone deployments (App > Options, hidden by default): the deployment group and the
+        // restart/shutdown commands that fill it. Hidden, the console takes the freed space.
+        private Rectangle consoleBounds, consoleLabelBounds;
+
+        private void ApplyDeploymentsVisibility()
+        {
+            bool show = UserSettings.Current.ShowStandaloneDeployments;
+            if (consoleBounds.IsEmpty)
+            {
+                consoleBounds = consoleDisplay.Bounds;
+                consoleLabelBounds = label3.Bounds;
+            }
+            groupBox4.Visible = show;
+            restartToolStripMenuItem.Visible = show;
+            shutdownToolStripMenuItem.Visible = show;
+            toolStripSeparator3.Visible = show;
+            if (show)
+            {
+                label3.Bounds = consoleLabelBounds;
+                consoleDisplay.Bounds = consoleBounds;
+            }
+            else
+            {
+                int top = groupBox4.Top;
+                label3.Location = new Point(consoleLabelBounds.X, top + 3);
+                consoleDisplay.SetBounds(consoleBounds.X, top + 21, consoleBounds.Width, consoleBounds.Bottom - (top + 21));
             }
         }
 
