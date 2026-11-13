@@ -176,6 +176,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Main window: the computer list is on the left, the deployment and the console on the right.
+
 - **PsExec is optional.** LiteDeploy starts without it; the software updates, the computer card,
   the processes and the schedules need it only with the PsExec method (WinRM by default). The
   standalone deployments of the main window (file or command through PsExec) are **hidden by
