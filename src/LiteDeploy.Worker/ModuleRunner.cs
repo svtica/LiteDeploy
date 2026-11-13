@@ -34,7 +34,7 @@ namespace LiteDeploy.Worker
     internal static class ModuleRunner
     {
         /// <summary>Publisher of the LiteSuite releases (same pin as LiteTask).</summary>
-        public const string LiteSuiteThumbprint = "EC2B412C4025C2F1C8DB512CEC66632E65C017F0";
+        public const string LiteSuiteThumbprint = "D21B5D39EA4C7BDC69C94C86FC4602E8A1CA15B4";
 
         /// <summary>Exit code of an update that needs a restart (msiexec convention).</summary>
         public const int RestartRequired = 3010;
