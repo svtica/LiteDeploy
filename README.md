@@ -99,7 +99,9 @@ choose what to run and how, start the deployment, and follow each computer in th
 - **Platform**: .NET Framework 4.8 (Windows Forms), SDK-style project
 - **Language**: C#
 - **Remote execution**: Sysinternals PsExec; Active Directory (LDAP), ICMP ping, DNS
-- **Shared components**: `LiteSuite.Common.dll` (with LiteTask), see [src/LiteSuite.Common](src/LiteSuite.Common/README.md)
+- **Shared components**: NuGet package [LiteSuite.Common](https://github.com/svtica/LiteSuite.Common)
+  (with LiteTask): `LiteSuite.Common.dll` ships next to `LiteDeploy.exe`, and is embedded in
+  `LiteDeploy.Worker.exe`, which stays a single file for PsExec
 
 ## Development Status
 
@@ -126,8 +128,11 @@ Conventions: [docs/conventions.md](docs/conventions.md).
 ## Building and releasing
 
 - Build: `msbuild LiteDeploy.sln -restore /p:Configuration=Release`
-  (64-bit, output in `bin\Release\`; the .NET 10 SDK is needed for `LiteSuite.Common`).
-- Tests: `tests/LiteDeploy.Tests` and `tests/LiteSuite.Common.Tests` (MSTest), run by the CI.
+  (64-bit, output in `bin\Release\`). The package `LiteSuite.Common` comes from GitHub Packages
+  (`nuget.config`): set the user environment variable `LITESUITE_PACKAGES_TOKEN` to a personal
+  access token with `read:packages` only.
+- Tests: `tests/LiteDeploy.Tests` (MSTest), run by the CI; LiteSuite.Common is tested in its own
+  repository.
 - Release: *Actions > Release > Run workflow* (or `bump-version.ps1` on `main`).
   The version is bumped, tagged `v<Major.Minor.Build>`, built, signed when the
   `SIGNING_CERTIFICATE` / `CERTIFICATE_PASSWORD` secrets exist, and published as

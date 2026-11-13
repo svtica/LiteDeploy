@@ -318,8 +318,9 @@
     <None Include="Resources\back.jpg" />
   </ItemGroup>
   <ItemGroup>
-    <!-- Components shared with LiteTask (LiteSuite.Common.dll ships next to LiteDeploy.exe) -->
-    <ProjectReference Include="src\LiteSuite.Common\LiteSuite.Common.csproj" SetTargetFramework="TargetFramework=net48" />
+    <!-- Components shared with LiteTask: NuGet package of svtica/LiteSuite.Common (GitHub Packages,
+         see nuget.config); LiteSuite.Common.dll ships next to LiteDeploy.exe -->
+    <PackageReference Include="LiteSuite.Common" Version="1.0.1" />
     <!-- Built before LiteDeploy, not referenced: LiteDeploy.Worker.exe is copied next to LiteDeploy.exe
          by the CopyWorker target below (PsExec copies it to the computers) -->
     <ProjectReference Include="src\LiteDeploy.Worker\LiteDeploy.Worker.csproj" ReferenceOutputAssembly="false" />

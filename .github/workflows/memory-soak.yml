@@ -27,6 +27,11 @@ on:
 
 permissions:
   contents: read
+  packages: read
+
+env:
+  # NuGet package LiteSuite.Common from GitHub Packages (nuget.config)
+  LITESUITE_PACKAGES_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   soak:
@@ -53,7 +58,7 @@ jobs:
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
 
-    - name: Setup .NET 10 SDK (LiteSuite.Common)
+    - name: Setup .NET 10 SDK (older revisions build LiteSuite.Common from source)
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '10.0.x'
