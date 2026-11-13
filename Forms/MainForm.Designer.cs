@@ -217,7 +217,7 @@ namespace LiteDeploy
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(12, 258);
+            this.label3.Location = new System.Drawing.Point(268, 258);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(48, 13);
             this.label3.TabIndex = 2;
@@ -337,11 +337,11 @@ namespace LiteDeploy
             // lookUpGroup
             // 
             this.lookUpGroup.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            | System.Windows.Forms.AnchorStyles.Left)));
             this.lookUpGroup.Controls.Add(this.selectedComputers);
             this.lookUpGroup.Controls.Add(this.checkAll);
             this.lookUpGroup.Controls.Add(this.clearAllChecked);
-            this.lookUpGroup.Location = new System.Drawing.Point(790, 27);
+            this.lookUpGroup.Location = new System.Drawing.Point(9, 27);
             this.lookUpGroup.Name = "lookUpGroup";
             this.lookUpGroup.Size = new System.Drawing.Size(247, 600);
             this.lookUpGroup.TabIndex = 4;
@@ -397,7 +397,7 @@ namespace LiteDeploy
             this.consoleDisplay.DetectUrls = false;
             this.consoleDisplay.Font = new System.Drawing.Font("Lucida Console", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.consoleDisplay.ForeColor = System.Drawing.Color.White;
-            this.consoleDisplay.Location = new System.Drawing.Point(9, 274);
+            this.consoleDisplay.Location = new System.Drawing.Point(265, 274);
             this.consoleDisplay.Name = "consoleDisplay";
             this.consoleDisplay.ReadOnly = true;
             this.consoleDisplay.Size = new System.Drawing.Size(772, 353);
@@ -914,7 +914,7 @@ namespace LiteDeploy
             this.groupBox4.Controls.Add(this.startDeploy);
             this.groupBox4.Controls.Add(this.groupBox3);
             this.groupBox4.Controls.Add(this.groupBox2);
-            this.groupBox4.Location = new System.Drawing.Point(9, 27);
+            this.groupBox4.Location = new System.Drawing.Point(265, 27);
             this.groupBox4.Name = "groupBox4";
             this.groupBox4.Size = new System.Drawing.Size(772, 228);
             this.groupBox4.TabIndex = 13;
