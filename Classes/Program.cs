@@ -35,29 +35,29 @@ namespace LiteDeploy
             // "LiteDeploy.exe /schedule <name>": scheduled run started by the Windows task, no window
             if (args.Length == 2 && args[0].Equals("/schedule", StringComparison.OrdinalIgnoreCase))
             {
-                if (PsExecLocator.Find(AppDomain.CurrentDomain.BaseDirectory) == null)
+                PsExecLocator.Find(AppDomain.CurrentDomain.BaseDirectory);
+                String missing = RemoteRunner.Prerequisite();
+                if (missing != null)
                 {
-                    ScheduleRunner.Log("PsExec not found: schedule \"" + args[1] + "\" not run");
+                    ScheduleRunner.Log(missing + ": schedule \"" + args[1] + "\" not run");
                     Environment.Exit(2);
                 }
                 int failed = ScheduleRunner.RunByName(args[1]);
                 Environment.Exit(failed < 0 ? 1 : Math.Min(failed, 99));
             }
 
-            if (PsExecLocator.Find(AppDomain.CurrentDomain.BaseDirectory) == null && !OfferPsExecDownload())
+            // PsExec is optional: the software updates use WinRM by default. It is offered at start
+            // only when something shown needs it (standalone deployments, or the PsExec method).
+            if (PsExecLocator.Find(AppDomain.CurrentDomain.BaseDirectory) == null
+                && (UserSettings.Current.ShowStandaloneDeployments || RemoteRunner.Method == RemoteRunner.PsExec))
             {
-                MessageBox.Show(Localization.T("Program.PsExecMissing",
-                                    "PsExec is missing. The application cannot continue.\n\n" +
-                                    "Put PsExec.exe (Sysinternals) next to LiteDeploy.exe, or install LiteDeploy from LiteTask (Tools menu), " +
-                                    "which provides PsExec64.exe in its tools folder."),
-                                Localization.T("Program.PsExecMissing.Title", "File Missing"), MessageBoxButtons.OK, MessageBoxIcon.Error);
+                OfferPsExecDownload();
             }
 
-            else
             {
                 // A PsExec or worker copied from a browser download carries the Mark of the Web: the
                 // Windows security prompt would block the deployments, so it is removed (like Unblock-File)
-                LiteSuite.MarkOfTheWeb.RemoveFromFile(PsExecLocator.Path);
+                if (PsExecLocator.Path != null) LiteSuite.MarkOfTheWeb.RemoveFromFile(PsExecLocator.Path);
                 LiteSuite.MarkOfTheWeb.RemoveFromFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, UpdateRunner.WorkerFileName));
 
                 Application.EnableVisualStyles();
@@ -79,7 +79,7 @@ namespace LiteDeploy
         }
 
         // PsExec missing: offer to download it from live.sysinternals.com. True when it is now available.
-        static bool OfferPsExecDownload()
+        internal static bool OfferPsExecDownload()
         {
             if (MessageBox.Show(Localization.T("Program.PsExecDownload",
                                     "PsExec (Microsoft Sysinternals) is missing.\n\n" +

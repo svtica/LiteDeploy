@@ -306,6 +306,13 @@ $hosts = @('127.0.0.1', 'localhost') +
 $workExe = Join-Path $work (Split-Path $exe -Leaf)
 # Windows are found by their English titles and menu names: English interface whatever the runner language
 $env:LITEDEPLOY_LANG = 'en'
+# The soak drives "Start Deploy": the standalone deployments (hidden by default)
+# must be shown. Older revisions ignore the setting. An existing settings file is kept.
+$settingsFile = Join-Path $env:LOCALAPPDATA 'LiteDeploy\settings.xml'
+if (-not (Test-Path $settingsFile)) {
+    New-Item -ItemType Directory -Force -Path (Split-Path $settingsFile) | Out-Null
+    Set-Content -Path $settingsFile -Encoding UTF8 -Value '<?xml version="1.0" encoding="utf-8"?><UserSettings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><ShowStandaloneDeployments>true</ShowStandaloneDeployments></UserSettings>'
+}
 Write-Host "Starting $workExe (cwd $work)"
 $proc = Start-Process -FilePath $workExe -WorkingDirectory $work -PassThru
 $procId = $proc.Id
