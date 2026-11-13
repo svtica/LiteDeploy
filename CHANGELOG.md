@@ -176,6 +176,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **New LiteSuite publisher certificate**: the pinned thumbprint is now
+  `D21B5D39EA4C7BDC69C94C86FC4602E8A1CA15B4` (update modules, LitePM download). Modules signed
+  with the old certificate are refused.
+
 - Software updates, computer card, processes: the worker is started by **WinRM and a
   one-time scheduled task as SYSTEM** by default, the method of the MAJ-Logiciels tool
   (worker copied to `%windir%\LiteDeploy`, messages relayed from `%windir%\LiteDeploy\work`,

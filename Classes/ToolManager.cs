@@ -41,7 +41,7 @@ namespace LiteDeploy
         public const String LitePMId = "LitePM";
 
         /// <summary>Publisher of the LiteSuite releases (same pin as LiteTask's UpdateManager).</summary>
-        public const String LiteSuiteThumbprint = "EC2B412C4025C2F1C8DB512CEC66632E65C017F0";
+        public const String LiteSuiteThumbprint = "D21B5D39EA4C7BDC69C94C86FC4602E8A1CA15B4";
 
         static String AppDir { get { return AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\'); } }
 

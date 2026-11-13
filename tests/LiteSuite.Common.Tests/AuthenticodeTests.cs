@@ -14,7 +14,7 @@ namespace LiteSuite.Tests
     [TestClass]
     public class AuthenticodeTests
     {
-        const string Pinned = "EC2B412C4025C2F1C8DB512CEC66632E65C017F0";
+        const string Pinned = "D21B5D39EA4C7BDC69C94C86FC4602E8A1CA15B4";
         const string Other = "0123456789ABCDEF0123456789ABCDEF01234567";
 
         static AuthenticodeResult Signed(string thumbprint, AuthenticodeStatus status = AuthenticodeStatus.ValidUntrustedRoot)
