@@ -176,6 +176,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **LiteSuite.Common** moved to its own repository (svtica/LiteSuite.Common) and comes in as the
+  NuGet package `LiteSuite.Common` 1.0.1 (GitHub Packages, `nuget.config` with package source
+  mapping; token `LITESUITE_PACKAGES_TOKEN`). `LiteSuite.Common.dll` still ships next to
+  `LiteDeploy.exe`; `LiteDeploy.Worker.exe` embeds it and loads it from the resource, so PsExec
+  can still copy the worker alone (checked by the CI).
+
 - **New LiteSuite publisher certificate**: the pinned thumbprint is now
   `D21B5D39EA4C7BDC69C94C86FC4602E8A1CA15B4` (update modules, LitePM download). Modules signed
   with the old certificate are refused.

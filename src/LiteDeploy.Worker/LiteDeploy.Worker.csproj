@@ -1,8 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <!--
     LiteDeploy.Worker.exe: runs on the target computer, as SYSTEM, copied there by PsExec (-s -c).
-    Stand-alone on purpose: PsExec copies the exe only, so it references nothing outside the
-    .NET Framework (shared code is compiled in from Shared\ and from LiteSuite.Common sources).
+    Stand-alone on purpose: PsExec copies the exe only. Shared code is compiled in from Shared\;
+    LiteSuite.Common.dll (NuGet package) is embedded as a resource and loaded from it
+    (Program.ResolveEmbeddedAssembly), so the worker is still a single file.
     Its results go to standard output (WorkerProtocol), read by LiteDeploy.
   -->
   <PropertyGroup>
@@ -26,7 +27,11 @@
     <Reference Include="System.Management" />
   </ItemGroup>
   <ItemGroup>
-    <!-- Signature check of the update modules (source of LiteSuite.Common: the worker stays a single file) -->
-    <Compile Include="..\LiteSuite.Common\AuthenticodeVerifier.cs" Link="Shared\AuthenticodeVerifier.cs" />
+    <!-- Signature check of the update modules (AuthenticodeVerifier, UpdateSignaturePolicy) -->
+    <PackageReference Include="LiteSuite.Common" Version="1.0.1" GeneratePathProperty="true" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The signed DLL of the package, embedded: the worker stays a single file for PsExec -c -->
+    <EmbeddedResource Include="$(PkgLiteSuite_Common)\lib\net48\LiteSuite.Common.dll" LogicalName="LiteSuite.Common.dll" Visible="false" />
   </ItemGroup>
 </Project>

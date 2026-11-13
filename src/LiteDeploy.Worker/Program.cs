@@ -36,6 +36,33 @@ namespace LiteDeploy.Worker
         const int ExitUsage = 100;
         const int ExitNoWinget = 101;
 
+        // LiteSuite.Common.dll (NuGet package) is embedded in the worker so that PsExec -c, which
+        // copies the exe only, still has it: loaded from the resource when the runtime asks for it.
+        // The static constructor runs before Main, before any type of LiteSuite.Common is needed.
+        static Program()
+        {
+            AppDomain.CurrentDomain.AssemblyResolve += ResolveEmbeddedAssembly;
+        }
+
+        internal static System.Reflection.Assembly ResolveEmbeddedAssembly(object sender, ResolveEventArgs args)
+        {
+            string name = new System.Reflection.AssemblyName(args.Name).Name;
+            if (!string.Equals(name, "LiteSuite.Common", StringComparison.OrdinalIgnoreCase)) return null;
+            using (System.IO.Stream stream = typeof(Program).Assembly.GetManifestResourceStream("LiteSuite.Common.dll"))
+            {
+                if (stream == null) return null;
+                byte[] image = new byte[stream.Length];
+                int read = 0;
+                while (read < image.Length)
+                {
+                    int n = stream.Read(image, read, image.Length - read);
+                    if (n <= 0) break;
+                    read += n;
+                }
+                return System.Reflection.Assembly.Load(image);
+            }
+        }
+
         static int Main(string[] args)
         {
             Console.OutputEncoding = new UTF8Encoding(false);
