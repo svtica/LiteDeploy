@@ -38,7 +38,7 @@ namespace LiteSuite.Tests
         public void Evaluate_ThumbprintComparisonIgnoresCaseAndSeparators()
         {
             Assert.AreEqual(UpdateSignatureVerdict.Accepted,
-                UpdateSignaturePolicy.Evaluate(Signed("ec:2b:41:2c:40:25:c2:f1:c8:db:51:2c:ec:66:63:2e:65:c0:17:f0"), null, new[] { Pinned }));
+                UpdateSignaturePolicy.Evaluate(Signed("d2:1b:5d:39:ea:4c:7b:dc:69:c9:4c:86:fc:46:02:e8:a1:ca:15:b4"), null, new[] { Pinned }));
         }
 
         [TestMethod]
