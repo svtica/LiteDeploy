@@ -153,15 +153,3 @@ Conventions: [docs/conventions.md](docs/conventions.md).
 
 This software is released under [The Unlicense](LICENSE) - public domain.
 
-
-## 🌟 Part of LiteSuite
-
-This tool is part of **LiteSuite** - a comprehensive collection of lightweight Windows administration tools.
-
-### Other Tools in the Suite:
-- **[LiteTask](https://github.com/svtica/LiteTask)** - Advanced Task Scheduler Alternative  
-- **[LitePM](https://github.com/svtica/LitePM)** - Process Manager with System Monitoring
-- **[LiteDeploy](https://github.com/svtica/LiteDeploy)** - Network Deployment and Management
-- **[LiteRun](https://github.com/svtica/LiteRun)** - Remote Command Execution Utility (archived)
-- **[LiteSrv](https://github.com/svtica/LiteSrv)** - Windows Service Wrapper (archived)
-
