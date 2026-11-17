@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.13] - 2026-11-17
+
 ### Added
 
 - Update of LiteDeploy itself from its GitHub releases: *Help > Check for updates...* shows the
@@ -29,6 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`GitHubReleaseClient`, `UpdateDownloadPolicy`, `UpdatePackage`) instead of a copy of that
   code: only a release asset of svtica/LitePM is accepted, the size of the package is limited.
 - NuGet package LiteSuite.Common 1.1.0 (self-update), in LiteDeploy and LiteDeploy.Worker.
+
+## [1.0.12] and earlier
+
+### Changed
+
 - *Software Updates*: one row per computer, with its summary (updates available with their
   versions, errors, up to date) instead of one row per package and computer; *Show packages*
   gives the rows per package (packages that are not installed are left out). Computers can be
