@@ -28,7 +28,7 @@
   </ItemGroup>
   <ItemGroup>
     <!-- Signature check of the update modules (AuthenticodeVerifier, UpdateSignaturePolicy) -->
-    <PackageReference Include="LiteSuite.Common" Version="1.0.1" GeneratePathProperty="true" />
+    <PackageReference Include="LiteSuite.Common" Version="1.1.0" GeneratePathProperty="true" />
   </ItemGroup>
   <ItemGroup>
     <!-- The signed DLL of the package, embedded: the worker stays a single file for PsExec -c -->

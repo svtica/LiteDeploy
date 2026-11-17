@@ -51,6 +51,7 @@ namespace LiteDeploy.Tests
             Assert.IsFalse(ToolManager.IsSafeDownloadUrl("http://github.com/svtica/LitePM/releases/download/v1.2.0/LitePM.zip"));
             Assert.IsFalse(ToolManager.IsSafeDownloadUrl("https://evil.example/svtica/LitePM/releases/download/v1/LitePM.zip"));
             Assert.IsFalse(ToolManager.IsSafeDownloadUrl("https://github.com/svtica/LitePM/archive/main.zip"));
+            Assert.IsFalse(ToolManager.IsSafeDownloadUrl("https://github.com/someone/LitePM/releases/download/v1.2.0/LitePM.zip"));
             Assert.IsFalse(ToolManager.IsSafeDownloadUrl(null));
         }
 

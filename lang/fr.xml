@@ -14,6 +14,36 @@
   <translation key="ActiveDirectory.UpdateFailedDetail">Échec de la mise à jour d'Active Directory. {0}</translation>
   <translation key="ActiveDirectory.Updated">Mise à jour d'Active Directory terminée.</translation>
   <translation key="ActiveDirectory.Updating">Mise à jour d'Active Directory démarrée.</translation>
+  <!-- AppUpdater -->
+  <translation key="AppUpdater.Title">Mise à jour de LiteDeploy</translation>
+  <translation key="AppUpdater.Checking">Recherche d'une nouvelle version de LiteDeploy...</translation>
+  <translation key="AppUpdater.UpToDate">LiteDeploy est à jour (version {0}).</translation>
+  <translation key="AppUpdater.NoPackage">La version {0} n'a pas de paquet LiteDeploy. Réessayez plus tard.</translation>
+  <translation key="AppUpdater.AvailableLater">LiteDeploy {0} est disponible : Aide &gt; Rechercher des mises à jour.</translation>
+  <translation key="AppUpdater.Available">Une nouvelle version de LiteDeploy est disponible.&#10;&#10;Version actuelle : {0}&#10;Nouvelle version : {1}&#10;&#10;Notes de version :&#10;{2}&#10;&#10;Installer maintenant ? LiteDeploy sera fermé puis redémarré. Vos fichiers à côté de LiteDeploy.exe sont conservés ; Windows peut demander des droits d'administrateur.</translation>
+  <translation key="AppUpdater.NoNotes">(aucune note de version)</translation>
+  <translation key="AppUpdater.Unsigned">Attention : le paquet de mise à jour n'est pas signé. Il n'est accepté que parce que ce LiteDeploy n'est pas signé non plus (version de développement).&#10;&#10;L'installer quand même ?</translation>
+  <translation key="AppUpdater.Cancelled">Mise à jour de LiteDeploy annulée.</translation>
+  <translation key="AppUpdater.Downloading">Téléchargement de LiteDeploy {0}...</translation>
+  <translation key="AppUpdater.Extracting">Extraction de la mise à jour...</translation>
+  <translation key="AppUpdater.Verifying">Vérification de la signature de la mise à jour...</translation>
+  <translation key="AppUpdater.SignatureAccepted">Signature de la mise à jour acceptée.</translation>
+  <translation key="AppUpdater.UnsignedAccepted">La mise à jour n'est pas signée (version de développement).</translation>
+  <translation key="AppUpdater.Launching">Installation de LiteDeploy {0} : LiteDeploy se ferme, puis redémarre une fois ses fichiers remplacés.</translation>
+  <translation key="AppUpdater.LogFile">Journal de la mise à jour : {0}</translation>
+  <translation key="AppUpdater.FailedLog">Échec de la mise à jour de LiteDeploy : {0}</translation>
+  <translation key="AppUpdater.Failed">La mise à jour de LiteDeploy a échoué :&#10;{0}</translation>
+  <translation key="AppUpdater.CheckFailed">Impossible de lire la dernière version de LiteDeploy sur GitHub :&#10;{0}</translation>
+  <translation key="AppUpdater.NoPackageFailure">La dernière version n'a pas de paquet LiteDeploy.</translation>
+  <translation key="AppUpdater.UnsafeUrl">Le lien de téléchargement de la mise à jour a été refusé : seule une version GitHub de LiteDeploy, en HTTPS, est acceptée.</translation>
+  <translation key="AppUpdater.DownloadFailed">Impossible de télécharger la mise à jour :&#10;{0}</translation>
+  <translation key="AppUpdater.InvalidPackage">Le paquet de mise à jour n'est pas valide :&#10;{0}</translation>
+  <translation key="AppUpdater.ExecutableNotFound">LiteDeploy.exe est absent du paquet de mise à jour.</translation>
+  <translation key="AppUpdater.LaunchFailed">Impossible de lancer la mise à jour :&#10;{0}</translation>
+  <translation key="AppUpdater.RejectedUnsigned">La mise à jour a été refusée : elle n'est pas signée, alors que ce LiteDeploy l'est.</translation>
+  <translation key="AppUpdater.RejectedTampered">La mise à jour a été refusée : sa signature ne correspond pas à son contenu (fichier modifié).</translation>
+  <translation key="AppUpdater.RejectedPublisher">La mise à jour a été refusée : elle n'est pas signée par l'éditeur LiteSuite.</translation>
+  <translation key="AppUpdater.RejectedInvalid">La mise à jour a été refusée : sa signature n'a pas pu être validée.</translation>
   <!-- ChangeLogForm -->
   <translation key="ChangeLogForm.groupBox1.Text">Journal des modifications</translation>
   <!-- ComputerListForm -->
@@ -117,9 +147,11 @@
   <translation key="MainForm.PasswordMissing">Entrez votre mot de passe.</translation>
   <translation key="MainForm.RestartReady.Title">Commande de redémarrage prête</translation>
   <translation key="MainForm.ShutdownReady.Title">Commande d'arrêt prête</translation>
+  <translation key="MainForm.UpdateWhileBusy">Un déploiement ou une mise à jour planifiée est en cours : la fermeture de LiteDeploy pour la mise à jour l'interrompra.&#10;&#10;Installer la mise à jour maintenant quand même ?</translation>
   <translation key="MainForm.UserNameMissing">Entrez votre nom d'utilisateur.</translation>
   <translation key="MainForm.aboutToolStripMenuItem.Text">À propos</translation>
   <translation key="MainForm.changeLogToolStripMenuItem.Text">Journal des modifications</translation>
+  <translation key="MainForm.checkForUpdatesToolStripMenuItem.Text">Rechercher des mises à jour...</translation>
   <translation key="MainForm.checkAll.Text">Tout cocher</translation>
   <translation key="MainForm.clearAllChecked.Text">Tout décocher</translation>
   <translation key="MainForm.clearConsoleToolStripMenuItem.Text">Vider la console</translation>
@@ -206,6 +238,7 @@
   <translation key="OptionsForm.Text">Lite Deploy - Options</translation>
   <translation key="OptionsForm.button3.Text">Choisir</translation>
   <translation key="OptionsForm.cancelButton.Text">Annuler</translation>
+  <translation key="OptionsForm.checkUpdatesCheckBox.Text">Rechercher les mises à jour au démarrage</translation>
   <translation key="OptionsForm.groupBox2.Text">Utilisateur</translation>
   <translation key="OptionsForm.label4.Text">Dossier des journaux MSI :</translation>
   <translation key="OptionsForm.languageCombo.Items.0">Automatique (langue d'affichage de Windows)</translation>

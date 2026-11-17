@@ -7,8 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Update of LiteDeploy itself from its GitHub releases: *Help > Check for updates...* shows the
+  current and new versions with the release notes and offers to install the new version.
+  The package is downloaded (github.com release of svtica/LiteDeploy only), extracted and its
+  signature checked (LiteSuite publisher, or the signer of the running LiteDeploy) before
+  anything is replaced; LiteDeploy then closes and a script copies the new files and restarts
+  it. Nothing is deleted, the files of the user next to `LiteDeploy.exe` are kept
+  (`adcache.xml`, `subnets.txt`, `RemoteManagement.msc`, `*.local.*`... and the modules added
+  to `modules\`), no Windows service is stopped (LiteDeploy has none), and Windows asks for administrator rights
+  only when the installation folder is not writable. Log: `%TEMP%\LiteDeploy-update.log`.
+  Deployments or scheduled updates in progress are confirmed before closing.
+- *App > Options > Check for updates when the application starts* (on by default): the check
+  runs in the background once the main window is shown; a new version is offered with the same
+  dialog, nothing is shown when there is none or when GitHub cannot be reached.
+
 ### Changed
 
+- *Tools > Manage Tools*: LitePM is downloaded, extracted and checked with LiteSuite.Common
+  (`GitHubReleaseClient`, `UpdateDownloadPolicy`, `UpdatePackage`) instead of a copy of that
+  code: only a release asset of svtica/LitePM is accepted, the size of the package is limited.
+- NuGet package LiteSuite.Common 1.1.0 (self-update), in LiteDeploy and LiteDeploy.Worker.
 - *Software Updates*: one row per computer, with its summary (updates available with their
   versions, errors, up to date) instead of one row per package and computer; *Show packages*
   gives the rows per package (packages that are not installed are left out). Computers can be

@@ -5,8 +5,9 @@
 // Date:    2026-11-12
 // Purpose: Local tools of LiteDeploy (Tools > Manage Tools), same idea as the
 //          tools of LiteTask: PsExec (live.sysinternals.com, Microsoft signature
-//          required) and LitePM (GitHub release of svtica/LitePM, LiteSuite
-//          signature checked with the update policy of LiteTask). Tools are
+//          required) and LitePM (GitHub release of svtica/LitePM, downloaded,
+//          extracted and checked with LiteSuite.Common: GitHubReleaseClient,
+//          UpdatePackage, LiteSuite signature policy). Tools are
 //          installed in %LOCALAPPDATA%\LiteDeploy\tools; the copies provided by
 //          LiteTask (its tools folder, parent of LiteDeploy's) are found too.
 // -----------------------------------------------------------------------------
@@ -14,12 +15,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Net;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Json;
-using System.Text.RegularExpressions;
+using System.Threading;
 using LiteSuite;
 
 namespace LiteDeploy
@@ -40,8 +37,8 @@ namespace LiteDeploy
         public const String PsExecId = "PsExec";
         public const String LitePMId = "LitePM";
 
-        /// <summary>Publisher of the LiteSuite releases (same pin as LiteTask's UpdateManager).</summary>
-        public const String LiteSuiteThumbprint = "D21B5D39EA4C7BDC69C94C86FC4602E8A1CA15B4";
+        /// <summary>Publisher of the LiteSuite releases (pinned in LiteSuite.Common, as in LiteTask).</summary>
+        public const String LiteSuiteThumbprint = SelfUpdaterOptions.LiteSuiteThumbprint;
 
         static String AppDir { get { return AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\'); } }
 
@@ -108,32 +105,18 @@ namespace LiteDeploy
             }
         }
 
-        // ---- LitePM from its GitHub release ------------------------------------------
+        // ---- LitePM from its GitHub release (LiteSuite.Common) ----------------------------
 
-        [DataContract]
-        sealed class Release
-        {
-            [DataMember(Name = "tag_name")] public String Tag;
-            [DataMember(Name = "assets")] public List<Asset> Assets;
-        }
+        const String LitePMOwner = "svtica";
+        const String LitePMRepository = "LitePM";
 
-        [DataContract]
-        sealed class Asset
-        {
-            [DataMember(Name = "name")] public String Name;
-            [DataMember(Name = "browser_download_url")] public String Url;
-        }
-
-        /// <summary>A release download link of github.com, over HTTPS.</summary>
+        /// <summary>A release download link of svtica/LitePM on github.com, over HTTPS (UpdateDownloadPolicy).</summary>
         static public bool IsSafeDownloadUrl(String url)
         {
-            Uri uri;
-            return Uri.TryCreate(url, UriKind.Absolute, out uri)
-                && uri.Scheme == Uri.UriSchemeHttps
-                && String.Equals(uri.Host, "github.com", StringComparison.OrdinalIgnoreCase)
-                && uri.AbsolutePath.Contains("/releases/download/");
+            return UpdateDownloadPolicy.IsSafeDownloadUrl(url, LitePMOwner, LitePMRepository);
         }
 
+        // Runs on a worker thread (ToolsForm): the asynchronous calls of GitHubReleaseClient are waited for
         static String InstallLitePM()
         {
             String target = System.IO.Path.Combine(PsExecDownloader.UserToolsDir, "LitePM");
@@ -141,42 +124,43 @@ namespace LiteDeploy
             Directory.CreateDirectory(work);
             try
             {
-                ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
-                Release release;
-                using (WebClient client = NewClient())
-                {
-                    String json = client.DownloadString("https://api.github.com/repos/svtica/LitePM/releases/latest");
-                    using (MemoryStream ms = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json)))
-                        release = (Release)new DataContractJsonSerializer(typeof(Release)).ReadObject(ms);
-                }
-                Regex pattern = new Regex(@"^LitePM.*\.zip$", RegexOptions.IgnoreCase);
-                Asset asset = (release.Assets ?? new List<Asset>()).FirstOrDefault(a => a.Name != null && pattern.IsMatch(a.Name) && IsSafeDownloadUrl(a.Url));
-                if (asset == null)
-                    throw new InvalidDataException(Localization.F("ToolManager.NoAsset", "The release {0} of LitePM has no LitePM.zip.", release.Tag));
-
+                GitHubRelease release;
                 String zip = System.IO.Path.Combine(work, "LitePM.zip");
-                using (WebClient client = NewClient()) client.DownloadFile(asset.Url, zip);
+                using (GitHubReleaseClient client = new GitHubReleaseClient("LiteDeploy-ToolManager"))
+                {
+                    release = client.GetLatestAsync(LitePMOwner, LitePMRepository, CancellationToken.None).GetAwaiter().GetResult();
+                    GitHubReleaseAsset asset = UpdateDownloadPolicy.FindPackage(release, LitePMOwner, LitePMRepository, @"^LitePM.*\.zip$", "LitePM.zip");
+                    if (asset == null)
+                        throw new InvalidDataException(Localization.F("ToolManager.NoAsset", "The release {0} of LitePM has no LitePM.zip.", release.TagName));
+                    client.DownloadAsync(asset, LitePMOwner, LitePMRepository, zip, CancellationToken.None).GetAwaiter().GetResult();
+                }
 
-                // ExtractToDirectory refuses entries that would escape the folder
+                // Extract refuses entries that would escape the folder; LiteSuite's UpdatePackage
+                // (LiteDeploy has its own UpdatePackage: the software update catalog)
                 String extract = System.IO.Path.Combine(work, "extract");
-                ZipFile.ExtractToDirectory(zip, extract);
-                String exe = Directory.GetFiles(extract, "LitePM.exe", SearchOption.AllDirectories).OrderBy(p => p.Length).FirstOrDefault();
+                LiteSuite.UpdatePackage.Extract(zip, extract);
+                String exe = LiteSuite.UpdatePackage.LocateExecutable(extract, "LitePM.exe");
                 if (exe == null) throw new InvalidDataException(Localization.T("ToolManager.NoExe", "LitePM.exe is not in the downloaded package."));
 
                 // Signature: LiteSuite publisher (or this LiteDeploy's own signer); an unsigned LitePM
                 // is accepted only by an unsigned (development) LiteDeploy, as in LiteTask
-                AuthenticodeResult running = AuthenticodeVerifier.Verify(System.Reflection.Assembly.GetExecutingAssembly().Location);
-                AuthenticodeResult package = AuthenticodeVerifier.Verify(exe);
-                UpdateSignatureVerdict verdict = UpdateSignaturePolicy.Evaluate(package, running, UpdateSignaturePolicy.ExpectedThumbprints(LiteSuiteThumbprint, running));
-                if (verdict != UpdateSignatureVerdict.Accepted && verdict != UpdateSignatureVerdict.AcceptedUnsignedDevBuild)
-                    throw new InvalidDataException(Localization.F("ToolManager.BadSignature", "LitePM was refused: {0} ({1}).", verdict, package));
+                UpdateSignatureVerdict verdict;
+                try
+                {
+                    AuthenticodeResult signature;
+                    verdict = LiteSuite.UpdatePackage.VerifySignature(exe, LiteSuiteThumbprint, System.Reflection.Assembly.GetExecutingAssembly().Location, out signature);
+                }
+                catch (UpdateException ex) when (ex.Failure == UpdateFailure.SignatureRejected)
+                {
+                    throw new InvalidDataException(Localization.F("ToolManager.BadSignature", "LitePM was refused: {0} ({1}).", ex.Verdict, ex.Signature), ex);
+                }
 
                 String source = System.IO.Path.GetDirectoryName(exe);
                 if (Directory.Exists(target)) Directory.Delete(target, true);
                 CopyDirectory(source, target);
                 MarkOfTheWeb.RemoveFromDirectory(target);
 
-                String message = Localization.F("ToolManager.Installed", "{0} {1} installed in {2}.", "LitePM", release.Tag, target);
+                String message = Localization.F("ToolManager.Installed", "{0} {1} installed in {2}.", "LitePM", release.TagName, target);
                 if (verdict == UpdateSignatureVerdict.AcceptedUnsignedDevBuild)
                     message += " " + Localization.T("ToolManager.Unsigned", "Warning: LitePM is not signed.");
                 return message;
@@ -185,15 +169,6 @@ namespace LiteDeploy
             {
                 try { Directory.Delete(work, true); } catch (Exception) { }
             }
-        }
-
-        static WebClient NewClient()
-        {
-            WebClient client = new WebClient();
-            client.Headers[HttpRequestHeader.UserAgent] = "LiteDeploy-ToolManager";   // required by the GitHub API
-            client.Proxy = WebRequest.GetSystemWebProxy();
-            client.Proxy.Credentials = CredentialCache.DefaultCredentials;
-            return client;
         }
 
         static void CopyDirectory(String source, String target)

@@ -465,6 +465,51 @@ namespace LiteDeploy
             }
         }
 
+        // ---- Update of LiteDeploy (AppUpdater) -------------------------------------------
+
+        // Set when LiteDeploy closes for its update: the closing question was already asked
+        bool closingForUpdate;
+
+        private async void checkForUpdatesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            checkForUpdatesToolStripMenuItem.Enabled = false;
+            try
+            {
+                await AppUpdater.RunAsync(this, true);
+            }
+            finally
+            {
+                if (!IsDisposed) checkForUpdatesToolStripMenuItem.Enabled = true;
+            }
+        }
+
+        // Start-up check (App > Options), in the background once the window is shown
+        private async void MainForm_Shown(object sender, EventArgs e)
+        {
+            if (!UserSettings.Current.CheckUpdatesOnStartup) return;
+            await AppUpdater.RunAsync(this, false);
+        }
+
+        /// <summary>Before the update closes LiteDeploy: confirmation when deployments or scheduled updates are running.</summary>
+        internal bool ConfirmCloseForUpdate()
+        {
+            bool schedules;
+            lock (runningSchedules) schedules = runningSchedules.Count > 0;
+            if (!ProcessManager.processing && !schedules) return true;
+            return MessageBox.Show(this, Localization.T("MainForm.UpdateWhileBusy", "A deployment or a scheduled update is in progress: closing LiteDeploy for its update stops it.\n\nInstall the update now anyway?"),
+                                   Localization.T("MainForm.ConfirmClose.Title", "Confirm Close"), MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) == DialogResult.Yes;
+        }
+
+        /// <summary>Closes LiteDeploy once its update script runs (it waits for this process to exit).</summary>
+        internal void CloseForUpdate()
+        {
+            closingForUpdate = true;
+            Close();
+            // Closing the main window ends the application; should it stay open, exit anyway
+            // (the script stops LiteDeploy after 60 s otherwise)
+            if (!IsDisposed && Visible) Application.Exit();
+        }
+
         private void pingAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ShowPingAll(false);
@@ -666,7 +711,7 @@ namespace LiteDeploy
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (ProcessManager.processing)
+            if (ProcessManager.processing && !closingForUpdate)
             {
                 DialogResult result = MessageBox.Show(Localization.T("MainForm.ConfirmClose", "A deployment is currently in progress. Are you sure you want to close the application?"), Localization.T("MainForm.ConfirmClose.Title", "Confirm Close"), MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 

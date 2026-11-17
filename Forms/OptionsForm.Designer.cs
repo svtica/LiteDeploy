@@ -57,6 +57,7 @@ namespace LiteDeploy
             this.LogDirDisplay = new System.Windows.Forms.TextBox();
             this.AutoUpADOnStartCheckBox = new System.Windows.Forms.CheckBox();
             this.deploymentsCheckBox = new System.Windows.Forms.CheckBox();
+            this.checkUpdatesCheckBox = new System.Windows.Forms.CheckBox();
             this.DirectoryBrowser = new System.Windows.Forms.FolderBrowserDialog();
             this.ApplyButton = new System.Windows.Forms.Button();
             this.cancelButton = new System.Windows.Forms.Button();
@@ -74,9 +75,10 @@ namespace LiteDeploy
             this.groupBox2.Controls.Add(this.LogDirDisplay);
             this.groupBox2.Controls.Add(this.AutoUpADOnStartCheckBox);
             this.groupBox2.Controls.Add(this.deploymentsCheckBox);
+            this.groupBox2.Controls.Add(this.checkUpdatesCheckBox);
             this.groupBox2.Location = new System.Drawing.Point(12, 12);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(417, 215);
+            this.groupBox2.Size = new System.Drawing.Size(417, 247);
             this.groupBox2.TabIndex = 1;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "User";
@@ -149,6 +151,15 @@ namespace LiteDeploy
             this.deploymentsCheckBox.Text = "Show the standalone deployments (file or command through PsExec)";
             this.deploymentsCheckBox.UseVisualStyleBackColor = true;
             // 
+            // checkUpdatesCheckBox
+            // 
+            this.checkUpdatesCheckBox.Location = new System.Drawing.Point(20, 204);
+            this.checkUpdatesCheckBox.Name = "checkUpdatesCheckBox";
+            this.checkUpdatesCheckBox.Size = new System.Drawing.Size(379, 30);
+            this.checkUpdatesCheckBox.TabIndex = 7;
+            this.checkUpdatesCheckBox.Text = "Check for updates when the application starts";
+            this.checkUpdatesCheckBox.UseVisualStyleBackColor = true;
+            // 
             // DirectoryBrowser
             // 
             this.DirectoryBrowser.Description = "Select Directory";
@@ -156,7 +167,7 @@ namespace LiteDeploy
             // 
             // ApplyButton
             // 
-            this.ApplyButton.Location = new System.Drawing.Point(237, 510);
+            this.ApplyButton.Location = new System.Drawing.Point(237, 542);
             this.ApplyButton.Name = "ApplyButton";
             this.ApplyButton.Size = new System.Drawing.Size(93, 23);
             this.ApplyButton.TabIndex = 6;
@@ -167,7 +178,7 @@ namespace LiteDeploy
             // cancelButton
             // 
             this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cancelButton.Location = new System.Drawing.Point(336, 510);
+            this.cancelButton.Location = new System.Drawing.Point(336, 542);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(93, 23);
             this.cancelButton.TabIndex = 7;
@@ -199,7 +210,7 @@ namespace LiteDeploy
             this.updatesGroup.Controls.Add(this.accountCombo);
             this.updatesGroup.Controls.Add(this.methodLabel);
             this.updatesGroup.Controls.Add(this.methodCombo);
-            this.updatesGroup.Location = new System.Drawing.Point(12, 233);
+            this.updatesGroup.Location = new System.Drawing.Point(12, 265);
             this.updatesGroup.Name = "updatesGroup";
             this.updatesGroup.Size = new System.Drawing.Size(417, 265);
             this.updatesGroup.TabIndex = 3;
@@ -256,7 +267,7 @@ namespace LiteDeploy
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.cancelButton;
-            this.ClientSize = new System.Drawing.Size(445, 545);
+            this.ClientSize = new System.Drawing.Size(445, 577);
             this.Controls.Add(this.cancelButton);
             this.Controls.Add(this.ApplyButton);
             this.Controls.Add(this.groupBox2);
@@ -282,6 +293,7 @@ namespace LiteDeploy
         private System.Windows.Forms.ComboBox languageCombo;
         private System.Windows.Forms.CheckBox AutoUpADOnStartCheckBox;
         private System.Windows.Forms.CheckBox deploymentsCheckBox;
+        private System.Windows.Forms.CheckBox checkUpdatesCheckBox;
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.TextBox LogDirDisplay;

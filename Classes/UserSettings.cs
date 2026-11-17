@@ -5,7 +5,7 @@
 // Date:    2026-11-11
 // Purpose: Settings of the current user, saved in
 //          %LOCALAPPDATA%\LiteDeploy\settings.xml (language, MSI logging
-//          folder, Active Directory refresh at start-up).
+//          folder, Active Directory refresh and update check at start-up...).
 // -----------------------------------------------------------------------------
 using System;
 using System.IO;
@@ -20,6 +20,8 @@ namespace LiteDeploy
         public String Language = Localization.Automatic;
         public String LoggingDir = "\\\\%computername%\\C$\\LiteDeploy";
         public bool AutoUpdateAdOnStartup = true;
+        /// <summary>Check for a new version of LiteDeploy at start-up (Help > Check for updates).</summary>
+        public bool CheckUpdatesOnStartup = true;
         /// <summary>"auto" (Windows light or dark mode), "light" or "dark".</summary>
         public String Theme = LiteDeploy.Theme.Automatic;
         /// <summary>Run update modules that are not signed (tests only: they run as SYSTEM on the computers).</summary>
