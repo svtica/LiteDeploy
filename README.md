@@ -79,6 +79,9 @@ them (and for the PsExec method of the software updates); it is asked for when t
 - Follows the Windows theme (light or dark mode, accent color).
 - English by default, **French** offered (*App > Options*, or the Windows display language).
 - Options saved per user in `%LOCALAPPDATA%\LiteDeploy\settings.xml`.
+- *Help > Check for updates...*: installs the latest release of LiteDeploy (signature checked,
+  files of the user kept, LiteDeploy restarted); also checked at start-up unless turned off in
+  *App > Options*.
 
 ## Installation
 

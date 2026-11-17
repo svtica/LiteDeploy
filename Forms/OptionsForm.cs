@@ -4,7 +4,7 @@
 // Author:  LiteDeploy contributors
 // Date:    2025-05-30
 // Purpose: Options window: language, MSI logging folder, Active Directory
-//          refresh at start-up (saved per user by UserSettings).
+//          refresh and update check at start-up (saved per user by UserSettings).
 // -----------------------------------------------------------------------------
 using System;
 using System.Windows.Forms;
@@ -29,6 +29,7 @@ namespace LiteDeploy
             languageCombo.SelectedIndex = Math.Max(0, Array.IndexOf(Languages, current.Language));
             LogDirDisplay.Text = current.LoggingDir;
             AutoUpADOnStartCheckBox.Checked = current.AutoUpdateAdOnStartup;
+            checkUpdatesCheckBox.Checked = current.CheckUpdatesOnStartup;
             deploymentsCheckBox.Checked = current.ShowStandaloneDeployments;
             themeCombo.SelectedIndex = Math.Max(0, Array.IndexOf(Themes, current.Theme));
             cacheBox.Text = current.UpdateCacheShare ?? "";
@@ -91,6 +92,7 @@ namespace LiteDeploy
             settings.Language = Languages[Math.Max(0, languageCombo.SelectedIndex)];
             settings.LoggingDir = LogDirDisplay.Text.Trim().Length > 0 ? LogDirDisplay.Text.Trim() : new UserSettings().LoggingDir;
             settings.AutoUpdateAdOnStartup = AutoUpADOnStartCheckBox.Checked;
+            settings.CheckUpdatesOnStartup = checkUpdatesCheckBox.Checked;
             settings.ShowStandaloneDeployments = deploymentsCheckBox.Checked;
             bool languageChanged = settings.Language != UserSettings.Current.Language;
 

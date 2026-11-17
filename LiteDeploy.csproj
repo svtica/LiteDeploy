@@ -82,6 +82,7 @@
     </Compile>
     <Compile Include="Classes\ActiveDirectoryCache.cs" />
     <Compile Include="Classes\AppConsole.cs" />
+    <Compile Include="Classes\AppUpdater.cs" />
     <Compile Include="Forms\DeploymentProgressForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -321,7 +322,7 @@
   <ItemGroup>
     <!-- Components shared with LiteTask: NuGet package of svtica/LiteSuite.Common (GitHub Packages,
          see nuget.config); LiteSuite.Common.dll ships next to LiteDeploy.exe -->
-    <PackageReference Include="LiteSuite.Common" Version="1.0.1" />
+    <PackageReference Include="LiteSuite.Common" Version="1.1.0" />
     <!-- Built before LiteDeploy, not referenced: LiteDeploy.Worker.exe is copied next to LiteDeploy.exe
          by the CopyWorker target below (PsExec copies it to the computers) -->
     <ProjectReference Include="src\LiteDeploy.Worker\LiteDeploy.Worker.csproj" ReferenceOutputAssembly="false" />
