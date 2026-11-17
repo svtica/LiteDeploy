@@ -189,6 +189,7 @@
       <DependentUpon>ToolsForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Classes\UpdateStateStore.cs" />
+    <Compile Include="Classes\UpdateSummary.cs" />
     <Compile Include="Classes\WakeOnLan.cs" />
     <Compile Include="Forms\SoftwareUpdatesForm.cs">
       <SubType>Form</SubType>

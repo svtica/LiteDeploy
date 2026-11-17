@@ -11,7 +11,8 @@ choose what to run and how, start the deployment, and follow each computer in th
 
 ### Computer list
 - Add computers by name or IP address, or from an **Active Directory** search (cached locally,
-  refreshed on demand or at start-up), or a **DNS scan** of a /24 subnet.
+  refreshed on demand or at start-up; the domain computers are listed when the window opens and
+  filtered as you type), or a **DNS scan** of a /24 subnet.
 - *Subnets* menu: the subnets of this computer and saved subnets with a name. *Edit subnets...*
   takes one subnet per line (`10.1.2.0/24 Garage`, /20 to /22 split into /24, `#` for comments)
   and imports a text or CSV file. A `subnets.txt` next to `LiteDeploy.exe` gives the team's
@@ -32,8 +33,12 @@ them (and for the PsExec method of the software updates); it is asked for when t
 - Stop the current PsExec or all processing.
 
 ### Software updates
-- *Tools > Software Updates...*: installed and available versions of a list of winget
-  packages on the checked computers (or the whole list); check the rows to update.
+- *Tools > Software Updates...*: one row per computer with its updates available and its errors
+  (*Show packages*: one row per installed package). Check the computers (*Select all*, Ctrl+A),
+  then *Check* (all the computers when none is checked) and *Update checked*. Packages that are
+  not installed are neither updates nor errors.
+- No credential chosen: the first check of a session offers to add one (or use the stored one)
+  and to make it the default.
 - `LiteDeploy.Worker.exe` runs as SYSTEM on the computer, started by one of two methods
   (*App > Options*), with nothing to install and no stored password:
   - **WinRM + SYSTEM task** (default, the method of the MAJ-Logiciels tool): the worker is copied

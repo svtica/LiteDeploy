@@ -97,10 +97,37 @@ namespace LiteDeploy
             return sb.ToString();
         }
 
-        /// <summary>The credential chosen in Options for the software updates; null: the current user.</summary>
+        /// <summary>Credential chosen for this session only (not saved), used when Options names none.</summary>
+        public static String SessionCredential;
+
+        /// <summary>Name of the credential of the software updates: the one of Options, else the one of this session; null: the current user.</summary>
+        public static String UpdateCredentialName
+        {
+            get
+            {
+                String name = UserSettings.Current.UpdateCredential;
+                if (!String.IsNullOrWhiteSpace(name)) return name;
+                return String.IsNullOrWhiteSpace(SessionCredential) ? null : SessionCredential;
+            }
+        }
+
+        /// <summary>
+        /// What to offer before a check or an update run as the current user: nothing when a
+        /// credential is chosen (Options or this session) or the question was already asked in
+        /// this session; else add one when none is stored, use the only one stored, or choose
+        /// one in Options.
+        /// </summary>
+        internal static CredentialOffer OfferFor(String chosen, int stored, bool alreadyAsked)
+        {
+            if (!String.IsNullOrWhiteSpace(chosen) || alreadyAsked) return CredentialOffer.None;
+            if (stored <= 0) return CredentialOffer.Add;
+            return stored == 1 ? CredentialOffer.UseStored : CredentialOffer.ChooseInOptions;
+        }
+
+        /// <summary>The credential chosen in Options (or for this session) for the software updates; null: the current user.</summary>
         public static StoredCredential UpdateCredential()
         {
-            String name = UserSettings.Current.UpdateCredential;
+            String name = UpdateCredentialName;
             if (String.IsNullOrWhiteSpace(name)) return null;
             StoredCredential c = CredentialStore.Read(name);
             if (c == null) throw new InvalidOperationException(Localization.F("UpdateRunner.NoCredential", "The credential \"{0}\" no longer exists (Tools > Credentials).", name));
@@ -246,5 +273,16 @@ namespace LiteDeploy
             }
             return result;
         }
+    }
+
+    internal enum CredentialOffer
+    {
+        None,
+        /// <summary>No credential stored: offer to add one.</summary>
+        Add,
+        /// <summary>One credential stored, none chosen: offer to use it.</summary>
+        UseStored,
+        /// <summary>Several stored, none chosen: offer to choose one in Options.</summary>
+        ChooseInOptions
     }
 }

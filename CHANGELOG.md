@@ -7,7 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- *Software Updates*: one row per computer, with its summary (updates available with their
+  versions, errors, up to date) instead of one row per package and computer; *Show packages*
+  gives the rows per package (packages that are not installed are left out). Computers can be
+  checked: *Check* reads the checked computers (all of them when none is checked), *Update
+  checked* updates the packages with an update of the checked computers. *Select all* (Ctrl+A)
+  and *Select none*.
+- *Software Updates*: before the first check or update of a session run as the current user,
+  LiteDeploy offers to add a credential when none is stored (or to use the stored one), then to
+  make it the default (*App > Options*), else it is used until LiteDeploy is closed.
+- Computer list: the Active Directory search runs by itself: the domain computers are listed
+  when the window opens and filtered as you type or change an option (*Search* is no longer
+  needed).
+
 ### Fixed
+
+- Software updates: a package that is not installed on a computer is no longer reported as an
+  error (winget "no package found", or a success without the package in its output). A long
+  package Id shortened by winget ("...") is still recognized.
 
 - Messages of PsExec with garbled accents (French Windows): its error output is read in the OEM
   code page. An exit code 2 of PsExec (file not found after the copy, often an antivirus)
