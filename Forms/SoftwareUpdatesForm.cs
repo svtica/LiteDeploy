@@ -4,10 +4,14 @@
 // Author:  LiteDeploy contributors
 // Date:    2026-11-12
 // Purpose: Software Updates window: state of the winget packages of the package
-//          list on the computers (from the local state file). Check reads the
-//          versions on every computer; the rows to update are checked (one
-//          click selects every outdated row) and Update checked upgrades, on
-//          each computer, only its checked packages. The work is done by
+//          list on the computers (from the local state file), one row per
+//          computer (its summary: updates, errors) or, with "Show packages",
+//          one row per installed package. Check reads the versions on the
+//          checked computers (every computer when none is checked); Update
+//          checked upgrades the packages with an update of the checked
+//          computers, or only the checked packages in the package view.
+//          Before the first run of a session as the current user, offers to
+//          add or choose a credential and to make it the default. The work is done by
 //          LiteDeploy.Worker.exe run as SYSTEM by PsExec, a few computers at a
 //          time. Paused computers are skipped; "outside business hours only"
 //          computers are updated during business hours only on request. Each
@@ -47,7 +51,10 @@ namespace LiteDeploy
         readonly UpdateStateStore store;
         readonly Object storeLock = new Object();
         readonly List<Process> running = new List<Process>();
+        /// <summary>Checked package rows (package view), by row key.</summary>
         readonly HashSet<String> checkedKeys = new HashSet<String>();
+        /// <summary>Checked computers (computer view), lower case.</summary>
+        readonly HashSet<String> checkedComputers = new HashSet<String>();
         /// <summary>Step in progress, by row key (computer|package, or computer| for the computer).</summary>
         readonly Dictionary<String, String> live = new Dictionary<String, String>();
         List<UpdatePackage> packages;
@@ -70,43 +77,33 @@ namespace LiteDeploy
 
         // ---- Display ----------------------------------------------------------------
 
+        /// <summary>One row per package (Show packages) instead of one row per computer.</summary>
+        bool ByPackage { get { return byPackageButton.Checked; } }
+
+        void SetColumns()
+        {
+            ColumnHeader[] wanted = ByPackage
+                ? new[] { computerColumn, packageColumn, installedColumn, availableColumn, statusColumn, resultColumn, changedColumn }
+                : new[] { computerColumn, statusColumn, updatesColumn, resultColumn, changedColumn };
+            if (updatesList.Columns.Count == wanted.Length && wanted.Select((c, i) => updatesList.Columns[i] == c).All(b => b)) return;
+            updatesList.Columns.Clear();
+            updatesList.Columns.AddRange(wanted);
+        }
+
         void RefreshList()
         {
             refreshing = true;
             updatesList.BeginUpdate();
+            SetColumns();
             updatesList.Items.Clear();
             lock (storeLock)
             {
                 foreach (String computer in computers)
                 {
                     ComputerUpdateState c = store.Find(computer);
-                    if (c != null && c.Paused)
-                    {
-                        AddRow(new RowKey { Computer = computer }, new[] { computer, "", "", "", Localization.T("SoftwareUpdatesForm.Paused", "Paused"), c.PauseReason ?? "", Format(c.LastChange) }, null);
-                        updatesList.Items[updatesList.Items.Count - 1].ForeColor = SystemColors.GrayText;
-                        continue;
-                    }
-                    if (packages.Count == 0 || c == null || (c.LastError != null && !packages.Any(p => c.Find(p.Id) != null)))
-                    {
-                        String status = c == null ? Localization.T("SoftwareUpdatesForm.NotChecked", "Not checked")
-                                      : c.LastError != null ? Localization.T("SoftwareUpdatesForm.Unreachable", "Error") : "";
-                        AddRow(new RowKey { Computer = computer }, new[] { computer, "", "", "", status, c?.LastError ?? "", Format(c?.LastChange) }, null);
-                        continue;
-                    }
-                    foreach (UpdatePackage p in packages)
-                    {
-                        PackageUpdateState s = c.Find(p.Id);
-                        AddRow(new RowKey { Computer = computer, PackageId = p.Id }, new[]
-                        {
-                            computer,
-                            p.DisplayName,
-                            s?.Installed ?? "",
-                            s?.Available ?? "",
-                            StatusText(s?.Status),
-                            ResultText(s),
-                            Format(c.LastChange)
-                        }, s);
-                    }
+                    ComputerSummary summary = ComputerSummary.Of(c, packages);
+                    if (!ByPackage || summary.Kind == ComputerSummaryKind.Paused || !AddPackageRows(computer, c))
+                        AddComputerRow(computer, c, summary);
                 }
             }
             updatesList.EndUpdate();
@@ -114,24 +111,121 @@ namespace LiteDeploy
             UpdateButtons();
         }
 
-        void AddRow(RowKey key, String[] cells, PackageUpdateState s)
+        // One row for the computer: its summary. Its checkbox selects the computer.
+        void AddComputerRow(String computer, ComputerUpdateState c, ComputerSummary summary)
         {
-            // Step in progress (live) instead of the saved status
-            String step;
+            String step = LiveStep(computer);
+            String[] cells = ByPackage
+                ? new[] { computer, "", "", "", SummaryText(summary), ComputerResult(c, summary), Format(c?.LastChange) }
+                : new[] { computer, SummaryText(summary), UpdatesText(c, summary), ComputerResult(c, summary), Format(c?.LastChange) };
+            int statusCell = ByPackage ? 4 : 1;
+            if (step.Length > 0) cells[statusCell] = step;
+
+            ListViewItem item = new ListViewItem(cells) { Tag = new RowKey { Computer = computer } };
+            switch (summary.Kind)
+            {
+                case ComputerSummaryKind.Paused: item.ForeColor = SystemColors.GrayText; break;
+                case ComputerSummaryKind.Errors:
+                case ComputerSummaryKind.Unreachable: item.ForeColor = Theme.ErrorColor; break;
+                case ComputerSummaryKind.Outdated: item.ForeColor = Theme.WarningColor; break;
+            }
+            if (step.Length > 0) item.ForeColor = Theme.Accent;
+            item.Checked = !ByPackage && checkedComputers.Contains(computer.ToLowerInvariant());
+            updatesList.Items.Add(item);
+        }
+
+        // One row per package of the computer, except the packages that are not installed; false when none
+        bool AddPackageRows(String computer, ComputerUpdateState c)
+        {
+            if (c == null) return false;
+            bool any = false;
+            foreach (UpdatePackage p in packages)
+            {
+                PackageUpdateState s = c.Find(p.Id);
+                if (s == null || s.Status == null || s.Status == WorkerProtocol.StatusNotInstalled) continue;
+                any = true;
+                RowKey key = new RowKey { Computer = computer, PackageId = p.Id };
+                String[] cells =
+                {
+                    computer,
+                    p.DisplayName,
+                    s.Installed ?? "",
+                    s.Available ?? "",
+                    StatusText(s.Status),
+                    ResultText(s),
+                    Format(c.LastChange)
+                };
+                String step;
+                lock (live)
+                {
+                    // the package's own step ("" once it is done), else the step of its computer (connecting, started)
+                    if (!live.TryGetValue(key.Key, out step) && !live.TryGetValue(new RowKey { Computer = computer }.Key, out step))
+                        step = "";
+                }
+                if (step.Length > 0) cells[4] = step;
+                ListViewItem item = new ListViewItem(cells) { Tag = key };
+                if (s.Status == WorkerProtocol.StatusOutdated) item.ForeColor = Theme.WarningColor;
+                if (s.Status == WorkerProtocol.StatusError || (s.Status == WorkerProtocol.StatusOutdated && s.LastResult == WorkerProtocol.ResultFailed)) item.ForeColor = Theme.ErrorColor;
+                if (step.Length > 0) item.ForeColor = Theme.Accent;
+                item.Checked = checkedKeys.Contains(key.Key);
+                updatesList.Items.Add(item);
+            }
+            return any;
+        }
+
+        // Step in progress on a computer: the step of one of its packages, else its own step; "" when idle
+        String LiveStep(String computer)
+        {
+            String prefix = (computer + "|").ToLowerInvariant();
+            String own = new RowKey { Computer = computer }.Key;
             lock (live)
             {
-                // the package's own step ("" once it is done), else the step of its computer (connecting, started)
-                if (!live.TryGetValue(key.Key, out step) && !live.TryGetValue(new RowKey { Computer = key.Computer }.Key, out step))
-                    step = "";
-                if (step.Length > 0) cells[4] = step;
+                foreach (KeyValuePair<String, String> entry in live)
+                {
+                    if (entry.Key == own || !entry.Key.StartsWith(prefix, StringComparison.Ordinal) || entry.Value.Length == 0) continue;
+                    UpdatePackage p = packages.FirstOrDefault(x => String.Equals(x.Id, entry.Key.Substring(prefix.Length), StringComparison.OrdinalIgnoreCase));
+                    return p == null ? entry.Value : entry.Value + " (" + p.DisplayName + ")";
+                }
+                String step;
+                return live.TryGetValue(own, out step) ? step : "";
             }
-            ListViewItem item = new ListViewItem(cells) { Tag = key };
-            if (s != null && s.Status == WorkerProtocol.StatusOutdated) item.ForeColor = Theme.WarningColor;
-            if (s != null && (s.Status == WorkerProtocol.StatusError || s.LastResult == WorkerProtocol.ResultFailed)) item.ForeColor = Theme.ErrorColor;
-            if (cells[4] != null && cells[4].StartsWith("\u25B6", StringComparison.Ordinal)) item.ForeColor = Theme.Accent;
-            // Only a package that is installed can be updated
-            item.Checked = key.PackageId != null && checkedKeys.Contains(key.Key);
-            updatesList.Items.Add(item);
+        }
+
+        static String SummaryText(ComputerSummary s)
+        {
+            switch (s.Kind)
+            {
+                case ComputerSummaryKind.Paused: return Localization.T("SoftwareUpdatesForm.Paused", "Paused");
+                case ComputerSummaryKind.Unreachable: return Localization.T("SoftwareUpdatesForm.Unreachable", "Error");
+                case ComputerSummaryKind.Errors:
+                    return s.Outdated.Count > 0
+                        ? Localization.F("SoftwareUpdatesForm.ErrorsAndUpdates", "{0} error(s), {1} update(s)", s.Errors.Count, s.Outdated.Count)
+                        : Localization.F("SoftwareUpdatesForm.Errors", "{0} error(s)", s.Errors.Count);
+                case ComputerSummaryKind.Outdated: return Localization.F("SoftwareUpdatesForm.UpdatesAvailable", "{0} update(s)", s.Outdated.Count);
+                case ComputerSummaryKind.UpToDate: return Localization.T("SoftwareUpdatesForm.UpToDate", "Up to date");
+                default: return Localization.T("SoftwareUpdatesForm.NotChecked", "Not checked");
+            }
+        }
+
+        // "Firefox 120.0 > 121.0, 7-Zip 23.01 > 24.08"
+        static String UpdatesText(ComputerUpdateState c, ComputerSummary s)
+        {
+            if (c == null) return "";
+            return String.Join(", ", s.Outdated.Select(p =>
+            {
+                PackageUpdateState ps = c.Find(p.Id);
+                return p.DisplayName + " " + ps.Installed + " → " + ps.Available;
+            }));
+        }
+
+        // Pause reason, errors of the packages, or the error of the last run
+        static String ComputerResult(ComputerUpdateState c, ComputerSummary s)
+        {
+            if (c == null) return "";
+            if (s.Kind == ComputerSummaryKind.Paused) return c.PauseReason ?? "";
+            // The errors of the last run ("id: message | ..."), else the failed updates still to do
+            if (c.LastError != null) return c.LastError;
+            return String.Join(" | ", s.Errors.Select(p => p.DisplayName + ": " + ResultText(c.Find(p.Id))));
         }
 
         void updatesList_ItemChecked(object sender, ItemCheckedEventArgs e)
@@ -140,13 +234,35 @@ namespace LiteDeploy
             RowKey key = (RowKey)e.Item.Tag;
             if (key.PackageId == null)
             {
-                // A computer without package rows: check it to update... nothing; keep unchecked
-                if (e.Item.Checked) e.Item.Checked = false;
-                return;
+                if (ByPackage)
+                {
+                    // A computer row in the package view (nothing installed, not checked): nothing to update
+                    if (e.Item.Checked) e.Item.Checked = false;
+                    return;
+                }
+                if (e.Item.Checked) checkedComputers.Add(key.Computer.ToLowerInvariant());
+                else checkedComputers.Remove(key.Computer.ToLowerInvariant());
             }
-            if (e.Item.Checked) checkedKeys.Add(key.Key);
-            else checkedKeys.Remove(key.Key);
+            else
+            {
+                if (e.Item.Checked) checkedKeys.Add(key.Key);
+                else checkedKeys.Remove(key.Key);
+            }
             UpdateButtons();
+        }
+
+        void byPackageButton_Click(object sender, EventArgs e)
+        {
+            RefreshList();
+        }
+
+        void updatesList_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyData == (Keys.Control | Keys.A))
+            {
+                selectAllButton_Click(sender, e);
+                e.Handled = e.SuppressKeyPress = true;
+            }
         }
 
         static String Format(DateTime? time)
@@ -189,29 +305,53 @@ namespace LiteDeploy
         {
             bool idle = pending == 0;
             checkButton.Enabled = idle && packages.Count > 0 && computers.Count > 0;
-            selectOutdatedButton.Enabled = idle;
-            updateButton.Enabled = idle && checkedKeys.Count > 0;
+            selectOutdatedButton.Enabled = selectAllButton.Enabled = selectNoneButton.Enabled = idle;
+            updateButton.Enabled = idle && (ByPackage ? checkedKeys.Count > 0 : checkedComputers.Count > 0);
             editPackagesButton.Enabled = idle;
+            byPackageButton.Enabled = idle;
             stopButton.Enabled = !idle;
         }
 
         // ---- Selection --------------------------------------------------------------
 
+        void selectAllButton_Click(object sender, EventArgs e)
+        {
+            if (pending > 0) return;
+            if (ByPackage)
+            {
+                foreach (ListViewItem item in updatesList.Items)
+                {
+                    RowKey key = (RowKey)item.Tag;
+                    if (key.PackageId != null) checkedKeys.Add(key.Key);
+                }
+            }
+            else
+            {
+                foreach (String computer in computers.Where(c => !IsPaused(c))) checkedComputers.Add(computer.ToLowerInvariant());
+            }
+            RefreshList();
+        }
+
+        void selectNoneButton_Click(object sender, EventArgs e)
+        {
+            checkedKeys.Clear();
+            checkedComputers.Clear();
+            RefreshList();
+        }
+
         void selectOutdatedButton_Click(object sender, EventArgs e)
         {
             checkedKeys.Clear();
+            checkedComputers.Clear();
             lock (storeLock)
             {
                 foreach (String computer in computers)
                 {
-                    ComputerUpdateState c = store.Find(computer);
-                    if (c == null) continue;
-                    foreach (UpdatePackage p in packages)
-                    {
-                        PackageUpdateState s = c.Find(p.Id);
-                        if (s != null && s.Status == WorkerProtocol.StatusOutdated)
-                            checkedKeys.Add(new RowKey { Computer = computer, PackageId = p.Id }.Key);
-                    }
+                    ComputerSummary summary = ComputerSummary.Of(store.Find(computer), packages);
+                    if (summary.Outdated.Count == 0) continue;
+                    checkedComputers.Add(computer.ToLowerInvariant());
+                    foreach (UpdatePackage p in summary.Outdated)
+                        checkedKeys.Add(new RowKey { Computer = computer, PackageId = p.Id }.Key);
                 }
             }
             RefreshList();
@@ -219,26 +359,112 @@ namespace LiteDeploy
                 statusLabel.Text = Localization.T("SoftwareUpdatesForm.NothingOutdated", "No update available: click \"Check\" first if the list is not up to date.");
         }
 
+        // Computers checked in the view shown (in the package view, the computers of the checked packages)
+        List<String> CheckedComputers()
+        {
+            return computers.Where(c => ByPackage
+                    ? packages.Any(p => checkedKeys.Contains(new RowKey { Computer = c, PackageId = p.Id }.Key))
+                    : checkedComputers.Contains(c.ToLowerInvariant()))
+                .ToList();
+        }
+
+        // ---- Account ----------------------------------------------------------------
+
+        /// <summary>Asked once per session (the question comes back at each start of LiteDeploy).</summary>
+        static bool credentialAsked;
+
+        /// <summary>
+        /// Before a check or an update run as the current user: offers to add a credential when none
+        /// is stored (or to use the stored one), then to make it the default (App > Options).
+        /// False: the user cancelled the run.
+        /// </summary>
+        bool OfferCredential()
+        {
+            int stored;
+            List<LiteSuite.StoredCredential> list;
+            try { list = LiteSuite.CredentialStore.List().ToList(); stored = list.Count; }
+            catch (Exception) { return true; }   // Credential Manager unavailable: the current user
+
+            CredentialOffer offer = UpdateRunner.OfferFor(UpdateRunner.UpdateCredentialName, stored, credentialAsked);
+            if (offer == CredentialOffer.None) return true;
+            credentialAsked = true;
+            String me = Environment.UserDomainName + "\\" + Environment.UserName;
+            String name = null;
+            DialogResult answer;
+            switch (offer)
+            {
+                case CredentialOffer.Add:
+                    answer = MessageBox.Show(this,
+                        Localization.F("SoftwareUpdatesForm.OfferAddCredential", "No credential is stored: the computers are reached with your account ({0}). Add a credential now (Tools > Credentials)?\n\nYes: add one. No: continue with your account.", me),
+                        Text, MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+                    if (answer == DialogResult.Cancel) return false;
+                    if (answer == DialogResult.No) return true;
+                    name = CredentialsForm.AddDialog(this);
+                    if (name == null) return false;
+                    break;
+                case CredentialOffer.UseStored:
+                    answer = MessageBox.Show(this,
+                        Localization.F("SoftwareUpdatesForm.OfferUseCredential", "No credential is chosen for the software updates: the computers are reached with your account ({0}). Use the stored credential \"{1}\"?\n\nYes: use it. No: continue with your account.", me, list[0].Name),
+                        Text, MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+                    if (answer == DialogResult.Cancel) return false;
+                    if (answer == DialogResult.No) return true;
+                    name = list[0].Name;
+                    break;
+                case CredentialOffer.ChooseInOptions:
+                    answer = MessageBox.Show(this,
+                        Localization.F("SoftwareUpdatesForm.OfferChooseCredential", "No credential is chosen for the software updates: the computers are reached with your account ({0}). Choose a credential in App > Options now?\n\nYes: open the options. No: continue with your account.", me),
+                        Text, MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+                    if (answer == DialogResult.Cancel) return false;
+                    if (answer == DialogResult.Yes)
+                        using (OptionsForm options = new OptionsForm()) options.ShowDialog(this);
+                    return true;
+            }
+
+            answer = MessageBox.Show(this,
+                Localization.F("SoftwareUpdatesForm.OfferDefaultCredential", "Use \"{0}\" by default for the software updates (App > Options)?\n\nYes: by default. No: until LiteDeploy is closed.", name),
+                Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (answer == DialogResult.Yes)
+            {
+                UserSettings settings = UserSettings.Current.Clone();
+                settings.UpdateCredential = name;
+                try { UserSettings.Save(settings); return true; }
+                catch (Exception ex) { MessageBox.Show(this, ex.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error); }
+            }
+            UpdateRunner.SessionCredential = name;
+            return true;
+        }
+
         // ---- Runs -------------------------------------------------------------------
 
         void checkButton_Click(object sender, EventArgs e)
         {
+            if (!OfferCredential()) return;
             packages = UpdateRunner.LoadPackages();
-            Start("scan", computers.Where(c => !IsPaused(c)).Select(c => new Job { Computer = c, Packages = packages.ToList() }).ToList());
+            // The checked computers, or every computer when none is checked
+            List<String> targets = CheckedComputers();
+            if (targets.Count == 0) targets = computers;
+            Start("scan", targets.Where(c => !IsPaused(c)).Select(c => new Job { Computer = c, Packages = packages.ToList() }).ToList());
         }
 
         void updateButton_Click(object sender, EventArgs e)
         {
-            // On each computer, only its checked packages
+            // Computer view: the packages with an update of each checked computer.
+            // Package view: on each computer, only its checked packages.
             List<Job> jobs = new List<Job>();
-            foreach (String computer in computers.Where(c => !IsPaused(c)))
+            foreach (String computer in CheckedComputers().Where(c => !IsPaused(c)))
             {
-                List<UpdatePackage> selected = packages
-                    .Where(p => checkedKeys.Contains(new RowKey { Computer = computer, PackageId = p.Id }.Key))
-                    .ToList();
+                List<UpdatePackage> selected;
+                if (ByPackage)
+                    selected = packages.Where(p => checkedKeys.Contains(new RowKey { Computer = computer, PackageId = p.Id }.Key)).ToList();
+                else
+                    lock (storeLock) selected = ComputerSummary.Of(store.Find(computer), packages).Outdated;
                 if (selected.Count > 0) jobs.Add(new Job { Computer = computer, Packages = selected });
             }
-            if (jobs.Count == 0) return;
+            if (jobs.Count == 0)
+            {
+                statusLabel.Text = Localization.T("SoftwareUpdatesForm.NothingToUpdate", "No update available on the checked computers: click \"Check\" first if the list is not up to date.");
+                return;
+            }
 
             // "Outside business hours only" computers, during business hours: only on request
             List<Job> night = jobs.Where(j => IsNightOnly(j.Computer)).ToList();
@@ -322,12 +548,13 @@ namespace LiteDeploy
                 }
                 if (command == "upgrade")
                 {
-                    // Updated rows are unchecked
+                    // Updated rows and computers are unchecked
                     foreach (UpdatePackage p in job.Packages)
                     {
                         String key = new RowKey { Computer = job.Computer, PackageId = p.Id }.Key;
                         lock (checkedKeys) checkedKeys.Remove(key);
                     }
+                    lock (checkedKeys) checkedComputers.Remove(job.Computer.ToLowerInvariant());
                 }
                 Done();
             }

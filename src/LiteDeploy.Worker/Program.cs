@@ -240,21 +240,18 @@ namespace LiteDeploy.Worker
         {
             PackageState state = new PackageState { Package = package };
             WingetResult list = winget.List(package.Id);
-            if (list.ExitCode == WingetClient.PackageNotInstalled)
+            WingetListRow row;
+            state.Status = WingetListParser.Classify(list.ExitCode, list.Output, package.Id, out row);
+            if (state.Status == WorkerProtocol.StatusError)
             {
-                state.Status = WorkerProtocol.StatusNotInstalled;
-                return state;
-            }
-            WingetListRow row = list.ExitCode == 0 ? WingetListParser.FindRow(list.Output, package.Id) : null;
-            if (row == null)
-            {
-                state.Status = WorkerProtocol.StatusError;
                 state.Message = "winget list " + list.Hex + " " + WingetClient.Describe(list.ExitCode) + LastLines(list.Output);
                 return state;
             }
-            state.Installed = row.Version;
-            state.Available = row.Available;
-            state.Status = row.Available == null ? WorkerProtocol.StatusUpToDate : WorkerProtocol.StatusOutdated;
+            if (row != null)
+            {
+                state.Installed = row.Version;
+                state.Available = row.Available;
+            }
             return state;
         }
 

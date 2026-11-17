@@ -26,10 +26,36 @@ namespace LiteDeploy.Worker
 
     internal static class WingetListParser
     {
-        /// <summary>The row of <paramref name="id"/> (exact, case-insensitive); null when absent.</summary>
+        /// <summary>
+        /// The row of <paramref name="id"/> (case-insensitive); null when absent. winget shortens a
+        /// long Id with "\u2026" in a narrow table: a shortened Id that begins <paramref name="id"/>
+        /// matches too.
+        /// </summary>
         public static WingetListRow FindRow(string output, string id)
         {
-            return Parse(output).FirstOrDefault(r => string.Equals(r.Id, id, StringComparison.OrdinalIgnoreCase));
+            List<WingetListRow> rows = Parse(output);
+            WingetListRow exact = rows.FirstOrDefault(r => string.Equals(r.Id, id, StringComparison.OrdinalIgnoreCase));
+            if (exact != null || string.IsNullOrEmpty(id)) return exact;
+            return rows.FirstOrDefault(r => r.Id.Length > 1 && r.Id[r.Id.Length - 1] == '\u2026'
+                && id.StartsWith(r.Id.Substring(0, r.Id.Length - 1), StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>
+        /// State of a package from "winget list --id X -e": WorkerProtocol.StatusOutdated,
+        /// StatusUpToDate, StatusNotInstalled or StatusError. A package that is not installed is
+        /// not an error, whatever the way winget says it: its "not installed" or "no package
+        /// found" codes, or success without the package in its output (no table, or a table
+        /// without that Id). Only the other exit codes are errors.
+        /// </summary>
+        public static string Classify(int exitCode, string output, string id, out WingetListRow row)
+        {
+            row = null;
+            if (exitCode == WingetClient.PackageNotInstalled || exitCode == WingetClient.NoPackageFound)
+                return WorkerProtocol.StatusNotInstalled;
+            if (exitCode != 0) return WorkerProtocol.StatusError;
+            row = FindRow(output, id);
+            if (row == null) return WorkerProtocol.StatusNotInstalled;
+            return row.Available == null ? WorkerProtocol.StatusUpToDate : WorkerProtocol.StatusOutdated;
         }
 
         public static List<WingetListRow> Parse(string output)

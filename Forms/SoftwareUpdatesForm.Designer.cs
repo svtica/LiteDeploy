@@ -36,6 +36,10 @@ namespace LiteDeploy
             this.logsItem = new System.Windows.Forms.ToolStripMenuItem();
             this.checkButton = new System.Windows.Forms.ToolStripButton();
             this.selectOutdatedButton = new System.Windows.Forms.ToolStripButton();
+            this.selectAllButton = new System.Windows.Forms.ToolStripButton();
+            this.selectNoneButton = new System.Windows.Forms.ToolStripButton();
+            this.byPackageButton = new System.Windows.Forms.ToolStripButton();
+            this.separator2 = new System.Windows.Forms.ToolStripSeparator();
             this.updateButton = new System.Windows.Forms.ToolStripButton();
             this.stopButton = new System.Windows.Forms.ToolStripButton();
             this.separator1 = new System.Windows.Forms.ToolStripSeparator();
@@ -44,6 +48,7 @@ namespace LiteDeploy
             this.updatesList = new System.Windows.Forms.ListView();
             this.computerColumn = new System.Windows.Forms.ColumnHeader();
             this.packageColumn = new System.Windows.Forms.ColumnHeader();
+            this.updatesColumn = new System.Windows.Forms.ColumnHeader();
             this.installedColumn = new System.Windows.Forms.ColumnHeader();
             this.availableColumn = new System.Windows.Forms.ColumnHeader();
             this.statusColumn = new System.Windows.Forms.ColumnHeader();
@@ -60,11 +65,15 @@ namespace LiteDeploy
             //
             this.toolStrip.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.toolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.checkButton,
+            this.selectAllButton,
+            this.selectNoneButton,
             this.selectOutdatedButton,
+            this.separator2,
+            this.checkButton,
             this.updateButton,
             this.stopButton,
             this.separator1,
+            this.byPackageButton,
             this.editPackagesButton,
             this.scheduleButton});
             this.toolStrip.Location = new System.Drawing.Point(0, 0);
@@ -77,7 +86,7 @@ namespace LiteDeploy
             this.checkButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.checkButton.Name = "checkButton";
             this.checkButton.Text = "Check";
-            this.checkButton.ToolTipText = "Check the installed and available versions on the checked computers";
+            this.checkButton.ToolTipText = "Check the installed and available versions on the checked computers (every computer when none is checked)";
             this.checkButton.Click += new System.EventHandler(this.checkButton_Click);
             //
             // selectOutdatedButton
@@ -87,13 +96,42 @@ namespace LiteDeploy
             this.selectOutdatedButton.Text = "Select outdated";
             this.selectOutdatedButton.ToolTipText = "Check every row that has an update available";
             this.selectOutdatedButton.Click += new System.EventHandler(this.selectOutdatedButton_Click);
+            // 
+            // selectAllButton
+            // 
+            this.selectAllButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.selectAllButton.Name = "selectAllButton";
+            this.selectAllButton.Text = "Select all";
+            this.selectAllButton.ToolTipText = "Check every row (Ctrl+A)";
+            this.selectAllButton.Click += new System.EventHandler(this.selectAllButton_Click);
+            // 
+            // selectNoneButton
+            // 
+            this.selectNoneButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.selectNoneButton.Name = "selectNoneButton";
+            this.selectNoneButton.Text = "Select none";
+            this.selectNoneButton.ToolTipText = "Uncheck every row";
+            this.selectNoneButton.Click += new System.EventHandler(this.selectNoneButton_Click);
+            // 
+            // separator2
+            // 
+            this.separator2.Name = "separator2";
+            // 
+            // byPackageButton
+            // 
+            this.byPackageButton.CheckOnClick = true;
+            this.byPackageButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.byPackageButton.Name = "byPackageButton";
+            this.byPackageButton.Text = "Show packages";
+            this.byPackageButton.ToolTipText = "One row per package instead of one row per computer";
+            this.byPackageButton.Click += new System.EventHandler(this.byPackageButton_Click);
             //
             // updateButton
             //
             this.updateButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.updateButton.Name = "updateButton";
             this.updateButton.Text = "Update checked";
-            this.updateButton.ToolTipText = "Update the checked packages on their computers";
+            this.updateButton.ToolTipText = "Update the checked computers (their packages with an update), or the checked packages";
             this.updateButton.Click += new System.EventHandler(this.updateButton_Click);
             //
             // stopButton
@@ -139,6 +177,7 @@ namespace LiteDeploy
             this.updatesList.Dock = System.Windows.Forms.DockStyle.Fill;
             this.updatesList.FullRowSelect = true;
             this.updatesList.HideSelection = false;
+            this.updatesList.KeyDown += new System.Windows.Forms.KeyEventHandler(this.updatesList_KeyDown);
             this.updatesList.Location = new System.Drawing.Point(0, 25);
             this.updatesList.Name = "updatesList";
             this.updatesList.Size = new System.Drawing.Size(884, 414);
@@ -152,6 +191,11 @@ namespace LiteDeploy
             this.computerColumn.Width = 130;
             this.packageColumn.Text = "Package";
             this.packageColumn.Width = 150;
+            // 
+            // updatesColumn
+            // 
+            this.updatesColumn.Text = "Updates available";
+            this.updatesColumn.Width = 300;
             this.installedColumn.Text = "Installed";
             this.installedColumn.Width = 90;
             this.availableColumn.Text = "Available";
@@ -259,6 +303,10 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripMenuItem logsItem;
         private System.Windows.Forms.ToolStripButton checkButton;
         private System.Windows.Forms.ToolStripButton selectOutdatedButton;
+        private System.Windows.Forms.ToolStripButton selectAllButton;
+        private System.Windows.Forms.ToolStripButton selectNoneButton;
+        private System.Windows.Forms.ToolStripButton byPackageButton;
+        private System.Windows.Forms.ToolStripSeparator separator2;
         private System.Windows.Forms.ToolStripButton updateButton;
         private System.Windows.Forms.ToolStripButton stopButton;
         private System.Windows.Forms.ToolStripSeparator separator1;
@@ -267,6 +315,7 @@ namespace LiteDeploy
         private System.Windows.Forms.ListView updatesList;
         private System.Windows.Forms.ColumnHeader computerColumn;
         private System.Windows.Forms.ColumnHeader packageColumn;
+        private System.Windows.Forms.ColumnHeader updatesColumn;
         private System.Windows.Forms.ColumnHeader installedColumn;
         private System.Windows.Forms.ColumnHeader availableColumn;
         private System.Windows.Forms.ColumnHeader statusColumn;

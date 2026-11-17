@@ -4,7 +4,9 @@
 // Author:  LiteDeploy contributors
 // Date:    2025-05-30
 // Purpose: Builds the computer list: Active Directory search, subnet scan,
-//          file, manual entry, ping.
+//          file, manual entry, ping. The Active Directory search runs by
+//          itself: the domain computers are listed when the window opens, and
+//          the list is filtered as the search text or its options change.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -33,6 +35,10 @@ namespace LiteDeploy
         private List<int> timeSinceLastChecked;
         private Object pingThreadCountLock;
         private bool abortPing = false;
+        /// <summary>Raised at each search: the ping of the previous results stops.</summary>
+        private int pingGeneration = 0;
+        /// <summary>Search as you type: runs once the text has not changed for a moment.</summary>
+        private readonly System.Windows.Forms.Timer autoSearchTimer = new System.Windows.Forms.Timer { Interval = 400 };
 
         public ComputerListForm()
         {
@@ -46,11 +52,33 @@ namespace LiteDeploy
             // status (title, counters) while the window is shown.
             timer.Enabled = false;
             VisibleChanged += ComputerListForm_VisibleChanged;
+
+            autoSearchTimer.Tick += (s, e) => { autoSearchTimer.Stop(); SearchDirectory(true); };
+            adSearchKey.TextChanged += (s, e) => ScheduleSearch();
+            adSearchContains.CheckedChanged += (s, e) => ScheduleSearch();
+            adSearchStartsWith.CheckedChanged += (s, e) => ScheduleSearch();
+            adSearchCaseSensitive.CheckedChanged += (s, e) => ScheduleSearch();
+            FormClosed += (s, e) => autoSearchTimer.Dispose();
         }
 
         private void ComputerListForm_VisibleChanged(object sender, EventArgs e)
         {
             timer.Enabled = Visible;
+            if (!Visible) { autoSearchTimer.Stop(); return; }
+            // The domain computers at once, without clicking Search
+            if (candidates.Items.Count == 0 && DirectorySearchAvailable())
+                SearchDirectory(true);
+        }
+
+        private bool DirectorySearchAvailable()
+        {
+            return !ActiveDirectoryCache.adNotAvailable && !searchInProgress && adSearchGroup.Enabled && SearchGroup.Enabled;
+        }
+
+        private void ScheduleSearch()
+        {
+            autoSearchTimer.Stop();
+            if (Visible && DirectorySearchAvailable()) autoSearchTimer.Start();
         }
 
         private void ComputerListForm_Load(object sender, EventArgs e)
@@ -416,8 +444,8 @@ namespace LiteDeploy
 
         private void adSearch_Click(object sender, EventArgs e)
         {
-            Thread t = new Thread(new ThreadStart(GoSearch));
-            t.Start();
+            autoSearchTimer.Stop();
+            SearchDirectory(false);
         }
 
         private void GoDnsSearch()
@@ -446,61 +474,49 @@ namespace LiteDeploy
             RunPing();
         }
 
-        private void GoSearch()
+        /// <summary>
+        /// Computers of <paramref name="names"/> that match <paramref name="key"/>: the same name,
+        /// or (options) a name that starts with it or contains it; case-insensitive unless
+        /// <paramref name="caseSensitive"/>. An empty key with "starts with" or "contains" lists them all.
+        /// </summary>
+        internal static List<String> FindComputers(IEnumerable<String> names, String key, bool startsWith, bool contains, bool caseSensitive)
         {
-            EnableSearchKey(false);
+            key = key ?? "";
+            StringComparison comparison = caseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+            return names.Where(x => x != null && (String.Equals(x, key, comparison)
+                    || (startsWith && x.StartsWith(key, comparison))
+                    || (contains && x.IndexOf(key, comparison) >= 0)))
+                .ToList();
+        }
 
+        // In-memory search of the Active Directory list (or its cache while it is updated): fast
+        // enough for the UI thread, so the search box keeps the focus while the user types.
+        // auto: started by the window or the search box, without the message about the cache.
+        private void SearchDirectory(bool auto)
+        {
+            if (searchInProgress) return;
+            List<String> source = ActiveDirectoryCache.cacheFound && (ActiveDirectoryCache.adUpdating || !ActiveDirectoryCache.DCAvailable)
+                ? ActiveDirectoryCache.CachedAD
+                : ActiveDirectoryCache.Computers;
             List<String> results;
+            try { results = FindComputers((source ?? new List<String>()).ToList(), adSearchKey.Text, adSearchStartsWith.Checked, adSearchContains.Checked, adSearchCaseSensitive.Checked); }
+            catch (InvalidOperationException) { results = new List<String>(); }   // list being refreshed
 
-            if (ActiveDirectoryCache.cacheFound && (ActiveDirectoryCache.adUpdating || !ActiveDirectoryCache.DCAvailable ))
-            {
-                results = ActiveDirectoryCache.CachedAD.FindAll(     x => x.Equals(adSearchKey.Text) ||
-                    
-                                                          (adSearchStartsWith.Checked ? x.StartsWith(adSearchKey.Text) : false) || 
-
-                                                          ((adSearchStartsWith.Checked && !adSearchCaseSensitive.Checked) ? 
-                                                          (x.StartsWith(adSearchKey.Text.ToLower()) || x.StartsWith(adSearchKey.Text.ToUpper())) : false ) ||
-
-                                                          (adSearchContains.Checked ? x.Contains(adSearchKey.Text) : false ) ||
-
-                                                          ( (adSearchContains.Checked && !adSearchCaseSensitive.Checked) ? (x.Contains(adSearchKey.Text.ToLower()) ||
-                                                          x.Contains(adSearchKey.Text.ToUpper())) : false )
-                                                    );               
-            }
-
-            else
-            {
-                results = ActiveDirectoryCache.Computers.FindAll(    x => x.Equals(adSearchKey.Text) ||
-
-                                                          (adSearchStartsWith.Checked ? x.StartsWith(adSearchKey.Text) : false) ||
-
-                                                          ((adSearchStartsWith.Checked && !adSearchCaseSensitive.Checked) ?
-                                                          (x.StartsWith(adSearchKey.Text.ToLower()) || x.StartsWith(adSearchKey.Text.ToUpper())) : false) ||
-
-                                                          (adSearchContains.Checked ? x.Contains(adSearchKey.Text) : false) ||
-
-                                                          ((adSearchContains.Checked && !adSearchCaseSensitive.Checked) ? (x.Contains(adSearchKey.Text.ToLower()) ||
-                                                          x.Contains(adSearchKey.Text.ToUpper())) : false)
-                                                    );
-            }
-
-            BeginCandUpdate();
-            ClearCandidates();
+            candidates.BeginUpdate();
+            candidates.Items.Clear();
             foreach (String currentComp in results)
                 AddCandidate(currentComp);
-            EndCandUpdate();       
-    
+            candidates.EndUpdate();
             searchResultsCount.Text = results.Count.ToString();
-            EnableSearchKey(true);
 
             RunPing();
 
-            if (ActiveDirectoryCache.adUpdating)
+            if (!auto && ActiveDirectoryCache.adUpdating)
             {
                 MessageBox.Show( Localization.F("ComputerListForm.FromCache", "Results acquired from the Active Directory cache created on {0} at {1}.",
                                 ActiveDirectoryCache.LastUpdate.ToShortDateString(), ActiveDirectoryCache.LastUpdate.ToShortTimeString()),
                                 Localization.T("ComputerListForm.FromCache.Title", "Search Results"), MessageBoxButtons.OK, MessageBoxIcon.Information );
-            }            
+            }
         }
 
         private delegate void BeginCandUpdateDel();
@@ -633,7 +649,10 @@ namespace LiteDeploy
         private void adSearchKey_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyData == Keys.Return)
+            {
                 adSearch_Click(sender, e);
+                e.SuppressKeyPress = true;
+            }
         }
 
         private void manualPC_KeyDown(object sender, KeyEventArgs e)
@@ -719,8 +738,21 @@ namespace LiteDeploy
 
         private void RunPing()
         {
-            Thread T = new Thread(new ThreadStart(pingCandidates));
+            // A new search stops the ping of the previous results
+            int generation = Interlocked.Increment(ref pingGeneration);
+            Thread T = new Thread(() => pingCandidates(generation)) { IsBackground = true };
             T.Start();
+        }
+
+        private int CandidateCount()
+        {
+            if (candidates.InvokeRequired)
+            {
+                try { return (int)Invoke(new Func<int>(CandidateCount)); }
+                catch (ObjectDisposedException) { return 0; }
+                catch (InvalidOperationException) { return 0; }
+            }
+            return candidates.Items.Count;
         }
 
         private delegate KeyValuePair<String, int> GetCandidateDel(int i);
@@ -748,16 +780,17 @@ namespace LiteDeploy
             }
         }
 
-        private void pingCandidates()
+        private void pingCandidates(int generation)
         {
             while(runningPingThreads > 0)
             {
+                if (generation != Volatile.Read(ref pingGeneration)) return;
                 Thread.Sleep(10);
             }
 
-            for (int i = 0; i < candidates.Items.Count; i++)
+            for (int i = 0; i < CandidateCount(); i++)
             {
-                if (searchInProgress)
+                if (searchInProgress || generation != Volatile.Read(ref pingGeneration))
                     return;
 
                 if (abortPing)

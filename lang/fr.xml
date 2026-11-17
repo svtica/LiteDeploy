@@ -325,9 +325,9 @@
   <!-- SoftwareUpdatesForm -->
   <translation key="SoftwareUpdatesForm.Text">Lite Deploy - Mises à jour logicielles</translation>
   <translation key="SoftwareUpdatesForm.checkButton.Text">Vérifier</translation>
-  <translation key="SoftwareUpdatesForm.checkButton.ToolTipText">Vérifier les versions installées et disponibles sur les ordinateurs cochés</translation>
+  <translation key="SoftwareUpdatesForm.checkButton.ToolTipText">Vérifier les versions installées et disponibles sur les ordinateurs cochés (tous les ordinateurs si aucun n'est coché)</translation>
   <translation key="SoftwareUpdatesForm.updateButton.Text">Mettre à jour la sélection</translation>
-  <translation key="SoftwareUpdatesForm.updateButton.ToolTipText">Mettre à jour les paquets cochés sur leurs ordinateurs</translation>
+  <translation key="SoftwareUpdatesForm.updateButton.ToolTipText">Mettre à jour les ordinateurs cochés (leurs paquets qui ont une mise à jour), ou les paquets cochés</translation>
   <translation key="SoftwareUpdatesForm.stopButton.Text">Arrêter</translation>
   <translation key="SoftwareUpdatesForm.editPackagesButton.Text">Liste des paquets...</translation>
   <translation key="SoftwareUpdatesForm.editPackagesButton.ToolTipText">Choisir les paquets winget à garder à jour</translation>
@@ -360,6 +360,29 @@
   <translation key="SoftwareUpdatesForm.selectOutdatedButton.Text">Sélectionner les désuets</translation>
   <translation key="SoftwareUpdatesForm.selectOutdatedButton.ToolTipText">Cocher toutes les lignes qui ont une mise à jour disponible</translation>
   <translation key="SoftwareUpdatesForm.NothingOutdated">Aucune mise à jour disponible : cliquez d'abord sur « Vérifier » si la liste n'est pas à jour.</translation>
+  <translation key="SoftwareUpdatesForm.selectAllButton.Text">Tout sélectionner</translation>
+  <translation key="SoftwareUpdatesForm.selectAllButton.ToolTipText">Cocher toutes les lignes (Ctrl+A)</translation>
+  <translation key="SoftwareUpdatesForm.selectNoneButton.Text">Ne rien sélectionner</translation>
+  <translation key="SoftwareUpdatesForm.selectNoneButton.ToolTipText">Décocher toutes les lignes</translation>
+  <translation key="SoftwareUpdatesForm.byPackageButton.Text">Afficher les paquets</translation>
+  <translation key="SoftwareUpdatesForm.byPackageButton.ToolTipText">Une ligne par paquet au lieu d'une ligne par ordinateur</translation>
+  <translation key="SoftwareUpdatesForm.updatesColumn.Text">Mises à jour disponibles</translation>
+  <translation key="SoftwareUpdatesForm.UpdatesAvailable">{0} mise(s) à jour</translation>
+  <translation key="SoftwareUpdatesForm.Errors">{0} erreur(s)</translation>
+  <translation key="SoftwareUpdatesForm.ErrorsAndUpdates">{0} erreur(s), {1} mise(s) à jour</translation>
+  <translation key="SoftwareUpdatesForm.NothingToUpdate">Aucune mise à jour disponible sur les ordinateurs cochés : cliquez d'abord sur « Vérifier » si la liste n'est pas à jour.</translation>
+  <translation key="SoftwareUpdatesForm.OfferAddCredential">Aucun identifiant n'est enregistré : les ordinateurs sont joints avec votre compte ({0}). Ajouter un identifiant maintenant (Outils &gt; Identifiants) ?
+
+Oui : en ajouter un. Non : continuer avec votre compte.</translation>
+  <translation key="SoftwareUpdatesForm.OfferUseCredential">Aucun identifiant n'est choisi pour les mises à jour logicielles : les ordinateurs sont joints avec votre compte ({0}). Utiliser l'identifiant enregistré « {1} » ?
+
+Oui : l'utiliser. Non : continuer avec votre compte.</translation>
+  <translation key="SoftwareUpdatesForm.OfferChooseCredential">Aucun identifiant n'est choisi pour les mises à jour logicielles : les ordinateurs sont joints avec votre compte ({0}). Choisir un identifiant dans Application &gt; Options maintenant ?
+
+Oui : ouvrir les options. Non : continuer avec votre compte.</translation>
+  <translation key="SoftwareUpdatesForm.OfferDefaultCredential">Utiliser « {0} » par défaut pour les mises à jour logicielles (Application &gt; Options) ?
+
+Oui : par défaut. Non : jusqu'à la fermeture de LiteDeploy.</translation>
   <translation key="PackageListForm.Text">Lite Deploy - Liste des paquets</translation>
   <translation key="PackageListForm.searchLabel.Text">Chercher dans winget :</translation>
   <translation key="PackageListForm.searchButton.Text">Chercher</translation>

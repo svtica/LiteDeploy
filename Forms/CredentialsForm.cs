@@ -89,6 +89,14 @@ namespace LiteDeploy
 
         void Add()
         {
+            AddDialog(this);
+            Reload();
+        }
+
+        /// <summary>Asks for a new credential and stores it; returns its name, or null when cancelled.</summary>
+        public static String AddDialog(IWin32Window owner)
+        {
+            String saved = null;
             using (Form dialog = new Form())
             using (Label nameLabel = new Label(), userLabel = new Label(), passwordLabel = new Label(), confirmLabel = new Label())
             using (TextBox name = new TextBox(), user = new TextBox(), password = new TextBox(), confirm = new TextBox())
@@ -130,6 +138,7 @@ namespace LiteDeploy
                     try
                     {
                         CredentialStore.Save(name.Text.Trim(), user.Text.Trim(), password.Text);
+                        saved = name.Text.Trim();
                         dialog.DialogResult = DialogResult.OK;
                     }
                     catch (Exception ex) { MessageBox.Show(dialog, ex.Message, dialog.Text, MessageBoxButtons.OK, MessageBoxIcon.Error); }
@@ -140,10 +149,10 @@ namespace LiteDeploy
                 dialog.AcceptButton = ok;
                 dialog.CancelButton = cancel;
                 Theme.Apply(dialog);
-                dialog.ShowDialog(this);
+                dialog.ShowDialog(owner);
                 password.Text = confirm.Text = "";
             }
-            Reload();
+            return saved;
         }
 
         void Delete()
