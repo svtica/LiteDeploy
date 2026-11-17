@@ -2,7 +2,7 @@
 
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-green.svg)](LICENSE)
 [![GitHub release](https://img.shields.io/github/v/release/svtica/LiteDeploy)](https://github.com/svtica/LiteDeploy/releases/latest)
-[![Release](https://github.com/svtica/LiteDeploy/actions/workflows/Release.yml/badge.svg)](https://github.com/svtica/LiteDeploy/actions/workflows/Release.yml)
+[![Release](https://github.com/svtica/LiteDeploy/actions/workflows/release.yml/badge.svg)](https://github.com/svtica/LiteDeploy/actions/workflows/release.yml)
 
 **Lightweight deployment tool: runs a program, a command or an MSI package on many Windows computers at once through PsExec.**
 
