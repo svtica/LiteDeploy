@@ -50,6 +50,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   link). Compares the provisioned `MSTeams` version with the offline package of the cache
   (`<cache>\Teams\MSTeams-x64.msix`) when there is one; the bootstrapper and the package are
   refused unless signed by Microsoft Corporation. Closes `ms-teams` before the update.
+- Update module `MsixProvision`: provisions any MSIX package (and its dependency packages) for
+  all users from the shared installer cache, configured with module parameters (`PackageName`,
+  `Folder`, optional `File`, `Dependencies`, `License`, `Features`, `Publisher`). Check compares
+  the provisioned version with the manifest version of the package of the cache (read without
+  extracting it). Update and Install copy the files to
+  `%windir%\LiteDeploy\work\MsixProvision\<PackageName>`, refuse every package unless validly
+  signed by the publisher of its manifest (and by the expected organisation when `Publisher` is
+  set), enable the requested Windows optional features (3010 when one needs a restart) and run
+  `Add-AppxProvisionedPackage -Online -Regions all`. Declares `# Install: yes` and accepts
+  `-Action Install`. No process is closed.
 - Unit tests: every shipped module follows the contract (header, comment-based help,
   `Write-LiteDeployResult` of the template, `$ErrorActionPreference = 'Stop'`).
 - `docs/modules.md`: layout of the shared installer cache and share permissions for the new

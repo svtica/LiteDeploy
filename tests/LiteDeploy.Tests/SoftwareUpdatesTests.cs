@@ -358,7 +358,7 @@ namespace LiteDeploy.Tests
         public void ShippedModules_AreAsciiModules()
         {
             string[] files = Directory.GetFiles(Path.Combine(RepoRoot(), "modules"), "*.ps1");
-            CollectionAssert.IsSubsetOf(new[] { "AdobeReader.ps1", "OnePassword.ps1", "OracleJava.ps1", "PrinterDrivers.ps1", "TeamsBootstrapper.ps1" },
+            CollectionAssert.IsSubsetOf(new[] { "AdobeReader.ps1", "MsixProvision.ps1", "OnePassword.ps1", "OracleJava.ps1", "PrinterDrivers.ps1", "TeamsBootstrapper.ps1" },
                 files.Select(Path.GetFileName).ToArray());
             foreach (string path in files)
             {
@@ -398,6 +398,25 @@ namespace LiteDeploy.Tests
             Assert.AreEqual("module:PrinterDrivers||Printer drivers (shared cache)", drivers.ToPackage().ToArgument());
             UpdateModule teams = UpdateModules.Read(Path.Combine(RepoRoot(), "modules", "TeamsBootstrapper.ps1"));
             CollectionAssert.AreEqual(new[] { "ms-teams" }, teams.Processes);
+        }
+
+        [TestMethod]
+        public void ShippedModules_MsixProvision_Header()
+        {
+            string path = Path.Combine(RepoRoot(), "modules", "MsixProvision.ps1");
+            UpdateModule msix = UpdateModules.Read(path);
+            Assert.AreEqual(0, msix.Processes.Length, "nothing to close");
+            Assert.AreEqual("MSIX package (provisioned)", msix.Label);
+            CollectionAssert.AreEqual(new[] { "PackageName", "Folder", "File", "Dependencies", "License", "Features", "Publisher" },
+                msix.Parameters.Select(p => p.Name).ToArray());
+            CollectionAssert.AreEqual(new[] { "PackageName", "Folder" }, msix.Parameters.Where(p => p.Required).Select(p => p.Name).ToArray());
+            Assert.IsFalse(msix.Parameters.Any(p => p.Secret));
+            Assert.IsTrue(msix.Parameters.Where(p => !p.Required).All(p => p.Default == ""), "optional parameters default to empty");
+            string[] header = File.ReadLines(path).Take(20).Select(l => l.Trim()).ToArray();
+            CollectionAssert.Contains(header, "# Install: yes");
+            string text = File.ReadAllText(path);
+            Assert.IsFalse(text.Contains("Invoke-Expression"), "no Invoke-Expression");
+            StringAssert.Contains(text, @"Join-Path $env:windir ""LiteDeploy\work\MsixProvision\$packageName""", "work folder under %windir%");
         }
 
         [TestMethod]
