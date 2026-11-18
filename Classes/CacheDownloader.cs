@@ -10,11 +10,17 @@
 //            1. download over HTTPS only (redirects too) to a new temporary
 //               folder of the administrator;
 //            2. SHA256 of the winget manifest, then Authenticode signature:
-//               Valid and O=<Publisher> of the instance; for an MSIX, the
-//               package name and the signer = Publisher of its manifest, as
-//               the module checks them;
+//               Valid and O= one of the organisations of the Publisher
+//               parameter (separated by ;); for an MSIX, the package name and
+//               the signer = Publisher of its manifest, as the module checks
+//               them. A zip installer (it has no signature): its SHA256, then
+//               the only .msi or .exe it holds (of the type of the instance) is
+//               extracted, within size limits, and its signature checked; a
+//               zip with none or several of them is refused (download it
+//               manually);
 //            3. copy to the folder of the current file, under a new versioned
-//               name (never over an existing file), SHA256 checked again;
+//               name (never over an existing file), SHA256 checked again
+//               (for a zip: the installer it holds, not the zip);
 //            4. File (and Version when it was set) of the instance updated in
 //               module-settings.xml;
 //            5. the previous file moved to the OLD subfolder of that folder.
@@ -29,6 +35,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
@@ -58,7 +65,84 @@ namespace LiteDeploy
         public WebVersionEntry Entry;
         /// <summary>Null: failed (Error).</summary>
         public CacheDownloadResult Result;
+        /// <summary>Full message of the failure (details window and log).</summary>
         public String Error;
+        /// <summary>Short reason of the failure (one line of the summary).</summary>
+        public String Reason;
+        /// <summary>The download was refused by a check (hash, signature, zip...), not stopped by an error.</summary>
+        public bool Refused;
+    }
+
+    /// <summary>
+    /// What the window shows after a Download to the cache: one line per product (summary), and the full
+    /// messages with the log file (Details window). Pure logic, unit-tested.
+    /// </summary>
+    internal static class CacheDownloadSummary
+    {
+        static String Name(WebVersionEntry e)
+        {
+            return ((e.Product ?? e.Key ?? "?") + " " + (e.WebVersion ?? "")).Trim();
+        }
+
+        /// <summary>One line per file processed, then the files not processed (cancelled).</summary>
+        static public String Summary(IList<CacheDownloadOutcome> outcomes, int requested)
+        {
+            List<String> lines = new List<String>();
+            foreach (CacheDownloadOutcome o in outcomes)
+            {
+                if (o.Result != null)
+                    lines.Add(o.Result.Warning == null
+                        ? Localization.F("CacheDownloadSummary.Ok", "OK: {0}", Name(o.Entry))
+                        : Localization.F("CacheDownloadSummary.OkWarning", "OK: {0} (previous file not moved to {1})", Name(o.Entry), CacheDownloader.OldFolder));
+                else if (o.Refused)
+                    lines.Add(Localization.F("CacheDownloadSummary.Refused", "Refused: {0} - {1}", Name(o.Entry), o.Reason ?? o.Error));
+                else
+                    lines.Add(Localization.F("CacheDownloadSummary.Failed", "Failed: {0} - {1}", Name(o.Entry), o.Reason ?? o.Error));
+            }
+            if (outcomes.Count < requested)
+                lines.Add(Localization.F("CacheDownloadSummary.NotProcessed", "Cancelled: {0} file(s) not processed.", requested - outcomes.Count));
+            return String.Join(Environment.NewLine, lines);
+        }
+
+        /// <summary>A file was not downloaded, or the previous file stayed: the details are worth a look.</summary>
+        static public bool HasDetails(IList<CacheDownloadOutcome> outcomes)
+        {
+            return outcomes.Any(o => o.Result == null || o.Result.Warning != null);
+        }
+
+        /// <summary>Full messages of each file, then the log file.</summary>
+        static public String Details(IList<CacheDownloadOutcome> outcomes, String logPath)
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (CacheDownloadOutcome o in outcomes)
+            {
+                WebVersionEntry e = o.Entry;
+                sb.AppendLine(Name(e) + " [" + (e.Key ?? "?") + "]");
+                if (o.Result != null)
+                {
+                    sb.AppendLine("  " + Localization.F("CacheDownloadSummary.NewFile", "File parameter: {0}", o.Result.NewFileParameter));
+                    if (o.Result.OldFileMovedTo != null)
+                        sb.AppendLine("  " + Localization.F("CacheDownloadSummary.Moved", "Previous file moved to: {0}", o.Result.OldFileMovedTo));
+                    if (o.Result.Warning != null) sb.AppendLine("  " + o.Result.Warning);
+                }
+                else sb.AppendLine("  " + (o.Error ?? o.Reason ?? "?"));
+                sb.AppendLine();
+            }
+            if (!String.IsNullOrEmpty(logPath))
+                sb.AppendLine(Localization.F("CacheDownloadSummary.Log", "Log file: {0}", logPath));
+            return sb.ToString().TrimEnd();
+        }
+    }
+
+    /// <summary>A download refused, with a short reason for the summary; the message has the details.</summary>
+    internal sealed class CacheDownloadException : Exception
+    {
+        public readonly String Reason;
+
+        public CacheDownloadException(String reason, String message) : base(message)
+        {
+            Reason = reason;
+        }
     }
 
     /// <summary>A step of a download: the step, bytes received, length of the download (0 or less: unknown).</summary>
@@ -88,15 +172,194 @@ namespace LiteDeploy
         }
 
         /// <summary>
-        /// Valid signature whose signer has O=<paramref name="organisation"/> (quoted when it has a
-        /// comma), like the Publisher check of the modules. Pure logic, unit-tested.
+        /// Organisations of a Publisher parameter: separated by ";" (a vendor that renamed itself signs
+        /// with its new name), trimmed, without empty ones; a name may be in double quotes (then a ";" in
+        /// it is kept). Pure logic, unit-tested; same rule as the modules.
         /// </summary>
-        static public bool IsSignedBy(AuthenticodeResult result, String organisation)
+        static public List<String> PublisherNames(String publisher)
         {
-            if (result == null || result.Status != AuthenticodeStatus.Valid || String.IsNullOrEmpty(result.SignerSubject) || String.IsNullOrWhiteSpace(organisation))
+            List<String> names = new List<String>();
+            StringBuilder current = new StringBuilder();
+            bool quoted = false;
+            Action flush = () =>
+            {
+                String name = current.ToString().Trim();
+                if (name.Length >= 2 && name[0] == '"' && name[name.Length - 1] == '"') name = name.Substring(1, name.Length - 2).Trim();
+                if (name.Length > 0 && !names.Contains(name)) names.Add(name);
+                current.Clear();
+            };
+            foreach (char c in publisher ?? "")
+            {
+                if (c == '"') quoted = !quoted;
+                if (c == ';' && !quoted) flush();
+                else current.Append(c);
+            }
+            flush();
+            return names;
+        }
+
+        /// <summary>
+        /// Valid signature whose signer has O= one of the organisations of <paramref name="publisher"/> (see
+        /// PublisherNames; O= quoted when it has a comma), like the Publisher check of the modules. Pure
+        /// logic, unit-tested.
+        /// </summary>
+        static public bool IsSignedBy(AuthenticodeResult result, String publisher)
+        {
+            if (result == null || result.Status != AuthenticodeStatus.Valid || String.IsNullOrEmpty(result.SignerSubject))
                 return false;
-            String pattern = "(^|,\\s*)O=(\"?)" + Regex.Escape(organisation.Trim()) + "\\2(,|$)";
-            return Regex.IsMatch(result.SignerSubject, pattern);
+            return PublisherNames(publisher).Any(name => HasOrganisation(result.SignerSubject, name));
+        }
+
+        /// <summary>O=<paramref name="organisation"/> in a certificate subject (quoted or not), exactly.</summary>
+        static public bool HasOrganisation(String subject, String organisation)
+        {
+            if (String.IsNullOrEmpty(subject) || String.IsNullOrWhiteSpace(organisation)) return false;
+            String pattern = @"(^|,\s*)O=(""?)" + Regex.Escape(organisation.Trim()) + @"\2\s*(,|$)";
+            return Regex.IsMatch(subject, pattern);
+        }
+
+        static readonly Regex OrganisationField = new Regex(@"(?:^|,)\s*O=(?:""(?<q>(?:[^""]|"""")*)""|(?<v>[^,]*))");
+
+        /// <summary>The O= value of a certificate subject, without its quotes (null: none). Pure logic, unit-tested.</summary>
+        static public String OrganisationOf(String subject)
+        {
+            if (String.IsNullOrEmpty(subject)) return null;
+            Match m = OrganisationField.Match(subject);
+            if (!m.Success) return null;
+            String o = m.Groups["q"].Success ? m.Groups["q"].Value.Replace("\"\"", "\"") : m.Groups["v"].Value;
+            o = o.Trim();
+            return o.Length == 0 ? null : o;
+        }
+
+        /// <summary>
+        /// Why a signature is refused for <paramref name="publisher"/>: a short reason (summary of the run) and
+        /// a message (details). A valid signature of another organisation names it and says how to accept a
+        /// vendor that renamed itself. Pure logic, unit-tested.
+        /// </summary>
+        static public CacheDownloadException SignatureRefusal(AuthenticodeResult signature, String publisher)
+        {
+            String expected = String.Join("; ", PublisherNames(publisher));
+            if (signature == null || signature.Status != AuthenticodeStatus.Valid || String.IsNullOrEmpty(signature.SignerSubject))
+            {
+                String status = signature == null ? "?" : signature.Status.ToString();
+                return new CacheDownloadException(
+                    Localization.F("CacheDownloader.NoValidSignatureShort", "no valid signature ({0})", status),
+                    Localization.F("CacheDownloader.NoValidSignature", "The download has no valid signature ({0}, signer {1}): refused.",
+                        status, signature == null || String.IsNullOrEmpty(signature.SignerSubject) ? "-" : signature.SignerSubject));
+            }
+            String actual = OrganisationOf(signature.SignerSubject) ?? signature.SignerSubject;
+            return new CacheDownloadException(
+                Localization.F("CacheDownloader.SignedByOtherShort", "signed by {0} instead of {1}", actual, expected),
+                Localization.F("CacheDownloader.SignedByOther",
+                    "The download is validly signed, but by {0} instead of {1}: refused. If this vendor renamed itself, add {0} to the Publisher parameter of the instance (names separated by ;). Signer: {2}",
+                    actual, expected, signature.SignerSubject));
+        }
+
+        /// <summary>Short reason of a failed download for the summary: the one of a refusal, else the first line of the message.</summary>
+        static public String ShortReason(Exception ex)
+        {
+            CacheDownloadException refusal = ex as CacheDownloadException;
+            if (refusal != null && !String.IsNullOrEmpty(refusal.Reason)) return refusal.Reason;
+            String message = ((ex == null ? null : ex.Message) ?? "").Trim();
+            int eol = message.IndexOfAny(new[] { '\r', '\n' });
+            if (eol >= 0) message = message.Substring(0, eol).Trim();
+            const int max = 120;
+            return message.Length <= max ? message : message.Substring(0, max - 3).TrimEnd() + "...";
+        }
+
+        // ---- Zip installers --------------------------------------------------------------------
+
+        /// <summary>Largest installer extracted from a zip.</summary>
+        public const long MaxNestedBytes = 4L * 1024 * 1024 * 1024;
+        /// <summary>Zip with more entries than this: refused (not an installer archive).</summary>
+        public const int MaxZipEntries = 10000;
+
+        /// <summary>A zip file (local file header "PK\x03\x04"); an MSIX is one too, so this is used for msi and exe instances only.</summary>
+        static public bool IsZipFile(String path)
+        {
+            byte[] head = new byte[4];
+            using (FileStream f = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+                return f.Read(head, 0, 4) == 4 && head[0] == 0x50 && head[1] == 0x4B && head[2] == 0x03 && head[3] == 0x04;
+        }
+
+        /// <summary>
+        /// A relative path of a zip entry that stays in the folder it is extracted to: no root, drive, ".."
+        /// or control character. Pure logic, unit-tested.
+        /// </summary>
+        static public bool IsSafeEntryName(String name)
+        {
+            if (String.IsNullOrWhiteSpace(name)) return false;
+            String n = name.Replace('\\', '/');
+            if (n.StartsWith("/") || n.Contains(":") || n.Any(Char.IsControl)) return false;
+            return !n.Split('/').Any(part => part == "..");
+        }
+
+        /// <summary>
+        /// The installer a zip holds for an instance of <paramref name="type"/> (msi or exe): its only file of
+        /// that extension. None, several or one with an unsafe path: refused (download it manually). Pure
+        /// logic, unit-tested.
+        /// </summary>
+        static public String NestedInstallerEntry(IEnumerable<String> entryNames, String type)
+        {
+            String ext = "." + (type ?? "").Trim().ToLowerInvariant();
+            if (ext != ".msi" && ext != ".exe")
+                throw ZipManual(Localization.F("CacheDownloader.ZipType", "the instance type is {0}, not msi or exe", type ?? "?"));
+            List<String> candidates = (entryNames ?? Enumerable.Empty<String>())
+                .Where(n => !String.IsNullOrEmpty(n) && !n.EndsWith("/") && !n.EndsWith("\\") && n.EndsWith(ext, StringComparison.OrdinalIgnoreCase)).ToList();
+            String unsafeName = candidates.FirstOrDefault(n => !IsSafeEntryName(n));
+            if (unsafeName != null)
+                throw new CacheDownloadException(Localization.T("CacheDownloader.ZipUnsafeShort", "zip installer: unsafe path"),
+                    Localization.F("CacheDownloader.ZipUnsafe", "The zip holds a file with an unsafe path ({0}): refused.", unsafeName));
+            if (candidates.Count == 0)
+                throw ZipManual(Localization.F("CacheDownloader.ZipNone", "no {0} file in it", ext));
+            if (candidates.Count > 1)
+                throw ZipManual(Localization.F("CacheDownloader.ZipSeveral", "{0} {1} files in it: {2}", candidates.Count, ext, String.Join(", ", candidates)));
+            return candidates[0];
+        }
+
+        static CacheDownloadException ZipManual(String why)
+        {
+            return new CacheDownloadException(Localization.T("CacheDownloader.ZipManualShort", "zip installer: download it manually"),
+                Localization.F("CacheDownloader.ZipManual", "Zip installer ({0}): LiteDeploy cannot tell which installer to keep. Download it manually from the vendor.", why));
+        }
+
+        /// <summary>
+        /// Extracts the installer a zip holds for an instance of <paramref name="type"/> (see NestedInstallerEntry)
+        /// to <paramref name="folder"/>, as "nested.msi" or "nested.exe" (never under the name of the entry).
+        /// Refused: too many entries, larger than <paramref name="maxBytes"/> (announced or actual size).
+        /// Returns its path; <paramref name="entryName"/>: its path in the zip. Unit-tested on a temporary zip.
+        /// </summary>
+        public String ExtractNestedInstaller(String zipPath, String type, String folder, long maxBytes, out String entryName)
+        {
+            using (ZipArchive zip = ZipFile.OpenRead(zipPath))
+            {
+                if (zip.Entries.Count > MaxZipEntries)
+                    throw ZipManual(Localization.F("CacheDownloader.ZipTooManyEntries", "more than {0} entries", MaxZipEntries));
+                entryName = NestedInstallerEntry(zip.Entries.Select(e => e.FullName), type);
+                String name = entryName;
+                ZipArchiveEntry entry = zip.Entries.First(e => e.FullName == name);
+                if (entry.Length > maxBytes)
+                    throw new CacheDownloadException(Localization.T("CacheDownloader.ZipTooLargeShort", "zip installer: file too large"),
+                        Localization.F("CacheDownloader.ZipTooLarge", "{0} in the zip is larger than {1} bytes: refused.", entryName, maxBytes));
+                String target = Path.Combine(folder, "nested." + type.Trim().ToLowerInvariant());
+                log("  extract " + entryName + " (" + entry.Length + " bytes) to " + target);
+                using (Stream source = entry.Open())
+                using (FileStream copy = new FileStream(target, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                {
+                    byte[] buffer = new byte[81920];
+                    long written = 0;
+                    int read;
+                    while ((read = source.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        written += read;
+                        if (written > maxBytes)
+                            throw new CacheDownloadException(Localization.T("CacheDownloader.ZipTooLargeShort", "zip installer: file too large"),
+                                Localization.F("CacheDownloader.ZipTooLarge", "{0} in the zip is larger than {1} bytes: refused.", entryName, maxBytes));
+                        copy.Write(buffer, 0, read);
+                    }
+                }
+                return target;
+            }
         }
 
         /// <summary>Two distinguished names in the same canonical form (MSIX: signer = Publisher of the manifest).</summary>
@@ -304,7 +567,12 @@ namespace LiteDeploy
                 });
                 CacheDownloadOutcome outcome = new CacheDownloadOutcome { Entry = e };
                 try { outcome.Result = download(e, step); }
-                catch (Exception ex) { outcome.Error = ex.Message; }
+                catch (Exception ex)
+                {
+                    outcome.Error = ex.Message;
+                    outcome.Reason = ShortReason(ex);
+                    outcome.Refused = ex is CacheDownloadException;
+                }
                 outcomes.Add(outcome);
                 WebVersionProgressText.Report(progress, new WebVersionProgress
                 {
@@ -356,17 +624,33 @@ namespace LiteDeploy
                 step(WebVersionStep.VerifyingHash, 0, 0);
                 String sha = Sha256Of(download);
                 if (!String.Equals(sha, entry.InstallerSha256, StringComparison.OrdinalIgnoreCase))
-                    throw new InvalidDataException(Localization.F("CacheDownloader.HashMismatch",
+                    throw new CacheDownloadException(Localization.T("CacheDownloader.HashMismatchShort", "SHA256 differs from the winget manifest"),
+                        Localization.F("CacheDownloader.HashMismatch",
                         "The SHA256 of the download ({0}) is not the one of the winget manifest ({1}): refused.", sha, entry.InstallerSha256));
                 log("  SHA256 matches the winget manifest: " + sha);
 
+                // A zip installer has no signature: the installer it holds is checked and put in the cache instead
+                if (!target.IsMsix && (WebVersionChecker.IsArchive(entry.InstallerType) || IsZipFile(download)))
+                {
+                    if (!String.IsNullOrEmpty(entry.NestedInstallerType) && !WebVersionChecker.NestedTypeMatches(target.Type, entry.NestedInstallerType))
+                        throw new CacheDownloadException(Localization.T("CacheDownloader.ZipManualShort", "zip installer: download it manually"),
+                            WebVersionChecker.ZipManualMessage(entry.NestedInstallerType, target.Type));
+                    step(WebVersionStep.Extracting, 0, 0);
+                    String entryName;
+                    String extractDir = Path.Combine(temp, "nested");
+                    Directory.CreateDirectory(extractDir);
+                    download = ExtractNestedInstaller(download, target.Type, extractDir, MaxNestedBytes, out entryName);
+                    extension = Path.GetExtension(download);
+                    sha = Sha256Of(download);
+                    log("  zip installer: " + entryName + " extracted, SHA256 " + sha);
+                }
+
                 step(WebVersionStep.VerifyingSignature, 0, 0);
                 AuthenticodeResult signature = AuthenticodeVerifier.Verify(download);
-                log("  signature: " + signature);
+                log("  signature: " + DescribeSignature(signature));
                 if (target.IsMsix) CheckMsix(download, target, signature);
                 else if (!IsSignedBy(signature, target.Publisher))
-                    throw new InvalidDataException(Localization.F("CacheDownloader.BadSignature",
-                        "The download is not validly signed by {0} ({1}): refused.", target.Publisher, signature.ToString()));
+                    throw SignatureRefusal(signature, target.Publisher);
                 log("  signature accepted");
 
                 // The downloaded file must not be older than the one of the cache
@@ -375,7 +659,8 @@ namespace LiteDeploy
                 try { oldFileVersion = WebVersionChecker.FileVersionOf(current, target.Type); } catch (Exception) { }
                 log("  version of the download " + (newFileVersion ?? "?") + ", of the cache file " + (oldFileVersion ?? "?"));
                 if (WebVersionChecker.CompareVersions(newFileVersion, oldFileVersion) < 0)
-                    throw new InvalidDataException(Localization.F("CacheDownloader.Older", "The download ({0}) is older than the file of the cache ({1}): refused.", newFileVersion, oldFileVersion));
+                    throw new CacheDownloadException(Localization.T("CacheDownloader.OlderShort", "older than the file of the cache"),
+                        Localization.F("CacheDownloader.Older", "The download ({0}) is older than the file of the cache ({1}): refused.", newFileVersion, oldFileVersion));
 
                 String newName = VersionedFileName(Path.GetFileName(current), new[] { entry.CacheVersion, oldFileVersion }, entry.WebVersion, extension);
                 step(WebVersionStep.CopyingToCache, 0, 0);
@@ -425,12 +710,18 @@ namespace LiteDeploy
             MsixManifest m = MsixManifest.Read(download);
             log("  manifest " + m.Name + " " + m.Version + ", publisher " + m.Publisher);
             if (!String.Equals(m.Name, target.PackageName, StringComparison.Ordinal))
-                throw new InvalidDataException(Localization.F("CacheDownloader.OtherPackage", "The download is the package {0}, not {1}: refused.", m.Name, target.PackageName));
+                throw new CacheDownloadException(Localization.F("CacheDownloader.OtherPackageShort", "package {0}, not {1}", m.Name, target.PackageName),
+                    Localization.F("CacheDownloader.OtherPackage", "The download is the package {0}, not {1}: refused.", m.Name, target.PackageName));
             if (signature == null || signature.Status != AuthenticodeStatus.Valid || !SameDistinguishedName(signature.SignerSubject, m.Publisher))
-                throw new InvalidDataException(Localization.F("CacheDownloader.MsixSigner", "The package is not validly signed by the Publisher of its manifest ({0}): refused.", m.Publisher));
+                throw new CacheDownloadException(Localization.T("CacheDownloader.MsixSignerShort", "not signed by the publisher of its manifest"),
+                    Localization.F("CacheDownloader.MsixSigner", "The package is not validly signed by the Publisher of its manifest ({0}): refused.", m.Publisher));
             if (!String.IsNullOrWhiteSpace(target.Publisher) && !IsSignedBy(signature, target.Publisher))
-                throw new InvalidDataException(Localization.F("CacheDownloader.BadSignature",
-                    "The download is not validly signed by {0} ({1}): refused.", target.Publisher, signature.ToString()));
+                throw SignatureRefusal(signature, target.Publisher);
+        }
+
+        static String DescribeSignature(AuthenticodeResult signature)
+        {
+            return signature == null ? "(none)" : signature.ToString();
         }
 
         // Extension of the installer: from the URL when it is a known one, else the one of the cache file
@@ -438,7 +729,7 @@ namespace LiteDeploy
         {
             String path = new Uri(url).AbsolutePath;
             String ext = Path.GetExtension(path).ToLowerInvariant();
-            return ext == ".msi" || ext == ".exe" || ext == ".msix" || ext == ".msixbundle" ? ext : fallback;
+            return ext == ".msi" || ext == ".exe" || ext == ".msix" || ext == ".msixbundle" || ext == ".zip" ? ext : fallback;
         }
 
         static WebVersionEntry Clone(WebVersionEntry e)
@@ -447,7 +738,7 @@ namespace LiteDeploy
             {
                 Key = e.Key, Module = e.Module, Instance = e.Instance, Product = e.Product, WingetId = e.WingetId, Type = e.Type,
                 CacheFile = e.CacheFile, CacheVersion = e.CacheVersion, WebVersion = e.WebVersion, Status = e.Status,
-                InstallerType = e.InstallerType, InstallerUrl = e.InstallerUrl, InstallerSha256 = e.InstallerSha256,
+                InstallerType = e.InstallerType, NestedInstallerType = e.NestedInstallerType, InstallerUrl = e.InstallerUrl, InstallerSha256 = e.InstallerSha256,
                 VendorUrl = e.VendorUrl, Message = e.Message, Checked = e.Checked
             };
         }

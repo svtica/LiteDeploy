@@ -24,6 +24,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The daily web check shows its progress in the status bar of the main window (no dialog), then
   its summary for 10 minutes.
 
+### Fixed
+
+- *Download to the cache* refused the new installer of a vendor that renamed itself (validly
+  signed, but with the new legal name in `O=`). The `Publisher` parameter now accepts several
+  organisations separated by `;` (any one matches), in LiteDeploy and in the `CachedInstaller` and
+  `MsixProvision` modules, and the refusal says "signed by *new name* instead of *old name*" and
+  how to accept it.
+- *Download to the cache* refused zip installers ("Invalid (0x800B0003)": a zip has no
+  signature). When the winget manifest gives a zip holding an installer of the type of the
+  instance (`winget show`: `wix (zip)`), its SHA256 is checked, the only `.msi` or `.exe` it holds
+  is extracted (path and size checks) and its signature checked, and that installer goes to the
+  cache. A zip with none or several of them, or with another type, says "zip installer: download
+  it manually". A plain installer is preferred when the manifest offers both.
+- The result of *Download to the cache* was one long message box. It is now one line per product
+  (*OK*, *Refused* or *Failed* with a short reason), with the full messages and the log file in a
+  *Details* window whose text can be copied.
+
 ## [1.0.17] - 2026-11-18
 
 ### Changed
