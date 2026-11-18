@@ -3,16 +3,17 @@
 // File:    ComputerListForm.cs
 // Author:  LiteDeploy contributors
 // Date:    2025-05-30
-// Purpose: Builds the computer list: Active Directory search, subnet scan,
-//          file, manual entry, ping. The Active Directory search runs by
+// Purpose: Add computers (main window): Active Directory search, subnet
+//          scan, file, manual entry, ping. The Active Directory search runs by
 //          itself: the domain computers are listed when the window opens, and
 //          the list is filtered as the search text or its options change.
 //          Both lists show the operating system and the last logon of the
 //          Active Directory inventory (sortable columns) and follow the rules of
-//          Software Updates (ComputerListFilter): disabled accounts hidden,
+//          the grid (ComputerListFilter): disabled accounts hidden,
 //          servers hidden unless Include servers is checked (the same setting,
-//          kept in sync); a computer unknown to Active Directory is kept. Use
-//          List applies the same filter to the main window's list.
+//          kept in sync); a computer unknown to Active Directory is kept. Add
+//          to the list applies the same filter and gives the computers to the
+//          grid of the main window (Pick).
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -33,7 +34,8 @@ namespace LiteDeploy
 {
     public partial class ComputerListForm : Form
     {
-        CheckedListBox UseList;
+        /// <summary>The computers chosen by Add to the list; null: closed without adding.</summary>
+        private List<String> picked;
         private bool searchInProgress = false;
         private volatile int runningPingThreads = 0;
         private String baseTitle;    // window title without the Active Directory state
@@ -63,7 +65,7 @@ namespace LiteDeploy
             baseTitle = Text;
             baseStatus = label2.Text;
 
-            // Same setting as Software Updates and App > Options: the three stay in sync
+            // Same setting as the grid and App > Options: the three stay in sync
             syncingIncludeServers = true;
             includeServersCheck.Checked = UserSettings.Current.IncludeServers;
             syncingIncludeServers = false;
@@ -111,9 +113,16 @@ namespace LiteDeploy
             timeSinceLastChecked = new List<int>();            
         }
 
-        public void initUseList(CheckedListBox l)
+        /// <summary>
+        /// Shows the window (modal) with an empty "to add" list; the computers chosen, or null when the window is
+        /// closed without adding. The search results are kept from one opening to the next.
+        /// </summary>
+        public List<String> Pick(IWin32Window owner)
         {
-            UseList = l;
+            picked = null;
+            selected.Items.Clear();
+            ShowDialog(owner);
+            return picked;
         }
 
         // ---- Active Directory details and the server filter ---------------------------------
@@ -134,7 +143,7 @@ namespace LiteDeploy
             inventorySource = inventory;
         }
 
-        /// <summary>Same rule as Software Updates: no disabled account, no server unless the servers are included.</summary>
+        /// <summary>Same rule as the grid: no disabled account, no server unless the servers are included.</summary>
         private bool IsShown(String name)
         {
             return ComputerListFilter.IsShown(Lookup(name), includeServersCheck.Checked);
@@ -179,7 +188,7 @@ namespace LiteDeploy
             SyncIncludeServers();
         }
 
-        // The box follows the setting changed in Software Updates or App > Options
+        // The box follows the setting changed in the grid or App > Options
         private void SyncIncludeServers()
         {
             if (includeServersCheck.Checked == UserSettings.Current.IncludeServers) return;
@@ -503,34 +512,19 @@ namespace LiteDeploy
 
         private void Use_Click(object sender, EventArgs e)
         {
-            bool clearOk = true;
             RemoveDoublesInSelected();
 
-            if ( UseList.Items.Count > 0 )
-            {
-                DialogResult result = MessageBox.Show( Localization.T("ComputerListForm.ConfirmClear", "This will clear the Selected Computers List in the main form. Continue?"), Localization.T("ComputerListForm.ConfirmClear.Title", "Clear List"), MessageBoxButtons.YesNo, MessageBoxIcon.Question );
-                if (result == System.Windows.Forms.DialogResult.No)
-                    clearOk = false;
-            }
+            // Same filter as the grid: no server unless included, no disabled account
+            RefreshInventory();
+            List<String> dropped;
+            List<String> names = ComputerListFilter.Shown(selected.Items.Cast<ListViewItem>().Select(o => o.Text), inventoryByName, includeServersCheck.Checked, out dropped);
 
-            if ( clearOk )
-            {
-                // Same filter as Software Updates: no server unless included, no disabled account
-                RefreshInventory();
-                List<String> dropped;
-                List<String> names = ComputerListFilter.Shown(selected.Items.Cast<ListViewItem>().Select(o => o.Text), inventoryByName, includeServersCheck.Checked, out dropped);
+            if (dropped.Count > 0)
+                MessageBox.Show(Localization.F("ComputerListForm.Dropped", "{0} computer(s) not used (servers while Include servers is off, or disabled accounts): {1}", dropped.Count, String.Join(", ", dropped)),
+                    Localization.T("ComputerListForm.Dropped.Title", "Add to the List"), MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                UseList.Items.Clear();
-
-                foreach (String name in names)
-                    UseList.Items.Add(name);
-
-                if (dropped.Count > 0)
-                    MessageBox.Show(Localization.F("ComputerListForm.Dropped", "{0} computer(s) not used (servers while Include servers is off, or disabled accounts): {1}", dropped.Count, String.Join(", ", dropped)),
-                        Localization.T("ComputerListForm.Dropped.Title", "Use List"), MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                Close();
-            }
+            picked = names;
+            Close();
         }
 
         // Subnets menu: the subnets of this computer, then the saved ones (team's subnets.txt
@@ -667,7 +661,7 @@ namespace LiteDeploy
                 .ToList();
         }
 
-        // In-memory search of the Active Directory inventory (the one of Software Updates: the last
+        // In-memory search of the Active Directory inventory (the one of the grid: the last
         // refresh, else the cache), fast enough for the UI thread, so the search box keeps the focus
         // while the user types. Disabled accounts and servers (unless included) are not listed.
         // auto: started by the window or the search box, without the message about the cache.
@@ -746,7 +740,7 @@ namespace LiteDeploy
 
             else
             {
-                // Search, text file, DNS scan: same filter as Software Updates (a name unknown to
+                // Search, text file, DNS scan: same filter as the grid (a name unknown to
                 // Active Directory is kept); blank lines of a file are skipped
                 if (String.IsNullOrWhiteSpace(s)) return;
                 String name = s.Trim();

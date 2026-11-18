@@ -3,14 +3,14 @@
 // File:    ComputerFilter.cs
 // Author:  LiteDeploy contributors
 // Date:    2026-11-18
-// Purpose: Rows of the computer view of Software Updates (Active Directory
+// Purpose: Rows of the computer view of the grid (Active Directory
 //          inventory + saved update state) and the pure logic around them:
 //          building a row, server and "offline/stale" classification, the
-//          filters (search, status chips, servers, disabled accounts, the
-//          selection of the main window) and the checking of rows (select
-//          all visible, select outdated, targets of an action). The same
-//          server and disabled-account rules for the computer list and the
-//          main window's list (ComputerListFilter). One key per computer
+//          filters (search, status chips, servers, disabled accounts, an
+//          optional selection) and the checking of rows (select all
+//          visible, select outdated, targets of an action). The same server
+//          and disabled-account rules for the computer search of Add
+//          computers (ComputerListFilter). One key per computer
 //          whatever its spelling (ComputerName): one row per computer.
 //          Unit-tested.
 // -----------------------------------------------------------------------------
@@ -84,7 +84,7 @@ namespace LiteDeploy
         }
     }
 
-    /// <summary>Status chips of Software Updates. Several chips: a row matching any of them is shown.</summary>
+    /// <summary>Status chips of the grid. Several chips: a row matching any of them is shown.</summary>
     [Flags]
     public enum ComputerStatusFilter
     {
@@ -112,7 +112,7 @@ namespace LiteDeploy
         /// <summary>OU (distinguished name of the container) from Active Directory; null: unknown.</summary>
         public String Ou;
         public DateTime? LastLogon;
-        /// <summary>Known by Active Directory (false: added by name, or from the list of the main window).</summary>
+        /// <summary>Known by Active Directory (false: added by name, or listed by the caller).</summary>
         public bool InAd;
         public bool Disabled;
         public bool IsServer;
@@ -193,7 +193,7 @@ namespace LiteDeploy
         public ComputerStatusFilter Statuses = ComputerStatusFilter.None;
         public bool IncludeServers;
         public int StaleDays = 30;
-        /// <summary>Only these computers (checked in the main window; a set with ComputerName.Comparer); null: no such filter.</summary>
+        /// <summary>Only these computers (a set with ComputerName.Comparer); null: no such filter.</summary>
         public HashSet<String> Selection;
     }
 
@@ -201,7 +201,7 @@ namespace LiteDeploy
     {
         /// <summary>
         /// Computers of the window, with their Active Directory entry (null when not in AD): the Active Directory
-        /// inventory, the computers added by name (updates.xml), and the computers of the main window's list.
+        /// inventory, the computers added by name (updates.xml), and the computers listed by the caller (if any).
         /// Without any Active Directory inventory (no domain), every computer of updates.xml too. One entry per
         /// computer (ComputerName.Key: "PC01", "pc01" and "PC01.example.com" are one computer), named as Active
         /// Directory names it, else as first saved or listed. Sorted by name.
@@ -340,8 +340,7 @@ namespace LiteDeploy
     }
 
     /// <summary>
-    /// Filters of the computer list (Computers > Edit list) and of the main window's list, the same as the
-    /// ones of Software Updates: a disabled Active Directory account is never shown, a server only when the
+    /// Filters of the computer search (Add computers...), the same as the ones of the grid: a disabled Active Directory account is never shown, a server only when the
     /// servers are included (UserSettings.IncludeServers). A computer unknown to Active Directory (typed by
     /// hand, read from a text file, found by a DNS scan or a ping) has no known operating system: it is
     /// kept, as a workstation.

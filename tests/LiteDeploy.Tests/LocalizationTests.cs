@@ -40,7 +40,7 @@ namespace LiteDeploy.Tests
         public void English_ReturnsTheEnglishText()
         {
             Localization.Initialize(Localization.English);
-            Assert.AreEqual("Start Deploy", Localization.T("MainForm.startDeploy.Text", "Start Deploy"));
+            Assert.AreEqual("Start Deploy", Localization.T("DeployForm.startDeploy.Text", "Start Deploy"));
         }
 
         [TestMethod]
@@ -48,8 +48,8 @@ namespace LiteDeploy.Tests
         {
             Localization.Initialize(Localization.French);
             Assert.AreEqual(Localization.French, Localization.Language);
-            Assert.AreEqual("Démarrer le déploiement", Localization.T("MainForm.startDeploy.Text", "Start Deploy"));
-            Assert.AreEqual("Mot de passe :", Localization.T("MainForm.label2.Text", "Password:"));
+            Assert.AreEqual("Démarrer le déploiement", Localization.T("DeployForm.startDeploy.Text", "Start Deploy"));
+            Assert.AreEqual("Mot de passe :", Localization.T("DeployForm.label2.Text", "Password:"));
         }
 
         [TestMethod]

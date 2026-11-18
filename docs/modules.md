@@ -6,7 +6,7 @@ on the computers through `LiteDeploy.Worker.exe`, as SYSTEM, like the winget pac
 
 ## How it runs
 
-1. In *Computers > Software Updates > Package list...*, *Add module* puts `module:<Name>` in the
+1. In *Package list...* (tool bar of the main window), *Add module* puts `module:<Name>` in the
    package list (processes and label come from the module header); *Parameters...* sets the
    values of its parameters, if it has any (see *Module parameters*). A module that declares
    `# Instances: yes` is added once per product, as `module:<Name>/<Instance>` (see *Module
@@ -438,7 +438,7 @@ computer, for each administrator account, once:
 | Shared modules folder (network path) | *App > Options > Software updates* | `settings.xml` (`SharedModulesFolder`) |
 | Credential of the software updates | *Tools > Credentials*, then *App > Options* | Windows Credential Manager, `settings.xml` (`UpdateCredential`) |
 | Include servers, remote method, business hours | *App > Options > Software updates* | `settings.xml` |
-| Package list | *Computers > Software Updates > Package list...* | `packages.txt` |
+| Package list | *Package list...* (tool bar of the main window) | `packages.txt` |
 | Module parameters (instances) | *Package list... > Import from catalog...* (or *Parameters...*) | `module-settings.xml` |
 
 1. Type or paste the network paths of the cache and of the shared modules folder (the boxes show
@@ -486,7 +486,7 @@ a module without `# Install: yes` line never receives `-Action Install`):
 By default LiteDeploy only updates: a computer where a package is `notinstalled` is never touched.
 The *Install* action is explicit and opt-in:
 
-- In *Computers > Software Updates*, select computers, right-click, *Install* and pick **one**
+- In the grid of the main window, select computers, right-click, *Install* and pick **one**
   package. The menu lists only the packages whose last check says `notinstalled` on at least one
   selected computer (paused computers excluded), and for a module only when its header has the
   line `# Install: yes` (key and value case-insensitive; any other value means no). A dialog
@@ -540,7 +540,7 @@ first 20 lines of the script:
 | `default=<value>` | Optional, right after the name: value used when none is set (`default="a b"` for spaces, `default=` for an empty value). Without default, the parameter is **required** |
 | Description | The rest of the line, shown in LiteDeploy |
 
-The administrator sets the values in *Computers > Software Updates > Package list...*: select a
+The administrator sets the values in *Package list...* (tool bar of the main window): select a
 `module:` row, then *Parameters...*. They are saved on the administrator's computer in
 `%LOCALAPPDATA%\LiteDeploy\module-settings.xml` (not in `packages.txt`, whose format does not
 change). A secret parameter holds the **name** of a credential of *Tools > Credentials*, never

@@ -32,5 +32,5 @@ Invoke-LiteDeployWorker -ComputerName PC01 -Command info
 ```
 
 `Invoke-LiteDeployWorker` does not change `updates.xml`: run a check in LiteDeploy to see the
-result there. `Set-LiteDeployPause` writes `updates.xml`: close the Software Updates window of
-LiteDeploy first, it keeps its own copy while it is open.
+result there. `Set-LiteDeployPause` writes `updates.xml`: close LiteDeploy first, it keeps its own copy while
+it is open.

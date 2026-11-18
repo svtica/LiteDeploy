@@ -4,7 +4,7 @@
 // Author:  LiteDeploy contributors
 // Date:    2026-11-11
 // Purpose: Actions on one remote computer offered by the right-click menus of
-//          the main window and of the process reports: ping, remote desktop,
+//          the grid of the main window and of the process reports: ping, remote desktop,
 //          management console, admin share and public folders; the local
 //          TeamViewer (connection to a TeamViewer ID).
 // -----------------------------------------------------------------------------

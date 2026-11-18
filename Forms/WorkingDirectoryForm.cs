@@ -18,9 +18,9 @@ namespace LiteDeploy
 {
     public partial class WorkingDirectoryForm : Form
     {
-        MainForm parent;
+        DeployForm parent;
 
-        public WorkingDirectoryForm(MainForm p, String current)
+        public WorkingDirectoryForm(DeployForm p, String current)
         {
             InitializeComponent();
             Localization.Apply(this);

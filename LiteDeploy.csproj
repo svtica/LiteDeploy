@@ -224,11 +224,17 @@
     <Compile Include="Forms\UserMessageForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\SoftwareUpdatesForm.cs">
+    <Compile Include="Forms\ComputerGrid.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Forms\ComputerGrid.Designer.cs">
+      <DependentUpon>ComputerGrid.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\DeployForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\SoftwareUpdatesForm.Designer.cs">
-      <DependentUpon>SoftwareUpdatesForm.cs</DependentUpon>
+    <Compile Include="Forms\DeployForm.Designer.cs">
+      <DependentUpon>DeployForm.cs</DependentUpon>
     </Compile>
     <!-- Shared with LiteDeploy.Worker.exe (internal types compiled into both) -->
     <Compile Include="src\LiteDeploy.Worker\Shared\WorkerProtocol.cs" Link="Classes\Shared\WorkerProtocol.cs" />

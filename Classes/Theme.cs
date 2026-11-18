@@ -97,6 +97,18 @@ namespace LiteDeploy
             }
         }
 
+        /// <summary>A user control: its controls, and its tool bars and menus held in fields (context menus).</summary>
+        static public void Apply(UserControl control)
+        {
+            if (control == null) return;
+            if (IsDark) ApplyTo((Control)control);
+            foreach (FieldInfo field in control.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public))
+            {
+                ToolStrip strip = field.GetValue(control) as ToolStrip;
+                if (strip != null) ApplyTo(strip);
+            }
+        }
+
         /// <summary>A menu built after the form was themed (context menu filled on demand).</summary>
         static public void Apply(ToolStrip strip)
         {
@@ -294,7 +306,7 @@ namespace LiteDeploy
             public override Color ButtonPressedGradientBegin { get { return Accent; } }
             public override Color ButtonPressedGradientEnd { get { return Accent; } }
             public override Color ButtonSelectedBorder { get { return Accent; } }
-            // Toggle buttons that are on (filters of Software Updates, Show packages)
+            // Toggle buttons that are on (filters of the grid, Show packages)
             public override Color ButtonCheckedHighlight { get { return Selected; } }
             public override Color ButtonCheckedGradientBegin { get { return Selected; } }
             public override Color ButtonCheckedGradientMiddle { get { return Selected; } }

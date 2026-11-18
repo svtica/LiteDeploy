@@ -210,7 +210,7 @@ function Set-LiteDeployPause {
     .PARAMETER Resume
         Resume instead of pausing.
     .NOTES
-        Close the Software Updates window of LiteDeploy first: it keeps its own copy while it is open.
+        Close LiteDeploy first: it keeps its own copy while it is open.
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(

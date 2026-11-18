@@ -3,8 +3,8 @@
 // File:    PingAllForm.cs
 // Author:  LiteDeploy contributors
 // Date:    2025-05-30
-// Purpose: Pings every computer of the list in parallel and updates the
-//          selection.
+// Purpose: Pings computers of the grid in parallel (the checked ones, else
+//          the ones shown) and updates the checks of the grid (IPingTarget).
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -20,13 +20,23 @@ using System.Net.NetworkInformation;
 
 namespace LiteDeploy
 {
+    /// <summary>What the ping results change: the checks of the grid of the main window.</summary>
+    internal interface IPingTarget
+    {
+        void SetChecked(IEnumerable<String> computers, bool check);
+        /// <summary>Unchecked, and no longer shown when only added by name.</summary>
+        void RemoveFromList(IEnumerable<String> computers);
+    }
+
     public partial class PingAllForm : Form
     {
         private const int MAX_NUM_THREADS = 255;
         private const int PING_TIMEOUT = 1100;
         private List<String> hosts;
         private List<int> indexes;
-        bool onlyWorkingWithCheckedItems;
+        /// <summary>The computers to ping (SetComputers) and what the results change.</summary>
+        private List<String> source = new List<String>();
+        private IPingTarget target;
         private static bool stopSignal;
         private static bool pingRunning; 
         private static int currentNum;
@@ -103,39 +113,32 @@ namespace LiteDeploy
             ChangeStopButtonText(Localization.T("PingAllForm.Abort", "Abort"));
         }
 
-        public void loadSelectedComputers(bool checkedOnly)
+        /// <summary>The computers of the next run (loadSelectedComputers with firstInit set).</summary>
+        internal void SetComputers(IEnumerable<String> computers, IPingTarget pingTarget)
+        {
+            source = (computers ?? Enumerable.Empty<String>()).ToList();
+            target = pingTarget;
+        }
+
+        public void loadSelectedComputers()
         {
             ResetStats();
             ResetFormsOps();
-            onlyWorkingWithCheckedItems = checkedOnly;
 
             if (firstInit)
             {
                 firstInit = false;
 
                 hosts.Clear();
+                indexes.Clear();
                 pingList.Items.Clear();
 
-                if (checkedOnly)
+                for (int i = 0; i < source.Count; i++)
                 {
-                    for (int i = 0; i < MainFormAccess.mainForm.selectedComputers.CheckedItems.Count; i++)
-                    {
-                        pingList.Items.Add(MainFormAccess.mainForm.selectedComputers.CheckedItems[i].ToString());
-                        pingList.Items[i].SubItems.Add("");
-                        hosts.Add(pingList.Items[i].Text);
-                        indexes.Add(i);
-                    }
-                }
-
-                else
-                {
-                    for (int i = 0; i < MainFormAccess.mainForm.selectedComputers.Items.Count; i++)
-                    {
-                        pingList.Items.Add(MainFormAccess.mainForm.selectedComputers.Items[i].ToString());
-                        pingList.Items[i].SubItems.Add("");
-                        hosts.Add(pingList.Items[i].Text);
-                        indexes.Add(i);
-                    }
+                    pingList.Items.Add(source[i]);
+                    pingList.Items[i].SubItems.Add("");
+                    hosts.Add(pingList.Items[i].Text);
+                    indexes.Add(i);
                 }
             }
 
@@ -324,85 +327,31 @@ namespace LiteDeploy
 
         private void done_Click(object sender, EventArgs e)
         {
+            // 0: check the OK ones; 1: uncheck the FAIL ones; 2, 3, 4: remove the FAIL, ERROR, or both
+            int action = doneAction.SelectedIndex;
+            bool removeFail = action == 2 || action == 4;
+            bool removeError = action == 3 || action == 4;
+            List<String> ok = new List<String>(), fail = new List<String>(), removed = new List<String>();
             for (int i = 0; i < pingList.Items.Count; i++)
             {
-                if (doneAction.SelectedIndex == 0) // Check all OK 
+                String result = pingList.Items[i].SubItems[1].Text;
+                String name = pingList.Items[i].Text;
+                if (result == "OK") ok.Add(name);
+                if (result == "FAIL") fail.Add(name);
+                if ((removeFail && result == "FAIL") || (removeError && result == "ERROR"))
                 {
-                    if (onlyWorkingWithCheckedItems)
-                    {
-                        if (pingList.Items[i].SubItems[1].Text == "OK")
-                        {
-                            MainFormAccess.mainForm.selectedComputers.SetItemChecked( MainFormAccess.mainForm.selectedComputers.Items.IndexOf( MainFormAccess.mainForm.selectedComputers.CheckedItems[i] ), true );
-                            pingList.Items.RemoveAt(i);
-                            hosts.RemoveAt( i );
-                            --i;
-                        }
-                    }
-
-                    else
-                    {
-                        if (pingList.Items[i].SubItems[1].Text == "OK")
-                            MainFormAccess.mainForm.selectedComputers.SetItemChecked( i, true );
-                    }
+                    removed.Add(name);
+                    pingList.Items.RemoveAt(i);
+                    hosts.RemoveAt(i);
+                    --i;
                 }
+            }
 
-                else if (doneAction.SelectedIndex == 1) // Uncheck all Fail and ERROR
-                {
-                    if (pingList.Items[i].SubItems[1].Text == "FAIL" )
-                    {
-                        if (onlyWorkingWithCheckedItems)
-                        {
-                            MainFormAccess.mainForm.selectedComputers.SetItemChecked( MainFormAccess.mainForm.selectedComputers.Items.IndexOf( MainFormAccess.mainForm.selectedComputers.CheckedItems[i] ), false );
-                            pingList.Items.RemoveAt(i);
-                            hosts.RemoveAt( i );
-                            --i;
-                        }
-
-                        else
-                        {
-                            MainFormAccess.mainForm.selectedComputers.SetItemChecked( i, false );
-                        }                        
-                    }
-                }
-
-                else if ( doneAction.SelectedIndex == 3 || doneAction.SelectedIndex == 2 || doneAction.SelectedIndex == 4) // Remove all Fail
-                {
-                    if (pingList.Items[i].SubItems[1].Text == "FAIL")
-                    {
-                        pingList.Items.RemoveAt(i);
-                        hosts.RemoveAt( i );
-
-                        if (onlyWorkingWithCheckedItems)
-                        {
-                            MainFormAccess.mainForm.selectedComputers.Items.RemoveAt( MainFormAccess.mainForm.selectedComputers.Items.IndexOf( MainFormAccess.mainForm.selectedComputers.CheckedItems[i] ) );
-                        }
-
-                        else
-                        {
-                            MainFormAccess.mainForm.selectedComputers.Items.RemoveAt( i );
-                        }
-
-                        --i;
-                    }
-
-                    else if (pingList.Items[i].SubItems[1].Text == "ERROR")
-                    {
-                        pingList.Items.RemoveAt(i);
-                        hosts.RemoveAt( i );
-
-                        if (onlyWorkingWithCheckedItems)
-                        {
-                            MainFormAccess.mainForm.selectedComputers.Items.RemoveAt( MainFormAccess.mainForm.selectedComputers.Items.IndexOf( MainFormAccess.mainForm.selectedComputers.CheckedItems[i] ) );
-                        }
-
-                        else
-                        {
-                            MainFormAccess.mainForm.selectedComputers.Items.RemoveAt( i );
-                        }
-
-                        --i;
-                    }
-                }
+            if (target != null)
+            {
+                if (action == 0) target.SetChecked(ok, true);
+                else if (action == 1) target.SetChecked(fail, false);
+                else if (removed.Count > 0) target.RemoveFromList(removed);
             }
 
             if (!KeepAlive.Checked)
@@ -433,7 +382,7 @@ namespace LiteDeploy
 
             else
             {
-                loadSelectedComputers(onlyWorkingWithCheckedItems);
+                loadSelectedComputers();
             }            
         }
 
