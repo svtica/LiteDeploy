@@ -387,8 +387,10 @@ rows *Newer on the web* that have an HTTPS installer URL and its SHA256 in the m
    4 GB at most, 10 000 entries at most) and that file's signature is checked as above. The
    installer, not the zip, goes to the cache with the versioned name. With several files of the
    type in the zip, LiteDeploy keeps the one with the same file name as the current file of the
-   instance, else the only one that is not for another architecture (ARM64, 32-bit: a word such
-   as `arm64`, `x86`, `win32` in its path). A zip with no such file, still several of them, or an
+   instance, else the only one that names x64 (a word such as `x64`, `win64`, `amd64`, `x86_64` or
+   `64-bit` in its path), else the only one that is not for another architecture (ARM64, 32-bit: a
+   word such as `arm64`, `x86`, `win32`). LiteDeploy only handles x64 installers (as the winget
+   query, `--architecture x64`). A zip with no such file, still several of them, or an
    installer of another type: *zip installer: download it manually*.
 3. It is copied **next to the current file**, under a versioned name
    (`ContosoExampleApp-2.4.1.msi` -> `ContosoExampleApp-2.5.0.msi`; the version is added when the

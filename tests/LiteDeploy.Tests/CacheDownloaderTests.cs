@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------------
+﻿// -----------------------------------------------------------------------------
 // LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
 // File:    CacheDownloaderTests.cs
 // Author:  LiteDeploy contributors
@@ -209,6 +209,27 @@ namespace LiteDeploy.Tests
             // Still several: download it manually
             Assert.ThrowsException<CacheDownloadException>(() =>
                 CacheDownloader.NestedInstallerEntry(new[] { "a/ExampleApp.msi", "b/ExampleTools.msi" }, "msi", "Other.msi"));
+        }
+
+        [TestMethod]
+        public void NestedInstallerEntry_NamesX64First()
+        {
+            // win64, x64 or amd64 named: chosen even when the other one names no architecture
+            Assert.AreEqual("Example-win64.msi", CacheDownloader.NestedInstallerEntry(new[] { "Example.msi", "Example-win64.msi" }, "msi"));
+            Assert.AreEqual("x64/Example.msi", CacheDownloader.NestedInstallerEntry(new[] { "Example.msi", "x64/Example.msi" }, "msi"));
+            Assert.AreEqual("Example_amd64.exe", CacheDownloader.NestedInstallerEntry(new[] { "Example_amd64.exe", "Example_arm64.exe", "Example_win32.exe" }, "exe"));
+            // Two x64 installers: refused
+            Assert.ThrowsException<CacheDownloadException>(() =>
+                CacheDownloader.NestedInstallerEntry(new[] { "Example-win64.msi", "Tools-x64.msi" }, "msi"));
+        }
+
+        [TestMethod]
+        public void NamesX64_Words()
+        {
+            foreach (string x64 in new[] { "Example_x64.msi", "Example-Win64.msi", "win64/Example.msi", "Example_amd64.msi", "Example-x86_64.msi", "Example-x86-64.msi", "Example 64-bit.msi", "Example_64bit.msi" })
+                Assert.IsTrue(CacheDownloader.NamesX64(x64), x64);
+            foreach (string other in new[] { "Example_arm64.msi", "Example-win32.msi", "Example_x86.msi", "Example64.msi", "Example.msi", "", null })
+                Assert.IsFalse(CacheDownloader.NamesX64(other), other ?? "(null)");
         }
 
         [TestMethod]

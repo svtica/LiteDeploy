@@ -307,8 +307,9 @@ namespace LiteDeploy
         /// <summary>
         /// With several files of the type in the zip, the one to keep: first the one with the same file name
         /// as the current file of the instance (<paramref name="currentFileName"/>, e.g. "Vendor_x64.msi"),
-        /// else the only one that is not for another architecture (ARM64, 32-bit), as LiteDeploy installs the
-        /// x64 installers. Still several: refused (download it manually).
+        /// else the only one that names x64 ("x64", "win64", "amd64", "x86_64", "64-bit"), else the only one
+        /// that is not for another architecture (ARM64, 32-bit): LiteDeploy installs the x64 installers, as
+        /// the winget query (--architecture x64). Still several: refused (download it manually).
         /// </summary>
         static public String NestedInstallerEntry(IEnumerable<String> entryNames, String type, String currentFileName)
         {
@@ -331,8 +332,10 @@ namespace LiteDeploy
                 List<String> same = candidates.Where(n => String.Equals(EntryFileName(n), current, StringComparison.OrdinalIgnoreCase)).ToList();
                 if (same.Count == 1) return same[0];
             }
-            List<String> x64 = candidates.Where(n => !IsOtherArchitecture(n)).ToList();
+            List<String> x64 = candidates.Where(NamesX64).ToList();
             if (x64.Count == 1) return x64[0];
+            List<String> notOther = candidates.Where(n => !IsOtherArchitecture(n)).ToList();
+            if (notOther.Count == 1) return notOther[0];
             throw ZipManual(Localization.F("CacheDownloader.ZipSeveral", "{0} {1} files in it: {2}", candidates.Count, ext, String.Join(", ", candidates)));
         }
 
@@ -341,6 +344,17 @@ namespace LiteDeploy
             String n = entryName.Replace('\\', '/');
             int slash = n.LastIndexOf('/');
             return slash < 0 ? n : n.Substring(slash + 1);
+        }
+
+        /// <summary>
+        /// Whether a path in a zip names an x64 installer: a part or a word "x64", "win64", "amd64", "x86_64" /
+        /// "x86-64", "64bit" / "64-bit". Pure logic, unit-tested.
+        /// </summary>
+        static public bool NamesX64(String entryName)
+        {
+            if (String.IsNullOrEmpty(entryName)) return false;
+            return System.Text.RegularExpressions.Regex.IsMatch(entryName.ToLowerInvariant(),
+                "(^|[^a-z0-9])(x64|win64|amd64|x86[_-]64|64-?bit)([^a-z0-9]|$)");
         }
 
         /// <summary>
