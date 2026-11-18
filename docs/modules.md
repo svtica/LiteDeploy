@@ -57,21 +57,58 @@ never read it: the module is copied to `ADMIN$` first).
 
 ## Shipped modules
 
-From an earlier in-house update script:
+Most of them come from an earlier in-house update script:
 
 | Module | Product | How |
 |---|---|---|
 | `AdobeReader` | Adobe Acrobat Reader and Acrobat (MSI installs, 32 and 64-bit, MUI) | Product recognized by its MSI product code; latest build among the versions winget knows; MSP patch from `ardownload2.adobe.com`, signed by Adobe, applied with `msiexec /p`. Outlook (Adobe add-ins) is not closed: when it blocks the patch, the message says so |
+| `MsixProvision` | Any MSIX package (and its dependency packages) provisioned for all users from the shared cache (`<cache>\<Folder>`) | Check: provisioned version (`Get-AppxProvisionedPackage -Online`, `DisplayName` = `PackageName`) against the version in the manifest of the package of the cache; `notinstalled` when not provisioned; `error` without a cache, a folder or a package of that name. Update (and Install): copies the package, its dependencies and its license to `%windir%\LiteDeploy\work\MsixProvision\<PackageName>`, refuses each package unless validly signed by the `Publisher` of its manifest (and by the organisation of the `Publisher` parameter when set), enables the optional features of `Features`, `Add-AppxProvisionedPackage -Online -Regions all`. No process closed. See *MsixProvision* below |
 | `OnePassword` | 1Password installed per machine | Latest version from winget; official MSI from `downloads.1password.com`, signed by AgileBits; `MANAGED_INSTALL=1 MANAGED_UPDATE=1`; old version removed first on 1638; Start menu host restarted if the MSI hangs on `AI_UnpinFromStartScreen` |
 | `OracleJava` | Oracle Java 8 (winget `Oracle.JavaRuntimeEnvironment`) | Stops only the system Java (bundled Java runtimes are left alone), upgrades with winget, checks that `java8path` still answers, asks for a restart (3010) when it stopped Java |
 | `PrinterDrivers` | Printer drivers listed in the shared cache (`<cache>\PrinterDrivers\drivers.csv`) | Check: every listed driver installed (`Get-PrinterDriver`), else `outdated` with the number missing; `error` without a cache or a readable list. Update: copies the package of each missing driver to `%windir%\LiteDeploy\work\PrinterDrivers`, refuses it unless its catalog (`.cat`) has a valid Authenticode signature, `pnputil /add-driver`, `Add-PrinterDriver`. No process closed, no printer created |
 | `TeamsBootstrapper` | New Microsoft Teams provisioned for all users (`MSTeams` package) | Check: provisioned version against the offline package of the cache (`<cache>\Teams\MSTeams-x64.msix`) when there is one; `notinstalled` when Teams is not provisioned. Update: `teamsbootstrapper.exe` from the cache or from Microsoft's documented link, signed by Microsoft Corporation, run with `-p` (or `-p -o <msix>` with the offline package, also signed by Microsoft); its JSON output must say `success`. Closes `ms-teams` |
 
-`PrinterDrivers` and `TeamsBootstrapper` are generic: their content comes from the shared installer
-cache (see below), nothing in the module is specific to an organisation. Like every module, they
-only update computers where the check says `outdated`: `TeamsBootstrapper` updates the computers
-where Teams is already provisioned and reports `notinstalled` elsewhere. They do not declare
-`# Install: yes`, so the *Install* action does not offer them.
+`MsixProvision`, `PrinterDrivers` and `TeamsBootstrapper` are generic: their content comes from the
+shared installer cache (see below), nothing in the module is specific to an organisation. Like every
+module, they only act on computers where the check says `outdated`: `TeamsBootstrapper` updates the
+computers where Teams is already provisioned and reports `notinstalled` elsewhere. `MsixProvision`
+declares `# Install: yes`: it also accepts `-Action Install`, which provisions the package on a
+computer where the check says `notinstalled` (`-Action Update` leaves such a computer alone).
+`PrinterDrivers` and `TeamsBootstrapper` do not declare it, so the *Install* action does not offer them.
+
+### MsixProvision
+
+One module for any MSIX package: add `module:MsixProvision` to the package list and set its
+parameters (*Parameters...*). Example, for a desktop application shipped as an MSIX bundle that
+needs a Windows optional feature:
+
+| Parameter | Example value | |
+|---|---|---|
+| `PackageName` | `Contoso.ExampleApp` | Required: the package identity name (`Name` of the `Identity` of its manifest, also the `DisplayName` of `Get-AppxProvisionedPackage`) |
+| `Folder` | `ExampleApp` | Required: folder of the package under the cache |
+| `File` | *(empty)* | Package file name in the folder; empty: the newest `.msix` or `.msixbundle` of the folder whose identity is `PackageName`, by manifest version |
+| `Dependencies` | *(empty)* | File names in the folder, separated by `;`; empty: the `.appx` and `.msix` files of the `Dependencies` subfolder, for the architectures the computer runs (x64 computer: `x64`, `x86` and neutral) |
+| `License` | `ExampleApp_License.xml` | License XML file name in the folder; empty: `-SkipLicense` |
+| `Features` | `VirtualMachinePlatform` | Windows optional features to enable first, separated by `;`; a feature that needs a restart: exit code 3010 after the provisioning |
+| `Publisher` | `Contoso Ltd` | Expected organisation (`O=`) of the signer of the package; empty: the signer must be the `Publisher` of the manifest (always checked) |
+
+```text
+<cache>\ExampleApp\
+  Contoso.ExampleApp_2.1.0.0_x64.msixbundle
+  Contoso.ExampleApp_2.0.0.0_x64.msixbundle   older version, ignored (File empty: the newest wins)
+  ExampleApp_License.xml                      optional
+  Dependencies\                               optional
+    Microsoft.VCLibs.140.00_14.0.33519.0_x64.appx
+    Microsoft.VCLibs.140.00_14.0.33519.0_x86.appx
+```
+
+The version compared is the one of the package manifest (`AppxManifest.xml`, or for a bundle the
+newest application package of `AppxBundleManifest.xml`); only that entry is read, the package is
+not extracted. Every package file (main package and dependencies) is refused unless its copy has a
+valid Authenticode signature whose subject is the `Publisher` of its own manifest: a dependency
+signed by Microsoft passes, a file changed in the cache does not. The license file is not signed;
+it must be an XML file. To roll out a new version, put its package in the folder (with `File` empty)
+or change `File`. Permissions: the computer accounts need **read** access to the folder only.
 
 The winget packages of the same tool (7-Zip, Notepad++, VLC) are in the example package list,
 `updates/packages.txt`.
@@ -98,6 +135,9 @@ the computers should fill the cache themselves.
 <cache>\
   Adobe\                        AdobeReader (filled by the computers when writable)
   1Password\                    OnePassword (filled by the computers when writable)
+  ExampleApp\                   MsixProvision, folder of its Folder parameter (filled by an administrator, read only for the computers)
+    Contoso.ExampleApp_2.1.0.0_x64.msixbundle
+    Dependencies\*.appx         optional dependency packages
   PrinterDrivers\               PrinterDrivers (filled by an administrator, read only for the computers)
     drivers.csv
     ExampleVendor\Universal\x64\example.inf, example.cat, ...
