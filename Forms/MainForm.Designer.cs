@@ -77,6 +77,8 @@ namespace LiteDeploy
             this.pingAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pingAllCheckedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.softwareUpdatesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.softwareUpdatesMenuButton = new System.Windows.Forms.ToolStripMenuItem();
+            this.softwareUpdatesComputersMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.manageToolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.schedulesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -449,6 +451,7 @@ namespace LiteDeploy
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
             this.computersToolStripMenuItem,
+            this.softwareUpdatesMenuButton,
             this.toolsToolStripMenuItem,
             this.processingToolStripMenuItem,
             this.optionsToolStripMenuItem,
@@ -486,6 +489,7 @@ namespace LiteDeploy
             // 
             this.computersToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.customListToolStripMenuItem,
+            this.softwareUpdatesComputersMenuItem,
             this.toolStripSeparator4,
             this.pingAllToolStripMenuItem,
             this.pingAllCheckedToolStripMenuItem,
@@ -507,6 +511,22 @@ namespace LiteDeploy
             // 
             this.toolStripSeparator4.Name = "toolStripSeparator4";
             this.toolStripSeparator4.Size = new System.Drawing.Size(187, 6);
+            //
+            // softwareUpdatesComputersMenuItem
+            //
+            this.softwareUpdatesComputersMenuItem.Name = "softwareUpdatesComputersMenuItem";
+            this.softwareUpdatesComputersMenuItem.Size = new System.Drawing.Size(190, 22);
+            this.softwareUpdatesComputersMenuItem.Text = "Software Updates...";
+            this.softwareUpdatesComputersMenuItem.Click += new System.EventHandler(this.softwareUpdatesToolStripMenuItem_Click);
+            //
+            // softwareUpdatesMenuButton
+            //
+            this.softwareUpdatesMenuButton.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.softwareUpdatesMenuButton.Name = "softwareUpdatesMenuButton";
+            this.softwareUpdatesMenuButton.Size = new System.Drawing.Size(115, 20);
+            this.softwareUpdatesMenuButton.Text = "Software Updates";
+            this.softwareUpdatesMenuButton.ToolTipText = "Every computer of Active Directory; only the checked computers when some are checked";
+            this.softwareUpdatesMenuButton.Click += new System.EventHandler(this.softwareUpdatesToolStripMenuItem_Click);
             // 
             // pingAllToolStripMenuItem
             // 
@@ -1023,6 +1043,8 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripMenuItem pingAllToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem pingAllCheckedToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem softwareUpdatesToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem softwareUpdatesMenuButton;
+        private System.Windows.Forms.ToolStripMenuItem softwareUpdatesComputersMenuItem;
         private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem manageToolsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem schedulesToolStripMenuItem;

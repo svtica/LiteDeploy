@@ -24,6 +24,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `info` message and the `done` line of every run carry `os` (caption, version, release) and
   `ostype` (`workstation`, `server`, `domaincontroller`); `updates.xml` keeps them per computer
   (`OsCaption`, `OsType` attributes; files of earlier versions are read as before).
+- *Software Updates* is a self-sufficient, non-modal window: it lists every enabled computer of
+  Active Directory without any prior selection (filtered to the computers checked in the main
+  window when there are some; the *Selection* filter can be removed), plus the computers of the
+  main window's list and computers added by name (*Add...*, kept in `updates.xml`).
+- Active Directory inventory in `adcache.xml` (backward compatible): operating system and version,
+  last logon (`lastLogonTimestamp`), disabled account, OU. Servers (operating system containing
+  "Server") are hidden unless *Include servers* is checked (`IncludeServers` in `settings.xml`);
+  disabled accounts are never shown.
+- New columns: OS (the one read on the computer, `OsCaption`/`OsType` in `updates.xml`, before
+  Active Directory), last logon, *Pause* and *Outside business hours* with a tooltip giving the
+  reason; every column sorts, columns can be resized and moved. Details of the selected computer
+  under the list.
+- Search box (Ctrl+F: name, OS, OU, package) and status filters (*To update*, *Errors*, *Up to
+  date*, *Not checked*, *Paused*, *Outside business hours*, *Offline/stale*: last logon older
+  than `UpdatesStaleDays`, 30 by default); status bar *shown / total / checked*.
+- *Actions* menu in the tool bar, same as the right-click menu; actions apply to several
+  computers (checked, else selected): pause / resume, outside business hours only (set or clear),
+  install, computer card, Wake-on-LAN, get the logs, remove a computer added by name.
+- Keyboard: F5 check, Ctrl+U update, Esc stop (confirmation), Ctrl+A select the rows shown.
+- *Software Updates* in the menu bar of the main window and in the *Computers* menu.
+- Window size and position, splitter, columns, view and filters kept in `settings.xml`.
+
+### Changed
+
+- *Select all* checks the rows shown; checks are kept when the filters change; *Select outdated*
+  checks exactly the rows shown that have updates.
+- Updates: one confirmation, which names the "outside business hours only" computers left out
+  during business hours (instead of a separate question).
+- Credential offer: at most one question per session; the credential chosen becomes the default.
+- Computer card: in a resizable window with *Copy* (several computers at once), opened by a
+  double-click too.
 
 ## [1.0.15] - 2026-11-18
 

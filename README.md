@@ -35,13 +35,35 @@ them (and for the PsExec method of the software updates); it is asked for when t
 - Stop the current PsExec or all processing.
 
 ### Software updates
-- *Tools > Software Updates...*: one row per computer with its updates available and its errors
-  (*Show packages*: one row per installed package). Check the computers (*Select all*, Ctrl+A),
-  then *Check* (all the computers when none is checked) and *Update checked*. Packages that are
-  not installed are neither updates nor errors: they are installed only on explicit request
-  (right-click > *Install*).
-- No credential chosen: the first check of a session offers to add one (or use the stored one)
-  and to make it the default.
+- **Software Updates** (menu bar, *Computers > Software Updates...* or *Tools > Software
+  Updates...*) opens a window of its own, non-modal, that needs no prior selection: every enabled
+  computer of **Active Directory** (from the local cache, refreshed in the background), the
+  computers of the main window's list, and computers added by name (*Add...*, for computers that
+  are not in Active Directory; kept in `updates.xml`). When computers are checked in the main
+  window, it opens filtered to them (*Selection: N computers ×* removes the filter). Typical use:
+  open it, *Select outdated*, *Update checked* (one confirmation).
+- One row per computer: OS (the one read on the computer when known, else Active Directory), last
+  logon (Active Directory), status, updates available, last result, last change, *Pause* and
+  *Outside business hours* (tooltip: the reason, the business hours). Every column sorts; columns
+  can be resized and moved. *Show packages*: one row per installed package. Under the list, the
+  details of the selected computer.
+- Filters, combined: search box (Ctrl+F; name, OS, OU or package), status buttons (*To update*,
+  *Errors*, *Up to date*, *Not checked*, *Paused*, *Outside business hours*, *Offline/stale*: last
+  logon older than 30 days by default, `UpdatesStaleDays` in `settings.xml`), and **Include
+  servers** (servers are hidden by default; an operating system containing "Server" is a server).
+  Disabled computer accounts are never shown. The status bar shows *shown / total / checked*.
+- Checks are kept when the filters change. *Select all* (Ctrl+A) checks the rows shown, *Select
+  none* unchecks everything, *Select outdated* checks exactly the rows shown that have updates.
+  *Check* (F5) reads the checked computers (every computer shown when none is checked); *Update
+  checked* (Ctrl+U) updates them; Esc stops (with a confirmation). Packages that are not
+  installed are neither updates nor errors: they are installed only on explicit request
+  (*Install*).
+- During business hours, "outside business hours only" computers are left out of an update; the
+  confirmation names them (to update one now, *Allow updates during business hours* first).
+- No credential chosen: the first run of a session asks once to add one (or use the stored one);
+  the credential chosen becomes the default (*App > Options*).
+- Window size and position, splitter, columns, view, status filters and *Include servers* are kept
+  in `%LOCALAPPDATA%\LiteDeploy\settings.xml`.
 - `LiteDeploy.Worker.exe` runs as SYSTEM on the computer, started by one of two methods
   (*App > Options*), with nothing to install and no stored password:
   - **WinRM + SYSTEM task** (default): the worker is copied
@@ -56,11 +78,13 @@ them (and for the PsExec method of the software updates); it is asked for when t
 - The account is the current user or a stored credential (*Tools > Credentials*), chosen in
   *App > Options*. The deployment credentials of the main window (*Saved...*) come from the
   same store.
-- Right-click a computer: *Install* one package where the last check says it is not installed
+- Actions (right-click, or the *Actions* menu of the tool bar) apply to the checked computers, else
+  to the selected rows: *Install* one package where the last check says it is not installed
   (explicit, with a confirmation; modules only when they declare `# Install: yes`; never part of
-  *Update checked* or of the schedules), pause it, outside business hours only, computer card
-  (logged-on users, pending restart, Windows version and type...), Wake-on-LAN. Each row shows
-  the step in progress.
+  *Update checked* or of the schedules), pause / resume, outside business hours only (set or
+  clear), computer card (Active Directory data, logged-on users, pending restart...; in a window
+  that can be copied; also on double-click), Wake-on-LAN, get the logs. Each row shows the step in
+  progress.
 - **Servers are left alone by default**: the worker reads the operating system type
   (`Win32_OperatingSystem.ProductType`) and refuses to update or install anything on a server
   unless *App > Options > Software updates > Include servers (updates and installs)* is checked

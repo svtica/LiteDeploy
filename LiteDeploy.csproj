@@ -196,6 +196,12 @@
     </Compile>
     <Compile Include="Classes\UpdateStateStore.cs" />
     <Compile Include="Classes\UpdateSummary.cs" />
+    <Compile Include="Classes\AdComputer.cs" />
+    <Compile Include="Classes\ComputerFilter.cs" />
+    <Compile Include="Classes\WindowLayout.cs" />
+    <Compile Include="Forms\TextViewForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Classes\WakeOnLan.cs" />
     <Compile Include="Forms\SoftwareUpdatesForm.cs">
       <SubType>Form</SubType>

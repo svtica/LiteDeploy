@@ -520,22 +520,25 @@ namespace LiteDeploy
             ShowPingAll(true);
         }
 
-        // Software updates of the checked computers, or of the whole list when none is checked
+        // Software Updates window: opened once and kept (non-modal)
+        static private SoftwareUpdatesForm updatesWindow;
+
+        // Software updates: every computer of Active Directory and of the list; filtered to the checked
+        // computers when some are checked (the filter can be removed in the window)
         private void softwareUpdatesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            IEnumerable<object> source = selectedComputers.CheckedItems.Count > 0
-                ? selectedComputers.CheckedItems.Cast<object>()
-                : selectedComputers.Items.Cast<object>();
-            List<String> computers = source.Select(o => o.ToString()).ToList();
-            if (computers.Count == 0)
+            List<String> listed = selectedComputers.Items.Cast<object>().Select(o => o.ToString()).ToList();
+            List<String> checkedNames = selectedComputers.CheckedItems.Cast<object>().Select(o => o.ToString()).ToList();
+            if (updatesWindow == null || updatesWindow.IsDisposed)
             {
-                MessageBox.Show(Localization.T("MainForm.NoComputer", "Add computers to the list first (Computers > Edit List)."), Localization.T("MainForm.SoftwareUpdates.Title", "Software Updates"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                updatesWindow = new SoftwareUpdatesForm(listed, checkedNames);
+                updatesWindow.Show();
                 return;
             }
-            using (SoftwareUpdatesForm updates = new SoftwareUpdatesForm(computers))
-            {
-                updates.ShowDialog(this);
-            }
+            updatesWindow.AddListedComputers(listed);
+            if (checkedNames.Count > 0) updatesWindow.SetSelectionFilter(checkedNames);
+            if (updatesWindow.WindowState == FormWindowState.Minimized) updatesWindow.WindowState = FormWindowState.Normal;
+            updatesWindow.Activate();
         }
 
         private void schedulesToolStripMenuItem_Click(object sender, EventArgs e)
@@ -716,10 +719,23 @@ namespace LiteDeploy
                 DialogResult result = MessageBox.Show(Localization.T("MainForm.ConfirmClose", "A deployment is currently in progress. Are you sure you want to close the application?"), Localization.T("MainForm.ConfirmClose.Title", "Confirm Close"), MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                 if (result == System.Windows.Forms.DialogResult.No)
-                {               
+                {
                     e.Cancel = true;
                     return;
                 }
+            }
+
+            // The Software Updates window closes with LiteDeploy: its work stops (after a question)
+            if (updatesWindow != null && !updatesWindow.IsDisposed)
+            {
+                if (updatesWindow.Busy && !closingForUpdate
+                    && MessageBox.Show(this, Localization.T("SoftwareUpdatesForm.ConfirmClose", "Work is in progress. Stop it and close?"),
+                        Localization.T("MainForm.ConfirmClose.Title", "Confirm Close"), MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+                updatesWindow.CloseWithoutQuestion();
             }
 
             ProcessManager.KillAll();
