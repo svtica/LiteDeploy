@@ -150,6 +150,7 @@
     <Compile Include="Classes\PsExecLocator.cs" />
     <Compile Include="Classes\Theme.cs" />
     <Compile Include="Classes\ToolManager.cs" />
+    <Compile Include="Classes\ModuleSettings.cs" />
     <Compile Include="Classes\UpdateModules.cs" />
     <Compile Include="Classes\UpdateRunner.cs" />
     <Compile Include="Classes\UpdateSchedules.cs" />
@@ -163,6 +164,9 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\RemoteProcessesForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\ModuleParametersForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\PackageListForm.cs">
@@ -201,6 +205,7 @@
     <!-- Shared with LiteDeploy.Worker.exe (internal types compiled into both) -->
     <Compile Include="src\LiteDeploy.Worker\Shared\WorkerProtocol.cs" Link="Classes\Shared\WorkerProtocol.cs" />
     <Compile Include="src\LiteDeploy.Worker\Shared\UpdatePackage.cs" Link="Classes\Shared\UpdatePackage.cs" />
+    <Compile Include="src\LiteDeploy.Worker\Shared\ModuleParameters.cs" Link="Classes\Shared\ModuleParameters.cs" />
     <!-- winget search in the package list editor -->
     <Compile Include="src\LiteDeploy.Worker\WingetClient.cs" Link="Classes\Shared\WingetClient.cs" />
     <Compile Include="src\LiteDeploy.Worker\WingetListParser.cs" Link="Classes\Shared\WingetListParser.cs" />

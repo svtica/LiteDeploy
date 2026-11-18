@@ -38,6 +38,7 @@ namespace LiteDeploy
             this.idColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.processesColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.labelColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.parametersButton = new System.Windows.Forms.Button();
             this.okButton = new System.Windows.Forms.Button();
             this.cancelButton = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.packagesGrid)).BeginInit();
@@ -155,6 +156,18 @@ namespace LiteDeploy
             this.processesColumn.Name = "processesColumn";
             this.labelColumn.HeaderText = "Label";
             this.labelColumn.Name = "labelColumn";
+            this.packagesGrid.CurrentCellChanged += new System.EventHandler(this.packagesGrid_CurrentCellChanged);
+            //
+            // parametersButton
+            //
+            this.parametersButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.parametersButton.Enabled = false;
+            this.parametersButton.Location = new System.Drawing.Point(12, 428);
+            this.parametersButton.Name = "parametersButton";
+            this.parametersButton.Size = new System.Drawing.Size(110, 23);
+            this.parametersButton.TabIndex = 9;
+            this.parametersButton.Text = "Parameters...";
+            this.parametersButton.Click += new System.EventHandler(this.parametersButton_Click);
             //
             // okButton
             //
@@ -193,6 +206,7 @@ namespace LiteDeploy
             this.Controls.Add(this.addModuleButton);
             this.Controls.Add(this.listLabel);
             this.Controls.Add(this.packagesGrid);
+            this.Controls.Add(this.parametersButton);
             this.Controls.Add(this.okButton);
             this.Controls.Add(this.cancelButton);
             this.MinimizeBox = false;
@@ -223,6 +237,7 @@ namespace LiteDeploy
         private System.Windows.Forms.DataGridViewTextBoxColumn idColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn processesColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn labelColumn;
+        private System.Windows.Forms.Button parametersButton;
         private System.Windows.Forms.Button okButton;
         private System.Windows.Forms.Button cancelButton;
     }

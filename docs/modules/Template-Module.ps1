@@ -1,6 +1,9 @@
 # LiteDeploy-Module
 # Label: Example product
 # Processes: example, example-helper
+# Parameter: Environment default=Production Name of the environment the product connects to
+# Parameter: InstallerFile default=example.msi File name of the installer in the shared cache
+# Parameter: EnrollmentToken secret Enrollment token (password of a stored credential)
 <#
 .SYNOPSIS
     Template of a LiteDeploy update module (see docs/modules.md).
@@ -16,6 +19,11 @@
         powershell.exe -File <Name>.ps1 -Action Check    (report the versions)
         powershell.exe -File <Name>.ps1 -Action Update   (install the update)
     The processes listed in the header are closed by the worker before Update.
+    Parameters (header lines "# Parameter: Name [secret] [default=value] description")
+    are set in LiteDeploy (Package list > Parameters...) and given to this
+    process only, as environment variables LITEDEPLOY_PARAM_<Name>. A required
+    parameter (no default) without value: the worker does not start the module.
+    A secret value must never be written to the output, a log or an error.
     Keep this file ASCII only (Windows PowerShell 5.1 reads it as ANSI).
 
 .PARAMETER Action
@@ -26,6 +34,11 @@ param(
     [string] $Action = 'Check'
 )
 $ErrorActionPreference = 'Stop'
+
+# Parameters of the header (empty when an older LiteDeploy runs the module: check them)
+$environment   = $env:LITEDEPLOY_PARAM_Environment
+$installerFile = $env:LITEDEPLOY_PARAM_InstallerFile
+$token         = $env:LITEDEPLOY_PARAM_EnrollmentToken   # secret: never write it out
 
 # One result line for LiteDeploy: status uptodate, outdated, notinstalled or error
 function Write-LiteDeployResult([string] $Status, [string] $Installed, [string] $Available, [string] $Message) {
@@ -53,6 +66,10 @@ function Get-LatestRelease {
 }
 
 try {
+    if (-not $environment -or -not $token) {
+        Write-LiteDeployResult 'error' $null $null 'Parameters missing: Environment and EnrollmentToken (Package list > Parameters...)'
+        exit 1
+    }
     $installed = Get-InstalledVersion
     if (-not $installed) { Write-LiteDeployResult 'notinstalled'; exit 0 }
     $latest = Get-LatestRelease
@@ -70,8 +87,15 @@ try {
     $work = Join-Path $env:windir 'LiteDeploy\work'
     New-Item -ItemType Directory -Force -Path $work | Out-Null
     $msi = Join-Path $work 'example.msi'
-    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-    Invoke-WebRequest -Uri $latest.Url -OutFile $msi -UseBasicParsing
+    # From the shared cache (LITEDEPLOY_CACHE) when it holds the file named by InstallerFile
+    $cached = if ($env:LITEDEPLOY_CACHE -and $installerFile) { Join-Path $env:LITEDEPLOY_CACHE (Split-Path $installerFile -Leaf) } else { $null }
+    if ($cached -and (Test-Path -LiteralPath $cached)) {
+        Copy-Item -LiteralPath $cached -Destination $msi -Force
+    }
+    else {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+        Invoke-WebRequest -Uri $latest.Url -OutFile $msi -UseBasicParsing
+    }
 
     # The installer must be signed by the vendor
     $sig = Get-AuthenticodeSignature $msi
@@ -81,7 +105,9 @@ try {
         exit 1
     }
 
-    $p = Start-Process msiexec.exe -ArgumentList "/i `"$msi`" /qn /norestart" -Wait -PassThru
+    # The token goes to the installer only (no /l*v log: it would record it)
+    $p = Start-Process msiexec.exe -ArgumentList "/i `"$msi`" /qn /norestart ENVIRONMENT=`"$environment`" ENROLLMENT_TOKEN=`"$token`"" -Wait -PassThru
+    $token = $null
     Remove-Item $msi -Force -ErrorAction SilentlyContinue
     if ($p.ExitCode -eq 0 -or $p.ExitCode -eq 3010) {
         Write-LiteDeployResult 'uptodate' (Get-InstalledVersion) $null "Updated to $($latest.Version)"

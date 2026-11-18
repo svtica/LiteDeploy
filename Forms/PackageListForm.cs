@@ -6,7 +6,7 @@
 // Purpose: Editor of the software update package list: search the winget
 //          catalog (winget of this computer), add a result, set the processes
 //          to close and the label, remove a package; add an update module
-//          (docs/modules.md).
+//          (docs/modules.md) and set its parameters (Parameters...).
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -57,6 +57,43 @@ namespace LiteDeploy
             bool present = packagesGrid.Rows.Cast<DataGridViewRow>()
                 .Any(r => String.Equals(Convert.ToString(r.Cells[0].Value), p.Id, StringComparison.OrdinalIgnoreCase));
             if (!present) packagesGrid.Rows.Add(p.Id, String.Join(", ", p.Processes), p.Label ?? "");
+        }
+
+        // ---- Module parameters -------------------------------------------------------
+
+        // Module of the current row ("module:Name"); null for a winget package or an empty row
+        String CurrentModuleName()
+        {
+            DataGridViewRow row = packagesGrid.CurrentRow;
+            if (row == null || row.IsNewRow) return null;
+            UpdatePackage p = UpdatePackage.Parse(Convert.ToString(row.Cells[0].Value));
+            return p != null && p.IsModule ? p.ModuleName : null;
+        }
+
+        void packagesGrid_CurrentCellChanged(object sender, EventArgs e)
+        {
+            parametersButton.Enabled = CurrentModuleName() != null;
+        }
+
+        void parametersButton_Click(object sender, EventArgs e)
+        {
+            String name = CurrentModuleName();
+            if (name == null) return;
+            UpdateModule m = UpdateModules.Find(name);
+            if (m == null)
+            {
+                MessageBox.Show(this, Localization.F("UpdateModules.Missing", "Module {0} not found in {1} or {2}.", name, UpdateModules.ShippedDir, UpdateModules.UserDir),
+                    Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (m.Parameters.Count == 0)
+            {
+                MessageBox.Show(this, Localization.F("PackageListForm.NoParameters", "The module {0} has no parameters.", m.Name),
+                    Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            using (ModuleParametersForm form = new ModuleParametersForm(m, ModuleSettings.Load()))
+                form.ShowDialog(this);
         }
 
         // ---- Search -----------------------------------------------------------------
