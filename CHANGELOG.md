@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- *Download to the cache*: a zip installer holding several installers of the type of the instance
+  (for example an x64 and an ARM64 MSI) is no longer refused when one can be chosen: the one with
+  the same file name as the current file of the instance, else the only one that is not for
+  another architecture (ARM64, 32-bit).
+
 ## [1.0.18] - 2026-11-18
 
 ### Added

@@ -194,15 +194,42 @@ namespace LiteDeploy.Tests
         // ---- Zip installers: the installer a zip holds ---------------------------------------
 
         [TestMethod]
+        public void NestedInstallerEntry_SeveralFiles_SameNameThenX64()
+        {
+            string[] vendor = { "Software/Example_Win10.msi", "Software/Example_arm64.msi" };
+            // The one of the other architecture is left out
+            Assert.AreEqual("Software/Example_Win10.msi", CacheDownloader.NestedInstallerEntry(vendor, "msi"));
+            Assert.AreEqual("x64/ExampleApp.msi", CacheDownloader.NestedInstallerEntry(new[] { "x64/ExampleApp.msi", "x86/ExampleApp.msi" }, "msi"));
+            Assert.AreEqual("ExampleApp-x86_64.msi", CacheDownloader.NestedInstallerEntry(new[] { "ExampleApp-x86_64.msi", "ExampleApp-win32.msi" }, "msi"));
+            // The same file name as the current file of the instance wins
+            Assert.AreEqual("b/ExampleTools.msi",
+                CacheDownloader.NestedInstallerEntry(new[] { "a/ExampleApp.msi", "b/ExampleTools.msi" }, "msi", "Vendor/ExampleTools.msi"));
+            Assert.AreEqual("b/ExampleTools.msi",
+                CacheDownloader.NestedInstallerEntry(new[] { "a/ExampleApp.msi", "b/ExampleTools.msi" }, "msi", "EXAMPLETOOLS.MSI"));
+            // Still several: download it manually
+            Assert.ThrowsException<CacheDownloadException>(() =>
+                CacheDownloader.NestedInstallerEntry(new[] { "a/ExampleApp.msi", "b/ExampleTools.msi" }, "msi", "Other.msi"));
+        }
+
+        [TestMethod]
+        public void IsOtherArchitecture_Words()
+        {
+            foreach (string other in new[] { "Example_arm64.msi", "arm64/Example.msi", "Example-ARM.msi", "x86/Example.msi", "Example_x86.msi", "Example-Win32.msi", "Example-32bit.msi", "Example 32-bit.msi", "aarch64/a.msi" })
+                Assert.IsTrue(CacheDownloader.IsOtherArchitecture(other), other);
+            foreach (string x64 in new[] { "Example_x64.msi", "Example-x86_64.msi", "Example-x86-64.msi", "Example_Win10RS.msi", "Farmer.msi", "Example64.msi", "", null })
+                Assert.IsFalse(CacheDownloader.IsOtherArchitecture(x64), x64 ?? "(null)");
+        }
+
+        [TestMethod]
         public void NestedInstallerEntry_OneFileOfTheType()
         {
             Assert.AreEqual("Host/ExampleApp.msi", CacheDownloader.NestedInstallerEntry(new[] { "Host/", "Host/ExampleApp.msi", "readme.txt", "setup.exe" }, "msi"));
             Assert.AreEqual("setup.EXE", CacheDownloader.NestedInstallerEntry(new[] { "setup.EXE", "data.cab" }, "exe"));
 
             CacheDownloadException several = Assert.ThrowsException<CacheDownloadException>(() =>
-                CacheDownloader.NestedInstallerEntry(new[] { "x64/ExampleApp.msi", "x86/ExampleApp.msi" }, "msi"));
+                CacheDownloader.NestedInstallerEntry(new[] { "ExampleApp.msi", "ExampleTools.msi" }, "msi"));
             Assert.AreEqual("zip installer: download it manually", several.Reason);
-            StringAssert.Contains(several.Message, "x64/ExampleApp.msi, x86/ExampleApp.msi");
+            StringAssert.Contains(several.Message, "ExampleApp.msi, ExampleTools.msi");
 
             Assert.AreEqual("zip installer: download it manually",
                 Assert.ThrowsException<CacheDownloadException>(() => CacheDownloader.NestedInstallerEntry(new[] { "readme.txt" }, "msi")).Reason);
@@ -272,7 +299,7 @@ namespace LiteDeploy.Tests
 
                 // Two installers: download it manually
                 string two = Path.Combine(root, "two.zip");
-                WriteZip(two, new Dictionary<string, string> { { "x64/ExampleApp.msi", "a" }, { "x86/ExampleApp.msi", "b" } });
+                WriteZip(two, new Dictionary<string, string> { { "ExampleApp.msi", "a" }, { "ExampleTools.msi", "b" } });
                 string twoOut = Path.Combine(root, "two-out");
                 Directory.CreateDirectory(twoOut);
                 Assert.AreEqual("zip installer: download it manually", Assert.ThrowsException<CacheDownloadException>(() =>

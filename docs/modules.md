@@ -385,8 +385,11 @@ rows *Newer on the web* that have an HTTPS installer URL and its SHA256 in the m
    against the manifest, then the **only** `.msi` (or `.exe`, after the `Type` of the instance) it
    holds is extracted to the temporary folder (an entry whose path leaves the folder is refused;
    4 GB at most, 10 000 entries at most) and that file's signature is checked as above. The
-   installer, not the zip, goes to the cache with the versioned name. A zip with no such file,
-   several of them, or an installer of another type: *zip installer: download it manually*.
+   installer, not the zip, goes to the cache with the versioned name. With several files of the
+   type in the zip, LiteDeploy keeps the one with the same file name as the current file of the
+   instance, else the only one that is not for another architecture (ARM64, 32-bit: a word such
+   as `arm64`, `x86`, `win32` in its path). A zip with no such file, still several of them, or an
+   installer of another type: *zip installer: download it manually*.
 3. It is copied **next to the current file**, under a versioned name
    (`ContosoExampleApp-2.4.1.msi` -> `ContosoExampleApp-2.5.0.msi`; the version is added when the
    name has none), through a `.partial` file whose SHA256 is checked again. An existing file is

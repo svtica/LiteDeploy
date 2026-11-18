@@ -301,6 +301,17 @@ namespace LiteDeploy
         /// </summary>
         static public String NestedInstallerEntry(IEnumerable<String> entryNames, String type)
         {
+            return NestedInstallerEntry(entryNames, type, null);
+        }
+
+        /// <summary>
+        /// With several files of the type in the zip, the one to keep: first the one with the same file name
+        /// as the current file of the instance (<paramref name="currentFileName"/>, e.g. "Vendor_x64.msi"),
+        /// else the only one that is not for another architecture (ARM64, 32-bit), as LiteDeploy installs the
+        /// x64 installers. Still several: refused (download it manually).
+        /// </summary>
+        static public String NestedInstallerEntry(IEnumerable<String> entryNames, String type, String currentFileName)
+        {
             String ext = "." + (type ?? "").Trim().ToLowerInvariant();
             if (ext != ".msi" && ext != ".exe")
                 throw ZipManual(Localization.F("CacheDownloader.ZipType", "the instance type is {0}, not msi or exe", type ?? "?"));
@@ -312,9 +323,36 @@ namespace LiteDeploy
                     Localization.F("CacheDownloader.ZipUnsafe", "The zip holds a file with an unsafe path ({0}): refused.", unsafeName));
             if (candidates.Count == 0)
                 throw ZipManual(Localization.F("CacheDownloader.ZipNone", "no {0} file in it", ext));
-            if (candidates.Count > 1)
-                throw ZipManual(Localization.F("CacheDownloader.ZipSeveral", "{0} {1} files in it: {2}", candidates.Count, ext, String.Join(", ", candidates)));
-            return candidates[0];
+            if (candidates.Count == 1) return candidates[0];
+
+            if (!String.IsNullOrWhiteSpace(currentFileName))
+            {
+                String current = Path.GetFileName(currentFileName.Trim().Replace('/', '\\'));
+                List<String> same = candidates.Where(n => String.Equals(EntryFileName(n), current, StringComparison.OrdinalIgnoreCase)).ToList();
+                if (same.Count == 1) return same[0];
+            }
+            List<String> x64 = candidates.Where(n => !IsOtherArchitecture(n)).ToList();
+            if (x64.Count == 1) return x64[0];
+            throw ZipManual(Localization.F("CacheDownloader.ZipSeveral", "{0} {1} files in it: {2}", candidates.Count, ext, String.Join(", ", candidates)));
+        }
+
+        static String EntryFileName(String entryName)
+        {
+            String n = entryName.Replace('\\', '/');
+            int slash = n.LastIndexOf('/');
+            return slash < 0 ? n : n.Substring(slash + 1);
+        }
+
+        /// <summary>
+        /// Whether a path in a zip names an installer for another architecture than x64: a part or a word
+        /// "arm64", "aarch64", "arm", "x86", "win32", "32bit" / "32-bit" ("x86_64" and "x86-64" are x64).
+        /// Pure logic, unit-tested.
+        /// </summary>
+        static public bool IsOtherArchitecture(String entryName)
+        {
+            if (String.IsNullOrEmpty(entryName)) return false;
+            String n = System.Text.RegularExpressions.Regex.Replace(entryName.ToLowerInvariant(), "x86[_-]64", "x64");
+            return System.Text.RegularExpressions.Regex.IsMatch(n, "(^|[^a-z0-9])(arm64|aarch64|arm|x86|win32|32-?bit)([^a-z0-9]|$)");
         }
 
         static CacheDownloadException ZipManual(String why)
@@ -331,11 +369,17 @@ namespace LiteDeploy
         /// </summary>
         public String ExtractNestedInstaller(String zipPath, String type, String folder, long maxBytes, out String entryName)
         {
+            return ExtractNestedInstaller(zipPath, type, folder, maxBytes, null, out entryName);
+        }
+
+        /// <summary>With <paramref name="currentFileName"/>: the current file of the instance, to choose among several installers.</summary>
+        public String ExtractNestedInstaller(String zipPath, String type, String folder, long maxBytes, String currentFileName, out String entryName)
+        {
             using (ZipArchive zip = ZipFile.OpenRead(zipPath))
             {
                 if (zip.Entries.Count > MaxZipEntries)
                     throw ZipManual(Localization.F("CacheDownloader.ZipTooManyEntries", "more than {0} entries", MaxZipEntries));
-                entryName = NestedInstallerEntry(zip.Entries.Select(e => e.FullName), type);
+                entryName = NestedInstallerEntry(zip.Entries.Select(e => e.FullName), type, currentFileName);
                 String name = entryName;
                 ZipArchiveEntry entry = zip.Entries.First(e => e.FullName == name);
                 if (entry.Length > maxBytes)
@@ -639,7 +683,7 @@ namespace LiteDeploy
                     String entryName;
                     String extractDir = Path.Combine(temp, "nested");
                     Directory.CreateDirectory(extractDir);
-                    download = ExtractNestedInstaller(download, target.Type, extractDir, MaxNestedBytes, out entryName);
+                    download = ExtractNestedInstaller(download, target.Type, extractDir, MaxNestedBytes, target.File, out entryName);
                     extension = Path.GetExtension(download);
                     sha = Sha256Of(download);
                     log("  zip installer: " + entryName + " extracted, SHA256 " + sha);
