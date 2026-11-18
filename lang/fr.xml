@@ -720,8 +720,6 @@ Dernière session (AD) : {2}</translation>
 
 Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winget et qu'il soit signé de façon valide par l'éditeur (Publisher) de l'instance. Il est copié à côté du fichier actuel sous un nouveau nom, le paramètre File de l'instance est mis à jour et l'ancien fichier est déplacé dans le sous-dossier OLD. Vous devez avoir l'accès en écriture à ces dossiers du cache.</translation>
   <translation key="WebVersionsForm.Downloading">Téléchargement...</translation>
-  <translation key="WebVersionsForm.Downloaded">{0} : {1} téléchargé dans le cache ({2}).</translation>
-  <translation key="WebVersionsForm.DownloadFailed">{0} : non téléchargé. {1}</translation>
   <translation key="WebVersionsForm.NoVendorPage">Le manifeste winget ne donne aucune page d'éditeur pour ce produit.</translation>
   <translation key="WebVersionsForm.InvalidTime">Tapez l'heure de la vérification quotidienne au format HH:mm (par exemple 06:30).</translation>
   <translation key="WebVersions.NoCacheVersion">Version de {0} inconnue : définissez le paramètre Version.</translation>
@@ -731,6 +729,7 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="WebVersions.NotInWinget">{0} n'est pas dans la source winget.</translation>
   <translation key="WebVersions.CannotCompare">Versions impossibles à comparer : {0} / {1}</translation>
   <translation key="WebVersions.NoInstaller">Aucun programme d'installation {0} x64 dans le manifeste winget : téléchargez-le chez l'éditeur.</translation>
+  <translation key="WebVersions.ZipManual">Programme d'installation zip (contient un programme d'installation {0}, pas un seul fichier {1}) : téléchargez-le manuellement chez l'éditeur.</translation>
   <translation key="WebVersions.InvalidFile">Paramètre File invalide : {0}</translation>
   <translation key="WebVersions.FileMissing">Fichier introuvable dans le cache : {0}</translation>
   <translation key="WebVersions.InvalidFolder">Paramètre Folder invalide : {0}</translation>
@@ -751,6 +750,7 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="WebVersions.Step.DownloadingPercent">téléchargement {0} % ({1} / {2})</translation>
   <translation key="WebVersions.Step.DownloadingBytes">téléchargement ({0})</translation>
   <translation key="WebVersions.Step.Hash">vérification du SHA256</translation>
+  <translation key="WebVersions.Step.Extract">extraction du programme d'installation du zip</translation>
   <translation key="WebVersions.Step.Signature">vérification de la signature</translation>
   <translation key="WebVersions.Step.Copy">copie dans le cache</translation>
   <translation key="WebVersions.Step.Settings">mise à jour des paramètres</translation>
@@ -761,6 +761,16 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="WebVersionsForm.CheckCancelled">Vérification annulée après {0} : {1} instance(s) sur {2} vérifiée(s) ; les résultats obtenus sont conservés.</translation>
   <translation key="WebVersionsForm.DownloadDone">Téléchargement terminé en {0} : {1} téléchargé(s), {2} en échec.</translation>
   <translation key="WebVersionsForm.DownloadCancelled">Téléchargement annulé après {0} : {1} fichier(s) sur {2} traité(s), {3} téléchargé(s).</translation>
+  <translation key="WebVersionsForm.ShowDetails">Afficher les détails (messages complets et fichier journal) ?</translation>
+  <translation key="WebVersionsForm.DetailsTitle">Téléchargement dans le cache : détails</translation>
+  <translation key="CacheDownloadSummary.Ok">OK : {0}</translation>
+  <translation key="CacheDownloadSummary.OkWarning">OK : {0} (l'ancien fichier n'a pas été déplacé dans {1})</translation>
+  <translation key="CacheDownloadSummary.Refused">Refusé : {0} - {1}</translation>
+  <translation key="CacheDownloadSummary.Failed">Échec : {0} - {1}</translation>
+  <translation key="CacheDownloadSummary.NotProcessed">Annulé : {0} fichier(s) non traité(s).</translation>
+  <translation key="CacheDownloadSummary.NewFile">Paramètre File : {0}</translation>
+  <translation key="CacheDownloadSummary.Moved">Ancien fichier déplacé dans : {0}</translation>
+  <translation key="CacheDownloadSummary.Log">Fichier journal : {0}</translation>
   <translation key="MainForm.WebCheckStatus">Vérification Web quotidienne : {0}</translation>
   <translation key="CacheDownloader.TargetExists">{0} existe déjà dans le cache avec un autre contenu : rien n'a été modifié.</translation>
   <translation key="CacheDownloader.CopyHash">La copie dans le cache n'a pas le SHA256 attendu ({0}) : elle a été supprimée.</translation>
@@ -770,10 +780,27 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="CacheDownloader.Changed">Les paramètres de {0} ont changé depuis la vérification : vérifiez de nouveau.</translation>
   <translation key="CacheDownloader.NoPublisher">{0} : le paramètre Publisher est requis pour vérifier la signature du téléchargement.</translation>
   <translation key="CacheDownloader.HashMismatch">Le SHA256 du téléchargement ({0}) n'est pas celui du manifeste winget ({1}) : refusé.</translation>
-  <translation key="CacheDownloader.BadSignature">Le téléchargement n'est pas signé de façon valide par {0} ({1}) : refusé.</translation>
+  <translation key="CacheDownloader.HashMismatchShort">SHA256 différent de celui du manifeste winget</translation>
+  <translation key="CacheDownloader.NoValidSignatureShort">aucune signature valide ({0})</translation>
+  <translation key="CacheDownloader.NoValidSignature">Le téléchargement n'a aucune signature valide ({0}, signataire {1}) : refusé.</translation>
+  <translation key="CacheDownloader.SignedByOtherShort">signé par {0} au lieu de {1}</translation>
+  <translation key="CacheDownloader.SignedByOther">Le téléchargement est signé de façon valide, mais par {0} au lieu de {1} : refusé. Si cet éditeur a changé de nom, ajoutez {0} au paramètre Publisher de l'instance (noms séparés par ;). Signataire : {2}</translation>
+  <translation key="CacheDownloader.ZipType">le type de l'instance est {0}, pas msi ni exe</translation>
+  <translation key="CacheDownloader.ZipUnsafeShort">installeur zip : chemin non sécuritaire</translation>
+  <translation key="CacheDownloader.ZipUnsafe">Le zip contient un fichier au chemin non sécuritaire ({0}) : refusé.</translation>
+  <translation key="CacheDownloader.ZipNone">aucun fichier {0}</translation>
+  <translation key="CacheDownloader.ZipSeveral">{0} fichiers {1} : {2}</translation>
+  <translation key="CacheDownloader.ZipTooManyEntries">plus de {0} entrées</translation>
+  <translation key="CacheDownloader.ZipManualShort">installeur zip : à télécharger manuellement</translation>
+  <translation key="CacheDownloader.ZipManual">Programme d'installation zip ({0}) : LiteDeploy ne peut pas savoir quel programme d'installation garder. Téléchargez-le manuellement chez l'éditeur.</translation>
+  <translation key="CacheDownloader.ZipTooLargeShort">installeur zip : fichier trop gros</translation>
+  <translation key="CacheDownloader.ZipTooLarge">{0} dans le zip dépasse {1} octets : refusé.</translation>
   <translation key="CacheDownloader.Older">Le téléchargement ({0}) est plus ancien que le fichier du cache ({1}) : refusé.</translation>
+  <translation key="CacheDownloader.OlderShort">plus ancien que le fichier du cache</translation>
   <translation key="CacheDownloader.OtherPackage">Le téléchargement est le paquet {0}, pas {1} : refusé.</translation>
+  <translation key="CacheDownloader.OtherPackageShort">paquet {0}, pas {1}</translation>
   <translation key="CacheDownloader.MsixSigner">Le paquet n'est pas signé de façon valide par l'éditeur (Publisher) de son manifeste ({0}) : refusé.</translation>
+  <translation key="CacheDownloader.MsixSignerShort">non signé par l'éditeur (Publisher) de son manifeste</translation>
   <translation key="CacheDownloader.NotHttps">Téléchargement refusé : ce n'est pas une adresse HTTPS ({0}).</translation>
   <translation key="CacheDownloader.TooManyRedirects">Trop de redirections.</translation>
   <!-- Computer list: same filters as Software Updates; shared folders; Web versions empty states -->

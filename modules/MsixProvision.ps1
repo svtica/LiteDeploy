@@ -7,7 +7,7 @@
 # Parameter: Dependencies default= Dependency file names in the folder, separated by ; (default: the .appx and .msix files of a Dependencies subfolder)
 # Parameter: License default= License XML file name in the folder (default: none, -SkipLicense)
 # Parameter: Features default= Windows optional features to enable first, separated by ; (e.g. VirtualMachinePlatform)
-# Parameter: Publisher default= Expected organisation (O=) of the package signer (default: the Publisher of the package manifest)
+# Parameter: Publisher default= Expected organisation (O=) of the package signer, several separated by ; (default: the Publisher of the package manifest)
 # Parameter: WingetId default= winget package Id of the product, for the web version check of LiteDeploy (not used on the computers)
 # Install: yes
 # Instances: yes
@@ -35,7 +35,8 @@
     and administrators can write to, never C:\Windows\Temp), refuses every
     package file unless it has a valid Authenticode signature whose subject is
     the Publisher of its manifest (and, for the main package, whose
-    organisation is the Publisher parameter when it is set), enables the
+    organisation is one of those of the Publisher parameter when it is set),
+    enables the
     optional features of the Features parameter, then runs
     Add-AppxProvisionedPackage -Online -Regions all with the dependencies and
     the license (else -SkipLicense). The work folder is removed and the result
@@ -53,7 +54,10 @@
                       architectures this computer runs
         License       license XML file name in Folder; default: -SkipLicense
         Features      optional features to enable first, separated by ";"
-        Publisher     expected organisation (O=) of the signer of the package
+        Publisher     expected organisation (O=) of the signer of the package;
+                      several separated by ";" (any one is accepted, e.g.
+                      the old and the new name of a vendor that renamed
+                      itself)
         WingetId      winget package Id, read by LiteDeploy only (Tools > Web
                       versions...); ignored by this script
     See docs/modules.md for the contract and the cache layout.
@@ -210,8 +214,49 @@ function Format-DistinguishedName([string] $Name) {
     return $dn.Decode([Security.Cryptography.X509Certificates.X500DistinguishedNameFlags]::None)
 }
 
+# Organisations of the Publisher parameter: separated by ; (a vendor that renamed itself signs with
+# its new name), trimmed, without empty ones; a name in double quotes keeps a ; it holds
+function Get-PublisherNames([string] $Publisher) {
+    $names = New-Object System.Collections.Generic.List[string]
+    $current = New-Object System.Text.StringBuilder
+    $quoted = $false
+    foreach ($c in (([string]$Publisher) + ';').ToCharArray()) {
+        if ($c -eq [char]'"') { $quoted = -not $quoted }
+        if ($c -eq [char]';' -and -not $quoted) {
+            $name = $current.ToString().Trim()
+            if ($name.Length -ge 2 -and $name.StartsWith('"') -and $name.EndsWith('"')) { $name = $name.Substring(1, $name.Length - 2).Trim() }
+            if ($name -and -not $names.Contains($name)) { $names.Add($name) }
+            $null = $current.Clear()
+        }
+        else { $null = $current.Append($c) }
+    }
+    if ($current.Length -gt 0) {
+        # Unbalanced quote: the rest is one name
+        $name = $current.ToString().TrimEnd(';').Trim().Trim('"').Trim()
+        if ($name -and -not $names.Contains($name)) { $names.Add($name) }
+    }
+    return $names.ToArray()
+}
+
+# O=<one of the organisations of Publisher> in a certificate subject (quoted when it has a comma)
+function Test-SubjectOrganisation([string] $Subject, [string] $Publisher) {
+    foreach ($name in @(Get-PublisherNames $Publisher)) {
+        $escaped = [regex]::Escape($name)
+        if ($Subject -match "(^|,\s*)O=(`"?)$escaped\2\s*(,|$)") { return $true }
+    }
+    return $false
+}
+
+# The O= value of a certificate subject, without its quotes ('' when there is none)
+function Get-SubjectOrganisation([string] $Subject) {
+    $m = [regex]::Match([string]$Subject, '(?:^|,)\s*O=(?:"(?<q>(?:[^"]|"")*)"|(?<v>[^,]*))')
+    if (-not $m.Success) { return '' }
+    if ($m.Groups['q'].Success) { return $m.Groups['q'].Value.Replace('""', '"').Trim() }
+    return $m.Groups['v'].Value.Trim()
+}
+
 # Throws unless the package file has a valid Authenticode signature whose subject is the Publisher
-# of its manifest and, when given, whose organisation (O=) is $Organisation
+# of its manifest and, when given, whose organisation (O=) is one of those of $Organisation
 function Assert-PackageSignature($Package, [string] $Organisation) {
     $leaf = Split-Path -Leaf $Package.Path
     $sig = Get-AuthenticodeSignature -LiteralPath $Package.Path
@@ -220,9 +265,11 @@ function Assert-PackageSignature($Package, [string] $Organisation) {
     if ((Format-DistinguishedName $subject) -ne (Format-DistinguishedName $Package.Publisher)) {
         throw "Package refused: $leaf is signed by '$subject', not by the Publisher of its manifest '$($Package.Publisher)'"
     }
-    if ($Organisation) {
-        $pattern = '(^|,\s*)O=("?)' + [regex]::Escape($Organisation) + '\2(,|$)'
-        if ($subject -notmatch $pattern) { throw "Package refused: $leaf is signed by '$subject', not by $Organisation" }
+    if (@(Get-PublisherNames $Organisation).Count -gt 0 -and -not (Test-SubjectOrganisation $subject $Organisation)) {
+        $actual = Get-SubjectOrganisation $subject
+        if (-not $actual) { $actual = $subject }
+        $expected = @(Get-PublisherNames $Organisation) -join '; '
+        throw "Package refused: $leaf is signed by $actual instead of $expected; add it to Publisher (separated by ;) if this vendor renamed itself (signer '$subject')"
     }
 }
 
