@@ -10,8 +10,15 @@
 //          the signer of this worker; an unsigned script runs only when
 //          LiteDeploy allows it explicitly (--allow-unsigned-modules). Contract
 //          of a module: docs/modules.md.
+//          Parameters (contract v2): LiteDeploy writes <Name>.params next to the
+//          script (administrators and SYSTEM only); the worker reads it, deletes
+//          it at once and gives the values declared in the header to the module
+//          process only, as LITEDEPLOY_PARAM_<Name>; secret values are masked in
+//          the messages.
 // -----------------------------------------------------------------------------
 using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -49,6 +56,69 @@ namespace LiteDeploy.Worker
             return Path.Combine(ModulesDir, module.ModuleName + ".ps1");
         }
 
+        public static string ParametersPath(UpdatePackage module)
+        {
+            return Path.Combine(ModulesDir, module.ModuleName + ModuleParameters.FileExtension);
+        }
+
+        /// <summary>
+        /// The values of the parameter file of the module, which is deleted at once (also when it
+        /// cannot be read): empty when there is none.
+        /// </summary>
+        public static Dictionary<string, string> TakeParameters(UpdatePackage module)
+        {
+            string path = ParametersPath(module);
+            try
+            {
+                if (!File.Exists(path)) return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                return ModuleParameters.ParseFile(File.ReadAllText(path, Encoding.UTF8));
+            }
+            catch (Exception)
+            {
+                // Unreadable: the required parameters are then reported missing (no content in the message)
+                return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            }
+            finally
+            {
+                DeleteParameters(module);
+            }
+        }
+
+        /// <summary>Deletes the parameter file of the module, if any (end of the run, also on failure).</summary>
+        public static void DeleteParameters(UpdatePackage module)
+        {
+            try
+            {
+                string path = ParametersPath(module);
+                if (File.Exists(path)) File.Delete(path);
+            }
+            catch (Exception) { }
+        }
+
+        /// <summary>
+        /// Environment of the module process: any LITEDEPLOY_PARAM_ variable inherited is removed,
+        /// then the values of this module are set. Pure logic, unit-tested.
+        /// </summary>
+        public static void ApplyEnvironment(StringDictionary target, IDictionary<string, string> environment)
+        {
+            List<string> inherited = new List<string>();
+            foreach (string key in target.Keys)
+                if (key.StartsWith(ModuleParameters.EnvironmentPrefix, StringComparison.OrdinalIgnoreCase)) inherited.Add(key);
+            foreach (string key in inherited) target.Remove(key);
+            if (environment == null) return;
+            foreach (KeyValuePair<string, string> v in environment) target[v.Key] = v.Value;
+        }
+
+        /// <summary>The result with every secret value masked (message and versions).</summary>
+        public static ModuleResult MaskSecrets(ModuleResult r, IList<string> secrets)
+        {
+            if (r == null || secrets == null || secrets.Count == 0) return r;
+            r.Message = ModuleParameters.MaskSecrets(r.Message, secrets);
+            r.Installed = ModuleParameters.MaskSecrets(r.Installed, secrets);
+            r.Available = ModuleParameters.MaskSecrets(r.Available, secrets);
+            return r;
+        }
+
         /// <summary>
         /// Whether a script with this signature verdict may run as SYSTEM. Accepted: signed by an
         /// expected publisher. Unsigned (whatever the worker): only when explicitly allowed. A
@@ -71,6 +141,15 @@ namespace LiteDeploy.Worker
         /// <summary>Runs "-Action Check" or "-Action Update"; a refused or missing script is reported as an error.</summary>
         public static ModuleResult Run(UpdatePackage module, string action, bool allowUnsigned, TimeSpan timeout)
         {
+            return Run(module, action, allowUnsigned, timeout, null);
+        }
+
+        /// <summary>
+        /// With <paramref name="parameters"/> (TakeParameters): the values of the parameters declared
+        /// in the header; a required one without value: error, the module is not started.
+        /// </summary>
+        public static ModuleResult Run(UpdatePackage module, string action, bool allowUnsigned, TimeSpan timeout, IDictionary<string, string> parameters)
+        {
             string script = ScriptPath(module);
             if (!File.Exists(script))
                 return Error("Module script not found: " + script);
@@ -81,6 +160,13 @@ namespace LiteDeploy.Worker
                 UpdateSignaturePolicy.ExpectedThumbprints(LiteSuiteThumbprint, running));
             if (!MayRun(verdict, allowUnsigned))
                 return Error("Module refused: " + verdict + " (" + signature.Status + ")");
+
+            // Parameters declared in the header of the (signed) script; values from LiteDeploy or the defaults
+            List<ModuleParameter> declared = ModuleParameters.ParseHeader(File.ReadLines(script).Take(20).ToList());
+            Dictionary<string, string> environment;
+            List<string> secrets;
+            string missing = ModuleParameters.Resolve(declared, parameters, out environment, out secrets);
+            if (missing != null) return Error(missing);
 
             string powershell = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "WindowsPowerShell", "v1.0", "powershell.exe");
             // The signature was checked above: the execution policy is not what protects this run
@@ -95,6 +181,8 @@ namespace LiteDeploy.Worker
                 StandardErrorEncoding = Encoding.UTF8,
                 WorkingDirectory = ModulesDir
             };
+            // Values for this process only, never on its command line
+            ApplyEnvironment(psi.EnvironmentVariables, environment);
 
             using (Process p = Process.Start(psi))
             {
@@ -107,7 +195,7 @@ namespace LiteDeploy.Worker
                 }
                 p.WaitForExit();
                 Task.WaitAll(new Task[] { stdout, stderr }, 10000);
-                return Interpret(p.ExitCode, stdout.IsCompleted ? stdout.Result : "", stderr.IsCompleted ? stderr.Result : "");
+                return MaskSecrets(Interpret(p.ExitCode, stdout.IsCompleted ? stdout.Result : "", stderr.IsCompleted ? stderr.Result : ""), secrets);
             }
         }
 

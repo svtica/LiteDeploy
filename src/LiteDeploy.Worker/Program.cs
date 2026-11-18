@@ -10,7 +10,8 @@
 //                                  [--timeout <minutes per winget call or module>]
 //                                  [--allow-unsigned-modules] [--cache \\server\share]
 //          A package "module:<Name>" is an update module, a PowerShell script
-//          copied by LiteDeploy to %windir%\LiteDeploy\modules (ModuleRunner).
+//          copied by LiteDeploy to %windir%\LiteDeploy\modules (ModuleRunner),
+//          with its parameter file, deleted at the end of the run.
 //          scan reports the installed and available version of each package;
 //          upgrade closes the package's processes and upgrades it when an
 //          upgrade is available. Results: WorkerProtocol lines on stdout.
@@ -93,13 +94,25 @@ namespace LiteDeploy.Worker
             string usageError = ParseArguments(args, out command, out packages, out timeoutMinutes, out allowUnsigned, out cache);
             // Shared cache of the installers, for the update modules (LITEDEPLOY_CACHE, docs/modules.md)
             if (cache != null) Environment.SetEnvironmentVariable("LITEDEPLOY_CACHE", cache);
-            if (usageError != null)
+            try
             {
-                Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeError, "message", usageError));
-                Console.Error.WriteLine("Usage: LiteDeploy.Worker.exe scan|upgrade --package \"Id|processes|label\" ... [--timeout minutes]");
-                return ExitUsage;
+                if (usageError != null)
+                {
+                    Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeError, "message", usageError));
+                    Console.Error.WriteLine("Usage: LiteDeploy.Worker.exe scan|upgrade --package \"Id|processes|label\" ... [--timeout minutes]");
+                    return ExitUsage;
+                }
+                return Run(command, packages, timeoutMinutes, allowUnsigned);
             }
+            finally
+            {
+                // Parameter files of the modules (docs/modules.md): never left behind, whatever happened
+                foreach (UpdatePackage p in packages.Where(x => x.IsModule)) ModuleRunner.DeleteParameters(p);
+            }
+        }
 
+        static int Run(string command, List<UpdatePackage> packages, int timeoutMinutes, bool allowUnsigned)
+        {
             string wingetPath = WingetClient.Locate();
             bool needsWinget = packages.Any(p => !p.IsModule);
             List<string> macs, ips;
@@ -173,8 +186,10 @@ namespace LiteDeploy.Worker
         // Update module: Check, then (upgrade) Update when it reports an update, then Check again
         static void RunModule(UpdatePackage module, string command, bool allowUnsigned, TimeSpan timeout, ref int failed, ref int upgraded)
         {
+            // Values of the parameters: read once, the file is deleted at once
+            Dictionary<string, string> parameters = ModuleRunner.TakeParameters(module);
             Progress(module, WorkerProtocol.StepChecking);
-            ModuleResult check = ModuleRunner.Run(module, "Check", allowUnsigned, timeout);
+            ModuleResult check = ModuleRunner.Run(module, "Check", allowUnsigned, timeout, parameters);
             Emit(ModuleMessage(module, check));
             if (check.Status == WorkerProtocol.StatusError) { failed++; return; }
             if (command != "upgrade") return;
@@ -196,13 +211,13 @@ namespace LiteDeploy.Worker
             }
 
             Progress(module, WorkerProtocol.StepUpgrading);
-            ModuleResult update = ModuleRunner.Run(module, "Update", allowUnsigned, timeout);
+            ModuleResult update = ModuleRunner.Run(module, "Update", allowUnsigned, timeout, parameters);
             bool ok = update.Status != WorkerProtocol.StatusError;
             if (ok) upgraded++; else failed++;
             Emit(UpgradeMessage(module, ok ? WorkerProtocol.ResultUpgraded : WorkerProtocol.ResultFailed,
                 update.ExitCode.ToString(), update.Message ?? (ok ? "OK" : "Failed")));
 
-            Emit(ModuleMessage(module, ModuleRunner.Run(module, "Check", allowUnsigned, timeout)));
+            Emit(ModuleMessage(module, ModuleRunner.Run(module, "Check", allowUnsigned, timeout, parameters)));
         }
 
         static string ModuleMessage(UpdatePackage module, ModuleResult r)

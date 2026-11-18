@@ -175,10 +175,24 @@ namespace LiteDeploy
             try { credential = UpdateCredential(); }
             catch (Exception ex) { result.Failure = ex.Message; return result; }
 
-            // Update modules: copied first to the administrators-only folder of the computer
-            String copyError = UpdateModules.CopyTo(computer, packages, credential);
-            if (copyError != null) { result.Failure = copyError; return result; }
+            // Update modules: copied first to the administrators-only folder of the computer, with
+            // their parameter files (deleted by the worker, and again here after the run)
+            bool parameterFiles;
+            String copyError = UpdateModules.CopyTo(computer, packages, credential, out parameterFiles);
+            try
+            {
+                if (copyError != null) { result.Failure = copyError; return result; }
+                return RunWorker(computer, command, packages, started, onMessage, credential, result);
+            }
+            finally
+            {
+                if (parameterFiles) UpdateModules.RemoveParameterFiles(computer, packages, credential);
+            }
+        }
 
+        static UpdateRunResult RunWorker(String computer, String command, IList<UpdatePackage> packages, Action<Process> started,
+            Action<WorkerMessage> onMessage, StoredCredential credential, UpdateRunResult result)
+        {
             // Enough for every winget call of every package (list, upgrade, list), plus the copy
             int timeoutMinutes = 5 + packages.Count * WingetTimeoutMinutes * (command == "upgrade" ? 3 : 1);
             int timeoutMs = (int)TimeSpan.FromMinutes(timeoutMinutes + 2).TotalMilliseconds;

@@ -456,6 +456,18 @@ Oui : par défaut. Non : jusqu'à la fermeture de LiteDeploy.</translation>
   <translation key="UpdateModules.Missing">Module {0} introuvable dans {1}.</translation>
   <translation key="UpdateModules.SharedUnreachable">Le dossier partagé des modules {0} est inaccessible : ses modules ne sont pas listés.</translation>
   <translation key="UpdateModules.CopyFailed">Impossible de copier les modules dans {0} : {1}</translation>
+  <translation key="UpdateModules.NoCredential">L'identifiant « {0} » du paramètre {1} du module {2} n'existe plus (Outils &gt; Identifiants).</translation>
+  <translation key="UpdateModules.ValueTooLong">La valeur du paramètre {0} du module {1} est trop longue ({2} caractères au plus).</translation>
+  <translation key="PackageListForm.parametersButton.Text">Paramètres...</translation>
+  <translation key="PackageListForm.NoParameters">Le module {0} n'a aucun paramètre.</translation>
+  <!-- ModuleParametersForm -->
+  <translation key="ModuleParametersForm.Text">Lite Deploy - Paramètres de {0}</translation>
+  <translation key="ModuleParametersForm.Info">Valeurs données au module sur chaque ordinateur (LITEDEPLOY_PARAM_&lt;Nom&gt;). Un paramètre secret utilise le mot de passe d'un identifiant conservé (Outils &gt; Identifiants) ; il n'est jamais affiché.</translation>
+  <translation key="ModuleParametersForm.Secret">secret</translation>
+  <translation key="ModuleParametersForm.NewCredential">Nouveau...</translation>
+  <translation key="ModuleParametersForm.Default">(par défaut : {0})</translation>
+  <translation key="ModuleParametersForm.None">(aucun)</translation>
+  <translation key="ModuleParametersForm.MissingCredential">{0} (n'existe plus)</translation>
   <translation key="SoftwareUpdatesForm.Paused">En pause</translation>
   <translation key="SoftwareUpdatesForm.NightOnlyNow">{0} ordinateur(s) ne sont mis à jour qu'en dehors des heures ouvrables ({1}). Les mettre à jour maintenant quand même ?
 

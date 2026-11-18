@@ -16,6 +16,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   skipped (the package list editor says so). Security is unchanged: the worker runs a module only
   with a valid signature from the expected publisher; the folder should be writable by IT
   administrators only (docs/modules.md).
+- Update module parameters (module contract version 2, backward compatible): a module declares
+  `# Parameter: <Name> [secret] [default=<value>] <description>` lines in its header and reads
+  `$env:LITEDEPLOY_PARAM_<Name>`, so one generic module can be configured (environment name,
+  installer file name in the cache, enrollment token...). The values are set in
+  *Package list > Parameters...* and saved in `%LOCALAPPDATA%\LiteDeploy\module-settings.xml`
+  (`packages.txt` does not change). A secret parameter takes a stored credential
+  (*Tools > Credentials*), chosen in a list; its password is never shown, never put on a command
+  line and masked (`***`) in the module results. For each run, LiteDeploy writes a parameter file
+  next to the module in `%windir%\LiteDeploy\modules` (SYSTEM and Administrators only); the worker
+  deletes it at once, gives the declared values to the module process only, and reports `error`
+  without starting the module when a required parameter has no value. See `docs/modules.md`.
 
 ### Changed
 
