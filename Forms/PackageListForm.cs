@@ -33,10 +33,14 @@ namespace LiteDeploy
             foreach (UpdatePackage p in packages)
                 packagesGrid.Rows.Add(p.Id, String.Join(", ", p.Processes), p.Label ?? "");
 
-            foreach (UpdateModule m in UpdateModules.List())
+            String modulesWarning;
+            foreach (UpdateModule m in UpdateModules.List(out modulesWarning))
                 modulesCombo.Items.Add(new ModuleItem { Module = m });
             if (modulesCombo.Items.Count > 0) modulesCombo.SelectedIndex = 0;
             addModuleButton.Enabled = modulesCombo.Items.Count > 0;
+            // Shared modules folder unreachable: the other modules are listed, the user is told why some are missing
+            if (modulesWarning != null)
+                Shown += (s, e) => MessageBox.Show(this, modulesWarning, Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
         sealed class ModuleItem

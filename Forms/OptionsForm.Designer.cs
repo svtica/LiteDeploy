@@ -42,6 +42,9 @@ namespace LiteDeploy
             this.themeCombo = new System.Windows.Forms.ComboBox();
             this.cacheLabel = new System.Windows.Forms.Label();
             this.cacheBox = new System.Windows.Forms.TextBox();
+            this.sharedModulesLabel = new System.Windows.Forms.Label();
+            this.sharedModulesBox = new System.Windows.Forms.TextBox();
+            this.sharedModulesButton = new System.Windows.Forms.Button();
             this.hoursLabel = new System.Windows.Forms.Label();
             this.hoursStartBox = new System.Windows.Forms.TextBox();
             this.hoursEndBox = new System.Windows.Forms.TextBox();
@@ -167,7 +170,7 @@ namespace LiteDeploy
             // 
             // ApplyButton
             // 
-            this.ApplyButton.Location = new System.Drawing.Point(237, 542);
+            this.ApplyButton.Location = new System.Drawing.Point(237, 588);
             this.ApplyButton.Name = "ApplyButton";
             this.ApplyButton.Size = new System.Drawing.Size(93, 23);
             this.ApplyButton.TabIndex = 6;
@@ -178,7 +181,7 @@ namespace LiteDeploy
             // cancelButton
             // 
             this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cancelButton.Location = new System.Drawing.Point(336, 542);
+            this.cancelButton.Location = new System.Drawing.Point(336, 588);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(93, 23);
             this.cancelButton.TabIndex = 7;
@@ -202,6 +205,9 @@ namespace LiteDeploy
             // 
             this.updatesGroup.Controls.Add(this.cacheLabel);
             this.updatesGroup.Controls.Add(this.cacheBox);
+            this.updatesGroup.Controls.Add(this.sharedModulesLabel);
+            this.updatesGroup.Controls.Add(this.sharedModulesBox);
+            this.updatesGroup.Controls.Add(this.sharedModulesButton);
             this.updatesGroup.Controls.Add(this.hoursLabel);
             this.updatesGroup.Controls.Add(this.hoursStartBox);
             this.updatesGroup.Controls.Add(this.hoursEndBox);
@@ -212,7 +218,7 @@ namespace LiteDeploy
             this.updatesGroup.Controls.Add(this.methodCombo);
             this.updatesGroup.Location = new System.Drawing.Point(12, 265);
             this.updatesGroup.Name = "updatesGroup";
-            this.updatesGroup.Size = new System.Drawing.Size(417, 265);
+            this.updatesGroup.Size = new System.Drawing.Size(417, 311);
             this.updatesGroup.TabIndex = 3;
             this.updatesGroup.TabStop = false;
             this.updatesGroup.Text = "Software updates";
@@ -224,50 +230,65 @@ namespace LiteDeploy
             this.cacheBox.Name = "cacheBox";
             this.cacheBox.Size = new System.Drawing.Size(379, 20);
             this.cacheBox.TabIndex = 11;
+            this.sharedModulesLabel.AutoSize = true;
+            this.sharedModulesLabel.Location = new System.Drawing.Point(17, 70);
+            this.sharedModulesLabel.Name = "sharedModulesLabel";
+            this.sharedModulesLabel.Text = "Shared update modules folder (optional):";
+            this.sharedModulesBox.Location = new System.Drawing.Point(20, 86);
+            this.sharedModulesBox.Name = "sharedModulesBox";
+            this.sharedModulesBox.Size = new System.Drawing.Size(298, 20);
+            this.sharedModulesBox.TabIndex = 12;
+            this.sharedModulesButton.Location = new System.Drawing.Point(324, 84);
+            this.sharedModulesButton.Name = "sharedModulesButton";
+            this.sharedModulesButton.Size = new System.Drawing.Size(75, 23);
+            this.sharedModulesButton.TabIndex = 13;
+            this.sharedModulesButton.Text = "Select";
+            this.sharedModulesButton.UseVisualStyleBackColor = true;
+            this.sharedModulesButton.Click += new System.EventHandler(this.sharedModulesButton_Click);
             this.hoursLabel.AutoSize = true;
-            this.hoursLabel.Location = new System.Drawing.Point(17, 74);
+            this.hoursLabel.Location = new System.Drawing.Point(17, 120);
             this.hoursLabel.Name = "hoursLabel";
             this.hoursLabel.Text = "Business hours (Monday to Friday, HH:mm):";
-            this.hoursStartBox.Location = new System.Drawing.Point(20, 90);
+            this.hoursStartBox.Location = new System.Drawing.Point(20, 136);
             this.hoursStartBox.Name = "hoursStartBox";
             this.hoursStartBox.Size = new System.Drawing.Size(60, 20);
-            this.hoursStartBox.TabIndex = 12;
-            this.hoursEndBox.Location = new System.Drawing.Point(90, 90);
+            this.hoursStartBox.TabIndex = 14;
+            this.hoursEndBox.Location = new System.Drawing.Point(90, 136);
             this.hoursEndBox.Name = "hoursEndBox";
             this.hoursEndBox.Size = new System.Drawing.Size(60, 20);
-            this.hoursEndBox.TabIndex = 13;
-            this.unsignedModulesCheckBox.Location = new System.Drawing.Point(20, 120);
+            this.hoursEndBox.TabIndex = 15;
+            this.unsignedModulesCheckBox.Location = new System.Drawing.Point(20, 166);
             this.unsignedModulesCheckBox.Name = "unsignedModulesCheckBox";
             this.unsignedModulesCheckBox.Size = new System.Drawing.Size(379, 40);
-            this.unsignedModulesCheckBox.TabIndex = 14;
+            this.unsignedModulesCheckBox.TabIndex = 16;
             this.unsignedModulesCheckBox.Text = "Run unsigned update modules (tests only: they run as SYSTEM on the computers)";
             this.unsignedModulesCheckBox.UseVisualStyleBackColor = true;
             this.accountLabel.AutoSize = true;
-            this.accountLabel.Location = new System.Drawing.Point(17, 166);
+            this.accountLabel.Location = new System.Drawing.Point(17, 212);
             this.accountLabel.Name = "accountLabel";
             this.accountLabel.Text = "Account (Tools > Credentials):";
             this.accountCombo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.accountCombo.Location = new System.Drawing.Point(20, 182);
+            this.accountCombo.Location = new System.Drawing.Point(20, 228);
             this.accountCombo.Name = "accountCombo";
             this.accountCombo.Size = new System.Drawing.Size(379, 21);
-            this.accountCombo.TabIndex = 15;
+            this.accountCombo.TabIndex = 17;
             this.methodLabel.AutoSize = true;
-            this.methodLabel.Location = new System.Drawing.Point(17, 214);
+            this.methodLabel.Location = new System.Drawing.Point(17, 260);
             this.methodLabel.Name = "methodLabel";
             this.methodLabel.Text = "Remote method:";
             this.methodCombo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.methodCombo.Location = new System.Drawing.Point(20, 230);
+            this.methodCombo.Location = new System.Drawing.Point(20, 276);
             this.methodCombo.Name = "methodCombo";
             this.methodCombo.Size = new System.Drawing.Size(379, 21);
-            this.methodCombo.TabIndex = 16;
-            // 
+            this.methodCombo.TabIndex = 18;
+            //
             // OptionsForm
             // 
             this.AcceptButton = this.ApplyButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.cancelButton;
-            this.ClientSize = new System.Drawing.Size(445, 577);
+            this.ClientSize = new System.Drawing.Size(445, 623);
             this.Controls.Add(this.cancelButton);
             this.Controls.Add(this.ApplyButton);
             this.Controls.Add(this.groupBox2);
@@ -305,6 +326,9 @@ namespace LiteDeploy
         private System.Windows.Forms.GroupBox updatesGroup;
         private System.Windows.Forms.Label cacheLabel;
         private System.Windows.Forms.TextBox cacheBox;
+        private System.Windows.Forms.Label sharedModulesLabel;
+        private System.Windows.Forms.TextBox sharedModulesBox;
+        private System.Windows.Forms.Button sharedModulesButton;
         private System.Windows.Forms.Label hoursLabel;
         private System.Windows.Forms.TextBox hoursStartBox;
         private System.Windows.Forms.TextBox hoursEndBox;

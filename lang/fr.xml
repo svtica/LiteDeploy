@@ -453,7 +453,8 @@ Oui : par défaut. Non : jusqu'à la fermeture de LiteDeploy.</translation>
   <translation key="ToolManager.Unsigned">Attention : LitePM n'est pas signé.</translation>
   <translation key="PackageListForm.moduleLabel.Text">Module de mise à jour :</translation>
   <translation key="PackageListForm.addModuleButton.Text">Ajouter le module</translation>
-  <translation key="UpdateModules.Missing">Module {0} introuvable dans {1} ni dans {2}.</translation>
+  <translation key="UpdateModules.Missing">Module {0} introuvable dans {1}.</translation>
+  <translation key="UpdateModules.SharedUnreachable">Le dossier partagé des modules {0} est inaccessible : ses modules ne sont pas listés.</translation>
   <translation key="UpdateModules.CopyFailed">Impossible de copier les modules dans {0} : {1}</translation>
   <translation key="SoftwareUpdatesForm.Paused">En pause</translation>
   <translation key="SoftwareUpdatesForm.NightOnlyNow">{0} ordinateur(s) ne sont mis à jour qu'en dehors des heures ouvrables ({1}). Les mettre à jour maintenant quand même ?
@@ -479,6 +480,9 @@ Oui : les mettre à jour maintenant. Non : les ignorer.</translation>
   <translation key="OptionsForm.hoursLabel.Text">Heures ouvrables (lundi au vendredi, HH:mm) :</translation>
   <translation key="OptionsForm.unsignedModulesCheckBox.Text">Exécuter les modules non signés (tests seulement : ils tournent en SYSTEM sur les ordinateurs)</translation>
   <translation key="OptionsForm.BadCache">Le cache doit être un dossier partagé : \\serveur\partage.</translation>
+  <translation key="OptionsForm.sharedModulesLabel.Text">Dossier partagé des modules de mise à jour (facultatif) :</translation>
+  <translation key="OptionsForm.sharedModulesButton.Text">Choisir</translation>
+  <translation key="OptionsForm.BadSharedModules">Le dossier partagé des modules doit être un chemin complet (partage réseau ou disque local).</translation>
   <translation key="OptionsForm.BadHours">Heures ouvrables : début et fin au format HH:mm, la fin après le début.</translation>
   <translation key="SoftwareUpdatesForm.cardItem.Text">Fiche du poste...</translation>
   <translation key="SoftwareUpdatesForm.wakeItem.Text">Réveiller (Wake-on-LAN)</translation>

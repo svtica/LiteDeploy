@@ -33,6 +33,7 @@ namespace LiteDeploy
             deploymentsCheckBox.Checked = current.ShowStandaloneDeployments;
             themeCombo.SelectedIndex = Math.Max(0, Array.IndexOf(Themes, current.Theme));
             cacheBox.Text = current.UpdateCacheShare ?? "";
+            sharedModulesBox.Text = current.SharedModulesFolder ?? "";
             hoursStartBox.Text = current.BusinessHoursStart;
             hoursEndBox.Text = current.BusinessHoursEnd;
             unsignedModulesCheckBox.Checked = current.AllowUnsignedModules;
@@ -65,6 +66,14 @@ namespace LiteDeploy
             }
         }
 
+        private void sharedModulesButton_Click(object sender, EventArgs e)
+        {
+            if (DirectoryBrowser.ShowDialog(this) == DialogResult.OK)
+            {
+                sharedModulesBox.Text = DirectoryBrowser.SelectedPath;
+            }
+        }
+
         private void ApplyButton_Click(object sender, EventArgs e)
         {
             // The settings that are not in this window are kept
@@ -76,12 +85,19 @@ namespace LiteDeploy
                 MessageBox.Show(this, Localization.T("OptionsForm.BadCache", "The cache must be a shared folder: \\\\server\\share."), Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+            String sharedModules = sharedModulesBox.Text.Trim();
+            if (sharedModules.Length > 0 && !IsFolderPath(sharedModules))
+            {
+                MessageBox.Show(this, Localization.T("OptionsForm.BadSharedModules", "The shared modules folder must be a full path (network share or local drive)."), Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
             if (!TimeSpan.TryParse(hoursStartBox.Text.Trim(), out start) || !TimeSpan.TryParse(hoursEndBox.Text.Trim(), out end) || end <= start)
             {
                 MessageBox.Show(this, Localization.T("OptionsForm.BadHours", "Business hours: start and end as HH:mm, the end after the start."), Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
             settings.UpdateCacheShare = cache;
+            settings.SharedModulesFolder = sharedModules;
             settings.BusinessHoursStart = start.ToString(@"hh\:mm");
             settings.BusinessHoursEnd = end.ToString(@"hh\:mm");
             settings.AllowUnsignedModules = unsignedModulesCheckBox.Checked;
@@ -115,6 +131,13 @@ namespace LiteDeploy
 
             DialogResult = DialogResult.OK;
             Close();
+        }
+
+        /// <summary>A full folder path (shared folder or local drive) without invalid characters.</summary>
+        static bool IsFolderPath(String path)
+        {
+            if (path.IndexOfAny(System.IO.Path.GetInvalidPathChars()) >= 0 || path.IndexOfAny(new[] { '*', '?' }) >= 0) return false;
+            return path.StartsWith(@"\\") ? path.Length > 4 : (path.Length >= 3 && path[1] == ':' && path[2] == '\\');
         }
     }
 }

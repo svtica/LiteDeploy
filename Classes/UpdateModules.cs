@@ -5,9 +5,10 @@
 // Date:    2026-11-12
 // Purpose: Update modules available to LiteDeploy (docs/modules.md): PowerShell
 //          scripts whose first lines say "# LiteDeploy-Module", in the modules
-//          folder next to LiteDeploy.exe (shipped, signed by the release) and in
-//          %LOCALAPPDATA%\LiteDeploy\modules (the administrator's own; same
-//          name wins). Before running the worker, LiteDeploy copies the modules
+//          folder next to LiteDeploy.exe (shipped, signed by the release), in the
+//          shared modules folder of the options (the IT team's) and in
+//          %LOCALAPPDATA%\LiteDeploy\modules (the administrator's own); same
+//          name: user > shared > shipped. Before the run, LiteDeploy copies the modules
 //          of the run to \\computer\ADMIN$\LiteDeploy\modules, a folder only
 //          administrators can write to.
 // -----------------------------------------------------------------------------
@@ -46,20 +47,77 @@ namespace LiteDeploy
             get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LiteDeploy", "modules"); }
         }
 
-        /// <summary>Every module found, by name (the administrator's own copy wins over the shipped one).</summary>
+        /// <summary>Shared modules folder of the IT team (App > Options > Software updates); null: none.</summary>
+        static public String SharedDir
+        {
+            get
+            {
+                String dir = UserSettings.Current.SharedModulesFolder;
+                return String.IsNullOrWhiteSpace(dir) ? null : dir.Trim();
+            }
+        }
+
+        /// <summary>The folders scanned, lowest precedence first: shipped, shared, the administrator's own.</summary>
+        static public List<String> Dirs
+        {
+            get { return new[] { ShippedDir, SharedDir, UserDir }.Where(d => d != null).ToList(); }
+        }
+
+        /// <summary>Every module found, by name (user folder > shared folder > shipped).</summary>
         static public List<UpdateModule> List()
         {
+            String warning;
+            return List(out warning);
+        }
+
+        /// <summary>With <paramref name="warning"/>: why the shared folder was skipped (unreachable), or null.</summary>
+        static public List<UpdateModule> List(out String warning)
+        {
+            List<String> skipped = new List<String>();
+            List<UpdateModule> modules = Scan(Dirs, ReadDir, skipped);
+            String shared = SharedDir;
+            warning = shared != null && skipped.Contains(shared)
+                ? Localization.F("UpdateModules.SharedUnreachable", "The shared modules folder {0} cannot be reached: its modules are not listed.", shared)
+                : null;
+            return modules;
+        }
+
+        /// <summary>
+        /// Scans <paramref name="dirs"/> in order; same name: the later folder wins. A folder whose
+        /// listing returns null (missing) or fails (unreachable share, access denied) is added to
+        /// <paramref name="skipped"/> and ignored. Pure logic, unit-tested.
+        /// </summary>
+        static public List<UpdateModule> Scan(IEnumerable<String> dirs, Func<String, IEnumerable<UpdateModule>> readDir, ICollection<String> skipped)
+        {
             Dictionary<String, UpdateModule> found = new Dictionary<String, UpdateModule>(StringComparer.OrdinalIgnoreCase);
-            foreach (String dir in new[] { ShippedDir, UserDir })
+            foreach (String dir in dirs)
             {
-                if (!Directory.Exists(dir)) continue;
-                foreach (String file in Directory.GetFiles(dir, "*.ps1"))
+                List<UpdateModule> modules;
+                try
                 {
-                    UpdateModule m = Read(file);
-                    if (m != null) found[m.Name] = m;
+                    IEnumerable<UpdateModule> read = readDir(dir);
+                    modules = read == null ? null : read.Where(m => m != null).ToList();
                 }
+                catch (IOException) { modules = null; }
+                catch (UnauthorizedAccessException) { modules = null; }
+                catch (System.Security.SecurityException) { modules = null; }
+                catch (ArgumentException) { modules = null; }
+                catch (NotSupportedException) { modules = null; }
+                if (modules == null)
+                {
+                    if (skipped != null) skipped.Add(dir);
+                    continue;
+                }
+                foreach (UpdateModule m in modules) found[m.Name] = m;
             }
             return found.Values.OrderBy(m => m.Name, StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        /// <summary>The modules of a folder; null when it does not exist or cannot be reached.</summary>
+        static IEnumerable<UpdateModule> ReadDir(String dir)
+        {
+            if (!Directory.Exists(dir)) return null;
+            return Directory.GetFiles(dir, "*.ps1").Select(Read);
         }
 
         static public UpdateModule Find(String name)
@@ -138,7 +196,7 @@ namespace LiteDeploy
             foreach (UpdatePackage p in modules)
             {
                 UpdateModule m = Find(p.ModuleName);
-                if (m == null) return Localization.F("UpdateModules.Missing", "Module {0} not found in {1} or {2}.", p.ModuleName, ShippedDir, UserDir);
+                if (m == null) return Localization.F("UpdateModules.Missing", "Module {0} not found in {1}.", p.ModuleName, String.Join(", ", Dirs));
                 File.Copy(m.Path, System.IO.Path.Combine(target, m.Name + ".ps1"), true);
             }
             return null;

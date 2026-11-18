@@ -28,6 +28,8 @@ namespace LiteDeploy
         public bool AllowUnsignedModules = false;
         /// <summary>Shared cache of the installers of the update modules (\\server\share), empty: none.</summary>
         public String UpdateCacheShare = "";
+        /// <summary>Shared folder of the IT team's update modules (usually a network share), empty: none.</summary>
+        public String SharedModulesFolder = "";
         /// <summary>Business hours, Monday to Friday (HH:mm): "outside business hours only" computers are not updated then.</summary>
         public String BusinessHoursStart = "07:00";
         public String BusinessHoursEnd = "17:00";
