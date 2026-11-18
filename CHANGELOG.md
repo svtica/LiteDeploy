@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- *Get the logs*: the extra log folders are now a setting, `ExtraLogFolders` in
+  `%LOCALAPPDATA%\LiteDeploy\settings.xml` (entries `label|folder under %windir%|newest files`,
+  separated by `;`), empty by default. The logs of the modules and of winget are still taken.
+- Generic wording in the documentation, the comments and the earlier entries of this file.
+
 ## [1.0.13] - 2026-11-17
 
 ### Added
@@ -110,15 +117,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   scheduler, the computer card and the copies to `ADMIN$` use the account chosen in *Options*
   (PsExec `-u -p -s`: the worker still runs as SYSTEM).
 - **Get the logs** (right-click): logs of the modules, newest winget logs of SYSTEM and logs of
-  the MAJ-Logiciels tool, copied to `%LOCALAPPDATA%\LiteDeploy\logs\<computer>\<date>`.
+  an earlier in-house update script, copied to `%LOCALAPPDATA%\LiteDeploy\logs\<computer>\<date>`.
 - **Processes and handles** (right-click): processes of a computer, the most handles first,
   with private memory and threads (`LiteDeploy.Worker.exe processes`).
 - **PowerShell module** `powershell\LiteDeploy` (docs/powershell.md): state, package list,
-  worker, pause, Wake-on-LAN from scripts, for the MAJ-Logiciels tool to live next to
+  worker, pause, Wake-on-LAN from scripts, for existing update scripts to live next to
   LiteDeploy. Signed with the release; CI imports it and checks it.
 
 - **Scheduled updates** (*Tools > Scheduled Updates*, or *Schedule...* in Software Updates), from
-  the agent of the MAJ-Logiciels panel: a check or an update of a list of computers, once or on
+  the agent of the previous update panel: a check or an update of a list of computers, once or on
   some days at a time, Wake-on-LAN first if asked. Paused computers are skipped, and during
   business hours the "outside business hours only" ones. Two engines, switched in the window:
   internal (while LiteDeploy is open; a run missed while it was closed is not caught up) or
@@ -129,7 +136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Wake-on-LAN** (right-click): magic packets to the MAC addresses the worker reported, kept in
   the state file while the computer is off.
 
-- Software updates, from the MAJ-Logiciels panel of Patrick Bédard:
+- Software updates, from the previous update panel:
   - right-click a computer: **pause** it (with a reason; skipped by Check and Update until
     resumed) or mark it **outside business hours only** (during business hours, LiteDeploy asks
     before updating it);
@@ -140,12 +147,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - *App > Options*: theme (automatic, light, dark), shared cache, business hours, unsigned
   modules (tests).
 
-- Modules from the MAJ-Logiciels tool of Patrick Bédard, shipped in `modules\`: `AdobeReader`
+- Modules from an earlier in-house update script, shipped in `modules\`: `AdobeReader`
   (Reader and Acrobat MSP patches), `OnePassword` (per-machine MSI) and `OracleJava` (Java 8 with
   the system Java stopped and checked).
 
 - **Update modules** (docs/modules.md): signed PowerShell scripts that update a product winget
-  does not cover (inspired by the Adobe and 1Password modules of the MAJ-Logiciels tool).
+  does not cover (inspired by the Adobe and 1Password modules of an earlier update script).
   LiteDeploy copies them to `%windir%\LiteDeploy\modules` on the computer (administrators
   only) and the worker runs them as SYSTEM only when their Authenticode signature is valid and
   from the LiteSuite publisher; *Add module* in the package list editor. Template:
@@ -176,7 +183,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     scheduled task and no password stored on the computers. It checks the installed and
     available version of each winget package of the list, and on *Update* closes the
     package's processes and upgrades it. winget is found in the App Installer folder, as in
-    the MAJ-Logiciels tool of Patrick Bédard, whose package list format it reuses.
+    an earlier update script, whose package list format it reuses.
   - Package list: `updates/packages.txt` (example shipped with LiteDeploy), copied to
     `%LOCALAPPDATA%\LiteDeploy\packages.txt` by *Package list...*.
   - State of each computer in `%LOCALAPPDATA%\LiteDeploy\updates.xml`: read when the window
@@ -241,7 +248,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with the old certificate are refused.
 
 - Software updates, computer card, processes: the worker is started by **WinRM and a
-  one-time scheduled task as SYSTEM** by default, the method of the MAJ-Logiciels tool
+  one-time scheduled task as SYSTEM** by default, the method of an earlier update script
   (worker copied to `%windir%\LiteDeploy`, messages relayed from `%windir%\LiteDeploy\work`,
   task and file deleted at the end). PsExec stays available in *App > Options*.
 - Main window: the credentials group is titled *Credentials (standalone deployments)*;

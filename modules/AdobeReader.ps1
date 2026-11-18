@@ -4,8 +4,7 @@
 <#
 .SYNOPSIS
     LiteDeploy update module: Adobe Acrobat Reader and Acrobat (MSI installs)
-    patched with Adobe's MSP files, from the MAJ-Logiciels tool of Patrick
-    Bedard.
+    patched with Adobe's MSP files, from an earlier in-house update script.
 
 .DESCRIPTION
     Each installed product is recognized by its MSI product code (its display

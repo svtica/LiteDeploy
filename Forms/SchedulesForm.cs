@@ -3,7 +3,7 @@
 // File:    SchedulesForm.cs
 // Author:  LiteDeploy contributors
 // Date:    2026-11-12
-// Purpose: Scheduled Updates window (agent of the MAJ-Logiciels panel): list of
+// Purpose: Scheduled Updates window (agent of the previous update panel): list of
 //          the schedules, add, edit, delete, run now, logs; engine switch
 //          between internal and Windows scheduled tasks (the tasks are created
 //          or removed accordingly).

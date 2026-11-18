@@ -3,7 +3,7 @@
     LiteDeploy PowerShell module: the software updates of LiteDeploy from scripts.
 
 .DESCRIPTION
-    Lets the scripts of the MAJ-Logiciels tool (and others) live next to
+    Lets existing update scripts live next to
     LiteDeploy: they read and change the same files and run the same worker.
       - Get-LiteDeployState         state of the computers (updates.xml)
       - Get-LiteDeployPackage       package list (packages.txt)

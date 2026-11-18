@@ -35,7 +35,7 @@ name without `.ps1`) has letters, digits and `. - _` only.
 
 ## Shipped modules
 
-From the MAJ-Logiciels tool of Patrick Bédard:
+From an earlier in-house update script:
 
 | Module | Product | How |
 |---|---|---|

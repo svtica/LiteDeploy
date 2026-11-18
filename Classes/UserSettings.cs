@@ -39,6 +39,8 @@ namespace LiteDeploy
         public String RemoteMethod = RemoteRunner.WinRm;
         /// <summary>Main window: the standalone deployments (file or command run through PsExec). Hidden by default.</summary>
         public bool ShowStandaloneDeployments = false;
+        /// <summary>Get the logs: extra folders, "label|folder under %windir%|newest files" separated by ';' (RemoteLogs.ParseExtraFolders). Empty: none.</summary>
+        public String ExtraLogFolders = "";
 
         /// <summary>A copy, so a window can change some settings and keep the others.</summary>
         public UserSettings Clone()

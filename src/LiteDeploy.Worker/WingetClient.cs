@@ -5,7 +5,7 @@
 // Date:    2026-11-12
 // Purpose: Finds and runs winget.exe. As SYSTEM, winget is not on the PATH: it
 //          is taken from the newest App Installer folder under WindowsApps
-//          (finding of the MAJ-Logiciels tool, which runs it as SYSTEM).
+//          (finding of an earlier update script, which runs it as SYSTEM).
 // -----------------------------------------------------------------------------
 using System;
 using System.Diagnostics;

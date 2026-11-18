@@ -4,7 +4,7 @@
 <#
 .SYNOPSIS
     LiteDeploy update module: Oracle Java Runtime Environment 8 (winget package
-    Oracle.JavaRuntimeEnvironment), from the MAJ-Logiciels tool of Patrick Bedard.
+    Oracle.JavaRuntimeEnvironment), from an earlier in-house update script.
 
 .DESCRIPTION
     winget removes the old Java before installing the new one and fails while

@@ -3,7 +3,7 @@
 // File:    WakeOnLan.cs
 // Author:  LiteDeploy contributors
 // Date:    2026-11-12
-// Purpose: Wake-on-LAN magic packets, from the MAJ-Logiciels panel: the MAC
+// Purpose: Wake-on-LAN magic packets, from the previous update panel: the MAC
 //          addresses come from the computers themselves (worker), kept in the
 //          state file while they are off. Sent to the local broadcast and to
 //          the /24 broadcast of the last known address of the computer (routers

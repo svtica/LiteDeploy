@@ -7,13 +7,13 @@ Ideas kept for later. Nothing here is planned for a given version.
 - **Software updates**, done: winget packages, selection of the rows to update, package list
   editor with winget search. Next steps:
   - update modules: done (docs/modules.md). Next: modules for Adobe Acrobat Reader and
-    1Password, from the MAJ-Logiciels tool;
+    1Password, from an earlier in-house update script;
   - a message to the logged-on user (`msg.exe`) before closing an application and after the
     update;
-  - the network identity check of the MAJ-Logiciels panel (Kerberos) before connecting;
+  - the network identity check of the previous update panel (Kerberos) before connecting;
   - credentials other than the current user.
 
-## Features of the MAJ-Logiciels panel (Patrick Bédard)
+## Features of the previous update panel
 
 Kept, in three steps:
 
