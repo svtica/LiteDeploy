@@ -10,9 +10,14 @@
 //          shared installer cache. Runs on the administrator's computer only,
 //          never on the managed computers. Results kept in
 //          %LOCALAPPDATA%\LiteDeploy\web-versions.xml; optional daily check
-//          (internal scheduler of the main window). Version comparison, targets,
+//          (internal scheduler of the main window). Each step is reported
+//          (WebVersionProgress); a check can be cancelled: it stops after the
+//          items under way and keeps the results already obtained. Up to 3
+//          "winget show" run at a time, after a first one alone (it refreshes
+//          the winget source when it is stale). Version comparison, targets,
 //          rows of the window (every instance, checked or not), empty states,
-//          winget arguments and schedule are pure logic, unit-tested.
+//          winget arguments, schedule, the run loop (with a fake check) and the
+//          merge of partial results are pure logic, unit-tested.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -95,6 +100,10 @@ namespace LiteDeploy
         /// <summary>Last daily check (App setting "check every day at HH:mm").</summary>
         public DateTime? LastScheduledCheck;
         [XmlElement("Entry")] public List<WebVersionEntry> Entries = new List<WebVersionEntry>();
+        /// <summary>Last check: instances checked (fewer than the instances when it was cancelled).</summary>
+        [XmlIgnore] public int CheckedCount;
+        /// <summary>Last check cancelled: the instances not reached keep their previous result.</summary>
+        [XmlIgnore] public bool Cancelled;
 
         static public String DefaultPath
         {
@@ -401,8 +410,18 @@ namespace LiteDeploy
 
         // ---- Check (winget, cache) ----------------------------------------------------------
 
-        /// <summary>Checks every target; each result is logged and kept in web-versions.xml.</summary>
-        static public WebVersionResults CheckAll(Action<WebVersionEntry> progress)
+        /// <summary>
+        /// "winget show" run at a time. Tested with concurrent read-only "winget show" calls on public
+        /// packages: same output and exit codes as one at a time. The first item still runs alone (see RunChecks).
+        /// </summary>
+        public const int MaxParallelWinget = 3;
+
+        /// <summary>
+        /// Checks every target (each step reported to <paramref name="progress"/>); each result is logged and
+        /// kept in web-versions.xml. Cancelled: stops after the items under way, keeps the results obtained
+        /// (and the previous results of the instances not reached) and saves them.
+        /// </summary>
+        static public WebVersionResults CheckAll(IProgress<WebVersionProgress> progress, CancellationToken token)
         {
             String cache = UserSettings.Current.UpdateCacheShare;
             List<WebVersionTarget> targets = Targets(ModuleSettings.Load());
@@ -410,25 +429,114 @@ namespace LiteDeploy
             Log("Web check started: " + targets.Count + " instance(s), cache " + (String.IsNullOrWhiteSpace(cache) ? "(none)" : cache)
                 + ", winget " + (winget ?? "not found"));
             WebVersionResults results = WebVersionResults.Load(WebVersionResults.DefaultPath);
-            results.Entries.Clear();
-            foreach (WebVersionTarget t in targets)
+            bool completed;
+            Dictionary<String, WebVersionEntry> checkedEntries = RunChecks(targets, (t, step) =>
             {
-                WebVersionEntry e = Check(t, cache, winget);
+                WebVersionEntry e = Check(t, cache, winget, step);
                 Log("  " + e.Key + " [" + (e.WingetId ?? "-") + "]: " + e.Status + ", cache " + (e.CacheVersion ?? "?") + ", web " + (e.WebVersion ?? "?")
                     + (e.Message != null ? " (" + e.Message + ")" : ""));
-                results.Entries.Add(e);
-                if (progress != null) progress(e);
-            }
+                return e;
+            }, winget == null ? 1 : MaxParallelWinget, progress, token, out completed);
+            results.Entries = Merge(results.Entries, targets, checkedEntries);
+            results.CheckedCount = checkedEntries.Count;
+            results.Cancelled = !completed;
             results.LastCheck = DateTime.Now;
             try { results.Save(WebVersionResults.DefaultPath); }
             catch (Exception ex) { Log("  results file: " + ex.Message); }
-            Log("Web check finished: " + results.Entries.Count(e => e.Status == WebVersionStatus.NewerOnWeb) + " newer on the web");
+            Log((completed ? "Web check finished: " : "Web check cancelled after " + checkedEntries.Count + " of " + targets.Count + " instance(s): ")
+                + results.Entries.Count(e => e.Status == WebVersionStatus.NewerOnWeb) + " newer on the web");
             return results;
         }
 
-        /// <summary>Checks one instance: version of its file in the cache, then winget.</summary>
-        static public WebVersionEntry Check(WebVersionTarget t, String cacheRoot, String winget)
+        /// <summary>
+        /// Runs <paramref name="check"/> on the targets, in their order, <paramref name="parallel"/> at a time at
+        /// most (the first one alone: a stale winget source is then refreshed by a single process), and reports
+        /// each step and each result. Cancelled: no new item is started, the items under way finish.
+        /// Returns the results by key; <paramref name="completed"/>: every target was checked. An exception of
+        /// <paramref name="check"/> becomes an Error result. Unit-tested with a fake check.
+        /// </summary>
+        static public Dictionary<String, WebVersionEntry> RunChecks(IList<WebVersionTarget> targets,
+            Func<WebVersionTarget, Action<WebVersionStep>, WebVersionEntry> check, int parallel,
+            IProgress<WebVersionProgress> progress, CancellationToken token, out bool completed)
         {
+            Dictionary<String, WebVersionEntry> results = new Dictionary<String, WebVersionEntry>(StringComparer.OrdinalIgnoreCase);
+            Object gate = new Object();
+            int next = 0, done = 0;
+            int total = targets.Count;
+
+            Func<bool> processNext = () =>
+            {
+                int index;
+                lock (gate)
+                {
+                    if (token.IsCancellationRequested || next >= total) return false;
+                    index = next++;
+                }
+                WebVersionTarget t = targets[index];
+                Action<WebVersionStep> step = s => WebVersionProgressText.Report(progress, new WebVersionProgress
+                {
+                    Operation = WebVersionOperation.Check, Index = index + 1, Total = total, Done = Volatile.Read(ref done),
+                    Key = t.Key, Product = t.Product, Step = s
+                });
+                WebVersionEntry e;
+                try { e = check(t, step) ?? ErrorEntry(t, null); }
+                catch (Exception ex) { e = ErrorEntry(t, ex.Message); }
+                int n;
+                lock (gate)
+                {
+                    results[t.Key] = e;
+                    n = ++done;
+                }
+                WebVersionProgressText.Report(progress, new WebVersionProgress
+                {
+                    Operation = WebVersionOperation.Check, Index = index + 1, Total = total, Done = n,
+                    Key = t.Key, Product = t.Product, Step = WebVersionStep.Done, Entry = e
+                });
+                return true;
+            };
+
+            int workers = Math.Max(1, Math.Min(parallel, total));
+            if (workers > 1) processNext();
+            Task[] others = Enumerable.Range(0, workers - 1).Select(_ => Task.Run(() => { while (processNext()) { } })).ToArray();
+            while (processNext()) { }
+            Task.WaitAll(others);
+            completed = results.Count == total;
+            return results;
+        }
+
+        static WebVersionEntry ErrorEntry(WebVersionTarget t, String message)
+        {
+            return new WebVersionEntry
+            {
+                Key = t.Key, Module = t.Module, Instance = t.Instance, Product = t.Product, WingetId = t.WingetId, Type = t.Type,
+                Status = WebVersionStatus.Error, Message = message, Checked = DateTime.Now
+            };
+        }
+
+        /// <summary>
+        /// Entries kept after a check, in the order of the targets: the new result of each target, else (check
+        /// cancelled before it) its previous result. Instances that no longer exist are dropped. Pure logic, unit-tested.
+        /// </summary>
+        static public List<WebVersionEntry> Merge(IEnumerable<WebVersionEntry> previous, IEnumerable<WebVersionTarget> targets, IDictionary<String, WebVersionEntry> checkedEntries)
+        {
+            Dictionary<String, WebVersionEntry> old = new Dictionary<String, WebVersionEntry>(StringComparer.OrdinalIgnoreCase);
+            foreach (WebVersionEntry e in previous ?? Enumerable.Empty<WebVersionEntry>())
+                if (e != null && e.Key != null) old[e.Key] = e;
+            List<WebVersionEntry> merged = new List<WebVersionEntry>();
+            foreach (WebVersionTarget t in targets ?? Enumerable.Empty<WebVersionTarget>())
+            {
+                WebVersionEntry e;
+                if ((checkedEntries != null && checkedEntries.TryGetValue(t.Key, out e)) || old.TryGetValue(t.Key, out e))
+                    merged.Add(e);
+            }
+            return merged;
+        }
+
+        /// <summary>Checks one instance: version of its file in the cache, then winget (each step reported to <paramref name="step"/>).</summary>
+        static public WebVersionEntry Check(WebVersionTarget t, String cacheRoot, String winget, Action<WebVersionStep> step = null)
+        {
+            if (step == null) step = s => { };
+            step(WebVersionStep.CacheFile);
             WebVersionEntry e = new WebVersionEntry
             {
                 Key = t.Key, Module = t.Module, Instance = t.Instance, Product = t.Product, WingetId = t.WingetId,
@@ -464,6 +572,7 @@ namespace LiteDeploy
             }
 
             WingetShowInfo web = null;
+            step(WebVersionStep.Winget);
             try
             {
                 foreach (String type in InstallerTypesOf(t.Type).DefaultIfEmpty(null))
@@ -635,29 +744,27 @@ namespace LiteDeploy
 
         /// <summary>
         /// The daily check (main window timer): report only, unless "Download new versions
-        /// automatically" is on. Returns a one-line summary for the console.
+        /// automatically" is on. Each step is reported to <paramref name="progress"/> (status line of the
+        /// main window). Returns a one-line summary for the console.
         /// </summary>
-        static public String RunScheduled(bool autoDownload)
+        static public String RunScheduled(bool autoDownload, IProgress<WebVersionProgress> progress = null)
         {
-            WebVersionResults results = CheckAll(null);
+            WebVersionResults results = CheckAll(progress, CancellationToken.None);
             int newer = results.Entries.Count(e => e.Status == WebVersionStatus.NewerOnWeb);
             int downloaded = 0, failed = 0;
             if (autoDownload)
             {
                 CacheDownloader downloader = new CacheDownloader(Log);
-                foreach (WebVersionEntry e in results.Entries.Where(x => x.CanDownload).ToList())
+                List<CacheDownloadOutcome> outcomes = downloader.DownloadAll(results.Entries.Where(x => x.CanDownload).ToList(),
+                    UserSettings.Current.UpdateCacheShare, progress, CancellationToken.None);
+                foreach (CacheDownloadOutcome o in outcomes)
                 {
-                    try
+                    if (o.Result != null)
                     {
-                        CacheDownloadResult r = downloader.Download(e, UserSettings.Current.UpdateCacheShare);
-                        results.Set(r.Entry);
+                        results.Set(o.Result.Entry);
                         downloaded++;
                     }
-                    catch (Exception ex)
-                    {
-                        Log("  " + e.Key + ": download failed: " + ex.Message);
-                        failed++;
-                    }
+                    else failed++;
                 }
             }
             results.LastScheduledCheck = DateTime.Now;
