@@ -61,6 +61,13 @@ From an earlier in-house update script:
 | `AdobeReader` | Adobe Acrobat Reader and Acrobat (MSI installs, 32 and 64-bit, MUI) | Product recognized by its MSI product code; latest build among the versions winget knows; MSP patch from `ardownload2.adobe.com`, signed by Adobe, applied with `msiexec /p`. Outlook (Adobe add-ins) is not closed: when it blocks the patch, the message says so |
 | `OnePassword` | 1Password installed per machine | Latest version from winget; official MSI from `downloads.1password.com`, signed by AgileBits; `MANAGED_INSTALL=1 MANAGED_UPDATE=1`; old version removed first on 1638; Start menu host restarted if the MSI hangs on `AI_UnpinFromStartScreen` |
 | `OracleJava` | Oracle Java 8 (winget `Oracle.JavaRuntimeEnvironment`) | Stops only the system Java (bundled Java runtimes are left alone), upgrades with winget, checks that `java8path` still answers, asks for a restart (3010) when it stopped Java |
+| `PrinterDrivers` | Printer drivers listed in the shared cache (`<cache>\PrinterDrivers\drivers.csv`) | Check: every listed driver installed (`Get-PrinterDriver`), else `outdated` with the number missing; `error` without a cache or a readable list. Update: copies the package of each missing driver to `%windir%\LiteDeploy\work\PrinterDrivers`, refuses it unless its catalog (`.cat`) has a valid Authenticode signature, `pnputil /add-driver`, `Add-PrinterDriver`. No process closed, no printer created |
+| `TeamsBootstrapper` | New Microsoft Teams provisioned for all users (`MSTeams` package) | Check: provisioned version against the offline package of the cache (`<cache>\Teams\MSTeams-x64.msix`) when there is one; `notinstalled` when Teams is not provisioned. Update: `teamsbootstrapper.exe` from the cache or from Microsoft's documented link, signed by Microsoft Corporation, run with `-p` (or `-p -o <msix>` with the offline package, also signed by Microsoft); its JSON output must say `success`. Closes `ms-teams` |
+
+`PrinterDrivers` and `TeamsBootstrapper` are generic: their content comes from the shared installer
+cache (see below), nothing in the module is specific to an organisation. Like every module, they
+only act on computers where the check says `outdated`: `TeamsBootstrapper` updates the computers
+where Teams is already provisioned and reports `notinstalled` elsewhere.
 
 The winget packages of the same tool (7-Zip, Notepad++, VLC) are in the example package list,
 `updates/packages.txt`.
@@ -80,6 +87,51 @@ Internet, so a file changed in the cache is refused.
 The modules run as SYSTEM: on the computers they use the **computer account**
 (`DOMAIN\COMPUTER$`). Give *Domain Computers* read access to the share, and write access only if
 the computers should fill the cache themselves.
+
+### Cache layout
+
+```text
+<cache>\
+  Adobe\                        AdobeReader (filled by the computers when writable)
+  1Password\                    OnePassword (filled by the computers when writable)
+  PrinterDrivers\               PrinterDrivers (filled by an administrator, read only for the computers)
+    drivers.csv
+    ExampleVendor\Universal\x64\example.inf, example.cat, ...
+    ExampleVendor\Label\x64\label.inf, label.cat, ...
+  Teams\                        TeamsBootstrapper (filled by an administrator, read only for the computers)
+    teamsbootstrapper.exe       optional: downloaded from Microsoft when absent
+    MSTeams-x64.msix            optional offline package (also MSTeams-x86.msix, MSTeams-arm64.msix)
+```
+
+`PrinterDrivers\drivers.csv` has the columns `Name,Inf`: `Name` is the driver name exactly as
+`Get-PrinterDriver` shows it once installed (the model name in the INF), `Inf` the path of the INF
+relative to the `PrinterDrivers` folder. The whole folder of the INF is copied to the computer:
+give each driver package its own folder (an INF directly in `PrinterDrivers` is refused, and so is
+a path that leaves the folder). Several drivers of the same INF are staged once.
+
+```text
+Name,Inf
+Example Printer Driver,ExampleVendor\Universal\x64\example.inf
+Example Printer Driver PS,ExampleVendor\Universal\x64\example.inf
+Example Label Printer,ExampleVendor\Label\x64\label.inf
+```
+
+Use the extracted driver package of the vendor (INF, catalog and files), not its setup program.
+The module refuses a package whose catalog files (the `CatalogFile` entries of the INF, else the
+`.cat` files next to it) are missing or not validly signed; `pnputil` then checks the files of the
+package against the catalog when it stages it.
+
+`Teams\`: `teamsbootstrapper.exe` and the offline packages come from Microsoft's page *Bulk deploy
+the Microsoft Teams client* (learn.microsoft.com). Without a copy in the cache, the module
+downloads the bootstrapper from the link of that page
+(`https://go.microsoft.com/fwlink/?linkid=2243204&clcid=0x409`). Both files are refused unless they
+have a valid signature of Microsoft Corporation. Keep the bootstrapper current: Microsoft asks for
+its latest version. Without an offline package, the check has no version to compare with
+(Teams updates itself) and reports `uptodate` with the provisioned version; put a newer
+`MSTeams-<arch>.msix` in the cache to roll out a version.
+
+Permissions for these two folders: the computer accounts (*Domain Computers*) need **read**
+only; write access stays with the administrators who fill them.
 
 ## Writing a module
 
