@@ -602,4 +602,15 @@ Adresses IPv4 : {6}</translation>
   <translation key="RemoteRunner.PsExecFileNotFound">PsExec a copié le worker, mais Windows n'a pas pu le lancer (un antivirus retire souvent un exécutable déposé dans ADMIN$). Essayez la méthode WinRM (App &gt; Options).</translation>
   <translation key="OptionsForm.deploymentsCheckBox.Text">Afficher les déploiements autonomes (fichier ou commande par PsExec)</translation>
   <translation key="MainForm.PsExecNeeded">Les déploiements autonomes ont besoin de PsExec : téléchargez-le dans Outils &gt; Gérer les outils, ou placez PsExec.exe à côté de LiteDeploy.exe.</translation>
+  <translation key="SoftwareUpdatesForm.installItem.Text">Installer</translation>
+  <translation key="SoftwareUpdatesForm.InstallPackageItem">{0} ({1} ordinateur(s))</translation>
+  <translation key="SoftwareUpdatesForm.NothingToInstall">Aucun paquet à installer : selon la dernière vérification des ordinateurs sélectionnés, chaque paquet est installé, ou le module ne déclare pas l'action Installer.</translation>
+  <translation key="SoftwareUpdatesForm.ConfirmInstall">Installer {0} sur {1} ordinateur(s) ?
+
+Il n'est installé que là où la vérification indique toujours qu'il n'est pas installé : {2}</translation>
+  <translation key="SoftwareUpdatesForm.NightOnlyInstallNow">{0} ordinateur(s) ne sont mis à jour qu'en dehors des heures ouvrables ({1}). Y installer maintenant quand même ?
+
+Oui : installer maintenant. Non : les ignorer.</translation>
+  <translation key="SoftwareUpdatesForm.StepInstalling">Installation...</translation>
+  <translation key="SoftwareUpdatesForm.Installed">Installé {0}</translation>
 </translations>

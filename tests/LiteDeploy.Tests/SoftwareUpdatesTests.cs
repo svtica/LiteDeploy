@@ -5,8 +5,9 @@
 // Date:    2026-11-12
 // Purpose: Unit tests of the software updates: worker protocol, package list,
 //          winget table reading (English and French headers, progress noise),
-//          worker arguments, the state file (written only on change) and the
-//          extra log folders setting.
+//          worker arguments, the state file (written only on change), the
+//          extra log folders setting and the explicit Install action (header,
+//          decision, worker and winget arguments).
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -160,7 +161,8 @@ namespace LiteDeploy.Tests
         {
             string command; List<UpdatePackage> packages; int timeout; bool unsigned;
             Assert.IsNotNull(Worker.Program.ParseArguments(new string[0], out command, out packages, out timeout, out unsigned));
-            Assert.IsNotNull(Worker.Program.ParseArguments(new[] { "install", "--package", "A.B" }, out command, out packages, out timeout, out unsigned));
+            Assert.IsNotNull(Worker.Program.ParseArguments(new[] { "remove", "--package", "A.B" }, out command, out packages, out timeout, out unsigned));
+            Assert.IsNotNull(Worker.Program.ParseArguments(new[] { "install" }, out command, out packages, out timeout, out unsigned), "install needs a package");
             Assert.IsNotNull(Worker.Program.ParseArguments(new[] { "scan" }, out command, out packages, out timeout, out unsigned));
             Assert.IsNotNull(Worker.Program.ParseArguments(new[] { "scan", "--package", "bad id" }, out command, out packages, out timeout, out unsigned));
             Assert.IsNotNull(Worker.Program.ParseArguments(new[] { "scan", "--package", "A.B", "--timeout", "0" }, out command, out packages, out timeout, out unsigned));
@@ -378,8 +380,12 @@ namespace LiteDeploy.Tests
                 Assert.IsTrue(header.Any(l => l.StartsWith("# Label:", StringComparison.Ordinal) && l.Length > "# Label:".Length + 1), path + ": # Label:");
                 Assert.IsTrue(header.Any(l => l.StartsWith("# Processes:", StringComparison.Ordinal)), path + ": # Processes:");
                 string text = String.Join("\n", lines);
-                foreach (string required in new[] { ".SYNOPSIS", ".DESCRIPTION", ".PARAMETER Action", "[ValidateSet('Check', 'Update')]", "$ErrorActionPreference = 'Stop'" })
+                foreach (string required in new[] { ".SYNOPSIS", ".DESCRIPTION", ".PARAMETER Action", "$ErrorActionPreference = 'Stop'" })
                     StringAssert.Contains(text, required, path);
+                // Install in the ValidateSet exactly when the header declares "# Install: yes"
+                StringAssert.Contains(text, InstallPolicy.DeclaresInstall(header)
+                    ? "[ValidateSet('Check', 'Update', 'Install')]"
+                    : "[ValidateSet('Check', 'Update')]", path);
                 Assert.AreEqual(resultFunction, ResultFunction(lines), path + ": Write-LiteDeployResult must be the one of the template");
             }
         }
@@ -416,6 +422,197 @@ namespace LiteDeploy.Tests
             string path = Path.Combine(RepoRoot(), "docs", "modules", "Template-Module.ps1");
             Assert.IsTrue(File.ReadAllBytes(path).All(b => b < 0x80), "the template must be ASCII only");
             Assert.IsNotNull(UpdateModules.Read(path));
+        }
+
+        [TestMethod]
+        public void ModuleTemplate_ShowsTheInstallAction()
+        {
+            string path = Path.Combine(RepoRoot(), "docs", "modules", "Template-Module.ps1");
+            Assert.IsTrue(UpdateModules.Read(path).Install, "the template declares # Install: yes");
+            string text = File.ReadAllText(path);
+            StringAssert.Contains(text, "[ValidateSet('Check', 'Update', 'Install')]");
+            StringAssert.Contains(text, "$Action -eq 'Install'");
+        }
+
+        // ---- Install action -----------------------------------------------------------
+
+        [TestMethod]
+        public void Install_Header_YesOnly_DefaultNo()
+        {
+            Assert.IsTrue(InstallPolicy.DeclaresInstall(new[] { "# LiteDeploy-Module", "# Install: yes" }));
+            Assert.IsTrue(InstallPolicy.DeclaresInstall(new[] { "﻿# install:  YES  " }));
+            Assert.IsFalse(InstallPolicy.DeclaresInstall(new[] { "# LiteDeploy-Module", "# Label: Example" }), "default: no");
+            Assert.IsFalse(InstallPolicy.DeclaresInstall(new[] { "# Install: no" }));
+            Assert.IsFalse(InstallPolicy.DeclaresInstall(new[] { "# Install: yes please" }));
+            Assert.IsFalse(InstallPolicy.DeclaresInstall(new[] { "# Install:" }));
+            Assert.IsFalse(InstallPolicy.DeclaresInstall(new[] { "#Install: yes" }));
+            Assert.IsFalse(InstallPolicy.DeclaresInstall(null));
+        }
+
+        [TestMethod]
+        public void Install_ModuleHeader_ParsedWithLabelProcessesAndParameters()
+        {
+            UpdateModule m = UpdateModules.Parse("Example", new[]
+            {
+                "# LiteDeploy-Module",
+                "# Label: Example product",
+                "# Processes: example",
+                "# Install: yes",
+                "# Parameter: Environment default=Production Name of the environment"
+            }, "x.ps1");
+            Assert.IsTrue(m.Install);
+            Assert.AreEqual("Example product", m.Label);
+            CollectionAssert.AreEqual(new[] { "example" }, m.Processes);
+            Assert.AreEqual(1, m.Parameters.Count);
+            Assert.IsFalse(UpdateModules.Parse("Example", new[] { "# LiteDeploy-Module", "# Label: Example" }, "x.ps1").Install);
+        }
+
+        [TestMethod]
+        public void Install_ModuleHeader_OnlyTheFirst20Lines()
+        {
+            string path = Path.GetTempFileName();
+            try
+            {
+                List<string> lines = new List<string> { "# LiteDeploy-Module" };
+                lines.AddRange(Enumerable.Repeat("# filler", 19));
+                lines.Add("# Install: yes");
+                File.WriteAllLines(path, lines);
+                UpdateModule m = UpdateModules.Read(path);
+                Assert.IsNotNull(m);
+                Assert.IsFalse(m.Install, "line 21 is not part of the header");
+            }
+            finally { File.Delete(path); }
+        }
+
+        [TestMethod]
+        public void Install_Decision()
+        {
+            // winget package: the module declaration does not matter
+            Assert.AreEqual(InstallDecision.Install, InstallPolicy.Decide(false, false, WorkerProtocol.StatusNotInstalled));
+            Assert.AreEqual(InstallDecision.AlreadyInstalled, InstallPolicy.Decide(false, false, WorkerProtocol.StatusUpToDate));
+            Assert.AreEqual(InstallDecision.AlreadyInstalled, InstallPolicy.Decide(false, false, WorkerProtocol.StatusOutdated));
+            Assert.AreEqual(InstallDecision.CheckFailed, InstallPolicy.Decide(false, false, WorkerProtocol.StatusError));
+            Assert.AreEqual(InstallDecision.CheckFailed, InstallPolicy.Decide(false, false, null));
+            // module: only with "# Install: yes"
+            Assert.AreEqual(InstallDecision.Install, InstallPolicy.Decide(true, true, WorkerProtocol.StatusNotInstalled));
+            Assert.AreEqual(InstallDecision.NotSupported, InstallPolicy.Decide(true, false, WorkerProtocol.StatusNotInstalled));
+            Assert.AreEqual(InstallDecision.NotSupported, InstallPolicy.Decide(true, false, WorkerProtocol.StatusUpToDate));
+            Assert.AreEqual(InstallDecision.AlreadyInstalled, InstallPolicy.Decide(true, true, WorkerProtocol.StatusOutdated));
+            Assert.AreEqual(InstallDecision.CheckFailed, InstallPolicy.Decide(true, true, WorkerProtocol.StatusError));
+
+            UpdatePackage winget = UpdatePackage.Parse("Example.Product");
+            UpdatePackage module = UpdatePackage.Parse("module:Example");
+            Assert.IsTrue(InstallPolicy.CanOffer(winget, WorkerProtocol.StatusNotInstalled, false));
+            Assert.IsFalse(InstallPolicy.CanOffer(winget, WorkerProtocol.StatusOutdated, false));
+            Assert.IsFalse(InstallPolicy.CanOffer(winget, null, false), "never checked: not offered");
+            Assert.IsTrue(InstallPolicy.CanOffer(module, WorkerProtocol.StatusNotInstalled, true));
+            Assert.IsFalse(InstallPolicy.CanOffer(module, WorkerProtocol.StatusNotInstalled, false));
+            Assert.IsFalse(InstallPolicy.CanOffer(null, WorkerProtocol.StatusNotInstalled, true));
+            StringAssert.Contains(InstallPolicy.NotSupportedMessage("Example"), "# Install: yes");
+        }
+
+        [TestMethod]
+        public void Install_Candidates_SelectedNotInstalledNotPausedDeclared()
+        {
+            UpdateStateStore store = new UpdateStateStore();
+            store.Apply("PC01", Messages(
+                WorkerProtocol.Format("type", "package", "id", "Example.Product", "status", "notinstalled"),
+                WorkerProtocol.Format("type", "package", "id", "module:Example", "status", "notinstalled"),
+                WorkerProtocol.Format("type", "package", "id", "module:Other", "status", "notinstalled")), null, DateTime.Now);
+            store.Apply("PC02", Messages(
+                WorkerProtocol.Format("type", "package", "id", "Example.Product", "status", "uptodate", "installed", "1.0"),
+                WorkerProtocol.Format("type", "package", "id", "module:Example", "status", "notinstalled")), null, DateTime.Now);
+            store.Apply("PC03", Messages(
+                WorkerProtocol.Format("type", "package", "id", "Example.Product", "status", "notinstalled")), null, DateTime.Now);
+            store.GetOrAdd("PC03").Paused = true;
+            List<UpdatePackage> packages = new List<UpdatePackage>
+            {
+                UpdatePackage.Parse("Example.Product | example | Example product"),
+                UpdatePackage.Parse("module:Example"),
+                UpdatePackage.Parse("module:Other"),
+                UpdatePackage.Parse("Never.Checked")
+            };
+
+            List<KeyValuePair<UpdatePackage, List<string>>> c = UpdateRunner.InstallCandidates(
+                new[] { "PC01", "PC02", "PC03", "pc01", "PC04" }, packages, store.Find, new[] { "example" });
+
+            CollectionAssert.AreEqual(new[] { "Example.Product", "module:Example" }, c.Select(x => x.Key.Id).ToArray());
+            CollectionAssert.AreEqual(new[] { "PC01" }, c[0].Value, "PC02 has it, PC03 is paused, PC04 never checked");
+            CollectionAssert.AreEqual(new[] { "PC01", "PC02" }, c[1].Value);
+            Assert.AreEqual(0, UpdateRunner.InstallCandidates(new[] { "PC02" }, packages.Take(1), store.Find, null).Count);
+        }
+
+        [TestMethod]
+        public void Install_WorkerArguments()
+        {
+            string command; List<UpdatePackage> packages; int timeout; bool unsigned;
+            Assert.IsNull(Worker.Program.ParseArguments(new[] { "INSTALL", "--package", "Example.Product|example|Example product", "--timeout", "15" },
+                out command, out packages, out timeout, out unsigned));
+            Assert.AreEqual(InstallPolicy.Command, command);
+            CollectionAssert.AreEqual(new[] { "Example.Product" }, packages.Select(p => p.Id).ToArray());
+
+            Assert.IsNull(Worker.Program.ParseArguments(new[] { "install", "--package", "module:Example||", "--allow-unsigned-modules" },
+                out command, out packages, out timeout, out unsigned));
+            Assert.IsTrue(packages[0].IsModule);
+            Assert.IsNotNull(Worker.Program.ParseArguments(new[] { "install", "--package", "bad id" }, out command, out packages, out timeout, out unsigned));
+            Assert.IsNotNull(Worker.Program.ParseArguments(new[] { "install", "--all" }, out command, out packages, out timeout, out unsigned));
+
+            // LiteDeploy passes only the package chosen
+            string args = UpdateRunner.BuildWorkerArguments(InstallPolicy.Command, new List<UpdatePackage> { UpdatePackage.Parse("Example.Product | example | Example product") });
+            Assert.AreEqual("install --package \"Example.Product|example|Example product\" --timeout 15", args);
+        }
+
+        [TestMethod]
+        public void Install_WingetArguments()
+        {
+            Assert.AreEqual("install --id Example.Product -e --scope machine --silent --accept-package-agreements --accept-source-agreements --disable-interactivity",
+                WingetClient.InstallArguments("Example.Product"));
+            foreach (string bad in new[] { null, "", "Bad Id", "A.B\" & calc", "module:Example" })
+            {
+                try { WingetClient.InstallArguments(bad); Assert.Fail("accepted: " + bad); }
+                catch (ArgumentException) { }
+            }
+        }
+
+        [TestMethod]
+        public void Install_WingetOutcome_SameRuleAsUpgrade()
+        {
+            Assert.AreEqual(WorkerProtocol.ResultInstalled, WingetClient.Outcome(0, WorkerProtocol.ResultInstalled));
+            Assert.AreEqual(WorkerProtocol.ResultUpgraded, WingetClient.Outcome(0, WorkerProtocol.ResultUpgraded));
+            Assert.AreEqual(WorkerProtocol.ResultSkipped, WingetClient.Outcome(WingetClient.NoApplicableUpgrade, WorkerProtocol.ResultInstalled));
+            Assert.AreEqual(WorkerProtocol.ResultFailed, WingetClient.Outcome(unchecked((int)0x80190193), WorkerProtocol.ResultInstalled));
+            Assert.AreEqual(WorkerProtocol.ResultFailed, WingetClient.Outcome(-1, WorkerProtocol.ResultInstalled));
+        }
+
+        [TestMethod]
+        public void Install_ModuleActions_AndSchedulesNeverInstall()
+        {
+            Assert.IsTrue(ModuleRunner.IsValidAction("Check"));
+            Assert.IsTrue(ModuleRunner.IsValidAction("Update"));
+            Assert.IsTrue(ModuleRunner.IsValidAction("Install"));
+            Assert.IsFalse(ModuleRunner.IsValidAction("install; calc"));
+            Assert.IsFalse(ModuleRunner.IsValidAction(null));
+
+            Assert.IsTrue(ScheduleRunner.IsScheduleCommand("scan"));
+            Assert.IsTrue(ScheduleRunner.IsScheduleCommand("upgrade"));
+            Assert.IsFalse(ScheduleRunner.IsScheduleCommand(InstallPolicy.Command));
+            Assert.IsFalse(ScheduleRunner.IsScheduleCommand(null));
+        }
+
+        [TestMethod]
+        public void Install_State_RecordsTheInstallResult()
+        {
+            UpdateStateStore store = new UpdateStateStore();
+            DateTime t1 = new DateTime(2026, 11, 17, 9, 0, 0);
+            store.Apply("PC01", Messages(
+                WorkerProtocol.Format("type", "package", "id", "A.B", "status", "notinstalled"),
+                WorkerProtocol.Format("type", "upgrade", "id", "A.B", "result", "installed", "code", "0x00000000", "message", "OK"),
+                WorkerProtocol.Format("type", "package", "id", "A.B", "status", "uptodate", "installed", "1.0")), null, t1);
+            PackageUpdateState p = store.Find("PC01").Find("A.B");
+            Assert.AreEqual("uptodate", p.Status);
+            Assert.AreEqual(WorkerProtocol.ResultInstalled, p.LastResult);
+            Assert.AreEqual(t1, p.LastUpgrade);
+            Assert.IsNull(store.Find("PC01").LastError);
         }
 
         // ---- Pause, business hours, cache, live ----------------------------------------

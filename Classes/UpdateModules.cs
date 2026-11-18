@@ -32,6 +32,8 @@ namespace LiteDeploy
         public String Path;
         /// <summary>Parameters of the header ("# Parameter: ..."), in their order.</summary>
         public List<ModuleParameter> Parameters = new List<ModuleParameter>();
+        /// <summary>The header declares "# Install: yes": the module accepts "-Action Install".</summary>
+        public bool Install;
 
         /// <summary>The package line of the module: "module:Name | processes | label".</summary>
         public UpdatePackage ToPackage()
@@ -144,8 +146,9 @@ namespace LiteDeploy
         }
 
         /// <summary>
-        /// Header: "# LiteDeploy-Module", then "# Label: ...", "# Processes: a, b" and any number of
-        /// "# Parameter: Name [secret] [default=value] description". Pure logic, unit-tested.
+        /// Header: "# LiteDeploy-Module", then "# Label: ...", "# Processes: a, b", "# Install: yes"
+        /// (optional) and any number of "# Parameter: Name [secret] [default=value] description".
+        /// Pure logic, unit-tested.
         /// </summary>
         static public UpdateModule Parse(String name, IEnumerable<String> firstLines, String path)
         {
@@ -166,6 +169,7 @@ namespace LiteDeploy
                 }
             }
             m.Parameters = ModuleParameters.ParseHeader(lines);
+            m.Install = InstallPolicy.DeclaresInstall(lines);
             return m;
         }
 

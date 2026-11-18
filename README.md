@@ -38,7 +38,8 @@ them (and for the PsExec method of the software updates); it is asked for when t
 - *Tools > Software Updates...*: one row per computer with its updates available and its errors
   (*Show packages*: one row per installed package). Check the computers (*Select all*, Ctrl+A),
   then *Check* (all the computers when none is checked) and *Update checked*. Packages that are
-  not installed are neither updates nor errors.
+  not installed are neither updates nor errors: they are installed only on explicit request
+  (right-click > *Install*).
 - No credential chosen: the first check of a session offers to add one (or use the stored one)
   and to make it the default.
 - `LiteDeploy.Worker.exe` runs as SYSTEM on the computer, started by one of two methods
@@ -55,8 +56,10 @@ them (and for the PsExec method of the software updates); it is asked for when t
 - The account is the current user or a stored credential (*Tools > Credentials*), chosen in
   *App > Options*. The deployment credentials of the main window (*Saved...*) come from the
   same store.
-- Right-click a computer: pause it, outside business hours only, computer card (logged-on
-  users, pending restart...), Wake-on-LAN. Each row shows the step in progress.
+- Right-click a computer: *Install* one package where the last check says it is not installed
+  (explicit, with a confirmation; modules only when they declare `# Install: yes`; never part of
+  *Update checked* or of the schedules), pause it, outside business hours only, computer card
+  (logged-on users, pending restart...), Wake-on-LAN. Each row shows the step in progress.
 - *Tools > Scheduled Updates*: check or update on a schedule, with the internal engine (while
   LiteDeploy is open) or Windows scheduled tasks (`LiteDeploy.exe /schedule <name>`).
 - **Update modules** for products winget does not cover: signed PowerShell scripts run as

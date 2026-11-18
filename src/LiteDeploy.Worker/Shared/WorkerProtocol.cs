@@ -34,7 +34,7 @@ namespace LiteDeploy
 
         // Message types
         public const string TypePackage = "package";   // state of one package (scan, and after an upgrade)
-        public const string TypeUpgrade = "upgrade";   // outcome of one upgrade
+        public const string TypeUpgrade = "upgrade";   // outcome of one upgrade (or one install)
         public const string TypeError = "error";       // the run could not be done (winget missing...)
         public const string TypeDone = "done";         // last line: summary
         public const string TypeModule = "module";     // written by an update module (status, versions, message)
@@ -44,6 +44,7 @@ namespace LiteDeploy
         public const string StepChecking = "checking";
         public const string StepClosing = "closing";
         public const string StepUpgrading = "upgrading";
+        public const string StepInstalling = "installing";
 
         // Package states
         public const string StatusUpToDate = "uptodate";
@@ -53,6 +54,7 @@ namespace LiteDeploy
 
         // Upgrade outcomes
         public const string ResultUpgraded = "upgraded";
+        public const string ResultInstalled = "installed";   // explicit Install action (type upgrade)
         public const string ResultFailed = "failed";
         public const string ResultSkipped = "skipped";
 

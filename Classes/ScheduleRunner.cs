@@ -8,7 +8,8 @@
 //          task): skips paused computers and, during business hours, the
 //          "outside business hours only" ones; wakes the computers first when
 //          asked; a few computers at a time; state file updated; a log per day
-//          in %LOCALAPPDATA%\LiteDeploy\logs.
+//          in %LOCALAPPDATA%\LiteDeploy\logs. Check or update only: a schedule
+//          never runs the Install action.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -45,6 +46,13 @@ namespace LiteDeploy
         {
             DateTime started = DateTime.Now;
             Log("Schedule \"" + schedule.Name + "\" (" + schedule.Command + ", " + schedule.Computers.Count + " computer(s)) started");
+            // Schedules check or update only: the Install action is never run by a schedule,
+            // even when the schedule file was edited by hand
+            if (!IsScheduleCommand(schedule.Command))
+            {
+                Finish(schedule.Name, started, "Refused: unknown action \"" + schedule.Command + "\" (scan or upgrade only)");
+                return -1;
+            }
 
             UpdateStateStore store = UpdateStateStore.Load(UpdateStateStore.DefaultPath);
             List<UpdatePackage> packages = UpdateRunner.LoadPackages();
@@ -106,6 +114,12 @@ namespace LiteDeploy
 
             Finish(schedule.Name, started, done + " OK, " + failed + " failed");
             return failed;
+        }
+
+        /// <summary>The worker commands a schedule may run: "scan" and "upgrade" (never "install"). Unit-tested.</summary>
+        static public bool IsScheduleCommand(String command)
+        {
+            return command == "scan" || command == "upgrade";
         }
 
         static String Summary(UpdateRunResult r)

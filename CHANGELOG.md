@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Explicit *Install* action for software not yet on a computer (*Tools > Software Updates*,
+  right-click > *Install*): one package, chosen by the administrator, on the selected computers
+  where the last check says `notinstalled`, after a confirmation naming the package and the number
+  of computers. Not part of *Update checked* nor of the schedules (a schedule runs check or update
+  only); paused and "outside business hours only" computers are handled as for updates. The new
+  worker command `install` checks first, installs only where the package is not installed, then
+  checks again. winget packages: `winget install --id <Id> -e --scope machine --silent
+  --accept-package-agreements --accept-source-agreements --disable-interactivity`. Update modules
+  (backward compatible): a module that declares `# Install: yes` in its header receives
+  `-Action Install`, with the same result line, exit codes, time limit, signature check and
+  parameters as `-Action Update`; a module without that line is refused with a clear error. The
+  module template shows an Install branch. See `docs/modules.md`.
+
 - Shared update modules folder (*App > Options > Software updates*, usually a network
   share): the modules of an IT team, used by the LiteDeploy of every administrator. Modules are
   found in the shipped `modules\` folder, then the shared folder, then

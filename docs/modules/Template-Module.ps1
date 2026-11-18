@@ -1,6 +1,7 @@
 # LiteDeploy-Module
 # Label: Example product
 # Processes: example, example-helper
+# Install: yes
 # Parameter: Environment default=Production Name of the environment the product connects to
 # Parameter: InstallerFile default=example.msi File name of the installer in the shared cache
 # Parameter: EnrollmentToken secret Enrollment token (password of a stored credential)
@@ -18,7 +19,12 @@
     LiteDeploy.Worker.exe runs it as SYSTEM, only if the signature is valid:
         powershell.exe -File <Name>.ps1 -Action Check    (report the versions)
         powershell.exe -File <Name>.ps1 -Action Update   (install the update)
+        powershell.exe -File <Name>.ps1 -Action Install  (install the product: only
+                                                          with the header line "# Install: yes")
     The processes listed in the header are closed by the worker before Update.
+    Install is an explicit action of the administrator (Software Updates, right-click >
+    Install), run only where Check reported notinstalled; without "# Install: yes" the
+    worker refuses it. Remove that line and the Install branch if the module cannot install.
     Parameters (header lines "# Parameter: Name [secret] [default=value] description")
     are set in LiteDeploy (Package list > Parameters...) and given to this
     process only, as environment variables LITEDEPLOY_PARAM_<Name>. A required
@@ -27,10 +33,10 @@
     Keep this file ASCII only (Windows PowerShell 5.1 reads it as ANSI).
 
 .PARAMETER Action
-    Check or Update.
+    Check, Update or Install.
 #>
 param(
-    [ValidateSet('Check', 'Update')]
+    [ValidateSet('Check', 'Update', 'Install')]
     [string] $Action = 'Check'
 )
 $ErrorActionPreference = 'Stop'
@@ -71,17 +77,30 @@ try {
         exit 1
     }
     $installed = Get-InstalledVersion
-    if (-not $installed) { Write-LiteDeployResult 'notinstalled'; exit 0 }
     $latest = Get-LatestRelease
-    $outdated = [version]$installed -lt [version]$latest.Version
 
-    if ($Action -eq 'Check') {
-        if ($outdated) { Write-LiteDeployResult 'outdated' $installed $latest.Version }
-        else { Write-LiteDeployResult 'uptodate' $installed }
-        exit 0
+    if ($Action -eq 'Install') {
+        # Install: only where the product is missing; an installed product is left alone
+        if ($installed) {
+            if ([version]$installed -lt [version]$latest.Version) { Write-LiteDeployResult 'outdated' $installed $latest.Version 'Already installed' }
+            else { Write-LiteDeployResult 'uptodate' $installed $null 'Already installed' }
+            exit 0
+        }
+    }
+    else {
+        if (-not $installed) { Write-LiteDeployResult 'notinstalled'; exit 0 }
+        $outdated = [version]$installed -lt [version]$latest.Version
+
+        if ($Action -eq 'Check') {
+            if ($outdated) { Write-LiteDeployResult 'outdated' $installed $latest.Version }
+            else { Write-LiteDeployResult 'uptodate' $installed }
+            exit 0
+        }
+
+        if (-not $outdated) { Write-LiteDeployResult 'uptodate' $installed; exit 0 }
     }
 
-    if (-not $outdated) { Write-LiteDeployResult 'uptodate' $installed; exit 0 }
+    # Update and Install: same installer, same checks
 
     # Download to a folder only SYSTEM and administrators can write to, never to C:\Windows\Temp
     $work = Join-Path $env:windir 'LiteDeploy\work'
@@ -110,7 +129,7 @@ try {
     $token = $null
     Remove-Item $msi -Force -ErrorAction SilentlyContinue
     if ($p.ExitCode -eq 0 -or $p.ExitCode -eq 3010) {
-        Write-LiteDeployResult 'uptodate' (Get-InstalledVersion) $null "Updated to $($latest.Version)"
+        Write-LiteDeployResult 'uptodate' (Get-InstalledVersion) $null "$(if ($Action -eq 'Install') { 'Installed' } else { 'Updated to' }) $($latest.Version)"
         exit $p.ExitCode
     }
     Write-LiteDeployResult 'error' $installed $latest.Version "msiexec exit code $($p.ExitCode)"
