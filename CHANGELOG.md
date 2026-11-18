@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **TeamViewer ID**: the worker's `info` command also reads the TeamViewer ID of the computer
+  (`ClientID`, else `ClientIDOfTSUser`, 64-bit then 32-bit key, then older `VersionN` subkeys;
+  field `teamviewer`, empty when TeamViewer is not installed). It is shown in the computer card,
+  the details and the tooltip of *Software Updates*, and kept in `updates.xml` (new
+  `TeamViewerId` attribute; older files load unchanged). New action *TeamViewer ID...* with
+  *Copy* and, when TeamViewer is installed locally, *Connect* (`TeamViewer.exe -i <ID>`).
+- **Command prompt on the computer**: a local console attached to the computer, PsExec (`cmd.exe`
+  as SYSTEM) or WinRM (`Enter-PSSession`) as chosen in *App > Options*, with the credential of the
+  software updates (WinRM: password protected by DPAPI for the current user).
+- **Quick commands** (fixed table, run as SYSTEM by the worker, `LiteDeploy.Worker.exe quick
+  <id>`): group policy refresh (`gpupdate /force`, `gpupdate /target:computer /force`), flush
+  DNS, restart the print spooler, restart in 5 minutes, cancel a planned restart; output in a
+  window that can be copied.
+- **Remote desktop** on several computers from *Software Updates* (one window per computer, a
+  confirmation above 5).
+- **Export to Royal TS...**: Remote Desktop connections as a CSV file for the Royal TS import, or
+  a RoyalJSON (`.rjson`) document; operating system as description, OU as folder path.
+- The main window's computer list offers the actions of *Software Updates* on the checked
+  computers (else the selected one): computer card, TeamViewer ID, remote desktop, command
+  prompt, quick commands, Wake-on-LAN, logs, pause / resume, outside business hours only, export
+  to Royal TS. Both windows share the same code (`ComputerActions`).
+
 ## [1.0.17] - 2026-11-18
 
 ### Changed

@@ -4,7 +4,9 @@
 // Author:  LiteDeploy contributors
 // Date:    2025-05-30
 // Purpose: Main window: target computers, file or command to run, PsExec
-//          options, console.
+//          options, console. The right-click menu of the computer list has
+//          the actions of Software Updates (ComputerActions) on the checked
+//          computers, else on the selected one.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -46,6 +48,7 @@ namespace LiteDeploy
         {            
             InitializeComponent();
             Localization.Apply(this);
+            AddComputerActions();
             Theme.Apply(this);
 
             // Computer counters in the status bar follow the list (they were refreshed by a 100 ms timer)
@@ -431,7 +434,7 @@ namespace LiteDeploy
 
         // Right-click menu on a computer: shared with the process reports (RemoteActions)
         private void pingHost_Click(object sender, EventArgs e) { RemoteActions.Ping(hostName.Text); }
-        private void remoteToHost_Click(object sender, EventArgs e) { RemoteActions.RemoteDesktop(hostName.Text); }
+        private void remoteToHost_Click(object sender, EventArgs e) { computerActions.RemoteDesktop(ActionTargets()); }
         private void mangementConsoleToolStripMenuItem_Click(object sender, EventArgs e) { RemoteActions.ManagementConsole(hostName.Text); }
         private void openAdminShareToolStripMenuItem_Click(object sender, EventArgs e) { RemoteActions.OpenAdminShare(hostName.Text, ""); }
         private void publicDesktopToolStripMenuItem1_Click(object sender, EventArgs e) { RemoteActions.OpenAdminShare(hostName.Text, "Users\\Public\\Desktop"); }
@@ -443,9 +446,13 @@ namespace LiteDeploy
             {
                 if (selectedComputers.Items.Count > 0)
                 {
-                    if (selectedComputers.SelectedIndex > -1)
+                    // The item under the mouse becomes the selected one (the actions on one computer)
+                    int index = selectedComputers.IndexFromPoint(e.Location);
+                    if (index >= 0) selectedComputers.SelectedIndex = index;
+                    if (selectedComputers.SelectedIndex > -1 || selectedComputers.CheckedItems.Count > 0)
                     {
-                        hostName.Text = selectedComputers.Items[selectedComputers.SelectedIndex].ToString();
+                        hostName.Text = selectedComputers.SelectedIndex > -1 ? selectedComputers.Items[selectedComputers.SelectedIndex].ToString() : "";
+                        PrepareComputerActions();
                         contextMenu.Show(MousePosition);
                     }
                 }
@@ -850,6 +857,147 @@ namespace LiteDeploy
                 SetWin.ShowDialog();
             }
             ApplyDeploymentsVisibility();
+        }
+
+        // ---- Computer actions of the right-click menu (shared with Software Updates) ------------
+        // They apply to the checked computers, else to the selected one; the first items (ping,
+        // management console, admin share, copy, remove) stay on the selected computer.
+
+        private ComputerActions computerActions;
+        private ToolStripMenuItem actionTargetsItem, cardActionItem, teamViewerActionItem, commandPromptActionItem, quickCommandsActionItem,
+            wakeActionItem, logsActionItem, pauseActionItem, resumeActionItem, nightOnlyActionItem, nightOnlyClearActionItem, royalTsActionItem;
+
+        private void AddComputerActions()
+        {
+            computerActions = new ComputerActions(new MainActionHost(this));
+            // Same texts as the Software Updates window
+            actionTargetsItem = new ToolStripMenuItem { Enabled = false };
+            cardActionItem = ActionItem(Localization.T("SoftwareUpdatesForm.cardItem.Text", "Computer card..."), () => computerActions.ShowCards(ActionTargets()));
+            teamViewerActionItem = ActionItem(Localization.T("SoftwareUpdatesForm.teamViewerItem.Text", "TeamViewer ID..."), () => computerActions.ShowTeamViewer(ActionTargets()));
+            commandPromptActionItem = ActionItem(Localization.T("SoftwareUpdatesForm.commandPromptItem.Text", "Command prompt on the computer"), () => computerActions.CommandPrompt(ActionTargets()));
+            commandPromptActionItem.ToolTipText = Localization.T("SoftwareUpdatesForm.commandPromptItem.ToolTipText",
+                "A console attached to the computer: PsExec (command prompt as SYSTEM) or WinRM (PowerShell session), as chosen in App > Options");
+            quickCommandsActionItem = new ToolStripMenuItem(Localization.T("SoftwareUpdatesForm.quickCommandsItem.Text", "Quick commands"));
+            wakeActionItem = ActionItem(Localization.T("SoftwareUpdatesForm.wakeItem.Text", "Wake up (Wake-on-LAN)"), () => computerActions.Wake(ActionTargets()));
+            logsActionItem = ActionItem(Localization.T("SoftwareUpdatesForm.logsItem.Text", "Get the logs"), () => computerActions.FetchLogs(ActionTargets()));
+            pauseActionItem = ActionItem(Localization.T("SoftwareUpdatesForm.pauseItem.Text", "Pause these computers..."), () => computerActions.Pause(ActionTargets()));
+            resumeActionItem = ActionItem(Localization.T("SoftwareUpdatesForm.resumeItem.Text", "Resume"), () => computerActions.Resume(ActionTargets()));
+            nightOnlyActionItem = ActionItem(Localization.T("SoftwareUpdatesForm.nightOnlyItem.Text", "Update outside business hours only"), () => computerActions.SetNightOnly(ActionTargets(), true));
+            nightOnlyClearActionItem = ActionItem(Localization.T("SoftwareUpdatesForm.nightOnlyClearItem.Text", "Allow updates during business hours"), () => computerActions.SetNightOnly(ActionTargets(), false));
+            royalTsActionItem = ActionItem(Localization.T("SoftwareUpdatesForm.royalTsItem.Text", "Export to Royal TS..."), () => computerActions.ExportRoyalTs(ExportTargets()));
+            royalTsActionItem.ToolTipText = Localization.T("MainForm.RoyalTsTip", "Remote Desktop connections of the checked computers, else of every computer of the list (CSV or RoyalJSON)");
+
+            // After "Open Admin Share", before "Copy" and "Remove"
+            int at = contextMenu.Items.IndexOf(openAdminShareToolStripMenuItem) + 1;
+            contextMenu.Items.Insert(at, new ToolStripSeparator());
+            contextMenu.Items.Insert(at + 1, actionTargetsItem);
+            ToolStripItem[] items =
+            {
+                cardActionItem, teamViewerActionItem, commandPromptActionItem, quickCommandsActionItem, wakeActionItem, logsActionItem,
+                new ToolStripSeparator(), pauseActionItem, resumeActionItem, nightOnlyActionItem, nightOnlyClearActionItem,
+                new ToolStripSeparator(), royalTsActionItem
+            };
+            for (int i = 0; i < items.Length; i++) contextMenu.Items.Insert(at + 2 + i, items[i]);
+        }
+
+        private static ToolStripMenuItem ActionItem(String text, Action click)
+        {
+            ToolStripMenuItem item = new ToolStripMenuItem(text);
+            item.Click += (s, e) => click();
+            return item;
+        }
+
+        /// <summary>The computers the shared actions apply to: the checked ones, else the selected one.</summary>
+        private List<String> ActionTargets()
+        {
+            return ComputerActions.Targets(selectedComputers.CheckedItems.Cast<object>().Select(o => o.ToString()),
+                selectedComputers.SelectedIndex > -1 ? new[] { selectedComputers.Items[selectedComputers.SelectedIndex].ToString() } : new String[0]);
+        }
+
+        /// <summary>Export to Royal TS: the checked computers, else every computer of the list.</summary>
+        private List<String> ExportTargets()
+        {
+            return ComputerActions.Targets(selectedComputers.CheckedItems.Cast<object>().Select(o => o.ToString()),
+                selectedComputers.Items.Cast<object>().Select(o => o.ToString()));
+        }
+
+        private void PrepareComputerActions()
+        {
+            List<String> targets = ActionTargets();
+            bool one = selectedComputers.SelectedIndex > -1;
+            bool idle = updatesWindow == null || updatesWindow.IsDisposed || !updatesWindow.Busy;
+            pingHost.Enabled = mangementConsoleToolStripMenuItem.Enabled = openAdminShareToolStripMenuItem.Enabled = one;
+            copyToolStripMenuItem.Enabled = removeToolStripMenuItem.Enabled = one;
+            actionTargetsItem.Text = selectedComputers.CheckedItems.Count > 0
+                ? Localization.F("SoftwareUpdatesForm.TargetsChecked", "{0} checked computer(s)", targets.Count)
+                : Localization.F("SoftwareUpdatesForm.TargetsSelected", "{0} selected computer(s)", targets.Count);
+            bool any = targets.Count > 0;
+            remoteToHost.Enabled = cardActionItem.Enabled = teamViewerActionItem.Enabled = commandPromptActionItem.Enabled = any;
+            quickCommandsActionItem.Enabled = logsActionItem.Enabled = any;
+            computerActions.FillQuickCommands(quickCommandsActionItem, ActionTargets);
+            wakeActionItem.Enabled = any && computerActions.CanWake(targets);
+            pauseActionItem.Enabled = idle && targets.Any(c => !computerActions.IsPaused(c));
+            resumeActionItem.Enabled = idle && targets.Any(computerActions.IsPaused);
+            nightOnlyActionItem.Enabled = idle && targets.Any(c => !computerActions.IsNightOnly(c));
+            nightOnlyClearActionItem.Enabled = idle && targets.Any(computerActions.IsNightOnly);
+            royalTsActionItem.Enabled = selectedComputers.Items.Count > 0;
+            Theme.Apply(contextMenu);
+        }
+
+        /// <summary>
+        /// The main window as the host of the shared actions: the saved state is the one of the Software
+        /// Updates window while it is open (one store in memory), else updates.xml read and written here.
+        /// </summary>
+        private sealed class MainActionHost : IComputerActionHost
+        {
+            static readonly Object fileLock = new Object();
+            readonly MainForm form;
+
+            public MainActionHost(MainForm form)
+            {
+                this.form = form;
+            }
+
+            public Form Owner { get { return form; } }
+
+            public bool Idle { get { return updatesWindow == null || updatesWindow.IsDisposed || !updatesWindow.Busy; } }
+
+            public void WithStore(Action<UpdateStateStore> action, bool save)
+            {
+                SoftwareUpdatesForm window = updatesWindow;
+                if (window != null && !window.IsDisposed)
+                {
+                    window.WithStore(action, save);
+                    return;
+                }
+                lock (fileLock)
+                {
+                    UpdateStateStore store = UpdateStateStore.Load(UpdateStateStore.DefaultPath);
+                    action(store);
+                    if (save) store.SaveIfChanged(UpdateStateStore.DefaultPath);
+                }
+            }
+
+            public ComputerRow Row(String computer)
+            {
+                AdComputer ad = null;
+                try { ad = ActiveDirectoryCache.Inventory.ToList().FirstOrDefault(c => c != null && String.Equals(c.Name, computer, StringComparison.OrdinalIgnoreCase)); }
+                catch (Exception) { }   // inventory being refreshed
+                ComputerUpdateState state = null;
+                WithStore(store => state = store.Find(computer), false);
+                return ComputerRow.Build(computer, ad, state, null, null);
+            }
+
+            public void SetStatus(String text)
+            {
+                if (text != null) AppConsole.WriteLine(text);
+            }
+
+            public void StoreChanged()
+            {
+                SoftwareUpdatesForm window = updatesWindow;
+                if (window != null) window.StoreChanged();
+            }
         }
 
         // Standalone deployments (App > Options, hidden by default): the deployment group and the

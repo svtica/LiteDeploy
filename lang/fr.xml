@@ -507,7 +507,8 @@ Windows : {3}
 Type : {7}
 Espace libre sur C:  {4}
 Cartes réseau (Wake-on-LAN) : {5}
-Adresses IPv4 : {6}</translation>
+Adresses IPv4 : {6}
+ID TeamViewer : {8}</translation>
   <translation key="SoftwareUpdatesForm.CardUnknown">(inconnu)</translation>
   <translation key="ComputerUpdateState.Workstation">Poste de travail</translation>
   <translation key="ComputerUpdateState.Server">Serveur</translation>
@@ -753,6 +754,42 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="CacheDownloader.MsixSigner">Le paquet n'est pas signé de façon valide par l'éditeur (Publisher) de son manifeste ({0}) : refusé.</translation>
   <translation key="CacheDownloader.NotHttps">Téléchargement refusé : ce n'est pas une adresse HTTPS ({0}).</translation>
   <translation key="CacheDownloader.TooManyRedirects">Trop de redirections.</translation>
+  <!-- Remote tools: TeamViewer ID, command prompt, quick commands, Royal TS export, actions of the main window -->
+  <translation key="SoftwareUpdatesForm.teamViewerItem.Text">ID TeamViewer...</translation>
+  <translation key="SoftwareUpdatesForm.remoteDesktopItem.Text">Bureau à distance</translation>
+  <translation key="SoftwareUpdatesForm.commandPromptItem.Text">Invite de commandes sur le poste</translation>
+  <translation key="SoftwareUpdatesForm.commandPromptItem.ToolTipText">Console reliée au poste : PsExec (invite de commandes en tant que SYSTEM) ou WinRM (session PowerShell), selon le choix fait dans App &gt; Options</translation>
+  <translation key="SoftwareUpdatesForm.quickCommandsItem.Text">Commandes rapides</translation>
+  <translation key="SoftwareUpdatesForm.royalTsItem.Text">Exporter vers Royal TS...</translation>
+  <translation key="SoftwareUpdatesForm.royalTsItem.ToolTipText">Connexions Bureau à distance des ordinateurs cochés, sinon de tous les ordinateurs affichés (CSV ou RoyalJSON)</translation>
+  <translation key="SoftwareUpdatesForm.TeamViewerTip">ID TeamViewer : {0}</translation>
+  <translation key="ComputerActions.TeamViewerNotInstalled">(TeamViewer non installé)</translation>
+  <translation key="ComputerActions.ConfirmRemoteDesktops">Ouvrir {0} fenêtres de bureau à distance d'un coup ?</translation>
+  <translation key="ComputerActions.ConfirmCommandPrompts">Ouvrir {0} fenêtres d'invite de commandes d'un coup ?</translation>
+  <translation key="ComputerActions.QuickGroupPolicy">Actualiser les stratégies de groupe (gpupdate /force)</translation>
+  <translation key="ComputerActions.QuickGroupPolicyComputer">Actualiser seulement les stratégies de l'ordinateur (gpupdate /target:computer /force)</translation>
+  <translation key="ComputerActions.QuickFlushDns">Vider le cache DNS (ipconfig /flushdns)</translation>
+  <translation key="ComputerActions.QuickRestartSpooler">Redémarrer le spouleur d'impression</translation>
+  <translation key="ComputerActions.QuickRestart">Redémarrer le poste dans 5 minutes (les utilisateurs sont avertis)</translation>
+  <translation key="ComputerActions.QuickCancelRestart">Annuler un redémarrage planifié (shutdown /a)</translation>
+  <translation key="ComputerActions.ConfirmQuick">Exécuter « {0} » sur {1} ordinateur(s) ?&#10;&#10;{2}</translation>
+  <translation key="ComputerActions.RunningQuick">Exécution de « {0} » sur {1} ordinateur(s)...</translation>
+  <translation key="ComputerActions.QuickDone">Terminé.</translation>
+  <translation key="ComputerActions.QuickExitCode">Code de sortie {0}.</translation>
+  <translation key="ComputerActions.RoyalTsTitle">Exporter vers Royal TS</translation>
+  <translation key="ComputerActions.RoyalTsFilter">Fichier CSV pour l'importation dans Royal TS (*.csv)|*.csv|Document RoyalJSON (*.rjson)|*.rjson</translation>
+  <translation key="ComputerActions.RoyalTsSaved">{0} ordinateur(s) exporté(s) dans {1}.</translation>
+  <translation key="RemoteConsole.PsExecMissing">PsExec est introuvable : téléchargez-le dans Outils &gt; Gérer les outils, ou choisissez la méthode WinRM dans App &gt; Options.</translation>
+  <translation key="TeamViewerIdForm.Text">ID TeamViewer</translation>
+  <translation key="TeamViewerIdForm.Computer">Ordinateur</translation>
+  <translation key="TeamViewerIdForm.Id">ID TeamViewer</translation>
+  <translation key="TeamViewerIdForm.Read">Lire sur les postes</translation>
+  <translation key="TeamViewerIdForm.Connect">Se connecter</translation>
+  <translation key="TeamViewerIdForm.NoLocalTeamViewer">TeamViewer n'est pas installé sur cet ordinateur : copiez l'ID pour vous connecter d'ailleurs.</translation>
+  <translation key="TeamViewerIdForm.Reading">Lecture...</translation>
+  <translation key="TeamViewerIdForm.ReadingMany">Lecture de l'ID TeamViewer de {0} ordinateur(s)...</translation>
+  <translation key="TeamViewerIdForm.NotRead">Non lu : {0}</translation>
+  <translation key="MainForm.RoyalTsTip">Connexions Bureau à distance des ordinateurs cochés, sinon de tous les ordinateurs de la liste (CSV ou RoyalJSON)</translation>
   <!-- Computer list: same filters as Software Updates; shared folders; Web versions empty states -->
   <translation key="ComputerListForm.main.Text">Nom</translation>
   <translation key="ComputerListForm.candOsColumn.Text">Système d'exploitation</translation>

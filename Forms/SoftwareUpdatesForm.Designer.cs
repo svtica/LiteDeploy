@@ -42,6 +42,12 @@ namespace LiteDeploy
             this.removeItem = new System.Windows.Forms.ToolStripMenuItem();
             this.installItem = new System.Windows.Forms.ToolStripMenuItem();
             this.installSeparator = new System.Windows.Forms.ToolStripSeparator();
+            this.teamViewerItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.remoteDesktopItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.commandPromptItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.quickCommandsItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.exportSeparator = new System.Windows.Forms.ToolStripSeparator();
+            this.royalTsItem = new System.Windows.Forms.ToolStripMenuItem();
             this.checkButton = new System.Windows.Forms.ToolStripButton();
             this.selectOutdatedButton = new System.Windows.Forms.ToolStripButton();
             this.selectAllButton = new System.Windows.Forms.ToolStripButton();
@@ -456,10 +462,16 @@ namespace LiteDeploy
             this.nightOnlyClearItem,
             this.menuSeparator,
             this.cardItem,
+            this.teamViewerItem,
+            this.remoteDesktopItem,
+            this.commandPromptItem,
+            this.quickCommandsItem,
             this.processesItem,
             this.litePMItem,
             this.logsItem,
             this.wakeItem,
+            this.exportSeparator,
+            this.royalTsItem,
             this.removeSeparator,
             this.removeItem});
             this.rowMenu.Name = "rowMenu";
@@ -487,6 +499,23 @@ namespace LiteDeploy
             this.cardItem.Name = "cardItem";
             this.cardItem.Text = "Computer card...";
             this.cardItem.Click += new System.EventHandler(this.cardItem_Click);
+            this.teamViewerItem.Name = "teamViewerItem";
+            this.teamViewerItem.Text = "TeamViewer ID...";
+            this.teamViewerItem.Click += new System.EventHandler(this.teamViewerItem_Click);
+            this.remoteDesktopItem.Name = "remoteDesktopItem";
+            this.remoteDesktopItem.Text = "Remote desktop";
+            this.remoteDesktopItem.Click += new System.EventHandler(this.remoteDesktopItem_Click);
+            this.commandPromptItem.Name = "commandPromptItem";
+            this.commandPromptItem.Text = "Command prompt on the computer";
+            this.commandPromptItem.ToolTipText = "A console attached to the computer: PsExec (command prompt as SYSTEM) or WinRM (PowerShell session), as chosen in App > Options";
+            this.commandPromptItem.Click += new System.EventHandler(this.commandPromptItem_Click);
+            this.quickCommandsItem.Name = "quickCommandsItem";
+            this.quickCommandsItem.Text = "Quick commands";
+            this.exportSeparator.Name = "exportSeparator";
+            this.royalTsItem.Name = "royalTsItem";
+            this.royalTsItem.Text = "Export to Royal TS...";
+            this.royalTsItem.ToolTipText = "Remote Desktop connections of the checked computers, else of every computer shown (CSV or RoyalJSON)";
+            this.royalTsItem.Click += new System.EventHandler(this.royalTsItem_Click);
             this.wakeItem.Name = "wakeItem";
             this.wakeItem.Text = "Wake up (Wake-on-LAN)";
             this.wakeItem.Click += new System.EventHandler(this.wakeItem_Click);
@@ -584,6 +613,12 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripMenuItem removeItem;
         private System.Windows.Forms.ToolStripMenuItem installItem;
         private System.Windows.Forms.ToolStripSeparator installSeparator;
+        private System.Windows.Forms.ToolStripMenuItem teamViewerItem;
+        private System.Windows.Forms.ToolStripMenuItem remoteDesktopItem;
+        private System.Windows.Forms.ToolStripMenuItem commandPromptItem;
+        private System.Windows.Forms.ToolStripMenuItem quickCommandsItem;
+        private System.Windows.Forms.ToolStripSeparator exportSeparator;
+        private System.Windows.Forms.ToolStripMenuItem royalTsItem;
         private System.Windows.Forms.ToolStripButton checkButton;
         private System.Windows.Forms.ToolStripButton selectOutdatedButton;
         private System.Windows.Forms.ToolStripButton selectAllButton;

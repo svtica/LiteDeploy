@@ -298,7 +298,19 @@ namespace LiteDeploy
             return RunSimple(computer, "processes");
         }
 
+        /// <summary>One command of the fixed table QuickCommands ("LiteDeploy.Worker.exe quick &lt;id&gt;"), as SYSTEM.</summary>
+        public static UpdateRunResult Quick(String computer, String quickCommandId)
+        {
+            // gpupdate can take minutes: up to 4 per step on the computer, plus the connection
+            return RunSimple(computer, QuickCommands.WorkerArguments(quickCommandId), 10);
+        }
+
         static UpdateRunResult RunSimple(String computer, String workerCommand)
+        {
+            return RunSimple(computer, workerCommand, 2);
+        }
+
+        static UpdateRunResult RunSimple(String computer, String workerCommand, int timeoutMinutes)
         {
             UpdateRunResult result = new UpdateRunResult();
             String missing = RemoteRunner.Prerequisite();
@@ -318,13 +330,13 @@ namespace LiteDeploy
             }, credential);
             String method = RemoteRunner.Method;
             Process started;
-            try { started = RemoteRunner.Start(computer, workerCommand, credential, 2, o); }
+            try { started = RemoteRunner.Start(computer, workerCommand, credential, timeoutMinutes, o); }
             catch (Exception ex) { result.Failure = ex.Message; return result; }
             using (Process p = started)
             {
                 Task<String> stdout = p.StandardOutput.ReadToEndAsync();
                 Task<String> stderr = p.StandardError.ReadToEndAsync();
-                if (!p.WaitForExit(240000)) { try { p.Kill(); } catch (Exception) { } }
+                if (!p.WaitForExit((int)TimeSpan.FromMinutes(timeoutMinutes + 2).TotalMilliseconds)) { try { p.Kill(); } catch (Exception) { } }
                 Task.WaitAll(new Task[] { stdout, stderr }, 10000);
                 String output = stdout.IsCompleted ? stdout.Result : "";
                 result.Messages = WorkerProtocol.ParseAll(output);
