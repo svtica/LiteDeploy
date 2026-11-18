@@ -101,6 +101,7 @@ that needs a Windows optional feature:
 | `License` | `ExampleApp_License.xml` | License XML file name in the folder; empty: `-SkipLicense` |
 | `Features` | `VirtualMachinePlatform` | Windows optional features to enable first, separated by `;`; a feature that needs a restart: exit code 3010 after the provisioning |
 | `Publisher` | `Contoso Ltd` | Expected organisation (`O=`) of the signer of the package; empty: the signer must be the `Publisher` of the manifest (always checked) |
+| `WingetId` | `Contoso.ExampleApp` | Optional: winget package Id of the product, for *Tools > Web versions...* (see *Web versions*); ignored by the module |
 
 ```text
 <cache>\ExampleApp\
@@ -158,6 +159,7 @@ the computers should fill the cache themselves.
   CachedInstaller\              CachedInstaller (filled by an administrator, read only for the computers)
     ExampleVendor\ContosoExampleApp-2.4.1.msi
     ExampleVendor\ExampleTool-3.2-setup.exe
+    ExampleVendor\OLD\ContosoExampleApp-2.4.0.msi   previous version (Tools > Web versions..., see Web versions)
 ```
 
 `PrinterDrivers\drivers.csv` has the columns `Name,Inf`: `Name` is the driver name exactly as
@@ -209,6 +211,7 @@ own parameter values:
 | `Version` | Version expected once installed; empty: the `ProductVersion` of the MSI (read from the file without installing it), or the product version (else file version) of the EXE. Set it when the installer's own version differs from the `DisplayVersion` the product registers |
 | `Publisher` | **Required.** Organisation (`O=`) of the Authenticode signer of the installer, exactly as in the certificate, e.g. `ExampleVendor Inc.` |
 | `CloseProcesses` | Processes the module closes right before the installer runs (comma-separated, without `.exe`) |
+| `WingetId` | Optional: winget package Id of the product, e.g. `Contoso.ExampleApp`, for *Tools > Web versions...* (see *Web versions*). Read by LiteDeploy only, on the administrator's computer; the module ignores it |
 
 - **Check**: the Uninstall entries (64 and 32-bit views) matching `ProductCode` or `DetectName`;
   none: `notinstalled`; an older `DisplayVersion` than the expected version: `outdated`; else
@@ -282,7 +285,8 @@ write to the cache a way to change the rows or arguments of the administrators.
       "Product": "Contoso Example App",
       "File": "CachedInstaller/ExampleVendor/ContosoExampleApp-2.4.1.msi",
       "DetectName": "Contoso Example App*",
-      "Publisher": "ExampleVendor Inc."
+      "Publisher": "ExampleVendor Inc.",
+      "WingetId": "Contoso.ExampleApp"
     },
     {
       "Instance": "ExampleTool",
@@ -308,6 +312,80 @@ write to the cache a way to change the rows or arguments of the administrators.
   parameter missing from the catalog is cleared). Secret parameters are never read from a
   catalog: set them in *Parameters...*. Products with an invalid instance name, a duplicate
   instance, or values that are not strings are skipped and reported.
+- `WingetId` is a parameter like the others: a catalog can give it (see *Web versions*).
+
+## Web versions
+
+*Tools > Web versions...* (also *Package list > Web versions...*) tells which products of the
+shared cache have a newer version on the web, and can put that version in the cache. It runs in
+LiteDeploy, on the **administrator's computer**, with the administrator's account: the managed
+computers never check the web nor download anything for it.
+
+One row per instance of `CachedInstaller` and `MsixProvision` that has parameters
+(`module-settings.xml`):
+
+| Column | Content |
+|---|---|
+| Product (instance) | `Product` (`PackageName` for an MSIX), then the instance name |
+| Module | `CachedInstaller` or `MsixProvision` |
+| Cache version | Version of the file the instance uses in the cache: the `Version` parameter when set (`CachedInstaller`), else the MSI `ProductVersion`, the product (else file) version of the EXE, or the version of the MSIX manifest (bundle: newest application package). `MsixProvision` with `File` empty: the newest package of `PackageName` in the folder, as the module picks it |
+| Web version | `Version` of `winget show --id <WingetId> -e --source winget --architecture x64 --installer-type <type>`; the type follows the instance: `msi` then `wix` for an MSI, `exe`, `inno`, `nullsoft` then `burn` for an EXE, `msix` for an MSIX |
+| Status | *Up to date*, *Newer on the web*, *Not found* (not in the winget source), *No WingetId*, *Error* (cache file missing, versions that cannot be compared, winget unavailable...; the reason is in the tooltip) |
+| Source URL | Installer URL of the winget manifest (its SHA256 is kept with it) |
+
+- Versions are compared by their numbers: missing parts count as zero (`26.06` = `26.6.0.0`), a
+  build in parentheses is compared with the part that follows (`6.1.5 (12345)` = `6.1.5.12345`).
+- The output of winget is read by its layout, not by its labels, so any display language works.
+- *Check now* checks every row; *Open vendor page* opens the home page of the manifest (else the
+  publisher page). The last results are kept in `%LOCALAPPDATA%\LiteDeploy\web-versions.xml`;
+  every check and download is logged in `%LOCALAPPDATA%\LiteDeploy\logs\web-versions-<date>.log`.
+- Sortable columns; the size of the window is remembered.
+- The winget packages of `packages.txt` need none of this: the worker compares them with winget
+  on each computer. `AdobeReader` and `OnePassword` fetch their installer from the vendor
+  themselves.
+
+### Download to the cache
+
+*Download to the cache* (checked rows, else the current row; also on the right-click menu) acts on
+rows *Newer on the web* that have an HTTPS installer URL and its SHA256 in the manifest:
+
+1. The installer is downloaded over **HTTPS only** (every redirect too) to a new temporary
+   folder of the administrator.
+2. It is refused unless its SHA256 is the one of the winget manifest **and** its Authenticode
+   signature is `Valid` with `O=<Publisher>` of the instance (`CachedInstaller`: `Publisher` is
+   required). For an MSIX: the package name of its manifest must be `PackageName`, the signer
+   must be the `Publisher` of its manifest, and `O=<Publisher>` when that parameter is set, as the
+   module checks it before provisioning. A download older than the file of the cache is refused.
+   An unsigned installer is therefore never put in the cache this way, even with a matching
+   SHA256: download it by hand if you trust it.
+3. It is copied **next to the current file**, under a versioned name
+   (`ContosoExampleApp-2.4.1.msi` -> `ContosoExampleApp-2.5.0.msi`; the version is added when the
+   name has none), through a `.partial` file whose SHA256 is checked again. An existing file is
+   never overwritten: a file of that name with the same content is kept, another content stops
+   the download.
+4. The `File` parameter of the instance is set to the new file in `module-settings.xml` (same
+   folder part); a `Version` parameter that was set is changed to the web version. The computers
+   get the new file at their next run.
+5. The previous file is moved to the `OLD` subfolder of that folder (with a time stamp when `OLD`
+   already holds a file of that name), so the last version stays at hand for a rollback.
+
+Only the file the instance uses is moved; nothing else in the cache is touched, and nothing is
+ever deleted from the cache. A failure before step 4 leaves the cache and the settings as they
+were; when only the move to `OLD` fails, the new version is in place and a warning says so.
+
+Permissions: the download needs **write** access to the folder of the installer in the cache,
+which only the administrators who fill the cache have (see *Shared installer cache*); without it,
+the download stops with a clear message and nothing changes. `module-settings.xml` is per
+administrator: another administrator who uses the same instances must update its `File` too (for
+example by importing the team's catalog again).
+
+### Daily check
+
+In the window: *Check web versions every day at HH:mm* runs the check once a day while LiteDeploy
+is open (timer of the internal scheduler, whatever the engine of the scheduled updates; a check
+missed while LiteDeploy was closed is not run later). It only reports (console of the main window,
+results file and log), unless *Download new versions automatically* is also checked (off by
+default). Saved in `%LOCALAPPDATA%\LiteDeploy\settings.xml` (`WebCheckTime`, `WebAutoDownload`).
 
 ## Writing a module
 

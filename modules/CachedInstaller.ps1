@@ -12,6 +12,7 @@
 # Parameter: Version default= Version expected once installed (empty: ProductVersion of the MSI, or version of the EXE)
 # Parameter: Publisher Organisation (O=) of the Authenticode signer of the installer, e.g. ExampleVendor Inc.
 # Parameter: CloseProcesses default= Processes closed by the module right before the install (comma-separated, without .exe)
+# Parameter: WingetId default= winget package Id of the product, for the web version check of LiteDeploy (not used on the computers)
 <#
 .SYNOPSIS
     LiteDeploy update module: installs or updates a vendor MSI or EXE installer
@@ -42,6 +43,9 @@
     empty. The processes of a product are closed by the module itself
     (CloseProcesses), right before its installer runs; only plain process
     names are accepted and system processes are refused.
+
+    WingetId is read by LiteDeploy only (Tools > Web versions..., on the
+    administrator's computer): this script ignores it.
 
 .PARAMETER Action
     Check, Update or Install.

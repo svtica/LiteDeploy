@@ -137,6 +137,13 @@ them (and for the PsExec method of the software updates); it is asked for when t
 ### Tools
 - *Tools > Credentials*: accounts in the Windows Credential Manager (shared with LiteTask), for
   the software updates (*App > Options*).
+- *Tools > Web versions...*: for the products of the shared installer cache (instances of
+  `CachedInstaller` and `MsixProvision` with a `WingetId` parameter), the version of the cache
+  against the latest one known to winget; *Download to the cache* puts a newer version next to
+  the current file once its SHA256 and its publisher signature are checked, updates the instance
+  and moves the previous file to `OLD`. Optional daily check, report only unless the automatic
+  download is on. Runs on the administrator's computer only; see
+  [docs/modules.md](docs/modules.md#web-versions).
 - Right-click a computer in Software Updates: processes and handles, get the logs.
   *Get the logs* copies the newest `*.log` files of the update modules (`%windir%\LiteDeploy\work`)
   and of winget (SYSTEM) to `%LOCALAPPDATA%\LiteDeploy\logs\<computer>\<date>`. Other folders

@@ -541,6 +541,15 @@ namespace LiteDeploy
             updatesWindow.Activate();
         }
 
+        // Web versions of the products of the shared cache (module instances with a WingetId)
+        private void webVersionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (WebVersionsForm webVersions = new WebVersionsForm())
+            {
+                webVersions.ShowDialog(this);
+            }
+        }
+
         private void schedulesToolStripMenuItem_Click(object sender, EventArgs e)
         {
             IEnumerable<object> source = selectedComputers.CheckedItems.Count > 0
@@ -561,8 +570,28 @@ namespace LiteDeploy
         void StartInternalScheduler()
         {
             schedulerTimer = new System.Windows.Forms.Timer { Interval = 60000 };
-            schedulerTimer.Tick += (s, e) => RunDueSchedules();
+            schedulerTimer.Tick += (s, e) => { RunDueSchedules(); RunDueWebCheck(); };
             schedulerTimer.Start();
+        }
+
+        // Daily web version check (Tools > Web versions...): report only, unless the automatic
+        // download is on; whatever the engine of the update schedules, while LiteDeploy is open
+        void RunDueWebCheck()
+        {
+            UserSettings settings = UserSettings.Current;
+            if (String.IsNullOrWhiteSpace(settings.WebCheckTime)) return;
+            DateTime? last = WebVersionResults.Load(WebVersionResults.DefaultPath).LastScheduledCheck;
+            if (!WebVersionChecker.IsDailyCheckDue(settings.WebCheckTime, last, DateTime.Now, startedAt)) return;
+            if (!WebVersionChecker.TryBegin()) return;
+            bool autoDownload = settings.WebAutoDownload;
+            new Thread(() =>
+            {
+                String summary;
+                try { summary = WebVersionChecker.RunScheduled(autoDownload); }
+                catch (Exception ex) { summary = ex.Message; WebVersionChecker.Log("Daily web check failed: " + ex.Message); }
+                finally { WebVersionChecker.End(); }
+                AppConsole.WriteLine(summary);
+            }) { IsBackground = true, Name = "Web versions daily check" }.Start();
         }
 
         void RunDueSchedules()

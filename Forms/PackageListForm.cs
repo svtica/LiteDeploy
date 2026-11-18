@@ -8,7 +8,8 @@
 //          to close and the label, remove a package; add an update module
 //          (docs/modules.md) and set its parameters (Parameters...); for a
 //          module with instances, add one row per instance and import the
-//          instances of a catalog (Import from catalog...).
+//          instances of a catalog (Import from catalog...); open Web versions...
+//          (versions of the products of the shared cache on the web).
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -216,6 +217,16 @@ namespace LiteDeploy
             }
             if (warnings.Count > 0)
                 MessageBox.Show(this, String.Join(Environment.NewLine, warnings), Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        // ---- Web versions -----------------------------------------------------------
+
+        // Versions of the products of the cache on the web (instances with a WingetId); a download
+        // changes the File parameter of an instance in module-settings.xml, not the rows of this list
+        void webVersionsButton_Click(object sender, EventArgs e)
+        {
+            using (WebVersionsForm form = new WebVersionsForm())
+                form.ShowDialog(this);
         }
 
         // ---- Search -----------------------------------------------------------------

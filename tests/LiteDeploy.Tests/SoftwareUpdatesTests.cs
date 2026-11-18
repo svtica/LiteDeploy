@@ -494,7 +494,7 @@ namespace LiteDeploy.Tests
             Assert.AreEqual(0, msix.Processes.Length, "nothing to close");
             Assert.AreEqual("MSIX package (provisioned)", msix.Label);
             Assert.IsTrue(msix.Instances, "one package row per MSIX package");
-            CollectionAssert.AreEqual(new[] { "PackageName", "Folder", "File", "Dependencies", "License", "Features", "Publisher" },
+            CollectionAssert.AreEqual(new[] { "PackageName", "Folder", "File", "Dependencies", "License", "Features", "Publisher", "WingetId" },
                 msix.Parameters.Select(p => p.Name).ToArray());
             CollectionAssert.AreEqual(new[] { "PackageName", "Folder" }, msix.Parameters.Where(p => p.Required).Select(p => p.Name).ToArray());
             Assert.IsFalse(msix.Parameters.Any(p => p.Secret));
@@ -513,7 +513,7 @@ namespace LiteDeploy.Tests
             Assert.IsNotNull(m);
             Assert.IsTrue(m.Instances, "one package row per product");
             Assert.AreEqual(0, m.Processes.Length, "per-product processes: CloseProcesses parameter");
-            CollectionAssert.AreEqual(new[] { "Product", "File", "Type", "Arguments", "DetectName", "ProductCode", "Version", "Publisher", "CloseProcesses" },
+            CollectionAssert.AreEqual(new[] { "Product", "File", "Type", "Arguments", "DetectName", "ProductCode", "Version", "Publisher", "CloseProcesses", "WingetId" },
                 m.Parameters.Select(p => p.Name).ToArray());
             CollectionAssert.AreEqual(new[] { "File", "Publisher" }, m.Parameters.Where(p => p.Required).Select(p => p.Name).ToArray());
             Assert.IsFalse(m.Parameters.Any(p => p.Secret));

@@ -79,6 +79,7 @@ namespace LiteDeploy
             this.softwareUpdatesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.softwareUpdatesMenuButton = new System.Windows.Forms.ToolStripMenuItem();
             this.softwareUpdatesComputersMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.webVersionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.manageToolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.schedulesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -549,10 +550,18 @@ namespace LiteDeploy
             this.softwareUpdatesToolStripMenuItem.Text = "Software Updates...";
             this.softwareUpdatesToolStripMenuItem.Click += new System.EventHandler(this.softwareUpdatesToolStripMenuItem_Click);
             // 
+            // webVersionsToolStripMenuItem
+            // 
+            this.webVersionsToolStripMenuItem.Name = "webVersionsToolStripMenuItem";
+            this.webVersionsToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
+            this.webVersionsToolStripMenuItem.Text = "Web Versions...";
+            this.webVersionsToolStripMenuItem.Click += new System.EventHandler(this.webVersionsToolStripMenuItem_Click);
+            // 
             // toolsToolStripMenuItem
             // 
             this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.softwareUpdatesToolStripMenuItem,
+            this.webVersionsToolStripMenuItem,
             this.schedulesToolStripMenuItem,
             this.credentialsToolStripMenuItem,
             this.manageToolsToolStripMenuItem,
@@ -1045,6 +1054,7 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripMenuItem softwareUpdatesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem softwareUpdatesMenuButton;
         private System.Windows.Forms.ToolStripMenuItem softwareUpdatesComputersMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem webVersionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem manageToolsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem schedulesToolStripMenuItem;

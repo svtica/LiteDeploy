@@ -150,7 +150,11 @@
     <Compile Include="Classes\PsExecLocator.cs" />
     <Compile Include="Classes\Theme.cs" />
     <Compile Include="Classes\ToolManager.cs" />
+    <Compile Include="Classes\CacheDownloader.cs" />
     <Compile Include="Classes\ModuleCatalog.cs" />
+    <Compile Include="Classes\MsixManifest.cs" />
+    <Compile Include="Classes\WebVersionChecker.cs" />
+    <Compile Include="Classes\WingetShowParser.cs" />
     <Compile Include="Classes\ModuleSettings.cs" />
     <Compile Include="Classes\UpdateModules.cs" />
     <Compile Include="Classes\UpdateRunner.cs" />
@@ -168,6 +172,9 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\ModuleParametersForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\WebVersionsForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\PackageListForm.cs">
