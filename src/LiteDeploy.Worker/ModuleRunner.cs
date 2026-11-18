@@ -15,6 +15,8 @@
 //          it at once and gives the values declared in the header to the module
 //          process only, as LITEDEPLOY_PARAM_<Name>; secret values are masked in
 //          the messages.
+//          Install: "-Action Install" runs only for a module whose signed header
+//          declares "# Install: yes" (InstallPolicy).
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -138,7 +140,27 @@ namespace LiteDeploy.Worker
             }
         }
 
-        /// <summary>Runs "-Action Check" or "-Action Update"; a refused or missing script is reported as an error.</summary>
+        /// <summary>The actions of the module contract: Check, Update, Install (only when the header declares "# Install: yes").</summary>
+        public static bool IsValidAction(string action)
+        {
+            return action == "Check" || action == "Update" || action == InstallPolicy.ModuleAction;
+        }
+
+        /// <summary>
+        /// Whether the module script on the computer declares "# Install: yes" (first 20 lines); false
+        /// when it is missing or unreadable. Run checks it again after the signature, before Install.
+        /// </summary>
+        public static bool DeclaresInstall(UpdatePackage module)
+        {
+            try
+            {
+                string script = ScriptPath(module);
+                return File.Exists(script) && InstallPolicy.DeclaresInstall(File.ReadLines(script).Take(20).ToList());
+            }
+            catch (Exception) { return false; }
+        }
+
+        /// <summary>Runs "-Action Check", "-Action Update" or "-Action Install"; a refused or missing script is reported as an error.</summary>
         public static ModuleResult Run(UpdatePackage module, string action, bool allowUnsigned, TimeSpan timeout)
         {
             return Run(module, action, allowUnsigned, timeout, null);
@@ -150,6 +172,7 @@ namespace LiteDeploy.Worker
         /// </summary>
         public static ModuleResult Run(UpdatePackage module, string action, bool allowUnsigned, TimeSpan timeout, IDictionary<string, string> parameters)
         {
+            if (!IsValidAction(action)) return Error("Unknown module action: " + action);
             string script = ScriptPath(module);
             if (!File.Exists(script))
                 return Error("Module script not found: " + script);
@@ -161,8 +184,13 @@ namespace LiteDeploy.Worker
             if (!MayRun(verdict, allowUnsigned))
                 return Error("Module refused: " + verdict + " (" + signature.Status + ")");
 
+            List<string> header = File.ReadLines(script).Take(20).ToList();
+            // Install: only a module whose (signed) header declares it
+            if (action == InstallPolicy.ModuleAction && !InstallPolicy.DeclaresInstall(header))
+                return Error(InstallPolicy.NotSupportedMessage(module.ModuleName));
+
             // Parameters declared in the header of the (signed) script; values from LiteDeploy or the defaults
-            List<ModuleParameter> declared = ModuleParameters.ParseHeader(File.ReadLines(script).Take(20).ToList());
+            List<ModuleParameter> declared = ModuleParameters.ParseHeader(header);
             Dictionary<string, string> environment;
             List<string> secrets;
             string missing = ModuleParameters.Resolve(declared, parameters, out environment, out secrets);

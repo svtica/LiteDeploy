@@ -7,6 +7,7 @@
 //          PsExec as SYSTEM on each target computer:
 //            LiteDeploy.Worker.exe scan    --package "Id|proc1,proc2|Label" ...
 //            LiteDeploy.Worker.exe upgrade --package "Id|proc1,proc2|Label" ...
+//            LiteDeploy.Worker.exe install --package "Id|proc1,proc2|Label" ...
 //                                  [--timeout <minutes per winget call or module>]
 //                                  [--allow-unsigned-modules] [--cache \\server\share]
 //          A package "module:<Name>" is an update module, a PowerShell script
@@ -14,7 +15,11 @@
 //          with its parameter file, deleted at the end of the run.
 //          scan reports the installed and available version of each package;
 //          upgrade closes the package's processes and upgrades it when an
-//          upgrade is available. Results: WorkerProtocol lines on stdout.
+//          upgrade is available. install (explicit, only the packages given:
+//          LiteDeploy passes the one the administrator chose) installs a
+//          package whose check says "notinstalled" (a module only when its
+//          header declares "# Install: yes"), then checks it again; it never
+//          touches an installed package. Results: WorkerProtocol lines on stdout.
 //            LiteDeploy.Worker.exe info    (computer card: ComputerInfo)
 //            LiteDeploy.Worker.exe processes  (processes, handles and memory)
 //          --output <file> (any command): the messages are also written to
@@ -99,7 +104,7 @@ namespace LiteDeploy.Worker
                 if (usageError != null)
                 {
                     Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeError, "message", usageError));
-                    Console.Error.WriteLine("Usage: LiteDeploy.Worker.exe scan|upgrade --package \"Id|processes|label\" ... [--timeout minutes]");
+                    Console.Error.WriteLine("Usage: LiteDeploy.Worker.exe scan|upgrade|install --package \"Id|processes|label\" ... [--timeout minutes]");
                     return ExitUsage;
                 }
                 return Run(command, packages, timeoutMinutes, allowUnsigned);
@@ -133,18 +138,23 @@ namespace LiteDeploy.Worker
             }
 
             WingetClient winget = wingetPath == null ? null : new WingetClient(wingetPath, TimeSpan.FromMinutes(timeoutMinutes));
-            int failed = 0, upgraded = 0;
+            int failed = 0, upgraded = 0, installed = 0;
             foreach (UpdatePackage package in packages)
             {
                 if (package.IsModule)
                 {
-                    RunModule(package, command, allowUnsigned, TimeSpan.FromMinutes(timeoutMinutes), ref failed, ref upgraded);
+                    RunModule(package, command, allowUnsigned, TimeSpan.FromMinutes(timeoutMinutes), ref failed, ref upgraded, ref installed);
                     continue;
                 }
 
                 Progress(package, WorkerProtocol.StepChecking);
                 PackageState state = Check(winget, package);
                 Emit(state.ToMessage());
+                if (command == InstallPolicy.Command)
+                {
+                    InstallPackage(winget, package, state, ref failed, ref installed);
+                    continue;
+                }
                 if (state.Status == WorkerProtocol.StatusError) { failed++; continue; }
                 if (command != "upgrade") continue;
 
@@ -166,31 +176,65 @@ namespace LiteDeploy.Worker
 
                 Progress(package, WorkerProtocol.StepUpgrading);
                 WingetResult result = winget.Upgrade(package.Id);
-                bool ok = result.ExitCode == 0;
-                bool nothing = result.ExitCode == WingetClient.NoApplicableUpgrade;
+                string outcome = WingetClient.Outcome(result.ExitCode, WorkerProtocol.ResultUpgraded);
+                bool ok = outcome == WorkerProtocol.ResultUpgraded;
                 if (ok) upgraded++;
-                if (!ok && !nothing) failed++;
-                Emit(UpgradeMessage(package,
-                    ok ? WorkerProtocol.ResultUpgraded : nothing ? WorkerProtocol.ResultSkipped : WorkerProtocol.ResultFailed,
-                    result.Hex,
+                if (outcome == WorkerProtocol.ResultFailed) failed++;
+                Emit(UpgradeMessage(package, outcome, result.Hex,
                     WingetClient.Describe(result.ExitCode) + (ok ? "" : LastLines(result.Output))));
 
                 // State after the upgrade (new installed version)
                 Emit(Check(winget, package).ToMessage());
             }
 
-            Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeDone, "upgraded", upgraded.ToString(), "failed", failed.ToString()));
+            if (command == InstallPolicy.Command)
+                Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeDone, "installed", installed.ToString(), "failed", failed.ToString()));
+            else
+                Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeDone, "upgraded", upgraded.ToString(), "failed", failed.ToString()));
             return Math.Min(failed, 99);
         }
 
-        // Update module: Check, then (upgrade) Update when it reports an update, then Check again
-        static void RunModule(UpdatePackage module, string command, bool allowUnsigned, TimeSpan timeout, ref int failed, ref int upgraded)
+        // Install run, winget package: installs it only when its check says "notinstalled", then a fresh state.
+        // No process is closed: the product is not installed for the computer.
+        static void InstallPackage(WingetClient winget, UpdatePackage package, PackageState state, ref int failed, ref int installed)
+        {
+            switch (InstallPolicy.Decide(false, true, state.Status))
+            {
+                case InstallDecision.CheckFailed:
+                    failed++;
+                    return;
+                case InstallDecision.AlreadyInstalled:
+                    Emit(UpgradeMessage(package, WorkerProtocol.ResultSkipped, null, "Already installed"));
+                    return;
+            }
+
+            Progress(package, WorkerProtocol.StepInstalling);
+            WingetResult result = winget.Install(package.Id);
+            string outcome = WingetClient.Outcome(result.ExitCode, WorkerProtocol.ResultInstalled);
+            bool ok = outcome == WorkerProtocol.ResultInstalled;
+            if (ok) installed++;
+            if (outcome == WorkerProtocol.ResultFailed) failed++;
+            Emit(UpgradeMessage(package, outcome, result.Hex,
+                WingetClient.Describe(result.ExitCode) + (ok ? "" : LastLines(result.Output))));
+
+            // State after the install (installed version)
+            Emit(Check(winget, package).ToMessage());
+        }
+
+        // Update module: Check, then (upgrade) Update when it reports an update, or (install) Install
+        // when it reports "notinstalled" and its header declares "# Install: yes", then Check again
+        static void RunModule(UpdatePackage module, string command, bool allowUnsigned, TimeSpan timeout, ref int failed, ref int upgraded, ref int installed)
         {
             // Values of the parameters: read once, the file is deleted at once
             Dictionary<string, string> parameters = ModuleRunner.TakeParameters(module);
             Progress(module, WorkerProtocol.StepChecking);
             ModuleResult check = ModuleRunner.Run(module, "Check", allowUnsigned, timeout, parameters);
             Emit(ModuleMessage(module, check));
+            if (command == InstallPolicy.Command)
+            {
+                InstallModule(module, check, allowUnsigned, timeout, parameters, ref failed, ref installed);
+                return;
+            }
             if (check.Status == WorkerProtocol.StatusError) { failed++; return; }
             if (command != "upgrade") return;
 
@@ -216,6 +260,34 @@ namespace LiteDeploy.Worker
             if (ok) upgraded++; else failed++;
             Emit(UpgradeMessage(module, ok ? WorkerProtocol.ResultUpgraded : WorkerProtocol.ResultFailed,
                 update.ExitCode.ToString(), update.Message ?? (ok ? "OK" : "Failed")));
+
+            Emit(ModuleMessage(module, ModuleRunner.Run(module, "Check", allowUnsigned, timeout, parameters)));
+        }
+
+        // Install run, module: same result line, exit codes, time limit, signature and parameters as Update
+        static void InstallModule(UpdatePackage module, ModuleResult check, bool allowUnsigned, TimeSpan timeout,
+            Dictionary<string, string> parameters, ref int failed, ref int installed)
+        {
+            switch (InstallPolicy.Decide(true, ModuleRunner.DeclaresInstall(module), check.Status))
+            {
+                case InstallDecision.CheckFailed:
+                    failed++;
+                    return;
+                case InstallDecision.NotSupported:
+                    failed++;
+                    Emit(UpgradeMessage(module, WorkerProtocol.ResultFailed, null, InstallPolicy.NotSupportedMessage(module.ModuleName)));
+                    return;
+                case InstallDecision.AlreadyInstalled:
+                    Emit(UpgradeMessage(module, WorkerProtocol.ResultSkipped, null, "Already installed"));
+                    return;
+            }
+
+            Progress(module, WorkerProtocol.StepInstalling);
+            ModuleResult install = ModuleRunner.Run(module, InstallPolicy.ModuleAction, allowUnsigned, timeout, parameters);
+            bool ok = install.Status != WorkerProtocol.StatusError;
+            if (ok) installed++; else failed++;
+            Emit(UpgradeMessage(module, ok ? WorkerProtocol.ResultInstalled : WorkerProtocol.ResultFailed,
+                install.ExitCode.ToString(), install.Message ?? (ok ? "OK" : "Failed")));
 
             Emit(ModuleMessage(module, ModuleRunner.Run(module, "Check", allowUnsigned, timeout, parameters)));
         }
@@ -373,7 +445,7 @@ namespace LiteDeploy.Worker
             if (args == null || args.Length == 0) return "No command";
 
             command = args[0].ToLowerInvariant();
-            if (command != "scan" && command != "upgrade") return "Unknown command: " + args[0];
+            if (command != "scan" && command != "upgrade" && command != InstallPolicy.Command) return "Unknown command: " + args[0];
 
             for (int i = 1; i < args.Length; i++)
             {

@@ -6,6 +6,7 @@
 // Purpose: Finds and runs winget.exe. As SYSTEM, winget is not on the PATH: it
 //          is taken from the newest App Installer folder under WindowsApps
 //          (finding of an earlier update script, which runs it as SYSTEM).
+//          list, search, upgrade and install (explicit Install action).
 // -----------------------------------------------------------------------------
 using System;
 using System.Diagnostics;
@@ -94,6 +95,36 @@ namespace LiteDeploy.Worker
         public WingetResult Upgrade(string id)
         {
             return Run("upgrade --id " + id + " -e --source winget --silent --accept-package-agreements --accept-source-agreements --disable-interactivity");
+        }
+
+        /// <summary>Explicit Install action: installs the package for the whole computer (InstallArguments).</summary>
+        public WingetResult Install(string id)
+        {
+            return Run(InstallArguments(id));
+        }
+
+        /// <summary>
+        /// Arguments of "winget install" for one package, for every user of the computer. The Id
+        /// must be a valid package Id (UpdatePackage.IsValidId: no space, no quote). Pure logic,
+        /// unit-tested.
+        /// </summary>
+        public static string InstallArguments(string id)
+        {
+            if (!UpdatePackage.IsValidId(id) || id.StartsWith(UpdatePackage.ModulePrefix, StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException("Invalid winget package Id.", "id");
+            return "install --id " + id + " -e --scope machine --silent --accept-package-agreements --accept-source-agreements --disable-interactivity";
+        }
+
+        /// <summary>
+        /// Outcome of an upgrade or an install from the winget exit code: <paramref name="success"/>
+        /// (WorkerProtocol.ResultUpgraded or ResultInstalled) on 0, skipped when winget has nothing
+        /// to apply (NoApplicableUpgrade), failed otherwise. Pure logic, unit-tested.
+        /// </summary>
+        public static string Outcome(int exitCode, string success)
+        {
+            if (exitCode == 0) return success;
+            if (exitCode == NoApplicableUpgrade) return WorkerProtocol.ResultSkipped;
+            return WorkerProtocol.ResultFailed;
         }
 
         WingetResult Run(string arguments)

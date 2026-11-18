@@ -19,6 +19,9 @@ on the computers through `LiteDeploy.Worker.exe`, as SYSTEM, like the winget pac
 4. `powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File <Name>.ps1 -Action Check`
    reports the versions; on *Update checked*, when the module reports `outdated`, the worker
    closes the processes of the header, runs `-Action Update`, then `-Action Check` again.
+5. On the explicit *Install* action (see *Install action* below), when the module declares
+   `# Install: yes` and reports `notinstalled`, the worker runs `-Action Install`, then
+   `-Action Check` again.
 
 Unsigned modules are refused. For tests only, `AllowUnsignedModules` set to `true` in
 `%LOCALAPPDATA%\LiteDeploy\settings.xml` lets the worker run them (`--allow-unsigned-modules`):
@@ -66,8 +69,9 @@ From an earlier in-house update script:
 
 `PrinterDrivers` and `TeamsBootstrapper` are generic: their content comes from the shared installer
 cache (see below), nothing in the module is specific to an organisation. Like every module, they
-only act on computers where the check says `outdated`: `TeamsBootstrapper` updates the computers
-where Teams is already provisioned and reports `notinstalled` elsewhere.
+only update computers where the check says `outdated`: `TeamsBootstrapper` updates the computers
+where Teams is already provisioned and reports `notinstalled` elsewhere. They do not declare
+`# Install: yes`, so the *Install* action does not offer them.
 
 The winget packages of the same tool (7-Zip, Notepad++, VLC) are in the example package list,
 `updates/packages.txt`.
@@ -135,7 +139,8 @@ only; write access stays with the administrators who fill them.
 
 ## Writing a module
 
-Start from [modules/Template-Module.ps1](modules/Template-Module.ps1).
+Start from [modules/Template-Module.ps1](modules/Template-Module.ps1) (it declares
+`# Install: yes` and shows an Install branch: remove both if your module cannot install).
 
 Header (first lines):
 
@@ -145,16 +150,49 @@ Header (first lines):
 # Processes: Acrobat, AcroRd32, AcroCEF, RdrCEF
 ```
 
-Contract (version 2; a module without `# Parameter:` line is a version 1 module and runs as before):
+Contract (version 2; a module without `# Parameter:` line is a version 1 module and runs as before;
+a module without `# Install: yes` line never receives `-Action Install`):
 
 | | |
 |---|---|
-| Action | `-Action Check` or `-Action Update` |
+| Header | `# LiteDeploy-Module` (required), `# Label:`, `# Processes:`, `# Install: yes` (optional, see *Install action*), `# Parameter:` lines; all in the first 20 lines |
+| Action | `-Action Check` or `-Action Update`; `-Action Install` only when the header declares `# Install: yes` (add `'Install'` to the `ValidateSet` of `-Action`) |
 | Parameters | Environment variables `LITEDEPLOY_PARAM_<Name>`, one per parameter of the header (see *Module parameters*); an empty value sets no variable |
 | Cache | `LITEDEPLOY_CACHE`: the shared installer cache, when one is set |
 | Result | one line `LDW1<TAB>type=module<TAB>status=...` (function `Write-LiteDeployResult` of the template); `status`: `uptodate`, `outdated`, `notinstalled` or `error`; optional `installed`, `available`, `message` (URI-escaped) |
-| Exit code | `0`; `3010` after an update that needs a restart; anything else is a failure |
+| Exit code | `0`; `3010` after an update or an install that needs a restart; anything else is a failure |
 | Time limit | 15 minutes per action |
+
+### Install action
+
+By default LiteDeploy only updates: a computer where a package is `notinstalled` is never touched.
+The *Install* action is explicit and opt-in:
+
+- In *Tools > Software Updates*, select computers, right-click, *Install* and pick **one**
+  package. The menu lists only the packages whose last check says `notinstalled` on at least one
+  selected computer (paused computers excluded), and for a module only when its header has the
+  line `# Install: yes` (key and value case-insensitive; any other value means no). A dialog
+  names the package and the number of computers before anything starts.
+- *Install* is never part of *Update checked* nor of the scheduled updates (a schedule runs `scan`
+  or `upgrade` only; a schedule file edited by hand to another action is refused). Paused
+  computers are skipped; "outside business hours only" computers are installed during business
+  hours only on request, like updates.
+- The worker (`LiteDeploy.Worker.exe install --package ...`) receives only the package chosen. It
+  runs the check first and installs only where the check says `notinstalled`; an installed
+  package (up to date or outdated) is reported as skipped (`Already installed`). Then it checks
+  again, so the new state is shown at once.
+- Module: same signature check, parameters (`LITEDEPLOY_PARAM_<Name>`), result line, exit codes
+  (`0`, `3010`, other = failure) and 15-minute limit as `-Action Update`. The worker reads the
+  header of the signed script again before `-Action Install`; a module without `# Install: yes`
+  is refused with a failed result: `Install refused: the module <Name> does not declare
+  "# Install: yes" in its header.` No process is closed before an install.
+- winget package: `winget install --id <Id> -e --scope machine --silent
+  --accept-package-agreements --accept-source-agreements --disable-interactivity`, with the same
+  reading of the exit code as an upgrade (0: installed; nothing to apply: skipped; any other code:
+  failed, with its meaning).
+
+A module that installs must handle `-Action Install` where the product is missing and leave an
+installed product alone (report its state and exit `0`); see the Install branch of the template.
 
 Rules:
 

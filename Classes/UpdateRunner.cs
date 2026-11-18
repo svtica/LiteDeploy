@@ -97,6 +97,35 @@ namespace LiteDeploy
             return sb.ToString();
         }
 
+        /// <summary>
+        /// Explicit Install action: for each package of the list (in its order), the computers among
+        /// <paramref name="computers"/> where it may be installed: not paused, last check
+        /// "notinstalled", and for a module, a header that declares "# Install: yes"
+        /// (<paramref name="installableModules"/>: names of those modules). Packages with no such
+        /// computer are left out. Pure logic, unit-tested.
+        /// </summary>
+        public static List<KeyValuePair<UpdatePackage, List<String>>> InstallCandidates(IEnumerable<String> computers, IEnumerable<UpdatePackage> packages,
+            Func<String, ComputerUpdateState> find, ICollection<String> installableModules)
+        {
+            List<KeyValuePair<UpdatePackage, List<String>>> result = new List<KeyValuePair<UpdatePackage, List<String>>>();
+            List<String> list = computers.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            foreach (UpdatePackage p in packages)
+            {
+                bool declares = p.IsModule && installableModules != null
+                                && installableModules.Any(n => String.Equals(n, p.ModuleName, StringComparison.OrdinalIgnoreCase));
+                List<String> targets = new List<String>();
+                foreach (String computer in list)
+                {
+                    ComputerUpdateState c = find(computer);
+                    if (c == null || c.Paused) continue;
+                    PackageUpdateState s = c.Find(p.Id);
+                    if (s != null && InstallPolicy.CanOffer(p, s.Status, declares)) targets.Add(computer);
+                }
+                if (targets.Count > 0) result.Add(new KeyValuePair<UpdatePackage, List<String>>(p, targets));
+            }
+            return result;
+        }
+
         /// <summary>Credential chosen for this session only (not saved), used when Options names none.</summary>
         public static String SessionCredential;
 
@@ -193,8 +222,8 @@ namespace LiteDeploy
         static UpdateRunResult RunWorker(String computer, String command, IList<UpdatePackage> packages, Action<Process> started,
             Action<WorkerMessage> onMessage, StoredCredential credential, UpdateRunResult result)
         {
-            // Enough for every winget call of every package (list, upgrade, list), plus the copy
-            int timeoutMinutes = 5 + packages.Count * WingetTimeoutMinutes * (command == "upgrade" ? 3 : 1);
+            // Enough for every winget call of every package (list, upgrade or install, list), plus the copy
+            int timeoutMinutes = 5 + packages.Count * WingetTimeoutMinutes * (command == "scan" ? 1 : 3);
             int timeoutMs = (int)TimeSpan.FromMinutes(timeoutMinutes + 2).TotalMilliseconds;
             PsExecOptions options = WithCredential(BuildOptions(computer, command, packages), credential);
             String method = RemoteRunner.Method;

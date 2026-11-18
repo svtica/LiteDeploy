@@ -34,6 +34,8 @@ namespace LiteDeploy
             this.processesItem = new System.Windows.Forms.ToolStripMenuItem();
             this.litePMItem = new System.Windows.Forms.ToolStripMenuItem();
             this.logsItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.installItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.installSeparator = new System.Windows.Forms.ToolStripSeparator();
             this.checkButton = new System.Windows.Forms.ToolStripButton();
             this.selectOutdatedButton = new System.Windows.Forms.ToolStripButton();
             this.selectAllButton = new System.Windows.Forms.ToolStripButton();
@@ -210,6 +212,8 @@ namespace LiteDeploy
             // rowMenu
             //
             this.rowMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.installItem,
+            this.installSeparator,
             this.pauseItem,
             this.resumeItem,
             this.nightOnlyItem,
@@ -221,6 +225,9 @@ namespace LiteDeploy
             this.wakeItem});
             this.rowMenu.Name = "rowMenu";
             this.rowMenu.Opening += new System.ComponentModel.CancelEventHandler(this.rowMenu_Opening);
+            this.installItem.Name = "installItem";
+            this.installItem.Text = "Install";
+            this.installSeparator.Name = "installSeparator";
             this.pauseItem.Name = "pauseItem";
             this.pauseItem.Text = "Pause these computers...";
             this.pauseItem.Click += new System.EventHandler(this.pauseItem_Click);
@@ -301,6 +308,8 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripMenuItem processesItem;
         private System.Windows.Forms.ToolStripMenuItem litePMItem;
         private System.Windows.Forms.ToolStripMenuItem logsItem;
+        private System.Windows.Forms.ToolStripMenuItem installItem;
+        private System.Windows.Forms.ToolStripSeparator installSeparator;
         private System.Windows.Forms.ToolStripButton checkButton;
         private System.Windows.Forms.ToolStripButton selectOutdatedButton;
         private System.Windows.Forms.ToolStripButton selectAllButton;

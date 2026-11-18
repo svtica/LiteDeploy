@@ -16,6 +16,10 @@
 //          time. Paused computers are skipped; "outside business hours only"
 //          computers are updated during business hours only on request. Each
 //          row shows the step in progress while its computer is processed.
+//          Right-click > Install: one package, chosen explicitly, on the selected
+//          computers where the last check says it is not installed (modules:
+//          only those that declare "# Install: yes"); never part of Update
+//          checked or of the schedules.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -289,6 +293,7 @@ namespace LiteDeploy
             switch (s.LastResult)
             {
                 case WorkerProtocol.ResultUpgraded: return Localization.F("SoftwareUpdatesForm.Upgraded", "Updated {0}", when);
+                case WorkerProtocol.ResultInstalled: return Localization.F("SoftwareUpdatesForm.Installed", "Installed {0}", when);
                 case WorkerProtocol.ResultFailed: return Localization.F("SoftwareUpdatesForm.Failed", "Failed {0}: {1}", when, s.LastMessage);
                 default: return s.LastMessage ?? "";
             }
@@ -466,18 +471,8 @@ namespace LiteDeploy
                 return;
             }
 
-            // "Outside business hours only" computers, during business hours: only on request
-            List<Job> night = jobs.Where(j => IsNightOnly(j.Computer)).ToList();
-            if (night.Count > 0 && UserSettings.Current.IsBusinessHours(DateTime.Now))
-            {
-                DialogResult answer = MessageBox.Show(this,
-                    Localization.F("SoftwareUpdatesForm.NightOnlyNow", "{0} computer(s) are updated outside business hours only ({1}). Update them now anyway?\n\nYes: update them now. No: skip them.",
-                        night.Count, String.Join(", ", night.Select(j => j.Computer).Take(10))),
-                    Text, MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
-                if (answer == DialogResult.Cancel) return;
-                if (answer == DialogResult.No) jobs = jobs.Except(night).ToList();
-                if (jobs.Count == 0) return;
-            }
+            jobs = AskNightOnly(jobs, false);
+            if (jobs == null || jobs.Count == 0) return;
 
             if (MessageBox.Show(this,
                     Localization.F("SoftwareUpdatesForm.ConfirmUpdate", "Update {0} package(s) on {1} computer(s)? Their applications are closed without warning before the update.",
@@ -485,6 +480,69 @@ namespace LiteDeploy
                     Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
             Start("upgrade", jobs);
+        }
+
+        /// <summary>
+        /// "Outside business hours only" computers, during business hours: only on request (Yes: keep
+        /// them, No: skip them). Null: cancelled.
+        /// </summary>
+        List<Job> AskNightOnly(List<Job> jobs, bool install)
+        {
+            List<Job> night = jobs.Where(j => IsNightOnly(j.Computer)).ToList();
+            if (night.Count == 0 || !UserSettings.Current.IsBusinessHours(DateTime.Now)) return jobs;
+            String names = String.Join(", ", night.Select(j => j.Computer).Take(10));
+            String question = install
+                ? Localization.F("SoftwareUpdatesForm.NightOnlyInstallNow", "{0} computer(s) are updated outside business hours only ({1}). Install on them now anyway?\n\nYes: install now. No: skip them.", night.Count, names)
+                : Localization.F("SoftwareUpdatesForm.NightOnlyNow", "{0} computer(s) are updated outside business hours only ({1}). Update them now anyway?\n\nYes: update them now. No: skip them.", night.Count, names);
+            DialogResult answer = MessageBox.Show(this, question, Text, MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+            if (answer == DialogResult.Cancel) return null;
+            return answer == DialogResult.No ? jobs.Except(night).ToList() : jobs;
+        }
+
+        // ---- Install (explicit, opt-in) ---------------------------------------------
+        // Not part of "Update checked" nor of the schedules: one package, chosen in the row menu,
+        // on the selected computers where the last check says "notinstalled" (a module only when
+        // its header declares "# Install: yes").
+
+        void BuildInstallMenu(List<String> selected)
+        {
+            installItem.DropDownItems.Clear();
+            HashSet<String> installable = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
+            if (packages.Any(p => p.IsModule))
+            {
+                foreach (UpdateModule m in UpdateModules.List().Where(m => m.Install)) installable.Add(m.Name);
+            }
+            List<KeyValuePair<UpdatePackage, List<String>>> candidates;
+            lock (storeLock) candidates = UpdateRunner.InstallCandidates(selected, packages, store.Find, installable);
+            foreach (KeyValuePair<UpdatePackage, List<String>> entry in candidates)
+            {
+                UpdatePackage package = entry.Key;
+                List<String> targets = entry.Value;
+                ToolStripMenuItem item = new ToolStripMenuItem(
+                    Localization.F("SoftwareUpdatesForm.InstallPackageItem", "{0} ({1} computer(s))", package.DisplayName, targets.Count));
+                item.Click += (s, e) => InstallPackage(package, targets);
+                installItem.DropDownItems.Add(item);
+            }
+            Theme.Apply(installItem.DropDown);
+            installItem.Enabled = candidates.Count > 0;
+            installItem.ToolTipText = candidates.Count > 0 ? null
+                : Localization.T("SoftwareUpdatesForm.NothingToInstall", "No package to install: the last check of the selected computers says every package is installed, or the module does not declare the Install action.");
+        }
+
+        void InstallPackage(UpdatePackage package, List<String> targets)
+        {
+            if (pending > 0) return;
+            List<Job> jobs = targets.Where(c => !IsPaused(c))
+                .Select(c => new Job { Computer = c, Packages = new List<UpdatePackage> { package } }).ToList();
+            jobs = AskNightOnly(jobs, true);
+            if (jobs == null || jobs.Count == 0) return;
+
+            if (MessageBox.Show(this,
+                    Localization.F("SoftwareUpdatesForm.ConfirmInstall", "Install {0} on {1} computer(s)?\n\nIt is installed only where the check still says it is not installed: {2}",
+                        package.DisplayName, jobs.Count, String.Join(", ", jobs.Select(j => j.Computer).Take(10)) + (jobs.Count > 10 ? ", ..." : "")),
+                    Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+                return;
+            Start(InstallPolicy.Command, jobs);
         }
 
         void Start(String command, List<Job> jobs)
@@ -594,6 +652,7 @@ namespace LiteDeploy
                 case WorkerProtocol.StepChecking: return Localization.T("SoftwareUpdatesForm.StepChecking", "Checking...");
                 case WorkerProtocol.StepClosing: return Localization.T("SoftwareUpdatesForm.StepClosing", "Closing the application...");
                 case WorkerProtocol.StepUpgrading: return Localization.T("SoftwareUpdatesForm.StepUpgrading", "Updating...");
+                case WorkerProtocol.StepInstalling: return Localization.T("SoftwareUpdatesForm.StepInstalling", "Installing...");
                 default: return step;
             }
         }
@@ -708,6 +767,7 @@ namespace LiteDeploy
         {
             List<String> selected = SelectedComputers();
             if (selected.Count == 0 || pending > 0) { e.Cancel = true; return; }
+            BuildInstallMenu(selected);
             pauseItem.Enabled = selected.Any(c => !IsPaused(c));
             resumeItem.Enabled = selected.Any(IsPaused);
             nightOnlyItem.Checked = selected.All(IsNightOnly);
