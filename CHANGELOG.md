@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- *Tools > Web versions...* shows real progress. *Check now*: a progress bar (done / total) and a
+  status line such as "Checking 3 / 12: Example App (winget)..." with the elapsed time and, after
+  the first few items, an estimated time left; the row being checked is highlighted, its status
+  shows the step (cache file version, winget), and each row shows its result as soon as it is
+  known. Up to 3 `winget show` run at a time (the first one alone, so a stale winget source is
+  refreshed once).
+- *Download to the cache* shows the same progress per file: downloading (percentage and size when
+  the server gives the length), verifying the SHA256, verifying the signature, copying to the
+  cache, updating the parameters.
+- While a check or a download runs, its button becomes *Cancel*: it stops after the current item
+  and keeps and saves the results already obtained (the instances not reached keep their previous
+  result). Closing the window does the same. The grid stays usable (scroll, sort, tooltips).
+- The daily web check shows its progress in the status bar of the main window (no dialog), then
+  its summary for 10 minutes.
+
 ## [1.0.17] - 2026-11-18
 
 ### Changed

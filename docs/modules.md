@@ -343,7 +343,10 @@ One row per instance of `CachedInstaller` and `MsixProvision` that has parameter
 - Versions are compared by their numbers: missing parts count as zero (`26.06` = `26.6.0.0`), a
   build in parentheses is compared with the part that follows (`6.1.5 (12345)` = `6.1.5.12345`).
 - The output of winget is read by its layout, not by its labels, so any display language works.
-- *Check now* checks every row; *Open vendor page* opens the home page of the manifest (else the
+- *Check now* checks every row, up to 3 `winget show` at a time (the first one alone), with a
+  progress bar, the item and step under way, the elapsed and estimated remaining time; each row
+  shows its result as soon as it is known. *Cancel* stops after the current item and keeps the
+  results obtained (the rows not reached keep their previous result). *Open vendor page* opens the home page of the manifest (else the
   publisher page). The last results are kept in `%LOCALAPPDATA%\LiteDeploy\web-versions.xml`;
   every check and download is logged in `%LOCALAPPDATA%\LiteDeploy\logs\web-versions-<date>.log`.
 - Sortable columns; the size of the window is remembered.
