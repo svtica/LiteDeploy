@@ -11,7 +11,13 @@
 //                <Parameter name="Environment" value="Production" />
 //                <Parameter name="Token" credential="Example token" />
 //              </Module>
+//              <Module name="CachedInstaller/ContosoExampleApp">   (an instance)
+//                <Parameter name="Product" value="Contoso Example App" />
+//              </Module>
 //            </ModuleSettings>
+//          An instance ("module:Name/Instance") has its own values, under the key
+//          "Name/Instance" (an earlier LiteDeploy skips such an entry: "/" was not
+//          valid in a module name).
 //          A secret parameter holds the NAME of a stored credential (Tools >
 //          Credentials), never the secret: its password is read at run time.
 // -----------------------------------------------------------------------------
@@ -43,7 +49,13 @@ namespace LiteDeploy
             get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LiteDeploy", "module-settings.xml"); }
         }
 
-        /// <summary>The setting of a parameter; null when none.</summary>
+        /// <summary>Key of the values of a module ("Name") or of one of its instances ("Name/Instance").</summary>
+        static public String Key(String module, String instance)
+        {
+            return String.IsNullOrEmpty(instance) ? module : module + UpdatePackage.InstanceSeparator + instance;
+        }
+
+        /// <summary>The setting of a parameter; null when none. <paramref name="module"/>: a key ("Name" or "Name/Instance").</summary>
         public ModuleParameterSetting Get(String module, String parameter)
         {
             Dictionary<String, ModuleParameterSetting> m;

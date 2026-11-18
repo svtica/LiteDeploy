@@ -17,6 +17,8 @@
 //          the messages.
 //          Install: "-Action Install" runs only for a module whose signed header
 //          declares "# Install: yes" (InstallPolicy).
+//          Instances ("module:Name/Instance", modules with "# Instances: yes"):
+//          the same script, with the parameter file Name@Instance.params.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -48,6 +50,9 @@ namespace LiteDeploy.Worker
         /// <summary>Exit code of an update that needs a restart (msiexec convention).</summary>
         public const int RestartRequired = 3010;
 
+        /// <summary>Environment variable of the module process: the instance name ("module:Name/Instance"), if any.</summary>
+        public const string InstanceVariable = "LITEDEPLOY_INSTANCE";
+
         public static string ModulesDir
         {
             get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "LiteDeploy", "modules"); }
@@ -58,9 +63,10 @@ namespace LiteDeploy.Worker
             return Path.Combine(ModulesDir, module.ModuleName + ".ps1");
         }
 
+        /// <summary>Name.params, or Name@Instance.params for an instance of the module.</summary>
         public static string ParametersPath(UpdatePackage module)
         {
-            return Path.Combine(ModulesDir, module.ModuleName + ModuleParameters.FileExtension);
+            return Path.Combine(ModulesDir, ModuleParameters.FileName(module));
         }
 
         /// <summary>
@@ -190,6 +196,9 @@ namespace LiteDeploy.Worker
                 return Error(InstallPolicy.NotSupportedMessage(module.ModuleName));
 
             // Parameters declared in the header of the (signed) script; values from LiteDeploy or the defaults
+            // An instance ("module:Name/Instance") only for a module that declares it
+            if (module.InstanceName != null && !ModuleParameters.DeclaresInstances(header))
+                return Error("The module " + module.ModuleName + " does not declare \"" + ModuleParameters.InstancesHeader + "\": instance " + module.InstanceName + " refused.");
             List<ModuleParameter> declared = ModuleParameters.ParseHeader(header);
             Dictionary<string, string> environment;
             List<string> secrets;
@@ -211,6 +220,9 @@ namespace LiteDeploy.Worker
             };
             // Values for this process only, never on its command line
             ApplyEnvironment(psi.EnvironmentVariables, environment);
+            // Name of the instance, for the module's own messages and work folder
+            psi.EnvironmentVariables.Remove(InstanceVariable);
+            if (module.InstanceName != null) psi.EnvironmentVariables[InstanceVariable] = module.InstanceName;
 
             using (Process p = Process.Start(psi))
             {

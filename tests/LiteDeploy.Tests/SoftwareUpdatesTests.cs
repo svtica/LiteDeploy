@@ -6,13 +6,16 @@
 // Purpose: Unit tests of the software updates: worker protocol, package list,
 //          winget table reading (English and French headers, progress noise),
 //          worker arguments, the state file (written only on change), the
-//          extra log folders setting and the explicit Install action (header,
-//          decision, worker and winget arguments).
+//          extra log folders setting, the explicit Install action (header,
+//          decision, worker and winget arguments), module Ids, instances
+//          ("module:Name/Instance") and the shipped modules.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using LiteDeploy.Worker;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -196,11 +199,93 @@ namespace LiteDeploy.Tests
             UpdatePackage p = UpdatePackage.Parse("module:Adobe-Reader | Acrobat, AcroRd32 | Adobe Acrobat Reader");
             Assert.IsTrue(p.IsModule);
             Assert.AreEqual("Adobe-Reader", p.ModuleName);
+            Assert.IsNull(p.InstanceName, "a plain module has no instance");
+            Assert.AreEqual("Adobe-Reader", p.SettingsKey);
             Assert.IsNull(UpdatePackage.Parse("module:..\\evil"));
-            Assert.IsNull(UpdatePackage.Parse("module:a/b"));
             Assert.IsNull(UpdatePackage.Parse("module:.hidden"));
             Assert.IsNull(UpdatePackage.Parse("module:"));
             Assert.IsFalse(UpdatePackage.Parse("7zip.7zip").IsModule);
+            Assert.IsNull(UpdatePackage.Parse("7zip.7zip").InstanceName);
+        }
+
+        [TestMethod]
+        public void Module_InstanceIds_ParseAndValidate()
+        {
+            UpdatePackage p = UpdatePackage.Parse("module:CachedInstaller/ContosoExampleApp | | Contoso Example App");
+            Assert.IsNotNull(p);
+            Assert.IsTrue(p.IsModule);
+            Assert.AreEqual("CachedInstaller", p.ModuleName);
+            Assert.AreEqual("ContosoExampleApp", p.InstanceName);
+            Assert.AreEqual("CachedInstaller/ContosoExampleApp", p.SettingsKey);
+            Assert.AreEqual("Contoso Example App", p.DisplayName);
+            Assert.AreEqual("module:CachedInstaller/ContosoExampleApp||Contoso Example App", p.ToArgument());
+            Assert.AreEqual("module:CachedInstaller/Example_App-2.x", UpdatePackage.ModuleId("CachedInstaller", "Example_App-2.x"));
+            Assert.AreEqual("module:CachedInstaller", UpdatePackage.ModuleId("CachedInstaller", null));
+
+            foreach (string bad in new[] { "module:a/", "module:/b", "module:a/b/c", "module:a/.b", "module:a/..", "module:a/b c",
+                                           @"module:a/b\c", "module:a/b:c", "module:a/b@c", "module:a/café", "module:a/" + new string('x', 65) })
+                Assert.IsFalse(UpdatePackage.IsValidId(bad), bad);
+            Assert.IsTrue(UpdatePackage.IsValidId("module:a/" + new string('x', 64)));
+            Assert.IsTrue(UpdatePackage.IsValidInstanceName("ContosoExampleApp"));
+            Assert.IsFalse(UpdatePackage.IsValidInstanceName(null));
+            // A winget Id never takes the instance form
+            Assert.IsFalse(UpdatePackage.IsValidId("Vendor.App/Instance"));
+        }
+
+        [TestMethod]
+        public void Module_PlainIds_Unchanged()
+        {
+            // Ids that were valid before instances keep their meaning
+            foreach (string id in new[] { "module:AdobeReader", "module:Adobe-Reader", "module:My.Module_2", "module:Modulé" })
+            {
+                UpdatePackage p = UpdatePackage.Parse(id + " | a, b | Label");
+                Assert.IsNotNull(p, id);
+                Assert.AreEqual(id.Substring("module:".Length), p.ModuleName, id);
+                Assert.IsNull(p.InstanceName, id);
+                Assert.AreEqual(id + "|a,b|Label", p.ToArgument(), id);
+                Assert.AreEqual(p.ModuleName + ModuleParameters.FileExtension, ModuleParameters.FileName(p), id);
+            }
+            Assert.IsNull(ModuleParameters.FileName(UpdatePackage.Parse("7zip.7zip")));
+        }
+
+        [TestMethod]
+        public void Module_Instances_OwnParameterFileAndRow()
+        {
+            UpdatePackage a = UpdatePackage.Parse("module:CachedInstaller/ContosoExampleApp");
+            UpdatePackage b = UpdatePackage.Parse("module:CachedInstaller/OtherExampleApp");
+            UpdatePackage plain = UpdatePackage.Parse("module:CachedInstaller");
+            Assert.AreEqual("CachedInstaller@ContosoExampleApp.params", ModuleParameters.FileName(a));
+            Assert.AreEqual("CachedInstaller@OtherExampleApp.params", ModuleParameters.FileName(b));
+            Assert.AreEqual("CachedInstaller.params", ModuleParameters.FileName(plain));
+            // Same script for every instance
+            Assert.AreEqual(ModuleRunner.ScriptPath(plain), ModuleRunner.ScriptPath(a));
+            Assert.AreNotEqual(ModuleRunner.ParametersPath(a), ModuleRunner.ParametersPath(b));
+
+            // The worker keeps both instances (distinct Ids)
+            string command; List<UpdatePackage> packages; int timeout; bool unsigned;
+            Assert.IsNull(Worker.Program.ParseArguments(new[] { "upgrade", "--package", a.ToArgument(), "--package", b.ToArgument(), "--package", a.ToArgument() },
+                out command, out packages, out timeout, out unsigned));
+            CollectionAssert.AreEqual(new[] { a.Id, b.Id }, packages.Select(x => x.Id).ToArray());
+        }
+
+        [TestMethod]
+        public void Module_InstancesHeader()
+        {
+            string[] header = { "# LiteDeploy-Module", "# Label: Example", "# Instances: yes" };
+            Assert.IsTrue(ModuleParameters.DeclaresInstances(header));
+            Assert.IsFalse(ModuleParameters.DeclaresInstances(new[] { "# LiteDeploy-Module", "# Instances: no" }));
+            Assert.IsFalse(ModuleParameters.DeclaresInstances(null));
+
+            UpdateModule m = UpdateModules.Parse("Example", header, "x.ps1");
+            Assert.IsTrue(m.Instances);
+            UpdatePackage p = m.ToPackage("ContosoExampleApp", "Contoso | Example App");
+            Assert.AreEqual("module:Example/ContosoExampleApp||Contoso   Example App", p.ToArgument());
+            Assert.AreEqual("ContosoExampleApp", m.ToPackage("ContosoExampleApp", null).Label, "label: the instance name by default");
+            Assert.IsNull(m.ToPackage("bad name", null));
+
+            UpdateModule single = UpdateModules.Parse("Single", new[] { "# LiteDeploy-Module" }, "x.ps1");
+            Assert.IsFalse(single.Instances);
+            Assert.IsNull(single.ToPackage("ContosoExampleApp", null), "no instance for a module that does not declare it");
         }
 
         [TestMethod]
@@ -358,7 +443,7 @@ namespace LiteDeploy.Tests
         public void ShippedModules_AreAsciiModules()
         {
             string[] files = Directory.GetFiles(Path.Combine(RepoRoot(), "modules"), "*.ps1");
-            CollectionAssert.IsSubsetOf(new[] { "AdobeReader.ps1", "MsixProvision.ps1", "OnePassword.ps1", "OracleJava.ps1", "PrinterDrivers.ps1", "TeamsBootstrapper.ps1" },
+            CollectionAssert.IsSubsetOf(new[] { "AdobeReader.ps1", "CachedInstaller.ps1", "MsixProvision.ps1", "OnePassword.ps1", "OracleJava.ps1", "PrinterDrivers.ps1", "TeamsBootstrapper.ps1" },
                 files.Select(Path.GetFileName).ToArray());
             foreach (string path in files)
             {
@@ -380,7 +465,8 @@ namespace LiteDeploy.Tests
                 Assert.IsTrue(header.Any(l => l.StartsWith("# Label:", StringComparison.Ordinal) && l.Length > "# Label:".Length + 1), path + ": # Label:");
                 Assert.IsTrue(header.Any(l => l.StartsWith("# Processes:", StringComparison.Ordinal)), path + ": # Processes:");
                 string text = String.Join("\n", lines);
-                foreach (string required in new[] { ".SYNOPSIS", ".DESCRIPTION", ".PARAMETER Action", "$ErrorActionPreference = 'Stop'" })
+                // Check and Update at least ('Install' is optional, for modules that declare "# Install: yes")
+                foreach (string required in new[] { ".SYNOPSIS", ".DESCRIPTION", ".PARAMETER Action", "[ValidateSet('Check', 'Update'", "$ErrorActionPreference = 'Stop'" })
                     StringAssert.Contains(text, required, path);
                 // Install in the ValidateSet exactly when the header declares "# Install: yes"
                 StringAssert.Contains(text, InstallPolicy.DeclaresInstall(header)
@@ -417,6 +503,46 @@ namespace LiteDeploy.Tests
             string text = File.ReadAllText(path);
             Assert.IsFalse(text.Contains("Invoke-Expression"), "no Invoke-Expression");
             StringAssert.Contains(text, @"Join-Path $env:windir ""LiteDeploy\work\MsixProvision\$packageName""", "work folder under %windir%");
+        }
+
+        [TestMethod]
+        public void ShippedModules_CachedInstaller_Header()
+        {
+            UpdateModule m = UpdateModules.Read(Path.Combine(RepoRoot(), "modules", "CachedInstaller.ps1"));
+            Assert.IsNotNull(m);
+            Assert.IsTrue(m.Instances, "one package row per product");
+            Assert.AreEqual(0, m.Processes.Length, "per-product processes: CloseProcesses parameter");
+            CollectionAssert.AreEqual(new[] { "Product", "File", "Type", "Arguments", "DetectName", "ProductCode", "Version", "Publisher", "CloseProcesses" },
+                m.Parameters.Select(p => p.Name).ToArray());
+            CollectionAssert.AreEqual(new[] { "File", "Publisher" }, m.Parameters.Where(p => p.Required).Select(p => p.Name).ToArray());
+            Assert.IsFalse(m.Parameters.Any(p => p.Secret));
+            string text = File.ReadAllText(Path.Combine(RepoRoot(), "modules", "CachedInstaller.ps1"));
+            StringAssert.Contains(text, "[ValidateSet('Check', 'Update', 'Install')]");
+            StringAssert.Contains(text, "# Install: yes");
+        }
+
+        [TestMethod]
+        public void ShippedModules_ParseInWindowsPowerShell()
+        {
+            String exe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "WindowsPowerShell", "v1.0", "powershell.exe");
+            if (!File.Exists(exe)) Assert.Inconclusive("Windows PowerShell not available");
+            foreach (string path in Directory.GetFiles(Path.Combine(RepoRoot(), "modules"), "*.ps1"))
+            {
+                String command = "$e = $null; [void][System.Management.Automation.Language.Parser]::ParseFile('" + path.Replace("'", "''") + "', [ref]$null, [ref]$e); $e | ForEach-Object { $_.ToString() }; exit @($e).Count";
+                // -EncodedCommand: no quoting of the command line
+                ProcessStartInfo psi = new ProcessStartInfo(exe, "-NoProfile -NonInteractive -EncodedCommand " + Convert.ToBase64String(Encoding.Unicode.GetBytes(command)))
+                {
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    CreateNoWindow = true
+                };
+                using (Process p = Process.Start(psi))
+                {
+                    String output = p.StandardOutput.ReadToEnd();
+                    p.WaitForExit(60000);
+                    Assert.AreEqual(0, p.ExitCode, path + ": " + output);
+                }
+            }
         }
 
         [TestMethod]

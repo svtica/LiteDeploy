@@ -12,7 +12,9 @@
 //                                  [--allow-unsigned-modules] [--cache \\server\share]
 //          A package "module:<Name>" is an update module, a PowerShell script
 //          copied by LiteDeploy to %windir%\LiteDeploy\modules (ModuleRunner),
-//          with its parameter file, deleted at the end of the run.
+//          with its parameter file, deleted at the end of the run;
+//          "module:<Name>/<Instance>" runs the same script with the parameter
+//          file of that instance.
 //          scan reports the installed and available version of each package;
 //          upgrade closes the package's processes and upgrades it when an
 //          upgrade is available. install (explicit, only the packages given:

@@ -8,6 +8,9 @@
 //          The worker receives each package as one --package argument.
 //          An Id "module:<Name>" is an update module (signed PowerShell script,
 //          docs/modules.md) instead of a winget package.
+//          An Id "module:<Name>/<Instance>" is one instance of a module that
+//          declares "# Instances: yes": the same script, run with the parameter
+//          values of that instance, with its own row and its own state.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -32,8 +35,43 @@ namespace LiteDeploy
         /// <summary>True for an update module (Id "module:Name").</summary>
         public bool IsModule { get { return Id != null && Id.StartsWith(ModulePrefix, StringComparison.OrdinalIgnoreCase); } }
 
+        /// <summary>Separates the module name from the instance name: "module:Name/Instance".</summary>
+        public const char InstanceSeparator = '/';
+
         /// <summary>Name of the module (file name without .ps1); null for a winget package.</summary>
-        public string ModuleName { get { return IsModule ? Id.Substring(ModulePrefix.Length) : null; } }
+        public string ModuleName
+        {
+            get
+            {
+                if (!IsModule) return null;
+                string rest = Id.Substring(ModulePrefix.Length);
+                int slash = rest.IndexOf(InstanceSeparator);
+                return slash < 0 ? rest : rest.Substring(0, slash);
+            }
+        }
+
+        /// <summary>Instance of the module ("module:Name/Instance"); null for a plain module or a winget package.</summary>
+        public string InstanceName
+        {
+            get
+            {
+                if (!IsModule) return null;
+                int slash = Id.IndexOf(InstanceSeparator);
+                return slash < 0 ? null : Id.Substring(slash + 1);
+            }
+        }
+
+        /// <summary>
+        /// Key of the parameter values in module-settings.xml: "Name" for a module, "Name/Instance"
+        /// for an instance; null for a winget package.
+        /// </summary>
+        public string SettingsKey { get { return IsModule ? Id.Substring(ModulePrefix.Length) : null; } }
+
+        /// <summary>The Id of a module ("module:Name") or of one of its instances ("module:Name/Instance").</summary>
+        public static string ModuleId(string module, string instance)
+        {
+            return ModulePrefix + module + (string.IsNullOrEmpty(instance) ? "" : InstanceSeparator + instance);
+        }
 
         /// <summary>Parses "Id | proc1, proc2 | label [| anything]"; null for a blank or comment line or an invalid Id.</summary>
         public static UpdatePackage Parse(string line)
@@ -71,16 +109,33 @@ namespace LiteDeploy
         }
 
         // A winget Id: letters, digits and . - _ + only (it ends up on a command line run as SYSTEM).
-        // A module: "module:" then a name of letters, digits and . - _ (it becomes a file name)
+        // A module: "module:" then a name of letters, digits and . - _ (it becomes a file name),
+        // optionally "/" and an instance name with the same rules (also part of a file name)
         public static bool IsValidId(string id)
         {
             if (string.IsNullOrEmpty(id) || id.Length > 128) return false;
             if (id.StartsWith(ModulePrefix, StringComparison.OrdinalIgnoreCase))
             {
-                string name = id.Substring(ModulePrefix.Length);
-                return name.Length > 0 && name[0] != '.' && name.All(c => char.IsLetterOrDigit(c) || c == '.' || c == '-' || c == '_');
+                string[] parts = id.Substring(ModulePrefix.Length).Split(InstanceSeparator);
+                return parts.Length <= 2 && IsValidModuleName(parts[0]) && (parts.Length == 1 || IsValidInstanceName(parts[1]));
             }
             return id.All(c => char.IsLetterOrDigit(c) || c == '.' || c == '-' || c == '_' || c == '+');
+        }
+
+        /// <summary>A module name (unchanged rule): letters, digits and . - _ only, not starting with a dot.</summary>
+        public static bool IsValidModuleName(string name)
+        {
+            return !string.IsNullOrEmpty(name) && name[0] != '.' && name.All(c => char.IsLetterOrDigit(c) || c == '.' || c == '-' || c == '_');
+        }
+
+        /// <summary>
+        /// An instance name: ASCII letters, digits and . - _ only (A-Z a-z 0-9 . - _), not starting
+        /// with a dot, 64 characters at most. It ends up in a file name on the computer.
+        /// </summary>
+        public static bool IsValidInstanceName(string name)
+        {
+            if (string.IsNullOrEmpty(name) || name.Length > 64 || name[0] == '.') return false;
+            return name.All(c => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '.' || c == '-' || c == '_');
         }
 
         static bool IsValidProcessName(string name)

@@ -4,7 +4,8 @@
 // Author:  LiteDeploy contributors
 // Date:    2026-11-17
 // Purpose: Unit tests of the module parameters (docs/modules.md): header
-//          parsing, module-settings.xml round-trip, parameter file, worker side
+//          parsing, module-settings.xml round-trip (modules and instances),
+//          parameter file, worker side
 //          mapping to LITEDEPLOY_PARAM_ variables, required and default values,
 //          and that a secret value never shows in arguments or messages.
 // -----------------------------------------------------------------------------
@@ -159,6 +160,53 @@ namespace LiteDeploy.Tests
             {
                 try { Directory.Delete(dir, true); } catch (Exception) { }
             }
+        }
+
+        [TestMethod]
+        public void Settings_Instances_OwnValues_RoundTrip()
+        {
+            ModuleSettings s = new ModuleSettings();
+            s.SetValue("Example", "Environment", "Module value");
+            s.SetValue(ModuleSettings.Key("Example", "ContosoExampleApp"), "Environment", "Instance A");
+            s.SetValue(ModuleSettings.Key("Example", "OtherExampleApp"), "Environment", "Instance B");
+            s.SetCredential(ModuleSettings.Key("Example", "OtherExampleApp"), "EnrollmentToken", "Example token");
+            Assert.AreEqual("Example/ContosoExampleApp", ModuleSettings.Key("Example", "ContosoExampleApp"));
+            Assert.AreEqual("Example", ModuleSettings.Key("Example", null));
+
+            string xml = s.ToXml();
+            StringAssert.Contains(xml, "name=\"Example/ContosoExampleApp\"");
+            ModuleSettings loaded = ModuleSettings.Parse(xml);
+            Assert.AreEqual("Module value", loaded.Get("Example", "Environment").Value);
+            Assert.AreEqual("Instance A", loaded.Get("example/contosoexampleapp", "Environment").Value);
+            Assert.AreEqual("Instance B", loaded.Get("Example/OtherExampleApp", "Environment").Value);
+            Assert.AreEqual("Example token", loaded.Get("Example/OtherExampleApp", "EnrollmentToken").Credential);
+            CollectionAssert.AreEqual(new[] { "Example", "Example/ContosoExampleApp", "Example/OtherExampleApp" }, loaded.Modules.ToArray());
+
+            // Invalid keys are skipped when read and refused when set
+            ModuleSettings filtered = ModuleSettings.Parse("<ModuleSettings><Module name=\"Example/a/b\"><Parameter name=\"A\" value=\"1\" /></Module>"
+                                                           + "<Module name=\"Example/\"><Parameter name=\"A\" value=\"1\" /></Module></ModuleSettings>");
+            Assert.AreEqual(0, filtered.Modules.Count());
+            try { s.SetValue("Example/a b", "Environment", "x"); Assert.Fail("invalid instance accepted"); }
+            catch (ArgumentException) { }
+        }
+
+        [TestMethod]
+        public void RunValues_Instance_UsesItsOwnValuesOnly()
+        {
+            UpdateModule m = ExampleModule();
+            ModuleSettings s = new ModuleSettings();
+            s.SetValue("Example", "Environment", "Module value");
+            s.SetValue("Example", "InstallerFile", "module.msi");
+            s.SetValue(ModuleSettings.Key("Example", "ContosoExampleApp"), "Environment", "Instance value");
+            string error;
+            Dictionary<string, string> instance = UpdateModules.BuildParameterValues(m, "ContosoExampleApp", s, n => null, out error);
+            Assert.IsNull(error);
+            Assert.AreEqual("Instance value", instance["Environment"]);
+            Assert.IsFalse(instance.ContainsKey("InstallerFile"), "an instance does not inherit the values of the module");
+
+            Dictionary<string, string> module = UpdateModules.BuildParameterValues(m, s, n => null, out error);
+            Assert.AreEqual("Module value", module["Environment"]);
+            Assert.AreEqual("module.msi", module["InstallerFile"]);
         }
 
         [TestMethod]

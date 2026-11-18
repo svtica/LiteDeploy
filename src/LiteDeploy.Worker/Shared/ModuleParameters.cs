@@ -5,8 +5,8 @@
 // Date:    2026-11-17
 // Purpose: Parameters of the update modules (docs/modules.md, contract v2):
 //          the "# Parameter:" header lines of a module, the parameter file that
-//          LiteDeploy writes next to the module on the computer (one per run,
-//          deleted by the worker), and how the worker turns the values into
+//          LiteDeploy writes next to the module on the computer (one per run and
+//          per instance, deleted by the worker), and how the worker turns the values into
 //          LITEDEPLOY_PARAM_<Name> environment variables of the module process.
 //          Pure logic, compiled into both programs (and the tests).
 // -----------------------------------------------------------------------------
@@ -46,7 +46,31 @@ namespace LiteDeploy
         /// <summary>Replaces a secret value in the messages of a module.</summary>
         public const string Mask = "***";
 
+        /// <summary>Header line of a module that can run as several instances ("module:Name/Instance").</summary>
+        public const string InstancesHeader = "# Instances: yes";
+        /// <summary>Separates the module and the instance in the name of a parameter file: Name@Instance.params.</summary>
+        public const char InstanceFileSeparator = '@';
+
         static readonly Regex NamePattern = new Regex("^[A-Za-z][A-Za-z0-9_]{0,31}$", RegexOptions.CultureInvariant);
+
+        /// <summary>
+        /// File name of the parameter file of a package: "Name.params" for a module,
+        /// "Name@Instance.params" for an instance ("@" cannot appear in a module or instance name,
+        /// so two packages never share a file); null for a winget package.
+        /// </summary>
+        public static string FileName(UpdatePackage package)
+        {
+            if (package == null || !package.IsModule) return null;
+            string instance = package.InstanceName;
+            return package.ModuleName + (instance == null ? "" : InstanceFileSeparator + instance) + FileExtension;
+        }
+
+        /// <summary>True when the header (first lines of the script) has the line "# Instances: yes".</summary>
+        public static bool DeclaresInstances(IEnumerable<string> firstLines)
+        {
+            if (firstLines == null) return false;
+            return firstLines.Any(l => l != null && l.Trim().TrimStart('﻿').Trim().Equals(InstancesHeader, StringComparison.OrdinalIgnoreCase));
+        }
 
         public static bool IsValidName(string name)
         {
