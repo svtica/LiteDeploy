@@ -6,7 +6,8 @@
 // Purpose: Tools > Web versions...: for every instance of CachedInstaller and
 //          MsixProvision that has a WingetId parameter, the latest version
 //          known to winget ("winget show", x64 installer of the type of the
-//          instance) against the version of the file the instance uses in the
+//          instance; a zip holding such an installer only when the manifest
+//          offers no plain one) against the version of the file the instance uses in the
 //          shared installer cache. Runs on the administrator's computer only,
 //          never on the managed computers. Results kept in
 //          %LOCALAPPDATA%\LiteDeploy\web-versions.xml; optional daily check
@@ -74,21 +75,28 @@ namespace LiteDeploy
         public String CacheVersion;
         public String WebVersion;
         [XmlAttribute] public WebVersionStatus Status = WebVersionStatus.Error;
+        /// <summary>Type of the installer of the winget manifest ("zip" for an archive).</summary>
         public String InstallerType;
+        /// <summary>Zip installer: type of the installer it holds (null otherwise).</summary>
+        public String NestedInstallerType;
         public String InstallerUrl;
         public String InstallerSha256;
         public String VendorUrl;
         public String Message;
         public DateTime Checked;
 
-        /// <summary>A new version can be downloaded: newer on the web, with an https installer and its SHA256.</summary>
+        /// <summary>
+        /// A new version can be downloaded: newer on the web, with an https installer and its SHA256 (a zip
+        /// installer only when it holds an installer of the type of the instance).
+        /// </summary>
         [XmlIgnore]
         public bool CanDownload
         {
             get
             {
                 return Status == WebVersionStatus.NewerOnWeb && CacheDownloader.IsHttps(InstallerUrl)
-                    && !String.IsNullOrEmpty(InstallerSha256) && !String.IsNullOrEmpty(CacheFile);
+                    && !String.IsNullOrEmpty(InstallerSha256) && !String.IsNullOrEmpty(CacheFile)
+                    && (!WebVersionChecker.IsArchive(InstallerType) || WebVersionChecker.NestedTypeMatches(Type, NestedInstallerType));
             }
         }
     }
@@ -180,7 +188,13 @@ namespace LiteDeploy
 
         static readonly Object logLock = new Object();
 
-        /// <summary>%LOCALAPPDATA%\LiteDeploy\logs\web-versions-yyyyMMdd.log (every check and download step).</summary>
+        /// <summary>Log file of today: %LOCALAPPDATA%\LiteDeploy\logs\web-versions-yyyyMMdd.log.</summary>
+        static public String LogPath
+        {
+            get { return Path.Combine(ScheduleRunner.LogDir, "web-versions-" + DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture) + ".log"); }
+        }
+
+        /// <summary>Appends a line to the log file of today (every check and download step).</summary>
         static public void Log(String line)
         {
             lock (logLock)
@@ -188,7 +202,7 @@ namespace LiteDeploy
                 try
                 {
                     Directory.CreateDirectory(ScheduleRunner.LogDir);
-                    System.IO.File.AppendAllText(Path.Combine(ScheduleRunner.LogDir, "web-versions-" + DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture) + ".log"),
+                    System.IO.File.AppendAllText(LogPath,
                         DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) + " " + line + Environment.NewLine, new UTF8Encoding(false));
                 }
                 catch (Exception) { }
@@ -390,6 +404,42 @@ namespace LiteDeploy
             }
         }
 
+        /// <summary>A winget installer type that is an archive holding the installer (zip).</summary>
+        static public bool IsArchive(String installerType)
+        {
+            return String.Equals(installerType, "zip", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>Message of a zip installer that LiteDeploy cannot put in the cache by itself.</summary>
+        static public String ZipManualMessage(String nestedInstallerType, String type)
+        {
+            return Localization.F("WebVersions.ZipManual", "Zip installer (holding a {0} installer, not a single {1} file): download it manually from the vendor.",
+                String.IsNullOrEmpty(nestedInstallerType) ? "?" : nestedInstallerType, type ?? "?");
+        }
+
+        /// <summary>
+        /// The installer held by a zip is of the type of the instance (msi: msi or wix; exe: exe, inno, nullsoft,
+        /// burn; never a portable program or an MSIX). Pure logic, unit-tested.
+        /// </summary>
+        static public bool NestedTypeMatches(String type, String nestedInstallerType)
+        {
+            if (String.IsNullOrWhiteSpace(nestedInstallerType) || String.Equals(type, "msix", StringComparison.OrdinalIgnoreCase)) return false;
+            return InstallerTypesOf(type).Contains(nestedInstallerType.Trim().ToLowerInvariant());
+        }
+
+        /// <summary>
+        /// The installer kept among the answers of "winget show" for the installer types of an instance, in the
+        /// order they were asked: the first one that is not an archive, else the first archive (zip), else the
+        /// first answer (no installer: the version is still known). Pure logic, unit-tested.
+        /// </summary>
+        static public WingetShowInfo PreferredInstaller(IEnumerable<WingetShowInfo> answers)
+        {
+            List<WingetShowInfo> found = (answers ?? Enumerable.Empty<WingetShowInfo>()).Where(i => i != null && i.Found).ToList();
+            return found.FirstOrDefault(i => i.InstallerUrl != null && !IsArchive(i.InstallerType))
+                ?? found.FirstOrDefault(i => i.InstallerUrl != null)
+                ?? found.FirstOrDefault();
+        }
+
         /// <summary>
         /// Daily check due: a time HH:mm is set and a start was due between the last daily check (or
         /// <paramref name="since"/>, the start of LiteDeploy) and now. Pure logic, unit-tested.
@@ -575,6 +625,8 @@ namespace LiteDeploy
             step(WebVersionStep.Winget);
             try
             {
+                // A zip that holds the installer is kept only when no plain installer of the type is offered
+                List<WingetShowInfo> answers = new List<WingetShowInfo>();
                 foreach (String type in InstallerTypesOf(t.Type).DefaultIfEmpty(null))
                 {
                     int exitCode;
@@ -588,9 +640,10 @@ namespace LiteDeploy
                             throw new InvalidOperationException("winget " + WingetClient.Hex(exitCode) + ": " + WingetClient.Describe(exitCode));
                         break;
                     }
-                    if (web == null || info.InstallerUrl != null) web = info;
-                    if (info.InstallerUrl != null) break;
+                    answers.Add(info);
+                    if (info.InstallerUrl != null && !IsArchive(info.InstallerType)) break;
                 }
+                web = PreferredInstaller(answers);
             }
             catch (Exception ex)
             {
@@ -607,6 +660,7 @@ namespace LiteDeploy
             }
             e.WebVersion = web.Version;
             e.InstallerType = web.InstallerType;
+            e.NestedInstallerType = web.NestedInstallerType;
             e.InstallerUrl = web.InstallerUrl;
             e.InstallerSha256 = web.InstallerSha256;
             e.VendorUrl = web.VendorUrl;
@@ -621,6 +675,8 @@ namespace LiteDeploy
                 e.Message = Localization.F("WebVersions.CannotCompare", "Versions cannot be compared: {0} / {1}", e.CacheVersion, e.WebVersion);
             else if (e.Status == WebVersionStatus.NewerOnWeb && e.InstallerUrl == null)
                 e.Message = Localization.F("WebVersions.NoInstaller", "No x64 {0} installer in the winget manifest: download it from the vendor.", t.Type);
+            else if (e.Status == WebVersionStatus.NewerOnWeb && IsArchive(e.InstallerType) && !NestedTypeMatches(t.Type, e.NestedInstallerType))
+                e.Message = ZipManualMessage(e.NestedInstallerType, t.Type);
             return e;
         }
 

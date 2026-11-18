@@ -9,8 +9,9 @@
 //          "URL du programme d'installation"...), so the parsing relies on the
 //          layout first: the "Name [Id]" line, the first field after it (the
 //          version), the indented block of the installer (an https URL, a
-//          64-digit SHA256, a known installer type). Pure logic, unit-tested
-//          with English and French outputs.
+//          64-digit SHA256, a known installer type, or "wix (zip)" for an
+//          archive and the type of the installer it holds). Pure logic,
+//          unit-tested with English and French outputs.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -27,7 +28,13 @@ namespace LiteDeploy
         public bool Found;
         public String Id;
         public String Version;
+        /// <summary>Type of the installer file ("zip" for an archive).</summary>
         public String InstallerType;
+        /// <summary>
+        /// Archive installer: type of the installer it holds ("wix (zip)" -> InstallerType zip, NestedInstallerType
+        /// wix); null otherwise. winget does not show which file of the archive it is (NestedInstallerFiles).
+        /// </summary>
+        public String NestedInstallerType;
         public String InstallerUrl;
         public String InstallerSha256;
         /// <summary>Home page of the product, else the publisher page.</summary>
@@ -43,7 +50,9 @@ namespace LiteDeploy
         static readonly Regex Header = new Regex(@"\[(?<id>[A-Za-z0-9][A-Za-z0-9._+-]*)\]\s*$");
         static readonly Regex Sha256 = new Regex("^[0-9A-Fa-f]{64}$");
         static readonly Regex Url = new Regex(@"^https?://\S+$", RegexOptions.IgnoreCase);
-        static readonly Regex AnyUrl = new Regex(@"https?://[^\s""<>]+", RegexOptions.IgnoreCase);
+        // "wix (zip)": installer type of an archive (its nested installer type, then the archive type)
+        static readonly Regex Nested = new Regex(@"^(?<nested>[a-z]+)\s*\(\s*(?<base>[a-z]+)\s*\)$");
+        static readonly Regex AnyUrl =new Regex(@"https?://[^\s""<>]+", RegexOptions.IgnoreCase);
 
         // Labels known in English and French (apostrophes normalised, lower case); the layout is used otherwise
         static readonly String[] VersionLabels = { "version" };
@@ -102,9 +111,33 @@ namespace LiteDeploy
                 String v = f.Value ?? "";
                 if (info.InstallerSha256 == null && Sha256.IsMatch(v)) info.InstallerSha256 = v.ToLowerInvariant();
                 else if (info.InstallerUrl == null && Url.IsMatch(v)) info.InstallerUrl = v;
-                else if (info.InstallerType == null && InstallerTypes.Contains(v.ToLowerInvariant())) info.InstallerType = v.ToLowerInvariant();
+                else if (info.InstallerType == null)
+                {
+                    String type, nested;
+                    if (TryInstallerType(v, out type, out nested))
+                    {
+                        info.InstallerType = type;
+                        info.NestedInstallerType = nested;
+                    }
+                }
             }
             return info;
+        }
+
+        /// <summary>
+        /// A known installer type ("wix"), or an archive with the type of the installer it holds, as winget shows
+        /// it: "&lt;nested&gt; (&lt;archive&gt;)", e.g. "wix (zip)" -> type zip, nested wix.
+        /// </summary>
+        static bool TryInstallerType(String value, out String type, out String nested)
+        {
+            type = nested = null;
+            String v = (value ?? "").Trim().ToLowerInvariant();
+            if (InstallerTypes.Contains(v)) { type = v; return true; }
+            Match m = Nested.Match(v);
+            if (!m.Success || !InstallerTypes.Contains(m.Groups["nested"].Value) || !InstallerTypes.Contains(m.Groups["base"].Value)) return false;
+            type = m.Groups["base"].Value;
+            nested = m.Groups["nested"].Value;
+            return true;
         }
 
         // Indented lines of the installer section: the block holding a SHA256, else the last block

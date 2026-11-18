@@ -23,6 +23,8 @@
 
   <ItemGroup>
     <Reference Include="System.Windows.Forms" />
+    <!-- Temporary zip installers of the Web versions tests -->
+    <Reference Include="System.IO.Compression" />
     <ProjectReference Include="..\..\LiteDeploy.csproj" />
   </ItemGroup>
 

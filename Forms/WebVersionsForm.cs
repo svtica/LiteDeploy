@@ -592,21 +592,12 @@ namespace LiteDeploy
             WebVersionResults target = results;
             new Thread(() =>
             {
-                List<String> report = new List<String>();
                 List<CacheDownloadOutcome> outcomes = new List<CacheDownloadOutcome>();
                 try
                 {
                     outcomes = new CacheDownloader(WebVersionChecker.Log).DownloadAll(ready, cache, progress, token);
                     foreach (CacheDownloadOutcome o in outcomes)
-                    {
-                        if (o.Result != null)
-                        {
-                            lock (target) target.Set(o.Result.Entry);
-                            report.Add(Localization.F("WebVersionsForm.Downloaded", "{0}: {1} downloaded to the cache ({2}).", o.Entry.Product, o.Entry.WebVersion, o.Result.NewFileParameter)
-                                + (o.Result.Warning != null ? " " + o.Result.Warning : ""));
-                        }
-                        else report.Add(Localization.F("WebVersionsForm.DownloadFailed", "{0}: not downloaded. {1}", o.Entry.Product, o.Error));
-                    }
+                        if (o.Result != null) lock (target) target.Set(o.Result.Entry);
                     // Cancelled or not, what was downloaded is kept
                     try { lock (target) target.Save(WebVersionResults.DefaultPath); }
                     catch (Exception ex) { WebVersionChecker.Log("  results file: " + ex.Message); }
@@ -622,11 +613,27 @@ namespace LiteDeploy
                     progressLabel.Text = outcomes.Count < ready.Count
                         ? Localization.F("WebVersionsForm.DownloadCancelled", "Download cancelled after {0}: {1} of {2} file(s) processed, {3} downloaded.", elapsed, outcomes.Count, ready.Count, downloaded)
                         : Localization.F("WebVersionsForm.DownloadDone", "Download finished in {0}: {1} downloaded, {2} failed.", elapsed, downloaded, outcomes.Count - downloaded);
-                    if (report.Count > 0)
-                        MessageBox.Show(this, String.Join(Environment.NewLine + Environment.NewLine, report), Text, MessageBoxButtons.OK,
-                            failed ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
+                    ShowDownloadSummary(outcomes, ready.Count, failed);
                 });
             }) { IsBackground = true, Name = "Web versions download" }.Start();
+        }
+
+        // One line per product; the full messages and the log file in a Details window (text that can be copied)
+        void ShowDownloadSummary(List<CacheDownloadOutcome> outcomes, int requested, bool failed)
+        {
+            if (outcomes.Count == 0 && requested == 0) return;
+            String summary = CacheDownloadSummary.Summary(outcomes, requested);
+            MessageBoxIcon icon = failed ? MessageBoxIcon.Warning : MessageBoxIcon.Information;
+            if (!CacheDownloadSummary.HasDetails(outcomes))
+            {
+                MessageBox.Show(this, summary, Text, MessageBoxButtons.OK, icon);
+                return;
+            }
+            String question = summary + Environment.NewLine + Environment.NewLine
+                + Localization.T("WebVersionsForm.ShowDetails", "Show the details (full messages and log file)?");
+            if (MessageBox.Show(this, question, Text, MessageBoxButtons.YesNo, icon, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
+                TextViewForm.ShowText(this, Localization.T("WebVersionsForm.DetailsTitle", "Download to the cache: details"),
+                    CacheDownloadSummary.Details(outcomes, WebVersionChecker.LogPath));
         }
 
         static bool IsWebPage(String url)
