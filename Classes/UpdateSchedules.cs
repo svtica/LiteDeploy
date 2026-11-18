@@ -3,7 +3,7 @@
 // File:    UpdateSchedules.cs
 // Author:  LiteDeploy contributors
 // Date:    2026-11-12
-// Purpose: Scheduled software updates (from the agent of the MAJ-Logiciels
+// Purpose: Scheduled software updates (from the agent of the previous update
 //          panel): a check or an update of a list of computers, once or on some
 //          days of the week at a time. Kept in %LOCALAPPDATA%\LiteDeploy\
 //          schedules.xml. Two engines (UserSettings.SchedulerEngine):

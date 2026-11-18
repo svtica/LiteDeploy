@@ -715,7 +715,7 @@ namespace LiteDeploy
             lock (storeLock) wakeItem.Enabled = selected.Any(c => { ComputerUpdateState s = store.Find(c); return s != null && !String.IsNullOrEmpty(s.Macs); });
         }
 
-        // ---- Computer card, Wake-on-LAN (MAJ-Logiciels panel) ----------------------------
+        // ---- Computer card, Wake-on-LAN ------------------------------------------------
 
         void cardItem_Click(object sender, EventArgs e)
         {

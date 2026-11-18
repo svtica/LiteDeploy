@@ -43,7 +43,7 @@ them (and for the PsExec method of the software updates); it is asked for when t
   and to make it the default.
 - `LiteDeploy.Worker.exe` runs as SYSTEM on the computer, started by one of two methods
   (*App > Options*), with nothing to install and no stored password:
-  - **WinRM + SYSTEM task** (default, the method of the MAJ-Logiciels tool): the worker is copied
+  - **WinRM + SYSTEM task** (default): the worker is copied
     to `%windir%\LiteDeploy` (`ADMIN$`), a PowerShell session registers a one-time scheduled
     task as SYSTEM in `\LiteDeploy\`, relays the messages the worker writes in
     `%windir%\LiteDeploy\work`, then deletes the task and the file (leftovers of a stopped run
@@ -71,6 +71,18 @@ them (and for the PsExec method of the software updates); it is asked for when t
 - *Tools > Credentials*: accounts in the Windows Credential Manager (shared with LiteTask), for
   the software updates (*App > Options*).
 - Right-click a computer in Software Updates: processes and handles, get the logs.
+  *Get the logs* copies the newest `*.log` files of the update modules (`%windir%\LiteDeploy\work`)
+  and of winget (SYSTEM) to `%LOCALAPPDATA%\LiteDeploy\logs\<computer>\<date>`. Other folders
+  are added in `%LOCALAPPDATA%\LiteDeploy\settings.xml` (no window for it), one entry
+  `label|folder under %windir%|newest files` per folder, separated by `;`; empty by default:
+
+  ```xml
+  <ExtraLogFolders>myscript|Temp\MyScript|10</ExtraLogFolders>
+  ```
+
+  The files of `%windir%\Temp\MyScript` go to the `myscript` subfolder. The folder must stay
+  under `%windir%` (no drive, no `..`); the number of files is 1 to 100 (10 when left out).
+  Invalid entries are ignored.
 - PowerShell module `powershell\LiteDeploy` for scripts ([docs/powershell.md](docs/powershell.md)).
 - *Tools > Manage Tools*: download or update PsExec (Microsoft signature required) and LitePM
   (LiteSuite release); *Tools > LitePM* opens it.

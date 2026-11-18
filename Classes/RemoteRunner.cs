@@ -5,7 +5,7 @@
 // Date:    2026-11-12
 // Purpose: Starts LiteDeploy.Worker.exe as SYSTEM on a computer, by one of two
 //          methods (App > Options):
-//          - WinRM (default, the method of Patrick's MAJ-Logiciels tool): the
+//          - WinRM (default, the method of an earlier update script): the
 //            worker is copied to %windir%\LiteDeploy (ADMIN$, administrators
 //            only), a PowerShell session (WinRM) registers a one-time
 //            scheduled task as SYSTEM in \LiteDeploy\, starts it, relays the

@@ -3,8 +3,8 @@
 # Processes: 1Password, 1Password-BrowserSupport
 <#
 .SYNOPSIS
-    LiteDeploy update module: 1Password installed per machine (MSI), from the
-    MAJ-Logiciels tool of Patrick Bedard.
+    LiteDeploy update module: 1Password installed per machine (MSI), from an
+    earlier in-house update script.
 
 .DESCRIPTION
     Check: installed version (registry) against the version winget knows

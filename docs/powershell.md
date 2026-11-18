@@ -1,7 +1,7 @@
 # LiteDeploy PowerShell module
 
 `LiteDeploy.zip` ships a PowerShell module in `powershell\LiteDeploy`, signed with the release.
-It lets scripts, such as those of the MAJ-Logiciels tool, live next to LiteDeploy: they read and
+It lets scripts, such as existing update scripts, live next to LiteDeploy: they read and
 change the same files (`%LOCALAPPDATA%\LiteDeploy`) and run the same worker.
 
 ```powershell

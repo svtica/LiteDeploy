@@ -4,7 +4,7 @@
 // Author:  LiteDeploy contributors
 // Date:    2026-11-12
 // Purpose: A package of the software update catalog (packages.txt), same format
-//          as the MAJ-Logiciels tool: Id | processes to close | label | ignored.
+//          as an earlier update script: Id | processes to close | label | ignored.
 //          The worker receives each package as one --package argument.
 //          An Id "module:<Name>" is an update module (signed PowerShell script,
 //          docs/modules.md) instead of a winget package.

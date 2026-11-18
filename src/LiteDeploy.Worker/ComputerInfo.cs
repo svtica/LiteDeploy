@@ -7,7 +7,7 @@
 //          (logged-on users, last restart, pending restart, Windows version,
 //          free space on C:, physical network adapters for Wake-on-LAN), as
 //          one WorkerProtocol message. From the identity check of the
-//          MAJ-Logiciels panel.
+//          previous update panel.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;

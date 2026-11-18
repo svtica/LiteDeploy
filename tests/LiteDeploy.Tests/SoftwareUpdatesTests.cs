@@ -5,7 +5,8 @@
 // Date:    2026-11-12
 // Purpose: Unit tests of the software updates: worker protocol, package list,
 //          winget table reading (English and French headers, progress noise),
-//          worker arguments and the state file (written only on change).
+//          worker arguments, the state file (written only on change) and the
+//          extra log folders setting.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -302,12 +303,13 @@ namespace LiteDeploy.Tests
         [TestMethod]
         public void Settings_Clone_KeepsEveryValue()
         {
-            UserSettings s = new UserSettings { Theme = Theme.Dark, AllowUnsignedModules = true, UpdateCacheShare = @"\\srv\cache" };
+            UserSettings s = new UserSettings { Theme = Theme.Dark, AllowUnsignedModules = true, UpdateCacheShare = @"\\server\share\cache", ExtraLogFolders = @"tool|Temp\Tool|10" };
             UserSettings c = s.Clone();
             c.Language = Localization.French;
             Assert.AreEqual(Theme.Dark, c.Theme);
             Assert.IsTrue(c.AllowUnsignedModules);
-            Assert.AreEqual(@"\\srv\cache", c.UpdateCacheShare);
+            Assert.AreEqual(@"\\server\share\cache", c.UpdateCacheShare);
+            Assert.AreEqual(@"tool|Temp\Tool|10", c.ExtraLogFolders);
             Assert.AreNotEqual(c.Language, s.Language, "the copy is independent");
         }
 
@@ -315,14 +317,68 @@ namespace LiteDeploy.Tests
         public void Cache_PassedToModulesOnly_AndValidated()
         {
             List<UpdatePackage> modules = new List<UpdatePackage> { UpdatePackage.Parse("module:AdobeReader") };
-            string args = UpdateRunner.BuildWorkerArguments("upgrade", modules, false, @"\\srv\deploy$\cache\");
-            StringAssert.Contains(args, @"--cache ""\\srv\deploy$\cache""");
-            Assert.IsFalse(UpdateRunner.BuildWorkerArguments("upgrade", new List<UpdatePackage> { UpdatePackage.Parse("A.B") }, false, @"\\srv\c").Contains("--cache"));
+            string args = UpdateRunner.BuildWorkerArguments("upgrade", modules, false, @"\\server\share\cache\");
+            StringAssert.Contains(args, @"--cache ""\\server\share\cache""");
+            Assert.IsFalse(UpdateRunner.BuildWorkerArguments("upgrade", new List<UpdatePackage> { UpdatePackage.Parse("A.B") }, false, @"\\server\share").Contains("--cache"));
 
-            Assert.IsTrue(Worker.Program.IsValidCachePath(@"\\srv\deploy$\cache"));
+            Assert.IsTrue(Worker.Program.IsValidCachePath(@"\\server\share\cache"));
             Assert.IsFalse(Worker.Program.IsValidCachePath(@"C:\cache"));
-            Assert.IsFalse(Worker.Program.IsValidCachePath(@"\\srv\..\x"));
-            Assert.IsFalse(Worker.Program.IsValidCachePath(@"\\srv\a"" & calc"));
+            Assert.IsFalse(Worker.Program.IsValidCachePath(@"\\server\share\..\x"));
+            Assert.IsFalse(Worker.Program.IsValidCachePath(@"\\server\share\a"" & calc"));
+        }
+
+        // ---- Extra log folders ------------------------------------------------------
+
+        [TestMethod]
+        public void ExtraLogFolders_EmptyByDefault()
+        {
+            Assert.AreEqual("", new UserSettings().ExtraLogFolders);
+            Assert.AreEqual(0, RemoteLogs.ParseExtraFolders(null).Count);
+            Assert.AreEqual(0, RemoteLogs.ParseExtraFolders("").Count);
+            Assert.AreEqual(0, RemoteLogs.ParseExtraFolders("  ; ").Count);
+        }
+
+        [TestMethod]
+        public void ExtraLogFolders_ParsesEntries()
+        {
+            List<Tuple<string, string, int>> folders = RemoteLogs.ParseExtraFolders(@" tool | Temp\Tool\ | 10 ;other|Logs\Other|3");
+            Assert.AreEqual(2, folders.Count);
+            Assert.AreEqual(Tuple.Create("tool", @"Temp\Tool", 10), folders[0]);
+            Assert.AreEqual(Tuple.Create("other", @"Logs\Other", 3), folders[1]);
+        }
+
+        [TestMethod]
+        public void ExtraLogFolders_NumberIsOptional()
+        {
+            Assert.AreEqual(RemoteLogs.DefaultMaxFiles, RemoteLogs.ParseExtraFolders(@"tool|Temp\Tool")[0].Item3);
+            Assert.AreEqual(RemoteLogs.DefaultMaxFiles, RemoteLogs.ParseExtraFolders(@"tool|Temp\Tool|")[0].Item3);
+        }
+
+        [TestMethod]
+        public void ExtraLogFolders_SkipsInvalidEntries()
+        {
+            string[] invalid =
+            {
+                @"Temp\Tool",                   // no label
+                @"|Temp\Tool|5",                // empty label
+                @"a\b|Temp\Tool|5",             // label is not a plain folder name
+                @"..|Temp\Tool|5",
+                @"tool||5",                     // empty folder
+                @"tool|C:\Temp|5",              // drive
+                @"tool|\Temp\Tool|5",           // rooted
+                @"tool|..\Temp|5",              // leaves %windir%
+                @"tool|Temp\..\..\x|5",
+                @"tool|Temp\Tool|0",            // number out of range
+                @"tool|Temp\Tool|101",
+                @"tool|Temp\Tool|ten",
+                @"tool|Temp\Tool|5|extra",      // too many fields
+            };
+            foreach (string entry in invalid)
+                Assert.AreEqual(0, RemoteLogs.ParseExtraFolders(entry).Count, entry);
+
+            List<Tuple<string, string, int>> kept = RemoteLogs.ParseExtraFolders(@"tool|..\x|5;good|Temp\Good|5");
+            Assert.AreEqual(1, kept.Count, "a bad entry does not drop the others");
+            Assert.AreEqual("good", kept[0].Item1);
         }
 
         [TestMethod]
