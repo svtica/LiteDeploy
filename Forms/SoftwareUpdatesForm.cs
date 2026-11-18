@@ -25,7 +25,7 @@
 //          chosen explicitly, never part of Update checked or of the
 //          schedules), pause, outside business hours only, computer card,
 //          TeamViewer ID, remote desktop, command prompt, quick commands,
-//          Wake-on-LAN, logs, export to
+//          message to the logged-on users, Wake-on-LAN, logs, export to
 //          Royal TS (ComputerActions, shared with the main window).
 //          A computer known under several spellings (ComputerName) is one row.
 //          Size, splitter, columns and filters are kept in the user settings;
@@ -66,6 +66,8 @@ namespace LiteDeploy
         readonly Object storeLock = new Object();
         /// <summary>Card, TeamViewer, remote desktop, command prompt, quick commands, logs, flags: shared with the main window.</summary>
         readonly ComputerActions actions;
+        /// <summary>Send a message... (created here: shared texts with the main window).</summary>
+        readonly ToolStripMenuItem messageItem = new ToolStripMenuItem();
         readonly List<Process> running = new List<Process>();
         /// <summary>Checked package rows (package view), by row key.</summary>
         readonly HashSet<String> checkedKeys = new HashSet<String>();
@@ -124,6 +126,11 @@ namespace LiteDeploy
 
             store = UpdateStateStore.Load(UpdateStateStore.DefaultPath);
             actions = new ComputerActions(this);
+            messageItem.Text = Localization.T("SoftwareUpdatesForm.messageItem.Text", "Send a message...");
+            messageItem.ToolTipText = Localization.T("SoftwareUpdatesForm.messageItem.ToolTipText", "A message box for the users logged on to the computers (replaces msg *)");
+            messageItem.Click += (s, e) => actions.SendMessage(ActionTargets(), "");
+            // In the right-click menu of the designer, after the quick commands (then moved with the other actions)
+            rowMenu.Items.Insert(rowMenu.Items.IndexOf(quickCommandsItem) + 1, messageItem);
             packages = UpdateRunner.LoadPackages();
             AddListedComputers(listedComputers);
             SetSelectionFilter(checkedInMain);
@@ -1305,7 +1312,7 @@ namespace LiteDeploy
                 return new ToolStripItem[]
                 {
                     targetsItem, targetsSeparator, installItem, installSeparator, pauseItem, resumeItem, nightOnlyItem, nightOnlyClearItem,
-                    menuSeparator, cardItem, teamViewerItem, remoteDesktopItem, commandPromptItem, quickCommandsItem,
+                    menuSeparator, cardItem, teamViewerItem, remoteDesktopItem, commandPromptItem, quickCommandsItem, messageItem,
                     processesItem, litePMItem, logsItem, wakeItem, exportSeparator, royalTsItem, removeSeparator, removeItem
                 };
             }
@@ -1335,7 +1342,7 @@ namespace LiteDeploy
             nightOnlyItem.Enabled = idle && targets.Any(c => !IsNightOnly(c));
             nightOnlyClearItem.Enabled = idle && targets.Any(IsNightOnly);
             cardItem.Enabled = logsItem.Enabled = targets.Count > 0;
-            teamViewerItem.Enabled = remoteDesktopItem.Enabled = commandPromptItem.Enabled = quickCommandsItem.Enabled = targets.Count > 0;
+            teamViewerItem.Enabled = remoteDesktopItem.Enabled = commandPromptItem.Enabled = quickCommandsItem.Enabled = messageItem.Enabled = targets.Count > 0;
             actions.FillQuickCommands(quickCommandsItem, ActionTargets);
             royalTsItem.Enabled = ExportTargets().Count > 0;
             processesItem.Enabled = litePMItem.Enabled = targets.Count == 1;

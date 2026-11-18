@@ -30,6 +30,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   computers (else the selected one): computer card, TeamViewer ID, remote desktop, command
   prompt, quick commands, Wake-on-LAN, logs, pause / resume, outside business hours only, export
   to Royal TS. Both windows share the same code (`ComputerActions`).
+- **Send a message...** to the users logged on to the checked computers (else the selected ones),
+  in *Software Updates* and the main window's list; replaces a `msg *` script. Up to 255
+  characters with a counter, ready texts (restart request, save your work, close your session),
+  display time (300 seconds by default, 0: until the user closes it), a confirmation naming the
+  number of computers. New worker command `message --text <base64 UTF-8> [--seconds N] [--title
+  <base64 UTF-8>]`, run as SYSTEM by the usual method (WinRM or PsExec): the text never travels as
+  raw text on a command line. The worker shows it in every active session with a logged-on user
+  through `WTSSendMessage` (`msg.exe` is missing on Home editions) and does not wait for the users.
+  Result per computer: sent to N session(s), no user logged on, or failed.
+- *Quick commands > Ask the users to restart...* opens the same window with the restart request
+  ready.
 
 ### Fixed
 
