@@ -829,6 +829,27 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="ComputerActions.RoyalTsTitle">Exporter vers Royal TS</translation>
   <translation key="ComputerActions.RoyalTsFilter">Fichier CSV pour l'importation dans Royal TS (*.csv)|*.csv|Document RoyalJSON (*.rjson)|*.rjson</translation>
   <translation key="ComputerActions.RoyalTsSaved">{0} ordinateur(s) exporté(s) dans {1}.</translation>
+  <!-- Message to the logged-on users -->
+  <translation key="SoftwareUpdatesForm.messageItem.Text">Envoyer un message...</translation>
+  <translation key="SoftwareUpdatesForm.messageItem.ToolTipText">Une boîte de message pour les utilisateurs connectés aux ordinateurs (remplace msg *)</translation>
+  <translation key="ComputerActions.AskRestart">Demander aux utilisateurs de redémarrer...</translation>
+  <translation key="ComputerActions.MessageRestart">Veuillez redémarrer votre ordinateur dès que possible. Merci !</translation>
+  <translation key="ComputerActions.MessageSaveWork">Veuillez enregistrer votre travail : une maintenance de votre ordinateur commence dans quelques minutes. Merci !</translation>
+  <translation key="ComputerActions.MessageLogOff">Veuillez fermer votre session lorsque vous aurez terminé. Merci !</translation>
+  <translation key="ComputerActions.ConfirmMessage">Envoyer ce message aux utilisateurs connectés à {0} ordinateur(s) ?&#10;&#10;{1}&#10;&#10;{2}</translation>
+  <translation key="ComputerActions.MessageTitle">Message de votre administrateur</translation>
+  <translation key="ComputerActions.SendingMessage">Envoi du message à {0} ordinateur(s)...</translation>
+  <translation key="ComputerActions.MessageSummary">Envoyé : {0} ordinateur(s), aucun utilisateur connecté : {1}, échec : {2}.</translation>
+  <translation key="ComputerActions.MessageSent">{0} : envoyé à {1} session(s) ({2})</translation>
+  <translation key="ComputerActions.MessageNoUser">{0} : aucun utilisateur connecté</translation>
+  <translation key="ComputerActions.MessageFailed">{0} : échec : {1}</translation>
+  <translation key="UserMessageForm.Text">Envoyer un message</translation>
+  <translation key="UserMessageForm.Intro">Message aux utilisateurs connectés à {0} ordinateur(s) :</translation>
+  <translation key="UserMessageForm.Preset">Texte prêt :</translation>
+  <translation key="UserMessageForm.NoPreset">(choisir un texte prêt)</translation>
+  <translation key="UserMessageForm.Seconds">Durée d'affichage en secondes (0 : jusqu'à la fermeture) :</translation>
+  <translation key="UserMessageForm.Send">Envoyer</translation>
+  <translation key="UserMessageForm.Counter">{0} / {1} caractères</translation>
   <translation key="RemoteConsole.PsExecMissing">PsExec est introuvable : téléchargez-le dans Outils &gt; Gérer les outils, ou choisissez la méthode WinRM dans App &gt; Options.</translation>
   <translation key="TeamViewerIdForm.Text">ID TeamViewer</translation>
   <translation key="TeamViewerIdForm.Computer">Ordinateur</translation>

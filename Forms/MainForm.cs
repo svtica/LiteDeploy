@@ -912,7 +912,7 @@ namespace LiteDeploy
 
         private ComputerActions computerActions;
         private ToolStripMenuItem actionTargetsItem, cardActionItem, teamViewerActionItem, commandPromptActionItem, quickCommandsActionItem,
-            wakeActionItem, logsActionItem, pauseActionItem, resumeActionItem, nightOnlyActionItem, nightOnlyClearActionItem, royalTsActionItem;
+            messageActionItem, wakeActionItem, logsActionItem, pauseActionItem, resumeActionItem, nightOnlyActionItem, nightOnlyClearActionItem, royalTsActionItem;
 
         private void AddComputerActions()
         {
@@ -925,6 +925,8 @@ namespace LiteDeploy
             commandPromptActionItem.ToolTipText = Localization.T("SoftwareUpdatesForm.commandPromptItem.ToolTipText",
                 "A console attached to the computer: PsExec (command prompt as SYSTEM) or WinRM (PowerShell session), as chosen in App > Options");
             quickCommandsActionItem = new ToolStripMenuItem(Localization.T("SoftwareUpdatesForm.quickCommandsItem.Text", "Quick commands"));
+            messageActionItem = ActionItem(Localization.T("SoftwareUpdatesForm.messageItem.Text", "Send a message..."), () => computerActions.SendMessage(ActionTargets(), ""));
+            messageActionItem.ToolTipText = Localization.T("SoftwareUpdatesForm.messageItem.ToolTipText", "A message box for the users logged on to the computers (replaces msg *)");
             wakeActionItem = ActionItem(Localization.T("SoftwareUpdatesForm.wakeItem.Text", "Wake up (Wake-on-LAN)"), () => computerActions.Wake(ActionTargets()));
             logsActionItem = ActionItem(Localization.T("SoftwareUpdatesForm.logsItem.Text", "Get the logs"), () => computerActions.FetchLogs(ActionTargets()));
             pauseActionItem = ActionItem(Localization.T("SoftwareUpdatesForm.pauseItem.Text", "Pause these computers..."), () => computerActions.Pause(ActionTargets()));
@@ -940,7 +942,7 @@ namespace LiteDeploy
             contextMenu.Items.Insert(at + 1, actionTargetsItem);
             ToolStripItem[] items =
             {
-                cardActionItem, teamViewerActionItem, commandPromptActionItem, quickCommandsActionItem, wakeActionItem, logsActionItem,
+                cardActionItem, teamViewerActionItem, commandPromptActionItem, quickCommandsActionItem, messageActionItem, wakeActionItem, logsActionItem,
                 new ToolStripSeparator(), pauseActionItem, resumeActionItem, nightOnlyActionItem, nightOnlyClearActionItem,
                 new ToolStripSeparator(), royalTsActionItem
             };
@@ -980,7 +982,7 @@ namespace LiteDeploy
                 : Localization.F("SoftwareUpdatesForm.TargetsSelected", "{0} selected computer(s)", targets.Count);
             bool any = targets.Count > 0;
             remoteToHost.Enabled = cardActionItem.Enabled = teamViewerActionItem.Enabled = commandPromptActionItem.Enabled = any;
-            quickCommandsActionItem.Enabled = logsActionItem.Enabled = any;
+            quickCommandsActionItem.Enabled = messageActionItem.Enabled = logsActionItem.Enabled = any;
             computerActions.FillQuickCommands(quickCommandsActionItem, ActionTargets);
             wakeActionItem.Enabled = any && computerActions.CanWake(targets);
             pauseActionItem.Enabled = idle && targets.Any(c => !computerActions.IsPaused(c));

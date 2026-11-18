@@ -32,6 +32,9 @@
 //            LiteDeploy.Worker.exe processes  (processes, handles and memory)
 //            LiteDeploy.Worker.exe quick <id> (one command of the fixed table
 //                                  QuickCommands: gpupdate, flush DNS...)
+//            LiteDeploy.Worker.exe message --text <base64 UTF-8> [--seconds N]
+//                                  [--title <base64 UTF-8>] (a message box in
+//                                  every active user session: SessionMessenger)
 //          --output <file> (any command): the messages are also written to
 //          that file, flushed line by line. Used by the WinRM method, where the
 //          worker runs in a scheduled task without a console to read.
@@ -110,6 +113,18 @@ namespace LiteDeploy.Worker
                     return ExitUsage;
                 }
                 return RunQuick(quick);
+            }
+            if (args != null && args.Length >= 1 && args[0].Equals(UserMessage.WorkerCommand, StringComparison.OrdinalIgnoreCase))
+            {
+                string text, title;
+                int seconds;
+                string messageError = UserMessage.ParseArguments(args, out text, out seconds, out title);
+                if (messageError != null)
+                {
+                    Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeError, "message", messageError));
+                    return ExitUsage;
+                }
+                return RunMessage(text, seconds, title);
             }
 
             string command;
@@ -488,6 +503,27 @@ namespace LiteDeploy.Worker
                 Emit(WorkerProtocol.Format("type", QuickCommands.TypeOutput, "text", step.FileName + ": " + ex.Message));
                 return 1;
             }
+        }
+
+        /// <summary>
+        /// "message": the text in every active user session (SessionMessenger), then one type=message line:
+        /// sessions (sent), users, failed (sessions not reached) and error. No user logged on: sessions=0, exit 0.
+        /// </summary>
+        static int RunMessage(string text, int seconds, string title)
+        {
+            MessageOutcome outcome = SessionMessenger.Send(string.IsNullOrEmpty(title) ? "LiteDeploy" : title, text, seconds);
+            Emit(MessageResultLine(outcome));
+            return outcome.Errors.Count == 0 ? 0 : 1;
+        }
+
+        internal static string MessageResultLine(MessageOutcome outcome)
+        {
+            return WorkerProtocol.Format("type", UserMessage.TypeResult,
+                "sessions", outcome.Sent.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                "users", string.Join(", ", outcome.Users),
+                "failed", outcome.Errors.Count.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                "error", string.Join(" | ", outcome.Errors),
+                "computer", Environment.MachineName);
         }
 
         static void Progress(UpdatePackage package, string step)

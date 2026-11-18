@@ -305,6 +305,15 @@ namespace LiteDeploy
             return RunSimple(computer, QuickCommands.WorkerArguments(quickCommandId), 10);
         }
 
+        /// <summary>
+        /// A message to the users logged on to the computer ("LiteDeploy.Worker.exe message --text &lt;base64&gt; ..."),
+        /// as SYSTEM. An empty or too long text: ArgumentException (UserMessage.WorkerArguments).
+        /// </summary>
+        public static UpdateRunResult Message(String computer, String text, int seconds, String title)
+        {
+            return RunSimple(computer, UserMessage.WorkerArguments(text, seconds, title), 2);
+        }
+
         static UpdateRunResult RunSimple(String computer, String workerCommand)
         {
             return RunSimple(computer, workerCommand, 2);
