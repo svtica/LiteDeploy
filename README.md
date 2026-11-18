@@ -63,7 +63,36 @@ them (and for the PsExec method of the software updates); it is asked for when t
 - *Tools > Scheduled Updates*: check or update on a schedule, with the internal engine (while
   LiteDeploy is open) or Windows scheduled tasks (`LiteDeploy.exe /schedule <name>`).
 - **Update modules** for products winget does not cover: signed PowerShell scripts run as
-  SYSTEM by the worker ([docs/modules.md](docs/modules.md)).
+  SYSTEM by the worker ([docs/modules.md](docs/modules.md)). Shipped generic modules take their
+  files from the shared installer cache (*App > Options > Software updates*): `CachedInstaller`
+  (vendor MSI or EXE installers), `MsixProvision` (MSIX packages), `PrinterDrivers`,
+  `TeamsBootstrapper`. A team's own modules can live in a shared modules folder (same options).
+- **Import from a catalog**: `CachedInstaller` and `MsixProvision` take one row per product
+  (`module:<Name>/<Instance>`). Instead of adding each row by hand, describe the products in a
+  JSON file and use *Package list... > Import from catalog...*: it adds the missing rows and sets
+  their parameters (the default file is `%LOCALAPPDATA%\LiteDeploy\catalog.local.json`; any other
+  file can be chosen, one module per file). Secret parameters are never read from a catalog.
+  Example (fictitious values; full format in [docs/modules.md](docs/modules.md)):
+
+  ```json
+  {
+    "module": "CachedInstaller",
+    "products": [
+      {
+        "Instance": "ExampleApp",
+        "Product": "Contoso Example App",
+        "File": "ExampleVendor/ExampleApp-2.1.0-x64.msi",
+        "Type": "msi",
+        "Arguments": "/qn /norestart",
+        "DetectName": "Contoso Example App*",
+        "Publisher": "Contoso Ltd"
+      }
+    ]
+  }
+  ```
+
+  Then *Check*: each product has its own state. *Install* (right-click) installs it where it is
+  missing. Keep the catalog out of any repository if it names your own products or paths.
 
 ### Process reports
 - One line per computer and event: started, unreachable, authentication failure, exit code.

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Update module `MsixProvision` declares `# Instances: yes`: several MSIX packages can be listed,
   one row per package (`module:MsixProvision/<Instance>`), each with its own parameters.
+- README: the shipped generic modules and *Import from catalog...*, with an example catalog.
 
 ## [1.0.14] - 2026-11-17
 
