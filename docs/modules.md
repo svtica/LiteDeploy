@@ -70,7 +70,7 @@ Most of them come from an earlier in-house update script:
 |---|---|---|
 | `CachedInstaller` | Any vendor MSI or EXE installer kept in the shared cache, one instance per product (see *CachedInstaller*) | Check: installed version (Uninstall entries, 64 and 32-bit, by `ProductCode` or `DetectName`) against the version of the installer; Update/Install: copy to `%windir%\LiteDeploy\work\CachedInstaller`, valid signature of the expected publisher required, silent install, exit code 0, 3010 or 1641, check again. Closes only the processes of its `CloseProcesses` parameter |
 | `AdobeReader` | Adobe Acrobat Reader and Acrobat (MSI installs, 32 and 64-bit, MUI) | Product recognized by its MSI product code; latest build among the versions winget knows; MSP patch from `ardownload2.adobe.com`, signed by Adobe, applied with `msiexec /p`. Outlook (Adobe add-ins) is not closed: when it blocks the patch, the message says so |
-| `MsixProvision` | Any MSIX package (and its dependency packages) provisioned for all users from the shared cache (`<cache>\<Folder>`) | Check: provisioned version (`Get-AppxProvisionedPackage -Online`, `DisplayName` = `PackageName`) against the version in the manifest of the package of the cache; `notinstalled` when not provisioned; `error` without a cache, a folder or a package of that name. Update (and Install): copies the package, its dependencies and its license to `%windir%\LiteDeploy\work\MsixProvision\<PackageName>`, refuses each package unless validly signed by the `Publisher` of its manifest (and by the organisation of the `Publisher` parameter when set), enables the optional features of `Features`, `Add-AppxProvisionedPackage -Online -Regions all`. No process closed. See *MsixProvision* below |
+| `MsixProvision` | Any MSIX package (and its dependency packages) provisioned for all users from the shared cache (`<cache>\<Folder>`) | Check: provisioned version (`Get-AppxProvisionedPackage -Online`, `DisplayName` = `PackageName`) against the version in the manifest of the package of the cache; `notinstalled` when not provisioned; `error` without a cache, a folder or a package of that name. Update (and Install): copies the package, its dependencies and its license to `%windir%\LiteDeploy\work\MsixProvision\<PackageName>`, refuses each package unless validly signed by the `Publisher` of its manifest (and by one of the organisations of the `Publisher` parameter, separated by `;`, when set), enables the optional features of `Features`, `Add-AppxProvisionedPackage -Online -Regions all`. No process closed. See *MsixProvision* below |
 | `OnePassword` | 1Password installed per machine | Latest version from winget; official MSI from `downloads.1password.com`, signed by AgileBits; `MANAGED_INSTALL=1 MANAGED_UPDATE=1`; old version removed first on 1638; Start menu host restarted if the MSI hangs on `AI_UnpinFromStartScreen` |
 | `OracleJava` | Oracle Java 8 (winget `Oracle.JavaRuntimeEnvironment`) | Stops only the system Java (bundled Java runtimes are left alone), upgrades with winget, checks that `java8path` still answers, asks for a restart (3010) when it stopped Java |
 | `PrinterDrivers` | Printer drivers listed in the shared cache (`<cache>\PrinterDrivers\drivers.csv`) | Check: every listed driver installed (`Get-PrinterDriver`), else `outdated` with the number missing; `error` without a cache or a readable list. Update: copies the package of each missing driver to `%windir%\LiteDeploy\work\PrinterDrivers`, refuses it unless its catalog (`.cat`) has a valid Authenticode signature, `pnputil /add-driver`, `Add-PrinterDriver`. No process closed, no printer created |
@@ -100,7 +100,7 @@ that needs a Windows optional feature:
 | `Dependencies` | *(empty)* | File names in the folder, separated by `;`; empty: the `.appx` and `.msix` files of the `Dependencies` subfolder, for the architectures the computer runs (x64 computer: `x64`, `x86` and neutral) |
 | `License` | `ExampleApp_License.xml` | License XML file name in the folder; empty: `-SkipLicense` |
 | `Features` | `VirtualMachinePlatform` | Windows optional features to enable first, separated by `;`; a feature that needs a restart: exit code 3010 after the provisioning |
-| `Publisher` | `Contoso Ltd` | Expected organisation (`O=`) of the signer of the package; empty: the signer must be the `Publisher` of the manifest (always checked) |
+| `Publisher` | `Contoso Ltd` | Expected organisation (`O=`) of the signer of the package, several separated by `;` (any one is accepted); empty: the signer must be the `Publisher` of the manifest (always checked) |
 | `WingetId` | `Contoso.ExampleApp` | Optional: winget package Id of the product, for *Tools > Web versions...* (see *Web versions*); ignored by the module |
 
 ```text
@@ -209,7 +209,7 @@ own parameter values:
 | `DetectName` | Wildcard on the `DisplayName` of the Uninstall entry, e.g. `Contoso Example App*` (at least 3 characters besides the wildcards) |
 | `ProductCode` | MSI product code `{GUID}`, the name of the Uninstall key; used instead of `DetectName` when set. One of the two is required |
 | `Version` | Version expected once installed; empty: the `ProductVersion` of the MSI (read from the file without installing it), or the product version (else file version) of the EXE. Set it when the installer's own version differs from the `DisplayVersion` the product registers |
-| `Publisher` | **Required.** Organisation (`O=`) of the Authenticode signer of the installer, exactly as in the certificate, e.g. `ExampleVendor Inc.` |
+| `Publisher` | **Required.** Organisation (`O=`) of the Authenticode signer of the installer, exactly as in the certificate, e.g. `ExampleVendor Inc.`. Several organisations separated by `;` (any one is accepted), e.g. `ExampleVendor Inc.; Fabrikam Inc.` when the vendor renamed itself and signs with its new legal name; a name in double quotes may hold a `;` |
 | `CloseProcesses` | Processes the module closes right before the installer runs (comma-separated, without `.exe`) |
 | `WingetId` | Optional: winget package Id of the product, e.g. `Contoso.ExampleApp`, for *Tools > Web versions...* (see *Web versions*). Read by LiteDeploy only, on the administrator's computer; the module ignores it |
 
@@ -219,7 +219,8 @@ own parameter values:
 - **Update** (outdated computers) and **Install** (`-Action Install`, declared with
   `# Install: yes`, for computers where the product is `notinstalled`; outdated ones too): the
   installer is copied to `%windir%\LiteDeploy\work\CachedInstaller`, refused unless its
-  Authenticode signature is `Valid` and the subject of its signer has `O=<Publisher>`, the
+  Authenticode signature is `Valid` and the subject of its signer has `O=<Publisher>` (one of the
+  organisations of `Publisher`; the refusal names the organisation that signed), the
   processes of `CloseProcesses` are closed, then it runs (`msiexec /i` for an MSI, the EXE itself
   otherwise; 13 minutes at most). Exit code 0: success; 3010 or 1641: success, restart needed
   (reported as 3010); anything else: `error` with the code (and the MSI log path, kept on failure).
@@ -236,7 +237,10 @@ Security:
 - Only an installer **signed by the expected publisher** runs: a file changed in the cache, an
   unsigned file or another signer is refused, whatever the parameters say. Choose `Publisher`
   from the certificate of the vendor (*Properties > Digital Signatures* of the file), never from
-  the file name.
+  the file name. When a vendor renames itself, its new installers are signed with the new legal
+  name: check the certificate of a new installer, then add that name to `Publisher` (`Old Name
+  Ltd; New Name Inc.`) rather than replacing it, so the installer already in the cache stays
+  accepted.
 - The computers only **read** the cache (*Domain Computers*: read); only the administrators who
   fill `CachedInstaller` can write to it. Write access to the cache would let someone replace an
   installer with another validly signed file of the same publisher (an older version, another
@@ -336,7 +340,7 @@ One row per instance of `CachedInstaller` and `MsixProvision` that has parameter
 | Product (instance) | `Product` (`PackageName` for an MSIX), then the instance name |
 | Module | `CachedInstaller` or `MsixProvision` |
 | Cache version | Version of the file the instance uses in the cache: the `Version` parameter when set (`CachedInstaller`), else the MSI `ProductVersion`, the product (else file) version of the EXE, or the version of the MSIX manifest (bundle: newest application package). `MsixProvision` with `File` empty: the newest package of `PackageName` in the folder, as the module picks it |
-| Web version | `Version` of `winget show --id <WingetId> -e --source winget --architecture x64 --installer-type <type>`; the type follows the instance: `msi` then `wix` for an MSI, `exe`, `inno`, `nullsoft` then `burn` for an EXE, `msix` for an MSIX |
+| Web version | `Version` of `winget show --id <WingetId> -e --source winget --architecture x64 --installer-type <type>`; the type follows the instance: `msi` then `wix` for an MSI, `exe`, `inno`, `nullsoft` then `burn` for an EXE, `msix` for an MSIX. A zip that holds an installer of that type (winget shows `wix (zip)`) is kept only when no plain installer of the type is offered |
 | Status | *Up to date*, *Newer on the web*, *Not found* (not in the winget source), *No WingetId* (listed anyway; set the parameter to compare it), *Not checked* (no result yet: *Check now*), *Error* (cache file missing, versions that cannot be compared, winget unavailable...; the reason is in the tooltip) |
 | Source URL | Installer URL of the winget manifest (its SHA256 is kept with it) |
 
@@ -366,12 +370,23 @@ rows *Newer on the web* that have an HTTPS installer URL and its SHA256 in the m
 1. The installer is downloaded over **HTTPS only** (every redirect too) to a new temporary
    folder of the administrator.
 2. It is refused unless its SHA256 is the one of the winget manifest **and** its Authenticode
-   signature is `Valid` with `O=<Publisher>` of the instance (`CachedInstaller`: `Publisher` is
-   required). For an MSIX: the package name of its manifest must be `PackageName`, the signer
+   signature is `Valid` with `O=<Publisher>` of the instance (one of its organisations separated
+   by `;`; `CachedInstaller`: `Publisher` is required). A valid signature of another organisation
+   is refused with its name ("signed by *New Name Inc.* instead of *Old Name Ltd*"): if the vendor
+   renamed itself, add that name to `Publisher`. For an MSIX: the package name of its manifest must be `PackageName`, the signer
    must be the `Publisher` of its manifest, and `O=<Publisher>` when that parameter is set, as the
    module checks it before provisioning. A download older than the file of the cache is refused.
    An unsigned installer is therefore never put in the cache this way, even with a matching
    SHA256: download it by hand if you trust it.
+
+   **Zip installers.** Some manifests give a zip that holds the MSI or EXE (`InstallerType: zip`,
+   `NestedInstallerType`, `NestedInstallerFiles`; `winget show` displays `wix (zip)` and does not
+   show the path inside the zip). A zip has no Authenticode signature, so: its SHA256 is checked
+   against the manifest, then the **only** `.msi` (or `.exe`, after the `Type` of the instance) it
+   holds is extracted to the temporary folder (an entry whose path leaves the folder is refused;
+   4 GB at most, 10 000 entries at most) and that file's signature is checked as above. The
+   installer, not the zip, goes to the cache with the versioned name. A zip with no such file,
+   several of them, or an installer of another type: *zip installer: download it manually*.
 3. It is copied **next to the current file**, under a versioned name
    (`ContosoExampleApp-2.4.1.msi` -> `ContosoExampleApp-2.5.0.msi`; the version is added when the
    name has none), through a `.partial` file whose SHA256 is checked again. An existing file is
@@ -386,6 +401,11 @@ rows *Newer on the web* that have an HTTPS installer URL and its SHA256 in the m
 Only the file the instance uses is moved; nothing else in the cache is touched, and nothing is
 ever deleted from the cache. A failure before step 4 leaves the cache and the settings as they
 were; when only the move to `OLD` fails, the new version is in place and a warning says so.
+
+At the end, one line per product: *OK*, *Refused* (a check failed: SHA256, signature, zip...) or
+*Failed* (network, disk...), with a short reason. When something was refused or failed, *Yes*
+opens the details (full messages, the new `File` parameters, the log file) in a window whose text
+can be copied; every step is also in the log file.
 
 Permissions: the download needs **write** access to the folder of the installer in the cache,
 which only the administrators who fill the cache have (see *Shared installer cache*); without it,

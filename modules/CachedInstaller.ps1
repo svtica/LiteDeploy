@@ -10,7 +10,7 @@
 # Parameter: DetectName default= Wildcard on the DisplayName of the Uninstall entry, e.g. "Contoso Example App*"
 # Parameter: ProductCode default= MSI product code {GUID} of the Uninstall entry (instead of DetectName)
 # Parameter: Version default= Version expected once installed (empty: ProductVersion of the MSI, or version of the EXE)
-# Parameter: Publisher Organisation (O=) of the Authenticode signer of the installer, e.g. ExampleVendor Inc.
+# Parameter: Publisher Organisation (O=) of the Authenticode signer of the installer, e.g. ExampleVendor Inc. (several: separated by ;)
 # Parameter: CloseProcesses default= Processes closed by the module right before the install (comma-separated, without .exe)
 # Parameter: WingetId default= winget package Id of the product, for the web version check of LiteDeploy (not used on the computers)
 <#
@@ -34,7 +34,10 @@
     Update (outdated only) and Install (notinstalled or outdated): copies the
     installer from <cache>\<File> to %windir%\LiteDeploy\work\CachedInstaller
     (never C:\Windows\Temp), refuses it unless its Authenticode signature is
-    Valid and its signer's subject has O=<Publisher>, closes the processes of
+    Valid and its signer's subject has O=<Publisher> (Publisher may name
+    several organisations separated by ";", e.g. the old and the new name of
+    a vendor that renamed itself: any one of them is accepted; the refusal
+    names the organisation that signed), closes the processes of
     CloseProcesses, runs it (msiexec /i for an msi, the exe itself otherwise)
     with the Arguments, reads its exit code (0 success; 3010 and 1641 success,
     restart needed) and checks again. The computers only read the cache.
@@ -164,13 +167,61 @@ function Get-Installed([string] $ProductCode, [string] $DetectName) {
     return ($entries | Sort-Object { ConvertTo-Version $_.DisplayVersion } -Descending | Select-Object -First 1)
 }
 
-# Valid signature and O=<Publisher> in the subject of the signer (quoted when it has a comma)
-function Test-PublisherSignature([string] $Path, [string] $Publisher) {
+# Organisations of the Publisher parameter: separated by ; (a vendor that renamed itself signs with
+# its new name), trimmed, without empty ones; a name in double quotes keeps a ; it holds
+function Get-PublisherNames([string] $Publisher) {
+    $names = New-Object System.Collections.Generic.List[string]
+    $current = New-Object System.Text.StringBuilder
+    $quoted = $false
+    foreach ($c in (([string]$Publisher) + ';').ToCharArray()) {
+        if ($c -eq [char]'"') { $quoted = -not $quoted }
+        if ($c -eq [char]';' -and -not $quoted) {
+            $name = $current.ToString().Trim()
+            if ($name.Length -ge 2 -and $name.StartsWith('"') -and $name.EndsWith('"')) { $name = $name.Substring(1, $name.Length - 2).Trim() }
+            if ($name -and -not $names.Contains($name)) { $names.Add($name) }
+            $null = $current.Clear()
+        }
+        else { $null = $current.Append($c) }
+    }
+    if ($current.Length -gt 0) {
+        # Unbalanced quote: the rest is one name
+        $name = $current.ToString().TrimEnd(';').Trim().Trim('"').Trim()
+        if ($name -and -not $names.Contains($name)) { $names.Add($name) }
+    }
+    return $names.ToArray()
+}
+
+# O=<one of the organisations of Publisher> in a certificate subject (quoted when it has a comma)
+function Test-SubjectOrganisation([string] $Subject, [string] $Publisher) {
+    foreach ($name in @(Get-PublisherNames $Publisher)) {
+        $escaped = [regex]::Escape($name)
+        if ($Subject -match "(^|,\s*)O=(`"?)$escaped\2\s*(,|$)") { return $true }
+    }
+    return $false
+}
+
+# The O= value of a certificate subject, without its quotes ('' when there is none)
+function Get-SubjectOrganisation([string] $Subject) {
+    $m = [regex]::Match([string]$Subject, '(?:^|,)\s*O=(?:"(?<q>(?:[^"]|"")*)"|(?<v>[^,]*))')
+    if (-not $m.Success) { return '' }
+    if ($m.Groups['q'].Success) { return $m.Groups['q'].Value.Replace('""', '"').Trim() }
+    return $m.Groups['v'].Value.Trim()
+}
+
+# '' when the signer subject has one of the organisations of Publisher, else why it is refused
+function Get-SubjectRefusal([string] $Subject, [string] $Publisher) {
+    if (Test-SubjectOrganisation $Subject $Publisher) { return '' }
+    $actual = Get-SubjectOrganisation $Subject
+    if (-not $actual) { $actual = $Subject }
+    $expected = @(Get-PublisherNames $Publisher) -join '; '
+    return "signed by $actual instead of $expected; add it to Publisher (separated by ;) if this vendor renamed itself"
+}
+
+# '' when the file has a valid signature of one of the organisations of Publisher, else why it is refused
+function Get-SignatureRefusal([string] $Path, [string] $Publisher) {
     $sig = Get-AuthenticodeSignature -LiteralPath $Path
-    if ($sig.Status -ne 'Valid' -or -not $sig.SignerCertificate) { return $false }
-    $subject = $sig.SignerCertificate.Subject
-    $escaped = [regex]::Escape($Publisher)
-    return ($subject -match "(^|,\s*)O=$escaped(,|$)") -or ($subject -match "(^|,\s*)O=`"$escaped`"(,|$)")
+    if ($sig.Status -ne 'Valid' -or -not $sig.SignerCertificate) { return "no valid signature ($($sig.Status))" }
+    return (Get-SubjectRefusal $sig.SignerCertificate.Subject $Publisher)
 }
 
 # Plain process names of CloseProcesses (without .exe); throws for an invalid or protected name
@@ -225,7 +276,7 @@ try {
     $productCode = Get-Param 'ProductCode'
     $detectName = Get-Param 'DetectName'
     if (-not $file) { throw 'Parameter File missing' }
-    if (-not $publisher) { throw 'Parameter Publisher missing: the signer of the installer must be named' }
+    if (@(Get-PublisherNames $publisher).Count -eq 0) { throw 'Parameter Publisher missing: the signer of the installer must be named' }
     if ($productCode -and $productCode -notmatch '^\{[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\}$') {
         throw "Invalid ProductCode (a {GUID} is expected): $productCode"
     }
@@ -264,7 +315,8 @@ try {
     $local = Join-Path $work (Split-Path -Leaf $source)
     Remove-Item -LiteralPath $local -Force -ErrorAction SilentlyContinue
     Copy-Item -LiteralPath $source -Destination $local -Force
-    if (-not (Test-PublisherSignature $local $publisher)) { throw "Installer refused: no valid signature of $publisher ($file)" }
+    $refusal = Get-SignatureRefusal $local $publisher
+    if ($refusal) { throw "Installer refused ($file): $refusal" }
     # The version of the local, verified copy is the one installed
     $target = Get-TargetVersion $local $type
 

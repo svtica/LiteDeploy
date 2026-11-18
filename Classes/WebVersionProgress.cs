@@ -32,6 +32,8 @@ namespace LiteDeploy
         /// <summary>Download: bytes received (BytesTotal when the server gives the length).</summary>
         Downloading,
         VerifyingHash,
+        /// <summary>Download of a zip installer: extracting the installer it holds.</summary>
+        Extracting,
         VerifyingSignature,
         CopyingToCache,
         UpdatingSettings,
@@ -115,6 +117,7 @@ namespace LiteDeploy
                         ? Localization.F("WebVersions.Step.DownloadingPercent", "downloading {0}% ({1} / {2})", percent, Bytes(p.BytesReceived), Bytes(p.BytesTotal))
                         : Localization.F("WebVersions.Step.DownloadingBytes", "downloading ({0})", Bytes(p.BytesReceived));
                 case WebVersionStep.VerifyingHash: return Localization.T("WebVersions.Step.Hash", "verifying the SHA256");
+                case WebVersionStep.Extracting: return Localization.T("WebVersions.Step.Extract", "extracting the installer from the zip");
                 case WebVersionStep.VerifyingSignature: return Localization.T("WebVersions.Step.Signature", "verifying the signature");
                 case WebVersionStep.CopyingToCache: return Localization.T("WebVersions.Step.Copy", "copying to the cache");
                 case WebVersionStep.UpdatingSettings: return Localization.T("WebVersions.Step.Settings", "updating the parameters");
