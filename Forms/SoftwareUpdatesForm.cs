@@ -24,7 +24,9 @@
 //          checked computers, else to the selected rows: Install (one package,
 //          chosen explicitly, never part of Update checked or of the
 //          schedules), pause, outside business hours only, computer card,
-//          Wake-on-LAN, logs. Size, splitter, columns, view and filters are
+//          TeamViewer ID, remote desktop, command prompt, quick commands,
+//          Wake-on-LAN, logs, export to Royal TS (ComputerActions, shared with
+//          the main window). Size, splitter, columns, view and filters are
 //          kept in the user settings.
 // -----------------------------------------------------------------------------
 using System;
@@ -39,7 +41,7 @@ using System.Windows.Forms;
 
 namespace LiteDeploy
 {
-    public partial class SoftwareUpdatesForm : Form
+    public partial class SoftwareUpdatesForm : Form, IComputerActionHost
     {
         /// <summary>Computers processed at the same time.</summary>
         const int Parallelism = 4;
@@ -63,6 +65,8 @@ namespace LiteDeploy
 
         readonly UpdateStateStore store;
         readonly Object storeLock = new Object();
+        /// <summary>Card, TeamViewer, remote desktop, command prompt, quick commands, logs, flags: shared with the main window.</summary>
+        readonly ComputerActions actions;
         readonly List<Process> running = new List<Process>();
         /// <summary>Checked package rows (package view), by row key.</summary>
         readonly HashSet<String> checkedKeys = new HashSet<String>();
@@ -120,6 +124,7 @@ namespace LiteDeploy
             };
 
             store = UpdateStateStore.Load(UpdateStateStore.DefaultPath);
+            actions = new ComputerActions(this);
             packages = UpdateRunner.LoadPackages();
             AddListedComputers(listedComputers);
             SetSelectionFilter(checkedInMain);
@@ -409,7 +414,14 @@ namespace LiteDeploy
             String tip = FlagsText(row);
             if (!String.IsNullOrEmpty(row.Ou))
                 tip = Localization.F("SoftwareUpdatesForm.OuTip", "OU: {0}", AdComputer.ShortOu(row.Ou)) + (tip.Length > 0 ? "\n" + tip : "");
+            if (!String.IsNullOrEmpty(row.TeamViewerId))
+                tip += (tip.Length > 0 ? "\n" : "") + TeamViewerText(row.TeamViewerId);
             return tip;
+        }
+
+        static String TeamViewerText(String id)
+        {
+            return Localization.F("SoftwareUpdatesForm.TeamViewerTip", "TeamViewer ID: {0}", id);
         }
 
         // Pause reason, outside business hours only, not in Active Directory: one line each
@@ -612,6 +624,7 @@ namespace LiteDeploy
                     String.IsNullOrEmpty(row.Ou) ? "?" : row.Ou,
                     row.LastLogon.HasValue ? row.LastLogon.Value.ToString("yyyy-MM-dd HH:mm") : Localization.T("SoftwareUpdatesForm.Never", "never")));
             foreach (String line in FlagsText(row).Split('\n').Where(l => l.Length > 0)) sb.AppendLine(line);
+            if (!String.IsNullOrEmpty(row.TeamViewerId)) sb.AppendLine(TeamViewerText(row.TeamViewerId));
             lock (storeLock)
             {
                 ComputerUpdateState c = store.Find(row.Name);
@@ -1290,7 +1303,8 @@ namespace LiteDeploy
                 return new ToolStripItem[]
                 {
                     targetsItem, targetsSeparator, installItem, installSeparator, pauseItem, resumeItem, nightOnlyItem, nightOnlyClearItem,
-                    menuSeparator, cardItem, processesItem, litePMItem, logsItem, wakeItem, removeSeparator, removeItem
+                    menuSeparator, cardItem, teamViewerItem, remoteDesktopItem, commandPromptItem, quickCommandsItem,
+                    processesItem, litePMItem, logsItem, wakeItem, exportSeparator, royalTsItem, removeSeparator, removeItem
                 };
             }
         }
@@ -1319,6 +1333,9 @@ namespace LiteDeploy
             nightOnlyItem.Enabled = idle && targets.Any(c => !IsNightOnly(c));
             nightOnlyClearItem.Enabled = idle && targets.Any(IsNightOnly);
             cardItem.Enabled = logsItem.Enabled = targets.Count > 0;
+            teamViewerItem.Enabled = remoteDesktopItem.Enabled = commandPromptItem.Enabled = quickCommandsItem.Enabled = targets.Count > 0;
+            actions.FillQuickCommands(quickCommandsItem, ActionTargets);
+            royalTsItem.Enabled = ExportTargets().Count > 0;
             processesItem.Enabled = litePMItem.Enabled = targets.Count == 1;
             lock (storeLock) wakeItem.Enabled = targets.Any(c => { ComputerUpdateState s = store.Find(c); return s != null && !String.IsNullOrEmpty(s.Macs); });
             bool anyAdded = targets.Any(c => { ComputerRow r; return rowsByName.TryGetValue(c, out r) && r.AddedByName && !r.InAd; });
@@ -1339,93 +1356,87 @@ namespace LiteDeploy
             PrepareActions();
         }
 
-        // ---- Computer card, Wake-on-LAN, logs ------------------------------------------
+        // ---- Computer card, TeamViewer, remote desktop, command prompt, Wake-on-LAN, logs (ComputerActions) ----
 
         void cardItem_Click(object sender, EventArgs e)
         {
             ShowCards(ActionTargets());
         }
 
-        // The cards of the computers (read a few at a time), in one window that can be copied
         void ShowCards(List<String> targets)
         {
-            if (targets.Count == 0) return;
-            Dictionary<String, String> directory = targets.ToDictionary(c => c, DirectoryText, StringComparer.OrdinalIgnoreCase);
-            statusLabel.Text = targets.Count == 1
-                ? Localization.F("SoftwareUpdatesForm.ReadingCard", "Reading the computer card of {0}...", targets[0])
-                : Localization.F("SoftwareUpdatesForm.ReadingCards", "Reading the computer cards of {0} computer(s)...", targets.Count);
-            Cursor = Cursors.WaitCursor;
-            new Thread(() =>
-            {
-                String[] cards = new String[targets.Count];
-                int next = -1;
-                List<Thread> readers = new List<Thread>();
-                for (int t = 0; t < Math.Min(Parallelism, targets.Count); t++)
-                {
-                    Thread reader = new Thread(() =>
-                    {
-                        int i;
-                        while ((i = Interlocked.Increment(ref next)) < targets.Count)
-                            cards[i] = ReadCard(targets[i], directory[targets[i]]);
-                    }) { IsBackground = true };
-                    readers.Add(reader);
-                    reader.Start();
-                }
-                foreach (Thread reader in readers) reader.Join();
-                if (IsDisposed) return;
-                try
-                {
-                    BeginInvoke(new MethodInvoker(() =>
-                    {
-                        Cursor = Cursors.Default;
-                        SetIdleStatus();
-                        String title = targets.Count == 1
-                            ? Localization.F("SoftwareUpdatesForm.CardTitle", "Computer card - {0}", targets[0])
-                            : Localization.F("SoftwareUpdatesForm.CardsTitle", "Computer cards - {0} computer(s)", targets.Count);
-                        TextViewForm.ShowText(this, title, String.Join("\n\n", cards));
-                        RefreshList();
-                    }));
-                }
-                catch (InvalidOperationException) { }   // window closed meanwhile
-            }) { IsBackground = true }.Start();
+            actions.ShowCards(targets);
         }
 
-        // What Active Directory says of a computer (first lines of its card)
-        String DirectoryText(String computer)
+        void teamViewerItem_Click(object sender, EventArgs e)
         {
-            ComputerRow row;
-            if (!rowsByName.TryGetValue(computer, out row) || !row.InAd)
-                return Localization.T("SoftwareUpdatesForm.NotInAdTip", "Not in Active Directory");
-            return Localization.F("SoftwareUpdatesForm.CardDirectory", "Operating system (AD): {0}\nOU: {1}\nLast logon (AD): {2}",
-                String.IsNullOrEmpty(row.Os) ? "?" : row.Os + (String.IsNullOrEmpty(row.OsVersion) ? "" : " (" + row.OsVersion + ")"),
-                String.IsNullOrEmpty(row.Ou) ? "?" : row.Ou,
-                row.LastLogon.HasValue ? row.LastLogon.Value.ToString("yyyy-MM-dd HH:mm") : Localization.T("SoftwareUpdatesForm.Never", "never"));
+            actions.ShowTeamViewer(ActionTargets());
         }
 
-        // Runs on a reader thread
-        String ReadCard(String computer, String directory)
+        void remoteDesktopItem_Click(object sender, EventArgs e)
         {
-            UpdateRunResult r = UpdateRunner.Info(computer);
-            WorkerMessage info = r.Messages.FirstOrDefault(m => m.Type == "info");
-            StringBuilder sb = new StringBuilder();
-            sb.Append("== ").Append(computer).Append(" ==\n").Append(directory).Append('\n');
-            if (info == null)
-            {
-                sb.Append(Localization.F("SoftwareUpdatesForm.CardFailed", "Not read: {0}", r.Failure ?? "?"));
-                return sb.ToString();
-            }
+            actions.RemoteDesktop(ActionTargets());
+        }
+
+        void commandPromptItem_Click(object sender, EventArgs e)
+        {
+            actions.CommandPrompt(ActionTargets());
+        }
+
+        /// <summary>Export to Royal TS: the checked computers, else every computer shown.</summary>
+        List<String> ExportTargets()
+        {
+            List<String> targets = CheckedComputers();
+            return targets.Count > 0 ? targets : visible.Select(r => r.Name).ToList();
+        }
+
+        void royalTsItem_Click(object sender, EventArgs e)
+        {
+            actions.ExportRoyalTs(ExportTargets());
+        }
+
+        // ---- IComputerActionHost ------------------------------------------------------------
+
+        Form IComputerActionHost.Owner { get { return this; } }
+
+        bool IComputerActionHost.Idle { get { return pending == 0; } }
+
+        /// <summary>The store of this window, under its lock (the main window uses it too while this window is open).</summary>
+        internal void WithStore(Action<UpdateStateStore> action, bool save)
+        {
             lock (storeLock)
             {
-                store.Apply(computer, r.Messages, null, DateTime.Now);
-                try { store.SaveIfChanged(UpdateStateStore.DefaultPath); } catch (Exception) { }
+                action(store);
+                if (save) store.SaveIfChanged(UpdateStateStore.DefaultPath);
             }
-            String none = Localization.T("SoftwareUpdatesForm.CardNone", "(none)");
-            sb.Append(Localization.F("SoftwareUpdatesForm.Card",
-                "Logged-on users: {0}\nLast restart: {1}\nRestart pending: {2}\nWindows: {3}\nType: {7}\nFree space on C: {4}\nAdapters (Wake-on-LAN): {5}\nIPv4 addresses: {6}",
-                Empty(info["users"], none), info["lastboot"], info["pendingrestart"] == "yes" ? Localization.T("SoftwareUpdatesForm.Yes", "yes") : Localization.T("SoftwareUpdatesForm.No", "no"),
-                info["os"], info["freec"], Empty(info["macs"], none), Empty(info["ips"], none),
-                Empty(ComputerUpdateState.OsTypeText(info["ostype"]), Localization.T("SoftwareUpdatesForm.CardUnknown", "(unknown)"))));
-            return sb.ToString();
+        }
+
+        void IComputerActionHost.WithStore(Action<UpdateStateStore> action, bool save)
+        {
+            WithStore(action, save);
+        }
+
+        ComputerRow IComputerActionHost.Row(String computer)
+        {
+            ComputerRow row;
+            return rowsByName.TryGetValue(computer, out row) ? row : null;
+        }
+
+        void IComputerActionHost.SetStatus(String text)
+        {
+            if (text == null) SetIdleStatus();
+            else statusLabel.Text = text;
+        }
+
+        void IComputerActionHost.StoreChanged()
+        {
+            RefreshList();
+        }
+
+        /// <summary>The saved state changed elsewhere (main window): refresh the list.</summary>
+        internal void StoreChanged()
+        {
+            if (!IsDisposed) RefreshList();
         }
 
         void processesItem_Click(object sender, EventArgs e)
@@ -1452,97 +1463,32 @@ namespace LiteDeploy
 
         void logsItem_Click(object sender, EventArgs e)
         {
-            List<String> targets = ActionTargets();
-            if (targets.Count == 0) return;
-            statusLabel.Text = targets.Count == 1
-                ? Localization.F("SoftwareUpdatesForm.FetchingLogs", "Getting the logs of {0}...", targets[0])
-                : Localization.F("SoftwareUpdatesForm.FetchingLogsMany", "Getting the logs of {0} computer(s)...", targets.Count);
-            Cursor = Cursors.WaitCursor;
-            new Thread(() =>
-            {
-                String folder = null;
-                int total = 0, fetched = 0;
-                List<String> errors = new List<String>();
-                foreach (String computer in targets)
-                {
-                    try
-                    {
-                        int count;
-                        folder = RemoteLogs.Fetch(computer, out count);
-                        total += count;
-                        fetched++;
-                    }
-                    catch (Exception ex) { errors.Add(computer + ": " + ex.Message); }
-                }
-                if (IsDisposed) return;
-                try
-                {
-                    BeginInvoke(new MethodInvoker(() =>
-                    {
-                        Cursor = Cursors.Default;
-                        if (fetched == 0)
-                        {
-                            SetIdleStatus();
-                            if (targets.Count == 1) MessageBox.Show(this, errors.FirstOrDefault() ?? "?", targets[0], MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            else TextViewForm.ShowText(this, Text, String.Join("\n", errors));
-                            return;
-                        }
-                        // One computer: its folder; several: the folder of every computer
-                        String open = targets.Count == 1 ? folder : ScheduleRunner.LogDir;
-                        statusLabel.Text = targets.Count == 1
-                            ? Localization.F("SoftwareUpdatesForm.LogsFetched", "{0} log(s) of {1} copied to {2}.", total, targets[0], folder)
-                            : Localization.F("SoftwareUpdatesForm.LogsFetchedMany", "Logs of {0} of {1} computer(s) copied to {2}.", fetched, targets.Count, open);
-                        if (errors.Count > 0) TextViewForm.ShowText(this, Text, String.Join("\n", errors));
-                        try { using (Process.Start(new ProcessStartInfo(open) { UseShellExecute = true })) { } } catch (Exception) { }
-                    }));
-                }
-                catch (InvalidOperationException) { }
-            }) { IsBackground = true }.Start();
-        }
-
-        static String Empty(String value, String none)
-        {
-            return String.IsNullOrEmpty(value) ? none : value;
+            actions.FetchLogs(ActionTargets());
         }
 
         void wakeItem_Click(object sender, EventArgs e)
         {
-            int computersWoken = 0;
-            lock (storeLock)
-            {
-                foreach (String computer in ActionTargets())
-                {
-                    ComputerUpdateState c = store.Find(computer);
-                    if (c == null || String.IsNullOrEmpty(c.Macs)) continue;
-                    if (WakeOnLan.Wake(c.Macs, c.Ips) > 0) computersWoken++;
-                }
-            }
-            statusLabel.Text = Localization.F("SoftwareUpdatesForm.WakeSent", "Wake-on-LAN sent to {0} computer(s). They can take a few minutes to start.", computersWoken);
+            actions.Wake(ActionTargets());
         }
 
         void pauseItem_Click(object sender, EventArgs e)
         {
-            List<String> targets = ActionTargets();
-            if (targets.Count == 0) return;
-            String reason = Prompt.Show(this, Text,
-                Localization.F("SoftwareUpdatesForm.PauseReason", "Reason of the pause ({0} computer(s)):", targets.Count), "");
-            if (reason == null) return;
-            ChangeComputers(targets, c => { c.Paused = true; c.PauseReason = reason.Length > 0 ? reason : null; });
+            actions.Pause(ActionTargets());
         }
 
         void resumeItem_Click(object sender, EventArgs e)
         {
-            ChangeComputers(ActionTargets(), c => { c.Paused = false; c.PauseReason = null; });
+            actions.Resume(ActionTargets());
         }
 
         void nightOnlyItem_Click(object sender, EventArgs e)
         {
-            ChangeComputers(ActionTargets(), c => c.NightOnly = true);
+            actions.SetNightOnly(ActionTargets(), true);
         }
 
         void nightOnlyClearItem_Click(object sender, EventArgs e)
         {
-            ChangeComputers(ActionTargets(), c => c.NightOnly = false);
+            actions.SetNightOnly(ActionTargets(), false);
         }
 
         // Computers added by name: no longer shown (the rest of their saved state is kept)
@@ -1556,14 +1502,7 @@ namespace LiteDeploy
 
         void ChangeComputers(List<String> targets, Action<ComputerUpdateState> change)
         {
-            if (targets.Count == 0) return;
-            lock (storeLock)
-            {
-                foreach (String computer in targets) change(store.GetOrAdd(computer));
-                try { store.SaveIfChanged(UpdateStateStore.DefaultPath); }
-                catch (Exception ex) { MessageBox.Show(this, ex.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error); }
-            }
-            RefreshList();
+            actions.Change(targets, change);
         }
 
         // ---- Add by name ------------------------------------------------------------------

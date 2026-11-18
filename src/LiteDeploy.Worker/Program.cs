@@ -30,6 +30,8 @@
 //          touches an installed package. Results: WorkerProtocol lines on stdout.
 //            LiteDeploy.Worker.exe info    (computer card: ComputerInfo)
 //            LiteDeploy.Worker.exe processes  (processes, handles and memory)
+//            LiteDeploy.Worker.exe quick <id> (one command of the fixed table
+//                                  QuickCommands: gpupdate, flush DNS...)
 //          --output <file> (any command): the messages are also written to
 //          that file, flushed line by line. Used by the WinRM method, where the
 //          worker runs in a scheduled task without a console to read.
@@ -98,6 +100,16 @@ namespace LiteDeploy.Worker
             {
                 foreach (string line in ComputerInfo.Processes(60)) Emit(line);
                 return 0;
+            }
+            if (args != null && args.Length >= 1 && args[0].Equals(QuickCommands.WorkerCommand, StringComparison.OrdinalIgnoreCase))
+            {
+                QuickCommand quick = args.Length == 2 ? QuickCommands.Find(args[1]) : null;
+                if (quick == null)
+                {
+                    Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeError, "message", "Unknown quick command"));
+                    return ExitUsage;
+                }
+                return RunQuick(quick);
             }
 
             string command;
@@ -411,6 +423,71 @@ namespace LiteDeploy.Worker
         {
             if (string.IsNullOrEmpty(path) || path.Length > 260 || !path.StartsWith(@"\\", StringComparison.Ordinal) || path.Length < 5) return false;
             return path.IndexOfAny(new[] { '"', '*', '?', '<', '>', '|', '\r', '\n' }) < 0 && !path.Contains("..");
+        }
+
+        /// <summary>Minutes per step of a quick command (gpupdate can take a while).</summary>
+        const int QuickStepTimeoutMinutes = 4;
+
+        /// <summary>
+        /// "quick &lt;id&gt;": the steps of a command of the fixed table (QuickCommands), from System32,
+        /// their output relayed line by line (type=output), then one type=quick line with the exit code.
+        /// </summary>
+        static int RunQuick(QuickCommand quick)
+        {
+            int code = 0;
+            foreach (QuickCommandStep step in quick.Steps)
+            {
+                Emit(WorkerProtocol.Format("type", QuickCommands.TypeOutput, "text", "> " + step.FileName + " " + step.Arguments));
+                code = RunQuickStep(step);
+                if (code != 0 && !step.IgnoreFailure) break;
+            }
+            Emit(WorkerProtocol.Format("type", QuickCommands.TypeResult, "id", quick.Id, "code", code.ToString(), "computer", Environment.MachineName));
+            return code == 0 ? 0 : 1;
+        }
+
+        static int RunQuickStep(QuickCommandStep step)
+        {
+            Encoding oem;
+            try { oem = Encoding.GetEncoding(System.Globalization.CultureInfo.CurrentCulture.TextInfo.OEMCodePage); }
+            catch (Exception) { oem = Encoding.Default; }
+            ProcessStartInfo psi = new ProcessStartInfo(System.IO.Path.Combine(Environment.SystemDirectory, step.FileName), step.Arguments)
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                StandardOutputEncoding = oem,
+                StandardErrorEncoding = oem
+            };
+            try
+            {
+                using (Process p = new Process { StartInfo = psi })
+                {
+                    DataReceivedEventHandler relay = (s, e) =>
+                    {
+                        if (!string.IsNullOrWhiteSpace(e.Data))
+                            lock (psi) Emit(WorkerProtocol.Format("type", QuickCommands.TypeOutput, "text", e.Data.TrimEnd()));
+                    };
+                    p.OutputDataReceived += relay;
+                    p.ErrorDataReceived += relay;
+                    p.Start();
+                    p.BeginOutputReadLine();
+                    p.BeginErrorReadLine();
+                    if (!p.WaitForExit((int)TimeSpan.FromMinutes(QuickStepTimeoutMinutes).TotalMilliseconds))
+                    {
+                        try { p.Kill(); } catch (Exception) { }
+                        Emit(WorkerProtocol.Format("type", QuickCommands.TypeOutput, "text", "Timed out after " + QuickStepTimeoutMinutes + " minutes"));
+                        return 1460;   // ERROR_TIMEOUT
+                    }
+                    p.WaitForExit();   // the last lines of the redirected output
+                    return p.ExitCode;
+                }
+            }
+            catch (Exception ex)
+            {
+                Emit(WorkerProtocol.Format("type", QuickCommands.TypeOutput, "text", step.FileName + ": " + ex.Message));
+                return 1;
+            }
         }
 
         static void Progress(UpdatePackage package, string step)

@@ -28,6 +28,11 @@ choose what to run and how, start the deployment, and follow each computer in th
   list; it is site data, kept out of this public repository.
 - Save and open lists; check the computers to deploy to.
 - **Ping** all or the checked computers before deploying.
+- Right-click the list: ping, management console and administrative share of the selected
+  computer; and, on the checked computers (else the selected one), the same actions as in
+  *Software Updates*: remote desktop, computer card, TeamViewer ID, command prompt, quick commands,
+  Wake-on-LAN, get the logs, pause / resume, outside business hours only, and *Export to Royal
+  TS...* (see *Remote tools*).
 
 ### Standalone deployments (PsExec)
 Hidden by default: *App > Options > Show the standalone deployments*. PsExec is needed only for
@@ -89,9 +94,34 @@ them (and for the PsExec method of the software updates); it is asked for when t
   to the selected rows: *Install* one package where the last check says it is not installed
   (explicit, with a confirmation; modules only when they declare `# Install: yes`; never part of
   *Update checked* or of the schedules), pause / resume, outside business hours only (set or
-  clear), computer card (Active Directory data, logged-on users, pending restart...; in a window
-  that can be copied; also on double-click), Wake-on-LAN, get the logs. Each row shows the step in
-  progress.
+  clear), computer card (Active Directory data, logged-on users, pending restart, TeamViewer
+  ID...; in a window that can be copied; also on double-click), the remote tools below,
+  Wake-on-LAN, get the logs. Each row shows the step in progress.
+
+### Remote tools
+Shared by *Software Updates* and the main window's list (checked computers, else the selected ones):
+- **TeamViewer ID**: read on the computer by the worker (`ClientID`, else `ClientIDOfTSUser`, under
+  `HKLM\SOFTWARE\TeamViewer` or its 32-bit `WOW6432Node` key), shown in the computer card, the
+  details and the tooltip of *Software Updates*, and kept in `updates.xml`. *TeamViewer ID...*
+  shows the saved IDs at once (read from the computers when none is known, or with *Read from the
+  computers*), with *Copy* and, when TeamViewer is installed on the administrator's computer,
+  *Connect* (`TeamViewer.exe -i <ID>`).
+- **Remote desktop**: one window per computer; a confirmation above 5 windows.
+- **Command prompt on the computer**: a local console window attached to the computer, by the
+  method of *App > Options*: PsExec (`cmd.exe` as SYSTEM) or WinRM (`Enter-PSSession`, a
+  PowerShell session as the account). With the credential of the software updates: for WinRM the
+  password is handed over protected by DPAPI for the current Windows user (never in clear text);
+  PsExec only accepts a password on its command line (readable by the same user and by local
+  administrators), as for the standalone deployments.
+- **Quick commands**, fixed (no free text), run as SYSTEM by the worker, output in a window that
+  can be copied: refresh the group policies (`gpupdate /force`), the computer policies only
+  (`gpupdate /target:computer /force`), flush the DNS cache, restart the print spooler, restart the
+  computer in 5 minutes (users are warned) and cancel a planned restart. Restarting the spooler or
+  the computer, or any command on several computers, asks first.
+- **Export to Royal TS...**: Remote Desktop connections of the checked computers (else every
+  computer shown), the operating system as description and the OU as folder path: a CSV file
+  (`Name,ComputerName,Description,Path`, UTF-8 with BOM) for *Data > Import > Comma Separated
+  File*, or a RoyalJSON document (`.rjson`, also usable as the content of a Dynamic Folder).
 - **Servers are left alone by default**: the worker reads the operating system type
   (`Win32_OperatingSystem.ProductType`) and refuses to update or install anything on a server
   unless *App > Options > Software updates > Include servers (updates and installs)* is checked
