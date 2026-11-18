@@ -223,6 +223,91 @@ namespace LiteDeploy.Tests
             Assert.IsNull(UpdateModules.Parse("bad name", new[] { "# LiteDeploy-Module" }, "x.ps1"));
         }
 
+        static UpdateModule FakeModule(string name, string dir)
+        {
+            return new UpdateModule { Name = name, Label = name, Path = Path.Combine(dir, name + ".ps1") };
+        }
+
+        [TestMethod]
+        public void ModuleScan_LaterFolderWins_UserOverSharedOverShipped()
+        {
+            Dictionary<string, UpdateModule[]> folders = new Dictionary<string, UpdateModule[]>
+            {
+                { "shipped", new[] { FakeModule("AdobeReader", "shipped"), FakeModule("OracleJava", "shipped"), FakeModule("OnePassword", "shipped") } },
+                { "shared", new[] { FakeModule("adobereader", "shared"), FakeModule("OnePassword", "shared"), FakeModule("InHouse", "shared") } },
+                { "user", new[] { FakeModule("OnePassword", "user") } },
+            };
+            List<string> skipped = new List<string>();
+            List<UpdateModule> list = UpdateModules.Scan(new[] { "shipped", "shared", "user" }, d => folders[d], skipped);
+
+            CollectionAssert.AreEqual(new[] { "adobereader", "InHouse", "OnePassword", "OracleJava" }, list.Select(m => m.Name).ToArray());
+            Assert.AreEqual(Path.Combine("shared", "adobereader.ps1"), list[0].Path);
+            Assert.AreEqual(Path.Combine("shared", "InHouse.ps1"), list[1].Path);
+            Assert.AreEqual(Path.Combine("user", "OnePassword.ps1"), list[2].Path);
+            Assert.AreEqual(Path.Combine("shipped", "OracleJava.ps1"), list[3].Path);
+            Assert.AreEqual(0, skipped.Count);
+        }
+
+        [TestMethod]
+        public void ModuleScan_MissingOrUnreachableFolder_IsSkipped()
+        {
+            List<string> skipped = new List<string>();
+            List<UpdateModule> list = UpdateModules.Scan(new[] { "shipped", "missing", "unreachable", "empty" }, d =>
+            {
+                if (d == "missing") return null;
+                if (d == "unreachable") throw new IOException("The network path was not found.");
+                if (d == "empty") return new UpdateModule[0];
+                return new[] { FakeModule("OracleJava", d), null };
+            }, skipped);
+
+            CollectionAssert.AreEqual(new[] { "OracleJava" }, list.Select(m => m.Name).ToArray());
+            CollectionAssert.AreEqual(new[] { "missing", "unreachable" }, skipped);
+        }
+
+        [TestMethod]
+        public void ModuleScan_RealFolders_EmptyAndMissing()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "litedeploy-modules-" + Guid.NewGuid().ToString("N"));
+            string shipped = Path.Combine(root, "shipped"), empty = Path.Combine(root, "empty"), missing = Path.Combine(root, "missing");
+            try
+            {
+                Directory.CreateDirectory(shipped);
+                Directory.CreateDirectory(empty);
+                File.WriteAllLines(Path.Combine(shipped, "Example.ps1"), new[] { "# LiteDeploy-Module", "# Label: Example" });
+                File.WriteAllLines(Path.Combine(shipped, "NotAModule.ps1"), new[] { "Write-Output 1" });
+                List<string> skipped = new List<string>();
+                Func<string, IEnumerable<UpdateModule>> readDir = d => Directory.Exists(d) ? Directory.GetFiles(d, "*.ps1").Select(UpdateModules.Read) : null;
+
+                List<UpdateModule> list = UpdateModules.Scan(new[] { shipped, empty, missing }, readDir, skipped);
+
+                CollectionAssert.AreEqual(new[] { "Example" }, list.Select(m => m.Name).ToArray());
+                CollectionAssert.AreEqual(new[] { missing }, skipped);
+                Assert.AreEqual(0, UpdateModules.Scan(new[] { empty, missing }, readDir, null).Count);
+            }
+            finally
+            {
+                if (Directory.Exists(root)) Directory.Delete(root, true);
+            }
+        }
+
+        [TestMethod]
+        public void ModuleDirs_SharedFolderBetweenShippedAndUser()
+        {
+            UserSettings saved = UserSettings.Current;
+            try
+            {
+                string shared = Path.Combine(Path.GetTempPath(), "litedeploy-shared-modules");
+                typeof(UserSettings).GetProperty("Current").SetValue(null, new UserSettings { SharedModulesFolder = "  " + shared + " " });
+                CollectionAssert.AreEqual(new[] { UpdateModules.ShippedDir, shared, UpdateModules.UserDir }, UpdateModules.Dirs);
+                typeof(UserSettings).GetProperty("Current").SetValue(null, new UserSettings());
+                CollectionAssert.AreEqual(new[] { UpdateModules.ShippedDir, UpdateModules.UserDir }, UpdateModules.Dirs);
+            }
+            finally
+            {
+                typeof(UserSettings).GetProperty("Current").SetValue(null, saved);
+            }
+        }
+
         [TestMethod]
         public void Module_SignatureRule()
         {

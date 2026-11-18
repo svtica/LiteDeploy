@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Shared update modules folder (*App > Options > Software updates*, usually a network
+  share): the modules of an IT team, used by the LiteDeploy of every administrator. Modules are
+  found in the shipped `modules\` folder, then the shared folder, then
+  `%LOCALAPPDATA%\LiteDeploy\modules`; same name: the later wins. An unreachable shared folder is
+  skipped (the package list editor says so). Security is unchanged: the worker runs a module only
+  with a valid signature from the expected publisher; the folder should be writable by IT
+  administrators only (docs/modules.md).
+
 ### Changed
 
 - *Get the logs*: the extra log folders are now a setting, `ExtraLogFolders` in

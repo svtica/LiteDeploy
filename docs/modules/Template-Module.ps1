@@ -6,8 +6,10 @@
     Template of a LiteDeploy update module (see docs/modules.md).
 
 .DESCRIPTION
-    Copy this file to %LOCALAPPDATA%\LiteDeploy\modules\<Name>.ps1, adapt the
-    three functions below, then sign it with the LiteSuite certificate:
+    Copy this file to %LOCALAPPDATA%\LiteDeploy\modules\<Name>.ps1 (or to the
+    shared modules folder of App > Options > Software updates, writable by IT
+    administrators only), adapt the three functions below, then sign it with
+    the LiteSuite certificate:
         Set-AuthenticodeSignature .\<Name>.ps1 -Certificate $cert -TimestampServer http://timestamp.digicert.com
     LiteDeploy copies it to %windir%\LiteDeploy\modules on the computer and
     LiteDeploy.Worker.exe runs it as SYSTEM, only if the signature is valid:

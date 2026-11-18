@@ -28,10 +28,28 @@ never in production, the script runs as SYSTEM on every computer of the run.
 | Folder | Content |
 |---|---|
 | `modules\` next to `LiteDeploy.exe` | Modules shipped with LiteDeploy (signed by the release) |
-| `%LOCALAPPDATA%\LiteDeploy\modules\` | Your own modules (same name: yours wins) |
+| Shared modules folder (*App > Options > Software updates*), usually a network share | Modules of your IT team, used by the LiteDeploy of every administrator (same name: wins over the shipped one) |
+| `%LOCALAPPDATA%\LiteDeploy\modules\` | Your own modules (same name: yours wins over the shared and the shipped ones) |
 
 A file is a module when one of its first 20 lines is `# LiteDeploy-Module`. Its name (file
 name without `.ps1`) has letters, digits and `. - _` only.
+
+When the shared folder cannot be reached (offline, no access), its modules are not listed and
+the package list editor says so; the shipped and your own modules are still listed.
+
+### Shared modules folder: permissions
+
+The shared folder changes nothing to the security of the run: wherever a module comes from,
+the worker runs it only with a valid Authenticode signature from the expected publisher (step 3
+above). Still, a module runs as SYSTEM on every computer of a run, so:
+
+- give **write** access to the folder (share and NTFS) only to the IT administrators who
+  publish modules; everyone else who uses LiteDeploy needs read access only;
+- put only signed modules there, and do not set `AllowUnsignedModules` on a computer that
+  uses the shared folder.
+
+LiteDeploy reads the folder with the account of the administrator who runs it (the computers
+never read it: the module is copied to `ADMIN$` first).
 
 ## Shipped modules
 
