@@ -27,6 +27,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   next to the module in `%windir%\LiteDeploy\modules` (SYSTEM and Administrators only); the worker
   deletes it at once, gives the declared values to the module process only, and reports `error`
   without starting the module when a required parameter has no value. See `docs/modules.md`.
+- Update module `PrinterDrivers`: installs the printer drivers listed in the shared installer
+  cache (`<cache>\PrinterDrivers\drivers.csv`, columns `Name,Inf`) on the computers that miss
+  them. Each package is copied to `%windir%\LiteDeploy\work\PrinterDrivers`, refused unless its
+  catalog has a valid Authenticode signature, staged with `pnputil /add-driver` and installed
+  with `Add-PrinterDriver`. No printer is created and no process is closed.
+- Update module `TeamsBootstrapper`: new Microsoft Teams provisioned for all users with
+  Microsoft's `teamsbootstrapper.exe` (from `<cache>\Teams` or Microsoft's documented download
+  link). Compares the provisioned `MSTeams` version with the offline package of the cache
+  (`<cache>\Teams\MSTeams-x64.msix`) when there is one; the bootstrapper and the package are
+  refused unless signed by Microsoft Corporation. Closes `ms-teams` before the update.
+- Unit tests: every shipped module follows the contract (header, comment-based help,
+  `Write-LiteDeployResult` of the template, `$ErrorActionPreference = 'Stop'`).
+- `docs/modules.md`: layout of the shared installer cache and share permissions for the new
+  modules, with an example `drivers.csv`.
 
 ### Changed
 

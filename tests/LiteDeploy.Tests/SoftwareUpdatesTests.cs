@@ -356,12 +356,58 @@ namespace LiteDeploy.Tests
         public void ShippedModules_AreAsciiModules()
         {
             string[] files = Directory.GetFiles(Path.Combine(RepoRoot(), "modules"), "*.ps1");
-            CollectionAssert.IsSubsetOf(new[] { "AdobeReader.ps1", "OnePassword.ps1", "OracleJava.ps1" }, files.Select(Path.GetFileName).ToArray());
+            CollectionAssert.IsSubsetOf(new[] { "AdobeReader.ps1", "OnePassword.ps1", "OracleJava.ps1", "PrinterDrivers.ps1", "TeamsBootstrapper.ps1" },
+                files.Select(Path.GetFileName).ToArray());
             foreach (string path in files)
             {
                 Assert.IsTrue(File.ReadAllBytes(path).All(b => b < 0x80), path + " must be ASCII only");
                 Assert.IsNotNull(UpdateModules.Read(path), path + " is not a module");
             }
+        }
+
+        [TestMethod]
+        public void ShippedModules_FollowTheContract()
+        {
+            String resultFunction = ResultFunction(File.ReadAllLines(Path.Combine(RepoRoot(), "docs", "modules", "Template-Module.ps1")));
+            Assert.IsNotNull(resultFunction, "template: Write-LiteDeployResult");
+            foreach (string path in Directory.GetFiles(Path.Combine(RepoRoot(), "modules"), "*.ps1"))
+            {
+                string[] lines = File.ReadAllLines(path);
+                string[] header = lines.Take(20).Select(l => l.Trim()).ToArray();
+                Assert.AreEqual(UpdateModules.Marker, header[0], path + ": first line");
+                Assert.IsTrue(header.Any(l => l.StartsWith("# Label:", StringComparison.Ordinal) && l.Length > "# Label:".Length + 1), path + ": # Label:");
+                Assert.IsTrue(header.Any(l => l.StartsWith("# Processes:", StringComparison.Ordinal)), path + ": # Processes:");
+                string text = String.Join("\n", lines);
+                foreach (string required in new[] { ".SYNOPSIS", ".DESCRIPTION", ".PARAMETER Action", "[ValidateSet('Check', 'Update')]", "$ErrorActionPreference = 'Stop'" })
+                    StringAssert.Contains(text, required, path);
+                Assert.AreEqual(resultFunction, ResultFunction(lines), path + ": Write-LiteDeployResult must be the one of the template");
+            }
+        }
+
+        [TestMethod]
+        public void ShippedModules_PrinterDriversAndTeams_Processes()
+        {
+            UpdateModule drivers = UpdateModules.Read(Path.Combine(RepoRoot(), "modules", "PrinterDrivers.ps1"));
+            Assert.AreEqual(0, drivers.Processes.Length, "nothing to close for the printer drivers");
+            Assert.AreEqual("module:PrinterDrivers||Printer drivers (shared cache)", drivers.ToPackage().ToArgument());
+            UpdateModule teams = UpdateModules.Read(Path.Combine(RepoRoot(), "modules", "TeamsBootstrapper.ps1"));
+            CollectionAssert.AreEqual(new[] { "ms-teams" }, teams.Processes);
+        }
+
+        [TestMethod]
+        public void Module_EmptyProcessesLine_ClosesNothing()
+        {
+            UpdateModule m = UpdateModules.Parse("Example", new[] { "# LiteDeploy-Module", "# Label: Example", "# Processes:" }, "x.ps1");
+            Assert.AreEqual(0, m.Processes.Length);
+        }
+
+        // Lines of "function Write-LiteDeployResult" up to its closing brace; null when absent
+        static string ResultFunction(string[] lines)
+        {
+            int start = Array.FindIndex(lines, l => l.StartsWith("function Write-LiteDeployResult", StringComparison.Ordinal));
+            if (start < 0) return null;
+            int end = Array.FindIndex(lines, start, l => l == "}");
+            return end < 0 ? null : String.Join("\n", lines.Skip(start).Take(end - start + 1));
         }
 
         [TestMethod]
