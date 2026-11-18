@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.18] - 2026-11-18
+
 ### Added
 
 - **TeamViewer ID**: the worker's `info` command also reads the TeamViewer ID of the computer
