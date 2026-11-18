@@ -40,6 +40,7 @@ namespace LiteDeploy
             this.labelColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.parametersButton = new System.Windows.Forms.Button();
             this.importCatalogButton = new System.Windows.Forms.Button();
+            this.webVersionsButton = new System.Windows.Forms.Button();
             this.okButton = new System.Windows.Forms.Button();
             this.cancelButton = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.packagesGrid)).BeginInit();
@@ -180,6 +181,16 @@ namespace LiteDeploy
             this.importCatalogButton.Text = "Import from catalog...";
             this.importCatalogButton.Click += new System.EventHandler(this.importCatalogButton_Click);
             //
+            // webVersionsButton
+            //
+            this.webVersionsButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.webVersionsButton.Location = new System.Drawing.Point(284, 428);
+            this.webVersionsButton.Name = "webVersionsButton";
+            this.webVersionsButton.Size = new System.Drawing.Size(120, 23);
+            this.webVersionsButton.TabIndex = 11;
+            this.webVersionsButton.Text = "Web versions...";
+            this.webVersionsButton.Click += new System.EventHandler(this.webVersionsButton_Click);
+            //
             // okButton
             //
             this.okButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
@@ -219,6 +230,7 @@ namespace LiteDeploy
             this.Controls.Add(this.packagesGrid);
             this.Controls.Add(this.parametersButton);
             this.Controls.Add(this.importCatalogButton);
+            this.Controls.Add(this.webVersionsButton);
             this.Controls.Add(this.okButton);
             this.Controls.Add(this.cancelButton);
             this.MinimizeBox = false;
@@ -251,6 +263,7 @@ namespace LiteDeploy
         private System.Windows.Forms.DataGridViewTextBoxColumn labelColumn;
         private System.Windows.Forms.Button parametersButton;
         private System.Windows.Forms.Button importCatalogButton;
+        private System.Windows.Forms.Button webVersionsButton;
         private System.Windows.Forms.Button okButton;
         private System.Windows.Forms.Button cancelButton;
     }

@@ -8,6 +8,7 @@
 # Parameter: License default= License XML file name in the folder (default: none, -SkipLicense)
 # Parameter: Features default= Windows optional features to enable first, separated by ; (e.g. VirtualMachinePlatform)
 # Parameter: Publisher default= Expected organisation (O=) of the package signer (default: the Publisher of the package manifest)
+# Parameter: WingetId default= winget package Id of the product, for the web version check of LiteDeploy (not used on the computers)
 # Install: yes
 # Instances: yes
 <#
@@ -53,6 +54,8 @@
         License       license XML file name in Folder; default: -SkipLicense
         Features      optional features to enable first, separated by ";"
         Publisher     expected organisation (O=) of the signer of the package
+        WingetId      winget package Id, read by LiteDeploy only (Tools > Web
+                      versions...); ignored by this script
     See docs/modules.md for the contract and the cache layout.
 
 .PARAMETER Action

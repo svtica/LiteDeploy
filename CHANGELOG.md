@@ -45,6 +45,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keyboard: F5 check, Ctrl+U update, Esc stop (confirmation), Ctrl+A select the rows shown.
 - *Software Updates* in the menu bar of the main window and in the *Computers* menu.
 - Window size and position, splitter, columns, view and filters kept in `settings.xml`.
+- *Tools > Web versions...* (also *Package list > Web versions...*): for every instance of
+  `CachedInstaller` and `MsixProvision`, the version of its file in the shared cache (MSI
+  `ProductVersion`, EXE version, MSIX manifest version or the `Version` parameter) against the
+  latest version known to winget (`winget show`, x64 installer of the type of the instance; output
+  read by its layout, any display language). Statuses *Up to date*, *Newer on the web*, *Not
+  found*, *No WingetId*, *Error*; *Check now*, *Open vendor page*; sortable columns, remembered
+  size; results in `%LOCALAPPDATA%\LiteDeploy\web-versions.xml`, log in
+  `logs\web-versions-<date>.log`. Runs on the administrator's computer only.
+- *Download to the cache* (checked rows or current row): HTTPS-only download to a temporary
+  folder, SHA256 of the winget manifest and Authenticode signature of the `Publisher` of the
+  instance required (MSIX: package name and manifest publisher too), copy next to the current
+  file under a versioned name (never over an existing file), `File` (and `Version` when set)
+  updated in `module-settings.xml`, previous file moved to the `OLD` subfolder. Needs write
+  access to the cache folder; clear message otherwise.
+- Optional daily check at a set time while LiteDeploy is open, report only unless *Download new
+  versions automatically* is on (off by default).
+- Update modules `CachedInstaller` and `MsixProvision`: optional parameter `WingetId` (also
+  accepted in a catalog), read by LiteDeploy only and ignored by the modules.
 
 ### Changed
 

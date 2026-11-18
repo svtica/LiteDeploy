@@ -53,6 +53,12 @@ namespace LiteDeploy
         public bool ShowStandaloneDeployments = false;
         /// <summary>Get the logs: extra folders, "label|folder under %windir%|newest files" separated by ';' (RemoteLogs.ParseExtraFolders). Empty: none.</summary>
         public String ExtraLogFolders = "";
+        /// <summary>Tools > Web versions...: check the web versions every day at this time (HH:mm), while LiteDeploy is open. Empty: no daily check.</summary>
+        public String WebCheckTime = "";
+        /// <summary>The daily web check downloads the new versions to the cache (off: report only).</summary>
+        public bool WebAutoDownload = false;
+        /// <summary>Size of the Web versions window, "width,height" (empty: default).</summary>
+        public String WebVersionsWindowSize = "";
 
         // ---- Software Updates window (restored when it opens; safe defaults when absent or unreadable) ----
 
