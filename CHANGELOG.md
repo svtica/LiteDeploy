@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Server guard of the software updates: before `upgrade` and `install`, the worker reads
+  `Win32_OperatingSystem.ProductType` (registry `ProductOptions` as fallback) and does nothing on a
+  server (ProductType 3) unless the new option `--allow-servers` is given, nor on a domain
+  controller (ProductType 2) or a computer whose type cannot be read unless
+  `--allow-domain-controllers` is given too: one `error` line saying why and how to allow it, a
+  `done` line, exit code 102. `scan`, `info` and `processes` are unchanged (report only).
+- Setting *Include servers (updates and installs)* in *App > Options > Software updates*
+  (`UserSettings.IncludeServers`, off by default): LiteDeploy then passes `--allow-servers`.
+  `AllowDomainControllers` (no window, `settings.xml` only) adds `--allow-domain-controllers`,
+  only together with it. Scheduled updates skip the computers already known as servers that are
+  not included (logged); scheduled checks still run on them.
+- Operating system type in the computer card (*Workstation*, *Server*, *Domain controller*). The
+  `info` message and the `done` line of every run carry `os` (caption, version, release) and
+  `ostype` (`workstation`, `server`, `domaincontroller`); `updates.xml` keeps them per computer
+  (`OsCaption`, `OsType` attributes; files of earlier versions are read as before).
+
 ## [1.0.15] - 2026-11-18
 
 ### Changed

@@ -29,6 +29,11 @@ Unsigned modules are refused. For tests only, `AllowUnsignedModules` set to `tru
 `%LOCALAPPDATA%\LiteDeploy\settings.xml` lets the worker run them (`--allow-unsigned-modules`):
 never in production, the script runs as SYSTEM on every computer of the run.
 
+Servers: on a server the worker runs no `Update` and no `Install` (of a module or of a winget
+package) unless *Include servers* is checked in *App > Options* (`--allow-servers`); a domain
+controller also needs `AllowDomainControllers` in `settings.xml` (`--allow-domain-controllers`).
+`Check` runs everywhere. See *Software updates* in the README.
+
 ## Where modules are found
 
 | Folder | Content |

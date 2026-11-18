@@ -4,7 +4,8 @@
 // Author:  LiteDeploy contributors
 // Date:    2026-11-12
 // Purpose: State of the software updates per computer (installed and available
-//          versions, last check, last upgrade result), kept in a local file,
+//          versions, last check, last upgrade result, operating system and its
+//          type), kept in a local file,
 //          %LOCALAPPDATA%\LiteDeploy\updates.xml. Read when the Software
 //          Updates window opens; written only when a value changed (versions,
 //          status, results, errors): a check that finds nothing new does not
@@ -46,11 +47,37 @@ namespace LiteDeploy
         /// <summary>MAC addresses of its physical adapters (Wake-on-LAN) and last IPv4 addresses, space-separated.</summary>
         [XmlAttribute] public String Macs;
         [XmlAttribute] public String Ips;
+        /// <summary>Windows caption, version and release, as the worker last reported it ("os"); null: never reported.</summary>
+        [XmlAttribute] public String OsCaption;
+        /// <summary>Operating system type, as the worker last reported it ("ostype": ServerPolicy.Type*); null: never reported.</summary>
+        [XmlAttribute] public String OsType;
         [XmlElement("Package")] public List<PackageUpdateState> Packages = new List<PackageUpdateState>();
 
         public PackageUpdateState Find(String id)
         {
             return Packages.FirstOrDefault(p => String.Equals(p.Id, id, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>True when the last known type is a server or a domain controller.</summary>
+        public bool IsServer
+        {
+            get
+            {
+                int type = ServerPolicy.ProductTypeOf(OsType);
+                return type == ServerPolicy.ProductServer || type == ServerPolicy.ProductDomainController;
+            }
+        }
+
+        /// <summary>The displayed name of an operating system type (ServerPolicy.Type*); empty when unknown.</summary>
+        public static String OsTypeText(String osType)
+        {
+            switch (ServerPolicy.ProductTypeOf(osType))
+            {
+                case ServerPolicy.ProductWorkstation: return Localization.T("ComputerUpdateState.Workstation", "Workstation");
+                case ServerPolicy.ProductServer: return Localization.T("ComputerUpdateState.Server", "Server");
+                case ServerPolicy.ProductDomainController: return Localization.T("ComputerUpdateState.DomainController", "Domain controller");
+                default: return "";
+            }
         }
     }
 
@@ -129,6 +156,10 @@ namespace LiteDeploy
                         // Kept for Wake-on-LAN: the adapters of a computer that is now off are still known
                         if (!String.IsNullOrEmpty(m["macs"])) c.Macs = m["macs"];
                         if (!String.IsNullOrEmpty(m["ips"])) c.Ips = m["ips"];
+                        ApplyOs(c, m);
+                        break;
+                    case WorkerProtocol.TypeDone:
+                        ApplyOs(c, m);
                         break;
                     case WorkerProtocol.TypeError:
                         errors.Add(m["message"]);
@@ -137,6 +168,13 @@ namespace LiteDeploy
             }
             c.LastError = errors.Count == 0 ? null : String.Join(" | ", errors);
             if (Fingerprint(c) != before) c.LastChange = now;
+        }
+
+        // Operating system of the info card and of the done line (older workers: no such field, kept as is)
+        static void ApplyOs(ComputerUpdateState c, WorkerMessage m)
+        {
+            if (!String.IsNullOrEmpty(m["os"])) c.OsCaption = m["os"];
+            if (!String.IsNullOrEmpty(m["ostype"])) c.OsType = m["ostype"];
         }
 
         // Everything but LastChange and the upgrade times

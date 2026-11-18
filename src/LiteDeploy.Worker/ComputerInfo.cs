@@ -5,7 +5,7 @@
 // Date:    2026-11-12
 // Purpose: "LiteDeploy.Worker.exe info": the computer card of LiteDeploy
 //          (logged-on users, last restart, pending restart, Windows version,
-//          free space on C:, physical network adapters for Wake-on-LAN), as
+//          operating system type (ServerPolicy), free space on C:, physical network adapters for Wake-on-LAN), as
 //          one WorkerProtocol message. From the identity check of the
 //          previous update panel.
 // -----------------------------------------------------------------------------
@@ -65,10 +65,11 @@ namespace LiteDeploy.Worker
         public static string Collect()
         {
             List<string> users = new List<string>();
-            string lastBoot = null, os = null;
+            string lastBoot = null, os;
+            int productType = ReadOperatingSystem(out os);
             try
             {
-                using (ManagementObjectSearcher s = new ManagementObjectSearcher("SELECT LastBootUpTime, Caption, Version FROM Win32_OperatingSystem"))
+                using (ManagementObjectSearcher s = new ManagementObjectSearcher("SELECT LastBootUpTime FROM Win32_OperatingSystem"))
                 using (ManagementObjectCollection results = s.Get())
                 {
                     foreach (ManagementObject o in results)
@@ -76,7 +77,6 @@ namespace LiteDeploy.Worker
                         using (o)
                         {
                             lastBoot = ManagementDateTimeConverter.ToDateTime((string)o["LastBootUpTime"]).ToString("yyyy-MM-dd HH:mm");
-                            os = o["Caption"] + " " + o["Version"];
                         }
                     }
                 }
@@ -100,9 +100,6 @@ namespace LiteDeploy.Worker
             }
             catch (Exception) { }
 
-            string release = RegistryString(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion", "DisplayVersion");
-            if (os != null && release != null) os += " (" + release + ")";
-
             string free = null;
             try
             {
@@ -121,9 +118,43 @@ namespace LiteDeploy.Worker
                 "lastboot", lastBoot,
                 "pendingrestart", PendingRestart() ? "yes" : "no",
                 "os", os,
+                "ostype", ServerPolicy.OsType(productType),
                 "freec", free,
                 "macs", string.Join(" ", macs),
                 "ips", string.Join(" ", ips));
+        }
+
+        /// <summary>
+        /// Windows caption, version and release (<paramref name="os"/>, null when unreadable) and
+        /// Win32_OperatingSystem.ProductType (ServerPolicy.Product*): from WMI, else from the registry
+        /// (ProductOptions); ServerPolicy.ProductUnknown when neither can be read.
+        /// </summary>
+        public static int ReadOperatingSystem(out string os)
+        {
+            os = null;
+            int productType = ServerPolicy.ProductUnknown;
+            try
+            {
+                using (ManagementObjectSearcher s = new ManagementObjectSearcher("SELECT Caption, Version, ProductType FROM Win32_OperatingSystem"))
+                using (ManagementObjectCollection results = s.Get())
+                {
+                    foreach (ManagementObject o in results)
+                    {
+                        using (o)
+                        {
+                            os = o["Caption"] + " " + o["Version"];
+                            if (o["ProductType"] != null) productType = Convert.ToInt32(o["ProductType"]);
+                        }
+                    }
+                }
+            }
+            catch (Exception) { }
+            if (ServerPolicy.OsType(productType) == null)
+                productType = ServerPolicy.ProductTypeFromRegistry(RegistryString(@"SYSTEM\CurrentControlSet\Control\ProductOptions", "ProductType"));
+
+            string release = RegistryString(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion", "DisplayVersion");
+            if (os != null && release != null) os += " (" + release + ")";
+            return productType;
         }
 
         /// <summary>Physical Ethernet and Wi-Fi adapters: MAC addresses (Wake-on-LAN) and IPv4 addresses of those that are up.</summary>

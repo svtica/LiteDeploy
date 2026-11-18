@@ -6,7 +6,8 @@
 // Purpose: Runs one scheduled check or update without a window (internal
 //          engine, or "LiteDeploy.exe /schedule <name>" started by the Windows
 //          task): skips paused computers and, during business hours, the
-//          "outside business hours only" ones; wakes the computers first when
+//          "outside business hours only" ones, and for an update the known
+//          servers unless App > Options includes them (ServerPolicy); wakes the computers first when
 //          asked; a few computers at a time; state file updated; a log per day
 //          in %LOCALAPPDATA%\LiteDeploy\logs. Check or update only: a schedule
 //          never runs the Install action.
@@ -63,6 +64,7 @@ namespace LiteDeploy
                 ComputerUpdateState c = store.Find(computer);
                 if (c != null && c.Paused) { Log("  " + computer + ": paused, skipped" + (c.PauseReason != null ? " (" + c.PauseReason + ")" : "")); continue; }
                 if (c != null && c.NightOnly && businessHours && schedule.Command == "upgrade") { Log("  " + computer + ": outside business hours only, skipped"); continue; }
+                if (SkipsServer(c, schedule.Command, UserSettings.Current)) { Log("  " + computer + ": server (" + c.OsType + "), skipped: servers not included (App > Options)"); continue; }
                 computers.Add(computer);
             }
 
@@ -120,6 +122,17 @@ namespace LiteDeploy
         static public bool IsScheduleCommand(String command)
         {
             return command == "scan" || command == "upgrade";
+        }
+
+        /// <summary>
+        /// True when a scheduled update skips this computer: its last known type is a server or a
+        /// domain controller that the settings do not include (the worker would refuse it anyway).
+        /// A computer whose type is not known yet is run: the worker checks it. Unit-tested.
+        /// </summary>
+        static public bool SkipsServer(ComputerUpdateState c, String command, UserSettings settings)
+        {
+            if (c == null || !c.IsServer) return false;
+            return ServerPolicy.Decide(command, ServerPolicy.ProductTypeOf(c.OsType), settings.IncludeServers, settings.AllowDomainControllers) != ServerDecision.Allowed;
         }
 
         static String Summary(UpdateRunResult r)

@@ -512,6 +512,7 @@ Oui : les mettre à jour maintenant. Non : les ignorer.</translation>
   <translation key="OptionsForm.cacheLabel.Text">Cache partagé des installeurs (\\serveur\partage, facultatif) :</translation>
   <translation key="OptionsForm.hoursLabel.Text">Heures ouvrables (lundi au vendredi, HH:mm) :</translation>
   <translation key="OptionsForm.unsignedModulesCheckBox.Text">Exécuter les modules non signés (tests seulement : ils tournent en SYSTEM sur les ordinateurs)</translation>
+  <translation key="OptionsForm.includeServersCheckBox.Text">Inclure les serveurs (mises à jour et installations)</translation>
   <translation key="OptionsForm.BadCache">Le cache doit être un dossier partagé : \\serveur\partage.</translation>
   <translation key="OptionsForm.sharedModulesLabel.Text">Dossier partagé des modules de mise à jour (facultatif) :</translation>
   <translation key="OptionsForm.sharedModulesButton.Text">Choisir</translation>
@@ -525,9 +526,14 @@ Oui : les mettre à jour maintenant. Non : les ignorer.</translation>
 Dernier redémarrage : {1}
 Redémarrage en attente : {2}
 Windows : {3}
+Type : {7}
 Espace libre sur C:  {4}
 Cartes réseau (Wake-on-LAN) : {5}
 Adresses IPv4 : {6}</translation>
+  <translation key="SoftwareUpdatesForm.CardUnknown">(inconnu)</translation>
+  <translation key="ComputerUpdateState.Workstation">Poste de travail</translation>
+  <translation key="ComputerUpdateState.Server">Serveur</translation>
+  <translation key="ComputerUpdateState.DomainController">Contrôleur de domaine</translation>
   <translation key="SoftwareUpdatesForm.Yes">oui</translation>
   <translation key="SoftwareUpdatesForm.No">non</translation>
   <translation key="SoftwareUpdatesForm.CardTitle">Fiche du poste - {0}</translation>

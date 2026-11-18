@@ -807,9 +807,10 @@ namespace LiteDeploy
                     }
                     String none = Localization.T("SoftwareUpdatesForm.CardNone", "(none)");
                     String text = Localization.F("SoftwareUpdatesForm.Card",
-                        "Logged-on users: {0}\nLast restart: {1}\nRestart pending: {2}\nWindows: {3}\nFree space on C: {4}\nAdapters (Wake-on-LAN): {5}\nIPv4 addresses: {6}",
+                        "Logged-on users: {0}\nLast restart: {1}\nRestart pending: {2}\nWindows: {3}\nType: {7}\nFree space on C: {4}\nAdapters (Wake-on-LAN): {5}\nIPv4 addresses: {6}",
                         Empty(info["users"], none), info["lastboot"], info["pendingrestart"] == "yes" ? Localization.T("SoftwareUpdatesForm.Yes", "yes") : Localization.T("SoftwareUpdatesForm.No", "no"),
-                        info["os"], info["freec"], Empty(info["macs"], none), Empty(info["ips"], none));
+                        info["os"], info["freec"], Empty(info["macs"], none), Empty(info["ips"], none),
+                        Empty(ComputerUpdateState.OsTypeText(info["ostype"]), Localization.T("SoftwareUpdatesForm.CardUnknown", "(unknown)")));
                     MessageBox.Show(this, text, Localization.F("SoftwareUpdatesForm.CardTitle", "Computer card - {0}", computer), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }));
             }) { IsBackground = true }.Start();

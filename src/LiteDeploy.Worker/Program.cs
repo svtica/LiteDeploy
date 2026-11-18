@@ -10,6 +10,12 @@
 //            LiteDeploy.Worker.exe install --package "Id|proc1,proc2|Label" ...
 //                                  [--timeout <minutes per winget call or module>]
 //                                  [--allow-unsigned-modules] [--cache \\server\share]
+//                                  [--allow-servers [--allow-domain-controllers]]
+//          Server guard (ServerPolicy): upgrade and install do nothing on a
+//          server unless --allow-servers is given, nor on a domain controller
+//          unless --allow-domain-controllers is given too (error line, done
+//          line, exit code 102). scan works everywhere; its done line (and
+//          the info card) carries "os" and "ostype".
 //          A package "module:<Name>" is an update module, a PowerShell script
 //          copied by LiteDeploy to %windir%\LiteDeploy\modules (ModuleRunner),
 //          with its parameter file, deleted at the end of the run;
@@ -43,6 +49,7 @@ namespace LiteDeploy.Worker
     {
         const int ExitUsage = 100;
         const int ExitNoWinget = 101;
+        const int ExitServerRefused = 102;
 
         // LiteSuite.Common.dll (NuGet package) is embedded in the worker so that PsExec -c, which
         // copies the exe only, still has it: loaded from the resource when the runtime asks for it.
@@ -98,7 +105,9 @@ namespace LiteDeploy.Worker
             int timeoutMinutes;
             bool allowUnsigned;
             string cache;
-            string usageError = ParseArguments(args, out command, out packages, out timeoutMinutes, out allowUnsigned, out cache);
+            bool allowServers, allowDomainControllers;
+            string usageError = ParseArguments(args, out command, out packages, out timeoutMinutes, out allowUnsigned, out cache,
+                out allowServers, out allowDomainControllers);
             // Shared cache of the installers, for the update modules (LITEDEPLOY_CACHE, docs/modules.md)
             if (cache != null) Environment.SetEnvironmentVariable("LITEDEPLOY_CACHE", cache);
             try
@@ -106,10 +115,10 @@ namespace LiteDeploy.Worker
                 if (usageError != null)
                 {
                     Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeError, "message", usageError));
-                    Console.Error.WriteLine("Usage: LiteDeploy.Worker.exe scan|upgrade|install --package \"Id|processes|label\" ... [--timeout minutes]");
+                    Console.Error.WriteLine("Usage: LiteDeploy.Worker.exe scan|upgrade|install --package \"Id|processes|label\" ... [--timeout minutes] [--allow-servers [--allow-domain-controllers]]");
                     return ExitUsage;
                 }
-                return Run(command, packages, timeoutMinutes, allowUnsigned);
+                return Run(command, packages, timeoutMinutes, allowUnsigned, allowServers, allowDomainControllers);
             }
             finally
             {
@@ -118,12 +127,15 @@ namespace LiteDeploy.Worker
             }
         }
 
-        static int Run(string command, List<UpdatePackage> packages, int timeoutMinutes, bool allowUnsigned)
+        static int Run(string command, List<UpdatePackage> packages, int timeoutMinutes, bool allowUnsigned, bool allowServers, bool allowDomainControllers)
         {
             string wingetPath = WingetClient.Locate();
             bool needsWinget = packages.Any(p => !p.IsModule);
             List<string> macs, ips;
             ComputerInfo.Network(out macs, out ips);
+            string os;
+            int productType = ComputerInfo.ReadOperatingSystem(out os);
+            string osType = ServerPolicy.OsType(productType);
             Emit(WorkerProtocol.Format(
                 "type", "start",
                 "computer", Environment.MachineName,
@@ -132,10 +144,20 @@ namespace LiteDeploy.Worker
                 "winget", wingetPath ?? "",
                 "macs", string.Join(" ", macs),
                 "ips", string.Join(" ", ips)));
+
+            // Server guard: nothing is checked, closed, upgraded or installed on a server that is not allowed
+            ServerDecision guard = ServerPolicy.Decide(command, productType, allowServers, allowDomainControllers);
+            if (guard != ServerDecision.Allowed)
+            {
+                Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeError, "message", ServerPolicy.RefusalMessage(guard, productType)));
+                Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeDone, "failed", packages.Count.ToString(), "os", os, "ostype", osType));
+                return ExitServerRefused;
+            }
+
             if (wingetPath == null && needsWinget)
             {
                 Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeError, "message", "winget.exe not found (App Installer missing)"));
-                Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeDone, "failed", packages.Count.ToString()));
+                Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeDone, "failed", packages.Count.ToString(), "os", os, "ostype", osType));
                 return ExitNoWinget;
             }
 
@@ -190,9 +212,9 @@ namespace LiteDeploy.Worker
             }
 
             if (command == InstallPolicy.Command)
-                Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeDone, "installed", installed.ToString(), "failed", failed.ToString()));
+                Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeDone, "installed", installed.ToString(), "failed", failed.ToString(), "os", os, "ostype", osType));
             else
-                Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeDone, "upgraded", upgraded.ToString(), "failed", failed.ToString()));
+                Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeDone, "upgraded", upgraded.ToString(), "failed", failed.ToString(), "os", os, "ostype", osType));
             return Math.Min(failed, 99);
         }
 
@@ -439,7 +461,17 @@ namespace LiteDeploy.Worker
 
         internal static string ParseArguments(string[] args, out string command, out List<UpdatePackage> packages, out int timeoutMinutes, out bool allowUnsigned, out string cache)
         {
+            bool allowServers, allowDomainControllers;
+            return ParseArguments(args, out command, out packages, out timeoutMinutes, out allowUnsigned, out cache, out allowServers, out allowDomainControllers);
+        }
+
+        /// <summary>With the server guard options (ServerPolicy): --allow-servers, --allow-domain-controllers.</summary>
+        internal static string ParseArguments(string[] args, out string command, out List<UpdatePackage> packages, out int timeoutMinutes, out bool allowUnsigned, out string cache,
+            out bool allowServers, out bool allowDomainControllers)
+        {
             cache = null;
+            allowServers = false;
+            allowDomainControllers = false;
             command = null;
             packages = new List<UpdatePackage>();
             timeoutMinutes = 15;
@@ -466,6 +498,14 @@ namespace LiteDeploy.Worker
                 else if (a == "--allow-unsigned-modules")
                 {
                     allowUnsigned = true;
+                }
+                else if (a == ServerPolicy.AllowServersOption)
+                {
+                    allowServers = true;
+                }
+                else if (a == ServerPolicy.AllowDomainControllersOption)
+                {
+                    allowDomainControllers = true;
                 }
                 else if (a == "--timeout" && i + 1 < args.Length)
                 {

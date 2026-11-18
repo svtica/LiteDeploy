@@ -53,6 +53,7 @@ namespace LiteDeploy
             this.accountCombo = new System.Windows.Forms.ComboBox();
             this.methodLabel = new System.Windows.Forms.Label();
             this.methodCombo = new System.Windows.Forms.ComboBox();
+            this.includeServersCheckBox = new System.Windows.Forms.CheckBox();
             this.languageLabel = new System.Windows.Forms.Label();
             this.languageCombo = new System.Windows.Forms.ComboBox();
             this.button3 = new System.Windows.Forms.Button();
@@ -170,7 +171,7 @@ namespace LiteDeploy
             // 
             // ApplyButton
             // 
-            this.ApplyButton.Location = new System.Drawing.Point(237, 588);
+            this.ApplyButton.Location = new System.Drawing.Point(237, 618);
             this.ApplyButton.Name = "ApplyButton";
             this.ApplyButton.Size = new System.Drawing.Size(93, 23);
             this.ApplyButton.TabIndex = 6;
@@ -181,7 +182,7 @@ namespace LiteDeploy
             // cancelButton
             // 
             this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cancelButton.Location = new System.Drawing.Point(336, 588);
+            this.cancelButton.Location = new System.Drawing.Point(336, 618);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(93, 23);
             this.cancelButton.TabIndex = 7;
@@ -216,9 +217,10 @@ namespace LiteDeploy
             this.updatesGroup.Controls.Add(this.accountCombo);
             this.updatesGroup.Controls.Add(this.methodLabel);
             this.updatesGroup.Controls.Add(this.methodCombo);
+            this.updatesGroup.Controls.Add(this.includeServersCheckBox);
             this.updatesGroup.Location = new System.Drawing.Point(12, 265);
             this.updatesGroup.Name = "updatesGroup";
-            this.updatesGroup.Size = new System.Drawing.Size(417, 311);
+            this.updatesGroup.Size = new System.Drawing.Size(417, 341);
             this.updatesGroup.TabIndex = 3;
             this.updatesGroup.TabStop = false;
             this.updatesGroup.Text = "Software updates";
@@ -281,6 +283,12 @@ namespace LiteDeploy
             this.methodCombo.Name = "methodCombo";
             this.methodCombo.Size = new System.Drawing.Size(379, 21);
             this.methodCombo.TabIndex = 18;
+            this.includeServersCheckBox.Location = new System.Drawing.Point(20, 306);
+            this.includeServersCheckBox.Name = "includeServersCheckBox";
+            this.includeServersCheckBox.Size = new System.Drawing.Size(379, 24);
+            this.includeServersCheckBox.TabIndex = 19;
+            this.includeServersCheckBox.Text = "Include servers (updates and installs)";
+            this.includeServersCheckBox.UseVisualStyleBackColor = true;
             //
             // OptionsForm
             // 
@@ -288,7 +296,7 @@ namespace LiteDeploy
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.cancelButton;
-            this.ClientSize = new System.Drawing.Size(445, 623);
+            this.ClientSize = new System.Drawing.Size(445, 653);
             this.Controls.Add(this.cancelButton);
             this.Controls.Add(this.ApplyButton);
             this.Controls.Add(this.groupBox2);
@@ -337,5 +345,6 @@ namespace LiteDeploy
         private System.Windows.Forms.ComboBox accountCombo;
         private System.Windows.Forms.Label methodLabel;
         private System.Windows.Forms.ComboBox methodCombo;
+        private System.Windows.Forms.CheckBox includeServersCheckBox;
     }
 }
