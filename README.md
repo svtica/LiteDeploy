@@ -163,7 +163,10 @@ them (and for the PsExec method of the software updates); it is asked for when t
   [docs/modules.md](docs/modules.md#web-versions). Every instance with parameters is listed, even
   before the first check or without a `WingetId` (status *No WingetId*). On a computer where the
   cache or the instances are not set up yet for the current user, the window says so and offers
-  *Open Options...* or *Import from catalog...*.
+  *Open Options...* or *Import from catalog...*. *Check now* and *Download to the cache* show a
+  progress bar, the item and step under way, the elapsed and estimated remaining time, and update
+  each row as soon as its result is known; their button becomes *Cancel* (stops after the current
+  item, keeps and saves the results already obtained).
 - Right-click a computer in Software Updates: processes and handles, get the logs.
   *Get the logs* copies the newest `*.log` files of the update modules (`%windir%\LiteDeploy\work`)
   and of winget (SYSTEM) to `%LOCALAPPDATA%\LiteDeploy\logs\<computer>\<date>`. Other folders

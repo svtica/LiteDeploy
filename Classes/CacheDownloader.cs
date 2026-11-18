@@ -19,8 +19,11 @@
 //               module-settings.xml;
 //            5. the previous file moved to the OLD subfolder of that folder.
 //          Only the file the instance uses is moved; nothing else in the cache
-//          is touched. Every step is logged. Naming and rotation are pure or
-//          file-only logic, unit-tested on a temporary folder.
+//          is touched. Every step is logged and reported (WebVersionProgress,
+//          with the bytes received). Several files: one at a time; cancelled,
+//          the run stops after the current file. Naming, rotation and the run
+//          loop (with a fake download) are pure or file-only logic, unit-tested
+//          on a temporary folder.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -32,6 +35,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using LiteSuite;
 
 namespace LiteDeploy
@@ -48,10 +52,24 @@ namespace LiteDeploy
         public String Warning;
     }
 
+    /// <summary>One file of a Download to the cache: its result, or why it failed.</summary>
+    internal sealed class CacheDownloadOutcome
+    {
+        public WebVersionEntry Entry;
+        /// <summary>Null: failed (Error).</summary>
+        public CacheDownloadResult Result;
+        public String Error;
+    }
+
+    /// <summary>A step of a download: the step, bytes received, length of the download (0 or less: unknown).</summary>
+    internal delegate void CacheDownloadStep(WebVersionStep step, long received, long total);
+
     internal sealed class CacheDownloader
     {
         public const String OldFolder = "OLD";
         const int MaxRedirects = 10;
+        /// <summary>Bytes received reported at most this often (the window redraws its status line).</summary>
+        const int ReportIntervalMs = 250;
 
         readonly Action<String> log;
 
@@ -253,12 +271,60 @@ namespace LiteDeploy
         // ---- Download -------------------------------------------------------------------------
 
         /// <summary>
+        /// Downloads the entries one at a time (see Download), each step reported to <paramref name="progress"/>.
+        /// Cancelled: stops before the next file. Returns the outcome of each file processed.
+        /// </summary>
+        public List<CacheDownloadOutcome> DownloadAll(IList<WebVersionEntry> entries, String cacheRoot, IProgress<WebVersionProgress> progress, CancellationToken token)
+        {
+            return RunDownloads(entries, (e, step) => Download(e, cacheRoot, step), progress, token, log);
+        }
+
+        /// <summary>
+        /// The run loop of DownloadAll, with the download as a parameter: one file at a time, each step and
+        /// each outcome reported, nothing new started once cancelled; an exception is the outcome of its file.
+        /// Unit-tested with a fake download.
+        /// </summary>
+        static public List<CacheDownloadOutcome> RunDownloads(IList<WebVersionEntry> entries, Func<WebVersionEntry, CacheDownloadStep, CacheDownloadResult> download,
+            IProgress<WebVersionProgress> progress, CancellationToken token, Action<String> log)
+        {
+            List<CacheDownloadOutcome> outcomes = new List<CacheDownloadOutcome>();
+            for (int i = 0; i < entries.Count; i++)
+            {
+                if (token.IsCancellationRequested)
+                {
+                    if (log != null) log("Download cancelled: " + outcomes.Count + " of " + entries.Count + " file(s) processed");
+                    break;
+                }
+                WebVersionEntry e = entries[i];
+                int index = i + 1, done = outcomes.Count;
+                CacheDownloadStep step = (s, received, total) => WebVersionProgressText.Report(progress, new WebVersionProgress
+                {
+                    Operation = WebVersionOperation.Download, Index = index, Total = entries.Count, Done = done,
+                    Key = e.Key, Product = e.Product, Step = s, BytesReceived = received, BytesTotal = total
+                });
+                CacheDownloadOutcome outcome = new CacheDownloadOutcome { Entry = e };
+                try { outcome.Result = download(e, step); }
+                catch (Exception ex) { outcome.Error = ex.Message; }
+                outcomes.Add(outcome);
+                WebVersionProgressText.Report(progress, new WebVersionProgress
+                {
+                    Operation = WebVersionOperation.Download, Index = index, Total = entries.Count, Done = outcomes.Count,
+                    Key = e.Key, Product = e.Product, Step = WebVersionStep.Done,
+                    Entry = outcome.Result != null ? outcome.Result.Entry : null, Error = outcome.Error
+                });
+            }
+            return outcomes;
+        }
+
+        /// <summary>
         /// Downloads the new version of the instance of <paramref name="entry"/> into the cache (see
         /// the steps above). Throws with a readable message; nothing is changed in the cache or the
         /// settings then (except the previous file, which is moved only once the new one is in place).
         /// </summary>
-        public CacheDownloadResult Download(WebVersionEntry entry, String cacheRoot)
+        public CacheDownloadResult Download(WebVersionEntry entry, String cacheRoot, CacheDownloadStep step = null)
         {
+            if (step == null) step = (s, received, total) => { };
+            step(WebVersionStep.Preparing, 0, 0);
             log("Download " + entry.Key + " [" + entry.WingetId + "] " + entry.CacheVersion + " -> " + entry.WebVersion + " from " + entry.InstallerUrl);
             if (!entry.CanDownload)
                 throw new InvalidOperationException(Localization.T("CacheDownloader.NothingToDownload", "No newer version with an HTTPS installer and its SHA256: check again first."));
@@ -285,14 +351,16 @@ namespace LiteDeploy
                 String extension = DownloadExtension(entry.InstallerUrl, Path.GetExtension(current));
                 String download = Path.Combine(temp, "download" + extension);
                 log("  download to " + download);
-                DownloadHttps(entry.InstallerUrl, download);
+                DownloadHttps(entry.InstallerUrl, download, step);
 
+                step(WebVersionStep.VerifyingHash, 0, 0);
                 String sha = Sha256Of(download);
                 if (!String.Equals(sha, entry.InstallerSha256, StringComparison.OrdinalIgnoreCase))
                     throw new InvalidDataException(Localization.F("CacheDownloader.HashMismatch",
                         "The SHA256 of the download ({0}) is not the one of the winget manifest ({1}): refused.", sha, entry.InstallerSha256));
                 log("  SHA256 matches the winget manifest: " + sha);
 
+                step(WebVersionStep.VerifyingSignature, 0, 0);
                 AuthenticodeResult signature = AuthenticodeVerifier.Verify(download);
                 log("  signature: " + signature);
                 if (target.IsMsix) CheckMsix(download, target, signature);
@@ -310,7 +378,9 @@ namespace LiteDeploy
                     throw new InvalidDataException(Localization.F("CacheDownloader.Older", "The download ({0}) is older than the file of the cache ({1}): refused.", newFileVersion, oldFileVersion));
 
                 String newName = VersionedFileName(Path.GetFileName(current), new[] { entry.CacheVersion, oldFileVersion }, entry.WebVersion, extension);
+                step(WebVersionStep.CopyingToCache, 0, 0);
                 String placed = CopyIntoCache(download, sha, folder, newName);
+                step(WebVersionStep.UpdatingSettings, 0, 0);
 
                 // Settings first (the computers get the new file at their next run), then the previous file to OLD
                 String newParameter = target.IsMsix ? newName : NewFileParameter(target.File, newName);
@@ -383,7 +453,7 @@ namespace LiteDeploy
         }
 
         // HTTPS only, redirects included (each one followed by hand and refused unless https)
-        void DownloadHttps(String url, String path)
+        void DownloadHttps(String url, String path, CacheDownloadStep step)
         {
             ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
             Uri uri = new Uri(url);
@@ -411,9 +481,27 @@ namespace LiteDeploy
                         continue;
                     }
                     if (code != 200) throw new WebException("HTTP " + code + " " + response.StatusDescription);
+                    long length = response.ContentLength;   // -1: not given by the server
+                    step(WebVersionStep.Downloading, 0, length);
                     using (Stream s = response.GetResponseStream())
                     using (FileStream f = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-                        s.CopyTo(f);
+                    {
+                        byte[] buffer = new byte[81920];
+                        long received = 0;
+                        int read;
+                        DateTime nextReport = DateTime.UtcNow.AddMilliseconds(ReportIntervalMs);
+                        while ((read = s.Read(buffer, 0, buffer.Length)) > 0)
+                        {
+                            f.Write(buffer, 0, read);
+                            received += read;
+                            if (DateTime.UtcNow >= nextReport)
+                            {
+                                step(WebVersionStep.Downloading, received, length);
+                                nextReport = DateTime.UtcNow.AddMilliseconds(ReportIntervalMs);
+                            }
+                        }
+                        step(WebVersionStep.Downloading, received, length);
+                    }
                     log("  downloaded " + new FileInfo(path).Length + " bytes");
                     return;
                 }

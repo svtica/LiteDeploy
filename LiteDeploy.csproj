@@ -156,6 +156,7 @@
     <Compile Include="Classes\SharedFolders.cs" />
     <Compile Include="Classes\MsixManifest.cs" />
     <Compile Include="Classes\WebVersionChecker.cs" />
+    <Compile Include="Classes\WebVersionProgress.cs" />
     <Compile Include="Classes\WingetShowParser.cs" />
     <Compile Include="Classes\ModuleSettings.cs" />
     <Compile Include="Classes\UpdateModules.cs" />

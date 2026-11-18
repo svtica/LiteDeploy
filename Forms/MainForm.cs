@@ -570,7 +570,7 @@ namespace LiteDeploy
         void StartInternalScheduler()
         {
             schedulerTimer = new System.Windows.Forms.Timer { Interval = 60000 };
-            schedulerTimer.Tick += (s, e) => { RunDueSchedules(); RunDueWebCheck(); };
+            schedulerTimer.Tick += (s, e) => { RunDueSchedules(); ClearWebCheckStatus(); RunDueWebCheck(); };
             schedulerTimer.Start();
         }
 
@@ -584,14 +584,61 @@ namespace LiteDeploy
             if (!WebVersionChecker.IsDailyCheckDue(settings.WebCheckTime, last, DateTime.Now, startedAt)) return;
             if (!WebVersionChecker.TryBegin()) return;
             bool autoDownload = settings.WebAutoDownload;
+            ShowWebCheckStatus(Localization.F("MainForm.WebCheckStatus", "Daily web check: {0}", Localization.T("WebVersionsForm.Checking", "Checking...")));
+            webCheckWatch.Restart();
+            WebVersionOperation phase = WebVersionOperation.Check;
+            // Status line only (no dialog): the item and its step, elapsed time and time left of the current phase
+            IProgress<WebVersionProgress> progress = new Progress<WebVersionProgress>(p =>
+            {
+                if (IsDisposed || p.Step == WebVersionStep.Done) return;
+                if (p.Operation != phase) { phase = p.Operation; webCheckWatch.Restart(); }
+                ShowWebCheckStatus(Localization.F("MainForm.WebCheckStatus", "Daily web check: {0}", WebVersionProgressText.StatusText(p, webCheckWatch.Elapsed)));
+            });
             new Thread(() =>
             {
                 String summary;
-                try { summary = WebVersionChecker.RunScheduled(autoDownload); }
+                try { summary = WebVersionChecker.RunScheduled(autoDownload, progress); }
                 catch (Exception ex) { summary = ex.Message; WebVersionChecker.Log("Daily web check failed: " + ex.Message); }
                 finally { WebVersionChecker.End(); }
                 AppConsole.WriteLine(summary);
+                try
+                {
+                    if (!IsDisposed && IsHandleCreated)
+                        BeginInvoke(new MethodInvoker(() =>
+                        {
+                            if (IsDisposed) return;
+                            ShowWebCheckStatus(summary);
+                            webCheckStatusUntil = DateTime.Now.AddMinutes(10);
+                        }));
+                }
+                catch (InvalidOperationException) { }
             }) { IsBackground = true, Name = "Web versions daily check" }.Start();
+        }
+
+        // Status bar text of the daily web check (added to the status bar the first time); the summary
+        // stays 10 minutes after the end
+        ToolStripStatusLabel webCheckStatus;
+        readonly System.Diagnostics.Stopwatch webCheckWatch = new System.Diagnostics.Stopwatch();
+        DateTime? webCheckStatusUntil;
+
+        void ShowWebCheckStatus(String text)
+        {
+            if (webCheckStatus == null)
+            {
+                webCheckStatus = new ToolStripStatusLabel { Spring = true, TextAlign = ContentAlignment.MiddleRight };
+                statusStrip.Items.Add(webCheckStatus);
+            }
+            webCheckStatusUntil = null;
+            webCheckStatus.Text = text;
+            webCheckStatus.ToolTipText = text;
+        }
+
+        void ClearWebCheckStatus()
+        {
+            if (webCheckStatus == null || !webCheckStatusUntil.HasValue || DateTime.Now < webCheckStatusUntil.Value) return;
+            webCheckStatus.Text = "";
+            webCheckStatus.ToolTipText = "";
+            webCheckStatusUntil = null;
         }
 
         void RunDueSchedules()
