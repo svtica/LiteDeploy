@@ -186,7 +186,6 @@
   <translation key="MainForm.optionsToolStripMenuItem.Text">Débogage</translation>
   <translation key="MainForm.optionsToolStripMenuItem1.Text">Options</translation>
   <translation key="MainForm.pingAllCheckedToolStripMenuItem.Text">Ping des ordinateurs cochés</translation>
-  <translation key="MainForm.softwareUpdatesToolStripMenuItem.Text">Mises à jour logicielles...</translation>
   <translation key="MainForm.pingAllToolStripMenuItem.Text">Ping</translation>
   <translation key="MainForm.pingHost.Text">Ping</translation>
   <translation key="MainForm.priority.Items.0">Basse</translation>
@@ -616,8 +615,6 @@ Il n'est installé que là où la vérification indique toujours qu'il n'est pas
   <translation key="SoftwareUpdatesForm.StepInstalling">Installation...</translation>
   <translation key="SoftwareUpdatesForm.Installed">Installé {0}</translation>
   <!-- Software Updates: self-sufficient window -->
-  <translation key="MainForm.softwareUpdatesMenuButton.Text">Mises à jour logicielles</translation>
-  <translation key="MainForm.softwareUpdatesMenuButton.ToolTipText">Tous les ordinateurs d'Active Directory ; seulement les ordinateurs cochés s'il y en a</translation>
   <translation key="MainForm.softwareUpdatesComputersMenuItem.Text">Mises à jour logicielles...</translation>
   <translation key="SoftwareUpdatesForm.checkButton.ToolTipText">Vérifier les versions installées et disponibles sur les ordinateurs cochés, ou sur tous les ordinateurs affichés si aucun n'est coché (F5)</translation>
   <translation key="SoftwareUpdatesForm.selectOutdatedButton.ToolTipText">Cocher exactement les lignes affichées qui ont une mise à jour disponible</translation>
@@ -719,7 +716,6 @@ Dernière session (AD) : {2}</translation>
   <translation key="WebVersionsForm.Busy">Une vérification Web ou un téléchargement est déjà en cours.</translation>
   <translation key="WebVersionsForm.Checking">Vérification...</translation>
   <translation key="WebVersionsForm.Checked">Vérification... {0} vérifié(s)</translation>
-  <translation key="WebVersionsForm.NoInstances">Aucune instance de CachedInstaller ou de MsixProvision n'a encore de paramètres (Liste des paquets &gt; Paramètres...).</translation>
   <translation key="WebVersionsForm.NothingToDownload">Rien à télécharger : choisissez une ligne dont l'état est « Plus récente sur le Web » et qui a une URL de source (vérifiez de nouveau au besoin).</translation>
   <translation key="WebVersionsForm.ConfirmDownload">Télécharger {0} nouvelle(s) version(s) dans le cache : {1} ?
 
@@ -736,7 +732,6 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="WebVersions.NotInWinget">{0} n'est pas dans la source winget.</translation>
   <translation key="WebVersions.CannotCompare">Versions impossibles à comparer : {0} / {1}</translation>
   <translation key="WebVersions.NoInstaller">Aucun programme d'installation {0} x64 dans le manifeste winget : téléchargez-le chez l'éditeur.</translation>
-  <translation key="WebVersions.NoCache">Aucun cache partagé des installeurs : définissez-en un dans Application &gt; Options &gt; Mises à jour logicielles.</translation>
   <translation key="WebVersions.InvalidFile">Paramètre File invalide : {0}</translation>
   <translation key="WebVersions.FileMissing">Fichier introuvable dans le cache : {0}</translation>
   <translation key="WebVersions.InvalidFolder">Paramètre Folder invalide : {0}</translation>
@@ -758,4 +753,36 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="CacheDownloader.MsixSigner">Le paquet n'est pas signé de façon valide par l'éditeur (Publisher) de son manifeste ({0}) : refusé.</translation>
   <translation key="CacheDownloader.NotHttps">Téléchargement refusé : ce n'est pas une adresse HTTPS ({0}).</translation>
   <translation key="CacheDownloader.TooManyRedirects">Trop de redirections.</translation>
+  <!-- Computer list: same filters as Software Updates; shared folders; Web versions empty states -->
+  <translation key="ComputerListForm.main.Text">Nom</translation>
+  <translation key="ComputerListForm.candOsColumn.Text">Système d'exploitation</translation>
+  <translation key="ComputerListForm.candLastLogonColumn.Text">Dernière connexion</translation>
+  <translation key="ComputerListForm.columnHeader1.Text">Nom</translation>
+  <translation key="ComputerListForm.selOsColumn.Text">Système d'exploitation</translation>
+  <translation key="ComputerListForm.selLastLogonColumn.Text">Dernière connexion</translation>
+  <translation key="ComputerListForm.includeServersCheck.Text">Inclure les serveurs</translation>
+  <translation key="ComputerListForm.NotInAdTip">{0} : absent d'Active Directory (système d'exploitation inconnu)</translation>
+  <translation key="ComputerListForm.ManualDisabled">Le compte d'ordinateur {0} est désactivé dans Active Directory.</translation>
+  <translation key="ComputerListForm.ManualServer">{0} est un serveur ({1}). Cochez Inclure les serveurs pour l'ajouter.</translation>
+  <translation key="ComputerListForm.ManualHidden.Title">Ordinateur non ajouté</translation>
+  <translation key="ComputerListForm.Dropped">{0} ordinateur(s) non utilisé(s) (serveurs alors que Inclure les serveurs est décoché, ou comptes désactivés) : {1}</translation>
+  <translation key="ComputerListForm.Dropped.Title">Utiliser la liste</translation>
+  <translation key="ComputerListForm.ResultCount">{0} ({1} masqué(s) : serveurs ou comptes désactivés)</translation>
+  <translation key="FolderCheck.NotFound">introuvable, ou le serveur ou le partage est injoignable depuis cet ordinateur</translation>
+  <translation key="FolderCheck.NotReadable">trouvé, mais votre compte ne peut pas le lire (autorisations)</translation>
+  <translation key="FolderCheck.Invalid">chemin de dossier invalide</translation>
+  <translation key="FolderCheck.TimedOut">aucune réponse en quelques secondes (serveur injoignable ou lent)</translation>
+  <translation key="OptionsForm.cacheButton.Text">Choisir</translation>
+  <translation key="OptionsForm.BrowseShare">Choisissez le dossier partagé (les partages sont sous Réseau), ou tapez son chemin dans la case.</translation>
+  <translation key="OptionsForm.FolderProblem">{0} : {1}</translation>
+  <translation key="OptionsForm.FoldersUnreachable">Ces dossiers ne sont pas utilisables depuis cet ordinateur avec votre compte :&#10;&#10;{0}&#10;&#10;Vérifiez le chemin et les autorisations du partage. Enregistrer quand même ?</translation>
+  <translation key="WebVersions.NoCache">Aucun cache partagé des installeurs n'est défini pour votre compte Windows sur cet ordinateur : définissez-le dans Application &gt; Options &gt; Mises à jour logicielles.</translation>
+  <translation key="WebVersions.SetWingetId">Définissez le paramètre WingetId de cette instance (Liste des paquets &gt; Paramètres...) pour la comparer avec winget.</translation>
+  <translation key="WebVersionsForm.NotChecked">Non vérifié</translation>
+  <translation key="WebVersionsForm.OpenOptions">Ouvrir les options...</translation>
+  <translation key="WebVersionsForm.Import">Importer du catalogue...</translation>
+  <translation key="WebVersionsForm.NoticeNoCache">Aucun cache partagé des installeurs n'est défini pour votre compte Windows sur cet ordinateur (les réglages sont propres à chaque utilisateur) : définissez-le dans les options.</translation>
+  <translation key="WebVersionsForm.NoticeNoInstances">Aucune instance de CachedInstaller ou de MsixProvision n'a de paramètres pour votre compte Windows sur cet ordinateur : importez le catalogue de l'équipe.</translation>
+  <translation key="WebVersionsForm.NoInstances">Rien à vérifier : aucune instance de CachedInstaller ou de MsixProvision n'a de paramètres pour votre compte Windows sur cet ordinateur. Utilisez Importer du catalogue... (ou Liste des paquets &gt; Paramètres...).</translation>
+  <translation key="WebVersionsForm.PackageListNotSaved">Les paramètres ont été importés, mais la liste des paquets n'a pas pu être mise à jour : {0}&#10;Ajoutez les lignes avec Liste des paquets &gt; Importer du catalogue...</translation>
 </translations>

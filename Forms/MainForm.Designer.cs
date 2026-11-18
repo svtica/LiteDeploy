@@ -76,8 +76,6 @@ namespace LiteDeploy
             this.toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
             this.pingAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pingAllCheckedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.softwareUpdatesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.softwareUpdatesMenuButton = new System.Windows.Forms.ToolStripMenuItem();
             this.softwareUpdatesComputersMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.webVersionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -452,7 +450,6 @@ namespace LiteDeploy
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
             this.computersToolStripMenuItem,
-            this.softwareUpdatesMenuButton,
             this.toolsToolStripMenuItem,
             this.processingToolStripMenuItem,
             this.optionsToolStripMenuItem,
@@ -516,18 +513,10 @@ namespace LiteDeploy
             // softwareUpdatesComputersMenuItem
             //
             this.softwareUpdatesComputersMenuItem.Name = "softwareUpdatesComputersMenuItem";
-            this.softwareUpdatesComputersMenuItem.Size = new System.Drawing.Size(190, 22);
+            this.softwareUpdatesComputersMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.M)));
+            this.softwareUpdatesComputersMenuItem.Size = new System.Drawing.Size(220, 22);
             this.softwareUpdatesComputersMenuItem.Text = "Software Updates...";
             this.softwareUpdatesComputersMenuItem.Click += new System.EventHandler(this.softwareUpdatesToolStripMenuItem_Click);
-            //
-            // softwareUpdatesMenuButton
-            //
-            this.softwareUpdatesMenuButton.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.softwareUpdatesMenuButton.Name = "softwareUpdatesMenuButton";
-            this.softwareUpdatesMenuButton.Size = new System.Drawing.Size(115, 20);
-            this.softwareUpdatesMenuButton.Text = "Software Updates";
-            this.softwareUpdatesMenuButton.ToolTipText = "Every computer of Active Directory; only the checked computers when some are checked";
-            this.softwareUpdatesMenuButton.Click += new System.EventHandler(this.softwareUpdatesToolStripMenuItem_Click);
             // 
             // pingAllToolStripMenuItem
             // 
@@ -543,13 +532,6 @@ namespace LiteDeploy
             this.pingAllCheckedToolStripMenuItem.Text = "Ping Checked";
             this.pingAllCheckedToolStripMenuItem.Click += new System.EventHandler(this.pingAllCheckedToolStripMenuItem_Click);
             // 
-            // softwareUpdatesToolStripMenuItem
-            // 
-            this.softwareUpdatesToolStripMenuItem.Name = "softwareUpdatesToolStripMenuItem";
-            this.softwareUpdatesToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
-            this.softwareUpdatesToolStripMenuItem.Text = "Software Updates...";
-            this.softwareUpdatesToolStripMenuItem.Click += new System.EventHandler(this.softwareUpdatesToolStripMenuItem_Click);
-            // 
             // webVersionsToolStripMenuItem
             // 
             this.webVersionsToolStripMenuItem.Name = "webVersionsToolStripMenuItem";
@@ -560,7 +542,6 @@ namespace LiteDeploy
             // toolsToolStripMenuItem
             // 
             this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.softwareUpdatesToolStripMenuItem,
             this.webVersionsToolStripMenuItem,
             this.schedulesToolStripMenuItem,
             this.credentialsToolStripMenuItem,
@@ -1051,8 +1032,6 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem pingAllToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem pingAllCheckedToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem softwareUpdatesToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem softwareUpdatesMenuButton;
         private System.Windows.Forms.ToolStripMenuItem softwareUpdatesComputersMenuItem;
         private System.Windows.Forms.ToolStripMenuItem webVersionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;

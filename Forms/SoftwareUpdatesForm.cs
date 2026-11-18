@@ -129,6 +129,7 @@ namespace LiteDeploy
             updatesList.ItemChecked += updatesList_ItemChecked;
             searchTimer.Tick += (s, e) => { searchTimer.Stop(); RefreshList(); };
             ActiveDirectoryCache.InventoryChanged += ActiveDirectoryCache_InventoryChanged;
+            UserSettings.Saved += UserSettings_Saved;
             Load += (s, e) => RestoreSplitter();
 
             loading = false;
@@ -724,9 +725,21 @@ namespace LiteDeploy
 
         void includeServersCheck_CheckedChanged(object sender, EventArgs e)
         {
-            if (loading) return;
-            SaveSettings();   // the setting is shared (the worker side reads it too)
+            if (loading || syncingSettings) return;
+            SaveSettings();   // the setting is shared (the worker side and the computer list read it too)
             RefreshList();
+        }
+
+        bool syncingSettings;
+
+        // Include servers changed elsewhere (computer list, options): same filter here
+        void UserSettings_Saved(object sender, EventArgs e)
+        {
+            if (IsDisposed || includeServersCheck.Checked == UserSettings.Current.IncludeServers) return;
+            syncingSettings = true;
+            try { includeServersCheck.Checked = UserSettings.Current.IncludeServers; }
+            finally { syncingSettings = false; }
+            if (!loading) RefreshList();
         }
 
         void selectionFilterButton_Click(object sender, EventArgs e)
@@ -1252,6 +1265,7 @@ namespace LiteDeploy
         void SoftwareUpdatesForm_FormClosed(object sender, FormClosedEventArgs e)
         {
             ActiveDirectoryCache.InventoryChanged -= ActiveDirectoryCache_InventoryChanged;
+            UserSettings.Saved -= UserSettings_Saved;
             searchTimer.Dispose();
         }
 

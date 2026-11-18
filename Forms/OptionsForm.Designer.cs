@@ -42,6 +42,7 @@ namespace LiteDeploy
             this.themeCombo = new System.Windows.Forms.ComboBox();
             this.cacheLabel = new System.Windows.Forms.Label();
             this.cacheBox = new System.Windows.Forms.TextBox();
+            this.cacheButton = new System.Windows.Forms.Button();
             this.sharedModulesLabel = new System.Windows.Forms.Label();
             this.sharedModulesBox = new System.Windows.Forms.TextBox();
             this.sharedModulesButton = new System.Windows.Forms.Button();
@@ -206,6 +207,7 @@ namespace LiteDeploy
             // 
             this.updatesGroup.Controls.Add(this.cacheLabel);
             this.updatesGroup.Controls.Add(this.cacheBox);
+            this.updatesGroup.Controls.Add(this.cacheButton);
             this.updatesGroup.Controls.Add(this.sharedModulesLabel);
             this.updatesGroup.Controls.Add(this.sharedModulesBox);
             this.updatesGroup.Controls.Add(this.sharedModulesButton);
@@ -230,8 +232,15 @@ namespace LiteDeploy
             this.cacheLabel.Text = "Shared installer cache (\\\\server\\share, optional):";
             this.cacheBox.Location = new System.Drawing.Point(20, 40);
             this.cacheBox.Name = "cacheBox";
-            this.cacheBox.Size = new System.Drawing.Size(379, 20);
+            this.cacheBox.Size = new System.Drawing.Size(298, 20);
             this.cacheBox.TabIndex = 11;
+            this.cacheButton.Location = new System.Drawing.Point(324, 38);
+            this.cacheButton.Name = "cacheButton";
+            this.cacheButton.Size = new System.Drawing.Size(75, 23);
+            this.cacheButton.TabIndex = 11;
+            this.cacheButton.Text = "Select";
+            this.cacheButton.UseVisualStyleBackColor = true;
+            this.cacheButton.Click += new System.EventHandler(this.cacheButton_Click);
             this.sharedModulesLabel.AutoSize = true;
             this.sharedModulesLabel.Location = new System.Drawing.Point(17, 70);
             this.sharedModulesLabel.Name = "sharedModulesLabel";
@@ -334,6 +343,7 @@ namespace LiteDeploy
         private System.Windows.Forms.GroupBox updatesGroup;
         private System.Windows.Forms.Label cacheLabel;
         private System.Windows.Forms.TextBox cacheBox;
+        private System.Windows.Forms.Button cacheButton;
         private System.Windows.Forms.Label sharedModulesLabel;
         private System.Windows.Forms.TextBox sharedModulesBox;
         private System.Windows.Forms.Button sharedModulesButton;

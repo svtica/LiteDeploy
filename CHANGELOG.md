@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- *Software Updates* has a single entry: *Computers > Software Updates...* (Ctrl+M). The bold
+  top-level item of the menu bar and the *Tools > Software Updates...* duplicate are removed; no
+  menu item is bold any more.
+- The computer list (*Computers > Edit List*) shows the operating system and the last logon of
+  the Active Directory inventory in both lists, with clickable, sortable column headers (name,
+  operating system, last logon); the tooltip adds the version and the OU.
+- *App > Options > Software updates*: the shared installer cache and the shared modules folder are
+  typed or pasted (the empty boxes show the expected form of a network path); the cache has a
+  *Select* button too, and the folder dialog starts at the typed path. *Save* checks that each
+  folder exists and can be read from this computer with the current account (a few seconds at
+  most per folder) and warns, with *Save anyway*, instead of failing later.
+- *Import from catalog...* opens the team's `catalogs` folder when one exists next to the shared
+  modules folder (in its parent), else `%LOCALAPPDATA%\LiteDeploy` as before.
+- The README and `docs/modules.md` describe what each administrator computer needs: the settings
+  are per Windows user profile (cache, shared modules folder, credential, package list, module
+  parameters), the catalogs are imported from the shared `catalogs` folder.
+
+### Fixed
+
+- The computer list and the main window's list showed servers and disabled computer accounts
+  that *Software Updates* hides. They now use the same Active Directory inventory and the same
+  rules: disabled accounts are never listed, servers only with **Include servers** (a check box
+  in the computer list, the same setting as in *Software Updates* and *App > Options*, kept in
+  sync between the windows). *Add all reachable* and *All >>* add only the computers shown; *Use
+  List* applies the same filter to the main window's list and names the computers left out.
+  Computers that are not in Active Directory (typed by hand, read from a text file, found by a DNS
+  scan) have no known operating system and are kept.
+- *Tools > Web versions...* looked empty on a computer where the current user had no cache set or
+  no instance with parameters yet. Every instance with parameters is now listed, even before the
+  first check (*Not checked*) or without a `WingetId` (*No WingetId*, with how to set it), and the
+  window says what is missing with a button that fixes it: *Open Options...* (no cache) or *Import
+  from catalog...* (no instance; the rows of the imported instances are added to the package
+  list). The messages about a missing cache or missing instances say that these settings belong
+  to the Windows user of this computer.
+
 ## [1.0.16] - 2026-11-18
 
 ### Added

@@ -162,70 +162,29 @@ namespace LiteDeploy
 
         // ---- Catalog of instances ----------------------------------------------------
 
+        // The shared "catalogs" folder next to the shared modules folder when it exists (CatalogImport)
         void importCatalogButton_Click(object sender, EventArgs e)
         {
-            String path;
-            using (OpenFileDialog dialog = new OpenFileDialog())
-            {
-                dialog.Title = Localization.T("PackageListForm.CatalogTitle", "Catalog of products");
-                dialog.Filter = Localization.T("PackageListForm.CatalogFilter", "Catalog (*.json)|*.json|All files (*.*)|*.*");
-                dialog.InitialDirectory = System.IO.Path.GetDirectoryName(ModuleCatalog.LocalPath);
-                dialog.FileName = System.IO.Path.GetFileName(ModuleCatalog.LocalPath);
-                dialog.CheckFileExists = true;
-                if (dialog.ShowDialog(this) != DialogResult.OK) return;
-                path = dialog.FileName;
-            }
+            AddRows(CatalogImport.Run(this, Text));
+        }
 
-            ModuleCatalog catalog;
-            try { catalog = ModuleCatalog.Load(path); }
-            catch (Exception ex)
+        // Rows of imported instances that are not listed yet
+        void AddRows(IEnumerable<UpdatePackage> imported)
+        {
+            foreach (UpdatePackage p in imported ?? Enumerable.Empty<UpdatePackage>())
             {
-                MessageBox.Show(this, ex.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                if (!IsListed(p.Id)) packagesGrid.Rows.Add(p.Id, String.Join(", ", p.Processes), p.Label ?? "");
             }
-            UpdateModule module = UpdateModules.Find(catalog.Module);
-            String problem = module == null
-                ? Localization.F("UpdateModules.Missing", "Module {0} not found in {1}.", catalog.Module, String.Join(", ", UpdateModules.Dirs))
-                : !module.Instances ? Localization.F("UpdateModules.NoInstances", "The module {0} does not support instances ({1}).", module.Name, path)
-                : catalog.Entries.Count == 0 ? Localization.T("PackageListForm.CatalogEmpty", "The catalog has no valid product.")
-                : null;
-            if (problem != null)
-            {
-                MessageBox.Show(this, String.Join(Environment.NewLine, new[] { problem }.Concat(catalog.Errors)), Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            String question = Localization.F("PackageListForm.CatalogConfirm",
-                "Import {0} products of the module {1}: {2}?\nThe parameter values of these instances are replaced by the ones of the catalog (secret parameters are not changed).",
-                catalog.Entries.Count, module.Name, String.Join(", ", catalog.Entries.Select(x => x.Instance)));
-            if (catalog.Errors.Count > 0) question += "\n\n" + String.Join("\n", catalog.Errors);
-            if (MessageBox.Show(this, question, Text, MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return;
-
-            ModuleSettings settings = ModuleSettings.Load();
-            List<String> warnings = new List<String>();
-            foreach (ModuleCatalogEntry entry in catalog.Entries)
-            {
-                ModuleCatalog.Apply(entry, module, settings, warnings);
-                UpdatePackage p = module.ToPackage(entry.Instance, entry.Label);
-                if (p != null && !IsListed(p.Id)) packagesGrid.Rows.Add(p.Id, String.Join(", ", p.Processes), p.Label ?? "");
-            }
-            try { settings.Save(); }
-            catch (Exception ex)
-            {
-                MessageBox.Show(this, ex.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-            if (warnings.Count > 0)
-                MessageBox.Show(this, String.Join(Environment.NewLine, warnings), Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         // ---- Web versions -----------------------------------------------------------
 
         // Versions of the products of the cache on the web (instances with a WingetId); a download
-        // changes the File parameter of an instance in module-settings.xml, not the rows of this list
+        // changes the File parameter of an instance in module-settings.xml, not the rows of this list.
+        // An import from that window adds its rows here (this list is saved with OK).
         void webVersionsButton_Click(object sender, EventArgs e)
         {
-            using (WebVersionsForm form = new WebVersionsForm())
+            using (WebVersionsForm form = new WebVersionsForm(AddRows))
                 form.ShowDialog(this);
         }
 

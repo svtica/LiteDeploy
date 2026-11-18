@@ -15,6 +15,13 @@ choose what to run and how, start the deployment, and follow each computer in th
 - Add computers by name or IP address, or from an **Active Directory** search (cached locally,
   refreshed on demand or at start-up; the domain computers are listed when the window opens and
   filtered as you type), or a **DNS scan** of a /24 subnet.
+- Same computers as *Software Updates*: the search uses the same Active Directory inventory,
+  disabled computer accounts are never listed and servers only when **Include servers** is checked
+  (the same setting as in *Software Updates* and *App > Options*; changing it in one window changes
+  it everywhere). Both lists show the operating system and the last logon (columns sort on click;
+  the tooltip adds the version and the OU). Computers that are not in Active Directory (typed by
+  hand, read from a text file, found by a DNS scan) have no known operating system and are kept.
+  *Use List* applies the same filter to the main window's list.
 - *Subnets* menu: the subnets of this computer and saved subnets with a name. *Edit subnets...*
   takes one subnet per line (`10.1.2.0/24 Garage`, /20 to /22 split into /24, `#` for comments)
   and imports a text or CSV file. A `subnets.txt` next to `LiteDeploy.exe` gives the team's
@@ -35,8 +42,8 @@ them (and for the PsExec method of the software updates); it is asked for when t
 - Stop the current PsExec or all processing.
 
 ### Software updates
-- **Software Updates** (menu bar, *Computers > Software Updates...* or *Tools > Software
-  Updates...*) opens a window of its own, non-modal, that needs no prior selection: every enabled
+- **Software Updates** (*Computers > Software Updates...*, Ctrl+M) opens a window of its own,
+  non-modal, that needs no prior selection: every enabled
   computer of **Active Directory** (from the local cache, refreshed in the background), the
   computers of the main window's list, and computers added by name (*Add...*, for computers that
   are not in Active Directory; kept in `updates.xml`). When computers are checked in the main
@@ -105,8 +112,10 @@ them (and for the PsExec method of the software updates); it is asked for when t
 - **Import from a catalog**: `CachedInstaller` and `MsixProvision` take one row per product
   (`module:<Name>/<Instance>`). Instead of adding each row by hand, describe the products in a
   JSON file and use *Package list... > Import from catalog...*: it adds the missing rows and sets
-  their parameters (the default file is `%LOCALAPPDATA%\LiteDeploy\catalog.local.json`; any other
-  file can be chosen, one module per file). Secret parameters are never read from a catalog.
+  their parameters. The dialog opens the team's `catalogs` folder when there is one next to the
+  shared modules folder (modules in `...\LiteDeploy\modules`: catalogs in
+  `...\LiteDeploy\catalogs`), else `%LOCALAPPDATA%\LiteDeploy` (`catalog.local.json`); any other
+  file can be chosen, one module per file. Secret parameters are never read from a catalog.
   Example (fictitious values; full format in [docs/modules.md](docs/modules.md)):
 
   ```json
@@ -128,6 +137,14 @@ them (and for the PsExec method of the software updates); it is asked for when t
 
   Then *Check*: each product has its own state. *Install* (right-click) installs it where it is
   missing. Keep the catalog out of any repository if it names your own products or paths.
+- **Each administrator computer** needs its own setup: the settings are kept per Windows user
+  profile (`%LOCALAPPDATA%\LiteDeploy`), not shared. On every computer and for every
+  administrator account that runs LiteDeploy, set once in *App > Options > Software updates* the
+  shared installer cache and the shared modules folder (type or paste the network path; *Save*
+  warns when this computer cannot read it), choose the credential (*Tools > Credentials*), then
+  open *Package list...* and *Import from catalog...* the team's catalogs (from the shared
+  `catalogs` folder): this writes the package list and the module parameters of that user. See
+  [docs/modules.md](docs/modules.md#setting-up-another-administrator-computer).
 
 ### Process reports
 - One line per computer and event: started, unreachable, authentication failure, exit code.
@@ -143,7 +160,10 @@ them (and for the PsExec method of the software updates); it is asked for when t
   the current file once its SHA256 and its publisher signature are checked, updates the instance
   and moves the previous file to `OLD`. Optional daily check, report only unless the automatic
   download is on. Runs on the administrator's computer only; see
-  [docs/modules.md](docs/modules.md#web-versions).
+  [docs/modules.md](docs/modules.md#web-versions). Every instance with parameters is listed, even
+  before the first check or without a `WingetId` (status *No WingetId*). On a computer where the
+  cache or the instances are not set up yet for the current user, the window says so and offers
+  *Open Options...* or *Import from catalog...*.
 - Right-click a computer in Software Updates: processes and handles, get the logs.
   *Get the logs* copies the newest `*.log` files of the update modules (`%windir%\LiteDeploy\work`)
   and of winget (SYSTEM) to `%LOCALAPPDATA%\LiteDeploy\logs\<computer>\<date>`. Other folders

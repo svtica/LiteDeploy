@@ -6,7 +6,7 @@ on the computers through `LiteDeploy.Worker.exe`, as SYSTEM, like the winget pac
 
 ## How it runs
 
-1. In *Tools > Software Updates > Package list...*, *Add module* puts `module:<Name>` in the
+1. In *Computers > Software Updates > Package list...*, *Add module* puts `module:<Name>` in the
    package list (processes and label come from the module header); *Parameters...* sets the
    values of its parameters, if it has any (see *Module parameters*). A module that declares
    `# Instances: yes` is added once per product, as `module:<Name>/<Instance>` (see *Module
@@ -267,14 +267,21 @@ values; it has its own row (label), its own state in the summary and its own las
 ### Catalog
 
 Typing the same fields for every product is error-prone: *Package list > Import from catalog...*
-reads a JSON catalog and creates one instance per product with its parameter values. The dialog
-opens `%LOCALAPPDATA%\LiteDeploy\catalog.local.json` by default (another file can be chosen, for
-example a copy the team keeps next to the installers).
+reads a JSON catalog and creates one instance per product with its parameter values. Where the
+dialog opens:
 
-The local file is the default because the catalog only serves the administrator's LiteDeploy:
-the computers never read it (the values travel in the parameter files, like any parameter), the
-administrator edits it like the rest of `%LOCALAPPDATA%\LiteDeploy`, and it gives no one who can
-write to the cache a way to change the rows or arguments of the administrators.
+1. the team's **`catalogs` folder**, when a shared modules folder is set and a folder named
+   `catalogs` exists next to it (in its parent): modules in `...\LiteDeploy\modules`, catalogs in
+   `...\LiteDeploy\catalogs`. Every administrator then imports the same catalogs;
+2. else `%LOCALAPPDATA%\LiteDeploy`, with `catalog.local.json` proposed.
+
+Any other file can be chosen.
+
+The catalog only serves the administrators' LiteDeploy: the computers never read it (the values
+travel in the parameter files, like any parameter). Keep the shared `catalogs` folder out of the
+installer cache and give it the permissions of the shared modules folder (write access for the
+administrators who publish, read access for the others): whoever can write a catalog chooses the
+files and arguments that the administrators import.
 
 ```json
 {
@@ -330,7 +337,7 @@ One row per instance of `CachedInstaller` and `MsixProvision` that has parameter
 | Module | `CachedInstaller` or `MsixProvision` |
 | Cache version | Version of the file the instance uses in the cache: the `Version` parameter when set (`CachedInstaller`), else the MSI `ProductVersion`, the product (else file) version of the EXE, or the version of the MSIX manifest (bundle: newest application package). `MsixProvision` with `File` empty: the newest package of `PackageName` in the folder, as the module picks it |
 | Web version | `Version` of `winget show --id <WingetId> -e --source winget --architecture x64 --installer-type <type>`; the type follows the instance: `msi` then `wix` for an MSI, `exe`, `inno`, `nullsoft` then `burn` for an EXE, `msix` for an MSIX |
-| Status | *Up to date*, *Newer on the web*, *Not found* (not in the winget source), *No WingetId*, *Error* (cache file missing, versions that cannot be compared, winget unavailable...; the reason is in the tooltip) |
+| Status | *Up to date*, *Newer on the web*, *Not found* (not in the winget source), *No WingetId* (listed anyway; set the parameter to compare it), *Not checked* (no result yet: *Check now*), *Error* (cache file missing, versions that cannot be compared, winget unavailable...; the reason is in the tooltip) |
 | Source URL | Installer URL of the winget manifest (its SHA256 is kept with it) |
 
 - Versions are compared by their numbers: missing parts count as zero (`26.06` = `26.6.0.0`), a
@@ -340,6 +347,10 @@ One row per instance of `CachedInstaller` and `MsixProvision` that has parameter
   publisher page). The last results are kept in `%LOCALAPPDATA%\LiteDeploy\web-versions.xml`;
   every check and download is logged in `%LOCALAPPDATA%\LiteDeploy\logs\web-versions-<date>.log`.
 - Sortable columns; the size of the window is remembered.
+- The cache and the instances are settings of the Windows user (see *Setting up another
+  administrator computer*). When the current user has no cache set, the window says so with
+  *Open Options...*; when no instance has parameters yet, with *Import from catalog...* (the import
+  of the package list editor; the rows of the new instances are added to the package list).
 - The winget packages of `packages.txt` need none of this: the worker compares them with winget
   on each computer. `AdobeReader` and `OnePassword` fetch their installer from the vendor
   themselves.
@@ -387,6 +398,34 @@ missed while LiteDeploy was closed is not run later). It only reports (console o
 results file and log), unless *Download new versions automatically* is also checked (off by
 default). Saved in `%LOCALAPPDATA%\LiteDeploy\settings.xml` (`WebCheckTime`, `WebAutoDownload`).
 
+## Setting up another administrator computer
+
+Nothing of the software updates is shared between administrators by LiteDeploy itself: every
+setting lives in the **Windows user profile** that runs it (`%LOCALAPPDATA%\LiteDeploy`). On each
+computer, for each administrator account, once:
+
+| What | Where | File |
+|---|---|---|
+| Shared installer cache (network path) | *App > Options > Software updates* | `settings.xml` (`UpdateCacheShare`) |
+| Shared modules folder (network path) | *App > Options > Software updates* | `settings.xml` (`SharedModulesFolder`) |
+| Credential of the software updates | *Tools > Credentials*, then *App > Options* | Windows Credential Manager, `settings.xml` (`UpdateCredential`) |
+| Include servers, remote method, business hours | *App > Options > Software updates* | `settings.xml` |
+| Package list | *Computers > Software Updates > Package list...* | `packages.txt` |
+| Module parameters (instances) | *Package list... > Import from catalog...* (or *Parameters...*) | `module-settings.xml` |
+
+1. Type or paste the network paths of the cache and of the shared modules folder (the boxes show
+   the expected form; *Select* starts at the typed path, shares are under *Network*). *Save*
+   checks that this computer can read them with this account and warns otherwise (*Save anyway*
+   keeps them, for a share that is down for a moment).
+2. Add the credential and choose it.
+3. Open *Package list...*, *Import from catalog...*: the dialog opens the shared `catalogs` folder
+   next to the shared modules folder (see *Catalog*). Import each catalog of the team; secret
+   parameters are then set in *Parameters...*.
+4. *Tools > Web versions...* lists the instances; *Check now*.
+
+Keep the catalogs in the shared `catalogs` folder rather than in each profile: an update of a
+product (new file, new version) is then imported again by every administrator from the same file.
+
 ## Writing a module
 
 Start from [modules/Template-Module.ps1](modules/Template-Module.ps1) (it declares
@@ -419,7 +458,7 @@ a module without `# Install: yes` line never receives `-Action Install`):
 By default LiteDeploy only updates: a computer where a package is `notinstalled` is never touched.
 The *Install* action is explicit and opt-in:
 
-- In *Tools > Software Updates*, select computers, right-click, *Install* and pick **one**
+- In *Computers > Software Updates*, select computers, right-click, *Install* and pick **one**
   package. The menu lists only the packages whose last check says `notinstalled` on at least one
   selected computer (paused computers excluded), and for a module only when its header has the
   line `# Install: yes` (key and value case-insensitive; any other value means no). A dialog
@@ -473,7 +512,7 @@ first 20 lines of the script:
 | `default=<value>` | Optional, right after the name: value used when none is set (`default="a b"` for spaces, `default=` for an empty value). Without default, the parameter is **required** |
 | Description | The rest of the line, shown in LiteDeploy |
 
-The administrator sets the values in *Tools > Software Updates > Package list...*: select a
+The administrator sets the values in *Computers > Software Updates > Package list...*: select a
 `module:` row, then *Parameters...*. They are saved on the administrator's computer in
 `%LOCALAPPDATA%\LiteDeploy\module-settings.xml` (not in `packages.txt`, whose format does not
 change). A secret parameter holds the **name** of a credential of *Tools > Credentials*, never

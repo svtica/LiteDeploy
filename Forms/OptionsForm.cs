@@ -5,8 +5,12 @@
 // Date:    2025-05-30
 // Purpose: Options window: language, MSI logging folder, Active Directory
 //          refresh and update check at start-up (saved per user by UserSettings).
+//          The shared folders of the software updates are typed (a hint shows
+//          the expected form), the folder dialog starts at the typed value, and
+//          Save warns (Save anyway) when one cannot be read from this computer.
 // -----------------------------------------------------------------------------
 using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace LiteDeploy
@@ -38,6 +42,8 @@ namespace LiteDeploy
             hoursEndBox.Text = current.BusinessHoursEnd;
             unsignedModulesCheckBox.Checked = current.AllowUnsignedModules;
             includeServersCheckBox.Checked = current.IncludeServers;
+            SetCue(cacheBox, FolderCheck.ShareHint);
+            SetCue(sharedModulesBox, FolderCheck.ShareHint);
 
             // Account of the software updates: the current user or a stored credential
             accountCombo.Items.Add(Localization.T("OptionsForm.CurrentUser", "Current user"));
@@ -69,10 +75,69 @@ namespace LiteDeploy
 
         private void sharedModulesButton_Click(object sender, EventArgs e)
         {
-            if (DirectoryBrowser.ShowDialog(this) == DialogResult.OK)
+            BrowseShared(sharedModulesBox);
+        }
+
+        private void cacheButton_Click(object sender, EventArgs e)
+        {
+            BrowseShared(cacheBox);
+        }
+
+        // The box is the main input (a network share is usually typed or pasted); the dialog starts at its
+        // value when one is typed, and the shares are under Network
+        private void BrowseShared(TextBox box)
+        {
+            String description = DirectoryBrowser.Description;
+            String selected = DirectoryBrowser.SelectedPath;
+            try
             {
-                sharedModulesBox.Text = DirectoryBrowser.SelectedPath;
+                DirectoryBrowser.Description = Localization.T("OptionsForm.BrowseShare", "Choose the shared folder (shares are under Network), or type its path in the box.");
+                DirectoryBrowser.SelectedPath = FolderCheck.StartFolder(box.Text) ?? "";
+                if (DirectoryBrowser.ShowDialog(this) == DialogResult.OK)
+                    box.Text = DirectoryBrowser.SelectedPath;
             }
+            finally
+            {
+                DirectoryBrowser.Description = description;
+                DirectoryBrowser.SelectedPath = selected;
+            }
+        }
+
+        /// <summary>Opens on the software updates settings (cache box focused).</summary>
+        public void FocusSoftwareUpdates()
+        {
+            Shown += (s, e) => { cacheBox.Focus(); cacheBox.SelectAll(); };
+        }
+
+        // EM_SETCUEBANNER: grey hint shown while a box is empty (wParam 1: also while it has the focus)
+        [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+        static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, String lParam);
+        const int EM_SETCUEBANNER = 0x1501;
+
+        static void SetCue(TextBox box, String cue)
+        {
+            try { SendMessage(box.Handle, EM_SETCUEBANNER, (IntPtr)1, cue); }
+            catch (Exception) { }   // no hint
+        }
+
+        /// <summary>
+        /// The shared folders that cannot be used from this computer (not found, not readable, no answer), one
+        /// line each; empty when they are fine or not set. Each check waits a few seconds at most.
+        /// </summary>
+        private List<String> FolderProblems(params String[] folders)
+        {
+            List<String> problems = new List<String>();
+            Cursor = Cursors.WaitCursor;
+            try
+            {
+                foreach (String folder in folders)
+                {
+                    String why = FolderCheck.Describe(FolderCheck.Probe(folder, TimeSpan.FromSeconds(8)));
+                    if (why != null) problems.Add(Localization.F("OptionsForm.FolderProblem", "{0}: {1}", folder, why));
+                }
+            }
+            finally { Cursor = Cursors.Default; }
+            return problems;
         }
 
         private void ApplyButton_Click(object sender, EventArgs e)
@@ -96,6 +161,16 @@ namespace LiteDeploy
             {
                 MessageBox.Show(this, Localization.T("OptionsForm.BadHours", "Business hours: start and end as HH:mm, the end after the start."), Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
+            }
+            // Exists and readable from this computer: a warning only (a share can be down for a moment)
+            List<String> problems = FolderProblems(cache, sharedModules);
+            if (problems.Count > 0)
+            {
+                String question = Localization.F("OptionsForm.FoldersUnreachable",
+                    "These folders cannot be used from this computer with your account:\n\n{0}\n\nCheck the path and the permissions of the share. Save anyway?",
+                    String.Join(Environment.NewLine, problems));
+                if (MessageBox.Show(this, question, Text, MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+                    return;
             }
             settings.UpdateCacheShare = cache;
             settings.SharedModulesFolder = sharedModules;

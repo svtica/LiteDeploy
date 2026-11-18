@@ -7,6 +7,12 @@
 //          file, manual entry, ping. The Active Directory search runs by
 //          itself: the domain computers are listed when the window opens, and
 //          the list is filtered as the search text or its options change.
+//          Both lists show the operating system and the last logon of the
+//          Active Directory inventory (sortable columns) and follow the rules of
+//          Software Updates (ComputerListFilter): disabled accounts hidden,
+//          servers hidden unless Include servers is checked (the same setting,
+//          kept in sync); a computer unknown to Active Directory is kept. Use
+//          List applies the same filter to the main window's list.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -39,6 +45,15 @@ namespace LiteDeploy
         private int pingGeneration = 0;
         /// <summary>Search as you type: runs once the text has not changed for a moment.</summary>
         private readonly System.Windows.Forms.Timer autoSearchTimer = new System.Windows.Forms.Timer { Interval = 400 };
+        /// <summary>Results not shown (servers while they are not included, disabled accounts): shown again when servers are included.</summary>
+        private readonly List<String> hiddenCandidates = new List<String>();
+        private readonly ListViewColumnSorter candidatesSorter = new ListViewColumnSorter();
+        private readonly ListViewColumnSorter selectedSorter = new ListViewColumnSorter();
+        /// <summary>The Active Directory inventory by name, rebuilt when ActiveDirectoryCache replaces it.</summary>
+        private IList<AdComputer> inventorySource;
+        private Dictionary<String, AdComputer> inventoryByName = new Dictionary<String, AdComputer>(StringComparer.OrdinalIgnoreCase);
+        /// <summary>The Include servers box follows the setting (no save, no message).</summary>
+        private bool syncingIncludeServers;
 
         public ComputerListForm()
         {
@@ -47,6 +62,12 @@ namespace LiteDeploy
             Theme.Apply(this);
             baseTitle = Text;
             baseStatus = label2.Text;
+
+            // Same setting as Software Updates and App > Options: the three stay in sync
+            syncingIncludeServers = true;
+            includeServersCheck.Checked = UserSettings.Current.IncludeServers;
+            syncingIncludeServers = false;
+            UserSettings.Saved += UserSettings_Saved;
 
             // Created at start-up and hidden most of the time: only refresh the
             // status (title, counters) while the window is shown.
@@ -65,6 +86,7 @@ namespace LiteDeploy
         {
             timer.Enabled = Visible;
             if (!Visible) { autoSearchTimer.Stop(); return; }
+            SyncIncludeServers();
             // The domain computers at once, without clicking Search
             if (candidates.Items.Count == 0 && DirectorySearchAvailable())
                 SearchDirectory(true);
@@ -94,6 +116,134 @@ namespace LiteDeploy
             UseList = l;
         }
 
+        // ---- Active Directory details and the server filter ---------------------------------
+
+        /// <summary>The Active Directory entry of a computer; null when it is not in the inventory (unknown OS).</summary>
+        private AdComputer Lookup(String name)
+        {
+            RefreshInventory();
+            AdComputer computer;
+            return name != null && inventoryByName.TryGetValue(name.Trim(), out computer) ? computer : null;
+        }
+
+        private void RefreshInventory()
+        {
+            IList<AdComputer> inventory = ActiveDirectoryCache.Inventory;
+            if (ReferenceEquals(inventory, inventorySource)) return;
+            inventoryByName = ComputerListFilter.ByName(inventory);
+            inventorySource = inventory;
+        }
+
+        /// <summary>Same rule as Software Updates: no disabled account, no server unless the servers are included.</summary>
+        private bool IsShown(String name)
+        {
+            return ComputerListFilter.IsShown(Lookup(name), includeServersCheck.Checked);
+        }
+
+        /// <summary>A row of either list: name (key), operating system and last logon from Active Directory.</summary>
+        private ListViewItem NewItem(String name, int stateImage)
+        {
+            AdComputer ad = Lookup(name);
+            ListViewItem item = new ListViewItem(name) { Name = name, StateImageIndex = stateImage };
+            item.SubItems.Add(ad == null ? "" : ad.OperatingSystem ?? "");
+            item.SubItems.Add(ad == null ? "" : ComputerListFilter.FormatLastLogon(ad.LastLogon));
+            item.ToolTipText = ad == null
+                ? Localization.F("ComputerListForm.NotInAdTip", "{0}: not in Active Directory (operating system unknown)", name)
+                : name + ": " + (String.IsNullOrEmpty(ad.OperatingSystem) ? "?" : ad.OperatingSystem)
+                    + (String.IsNullOrEmpty(ad.OperatingSystemVersion) ? "" : " (" + ad.OperatingSystemVersion + ")")
+                    + (String.IsNullOrEmpty(ad.Ou) ? "" : " - " + AdComputer.ShortOu(ad.Ou));
+            return item;
+        }
+
+        private void includeServersCheck_CheckedChanged(object sender, EventArgs e)
+        {
+            if (syncingIncludeServers) return;
+            if (UserSettings.Current.IncludeServers != includeServersCheck.Checked)
+            {
+                UserSettings settings = UserSettings.Current.Clone();
+                settings.IncludeServers = includeServersCheck.Checked;
+                try { UserSettings.Save(settings); }
+                catch (Exception ex) { AppConsole.WriteLine("Computer list: could not save " + UserSettings.FilePath + ": " + ex.Message); }
+            }
+            ApplyServerFilter();
+        }
+
+        private void UserSettings_Saved(object sender, EventArgs e)
+        {
+            if (IsDisposed) return;
+            if (InvokeRequired)
+            {
+                if (IsHandleCreated) BeginInvoke(new MethodInvoker(SyncIncludeServers));
+                return;
+            }
+            SyncIncludeServers();
+        }
+
+        // The box follows the setting changed in Software Updates or App > Options
+        private void SyncIncludeServers()
+        {
+            if (includeServersCheck.Checked == UserSettings.Current.IncludeServers) return;
+            syncingIncludeServers = true;
+            try { includeServersCheck.Checked = UserSettings.Current.IncludeServers; }
+            finally { syncingIncludeServers = false; }
+            ApplyServerFilter();
+        }
+
+        // Servers included: the hidden results that are now allowed come back. Excluded: the servers leave
+        // both lists (kept aside, they come back with the box).
+        private void ApplyServerFilter()
+        {
+            candidates.BeginUpdate();
+            selected.BeginUpdate();
+            try
+            {
+                if (includeServersCheck.Checked)
+                {
+                    List<String> back = hiddenCandidates.Where(IsShown).ToList();
+                    hiddenCandidates.RemoveAll(n => back.Contains(n, StringComparer.OrdinalIgnoreCase));
+                    foreach (String name in back)
+                    {
+                        if (!candidates.Items.ContainsKey(name) && !selected.Items.ContainsKey(name))
+                            candidates.Items.Add(NewItem(name, 8));
+                    }
+                    if (back.Count > 0) RunPing();
+                }
+                else
+                {
+                    foreach (ListView list in new[] { candidates, selected })
+                    {
+                        for (int i = list.Items.Count - 1; i >= 0; i--)
+                        {
+                            String name = list.Items[i].Text;
+                            if (IsShown(name)) continue;
+                            hiddenCandidates.Add(name);
+                            list.Items.RemoveAt(i);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                selected.EndUpdate();
+                candidates.EndUpdate();
+            }
+        }
+
+        // Sort by the clicked column (again: the other way); the sorter is removed afterwards so that adding
+        // many results does not sort the list at each row
+        private void list_ColumnClick(object sender, ColumnClickEventArgs e)
+        {
+            ListView list = (ListView)sender;
+            ListViewColumnSorter sorter = list == candidates ? candidatesSorter : selectedSorter;
+            if (sorter.SortColumn == e.Column && sorter.Order == SortOrder.Ascending) sorter.Order = SortOrder.Descending;
+            else { sorter.SortColumn = e.Column; sorter.Order = SortOrder.Ascending; }
+            list.ListViewItemSorter = sorter;
+            list.Sort();
+            list.ListViewItemSorter = null;
+        }
+
+        // ---- Moving computers between the lists ----------------------------------------------
+
         private void addSelected_Click(object sender, EventArgs e)
         {
             selected.BeginUpdate();
@@ -103,7 +253,7 @@ namespace LiteDeploy
                 ListViewItem selItem = candidates.SelectedItems[i];
                 if (!selected.Items.ContainsKey(selItem.Text))
                 {
-                    selected.Items.Add(selItem.Text, selItem.Text, 0).StateImageIndex = selItem.StateImageIndex;
+                    selected.Items.Add(NewItem(selItem.Text, selItem.StateImageIndex));
                 }
 
                 candidates.Items.RemoveByKey(selItem.Text);
@@ -128,13 +278,16 @@ namespace LiteDeploy
             selected.EndUpdate();
         }
 
+        // Every result shown (the hidden servers and disabled accounts are not results)
         private void addAll_Click(object sender, EventArgs e)
         {
             selected.BeginUpdate();
             for (int i = 0; i < candidates.Items.Count; i++)
             {
                 ListViewItem liTem = candidates.Items[i];
-                selected.Items.Add(liTem.Text, liTem.Text, 0).StateImageIndex = liTem.StateImageIndex;
+                if (!IsShown(liTem.Text)) { hiddenCandidates.Add(liTem.Text); continue; }
+                if (!selected.Items.ContainsKey(liTem.Text))
+                    selected.Items.Add(NewItem(liTem.Text, liTem.StateImageIndex));
             }
             selected.EndUpdate();
             candidates.Items.Clear();
@@ -190,6 +343,7 @@ namespace LiteDeploy
         private void clearPreview_Click(object sender, EventArgs e)
         {
             candidates.Items.Clear();
+            hiddenCandidates.Clear();
         }
 
         private void clearSelected_Click(object sender, EventArgs e)
@@ -236,6 +390,7 @@ namespace LiteDeploy
             else
             {
                 candidates.Items.Clear();
+                hiddenCandidates.Clear();
             }
         }
 
@@ -274,7 +429,22 @@ namespace LiteDeploy
                 }
             }
 
-            selected.Items.Add(manualPC.Text, manualPC.Text, 0);
+            // A computer known to Active Directory follows the same rule as the search results
+            AdComputer known = Lookup(manualPC.Text);
+            if (!ComputerListFilter.IsShown(known, includeServersCheck.Checked))
+            {
+                String why = known.Disabled
+                    ? Localization.F("ComputerListForm.ManualDisabled", "The computer account {0} is disabled in Active Directory.", known.Name)
+                    : Localization.F("ComputerListForm.ManualServer", "{0} is a server ({1}). Check Include servers to add it.", known.Name, known.OperatingSystem);
+                MessageBox.Show(why, Localization.T("ComputerListForm.ManualHidden.Title", "Computer Not Added"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                SearchGroup.Enabled = true;
+                Cursor = Cursors.Default;
+                manualPC.Focus();
+                manualPC.SelectAll();
+                return;
+            }
+
+            selected.Items.Add(NewItem(manualPC.Text.Trim(), -1));
             SearchGroup.Enabled = true;
             manualPC.Focus();
             manualPC.SelectAll();
@@ -345,10 +515,19 @@ namespace LiteDeploy
 
             if ( clearOk )
             {
+                // Same filter as Software Updates: no server unless included, no disabled account
+                RefreshInventory();
+                List<String> dropped;
+                List<String> names = ComputerListFilter.Shown(selected.Items.Cast<ListViewItem>().Select(o => o.Text), inventoryByName, includeServersCheck.Checked, out dropped);
+
                 UseList.Items.Clear();
 
-                foreach (ListViewItem o in selected.Items)
-                    UseList.Items.Add(o.Text);
+                foreach (String name in names)
+                    UseList.Items.Add(name);
+
+                if (dropped.Count > 0)
+                    MessageBox.Show(Localization.F("ComputerListForm.Dropped", "{0} computer(s) not used (servers while Include servers is off, or disabled accounts): {1}", dropped.Count, String.Join(", ", dropped)),
+                        Localization.T("ComputerListForm.Dropped.Title", "Use List"), MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 Close();
             }
@@ -438,6 +617,7 @@ namespace LiteDeploy
         private void scanSubnet_Click(object sender, EventArgs e)
         {
             candidates.Items.Clear();
+            hiddenCandidates.Clear();
             Thread t = new Thread(new ThreadStart(GoDnsSearch));
             t.Start();
         }
@@ -467,8 +647,6 @@ namespace LiteDeploy
                 AddCandidate(h);
             EndCandUpdate();
 
-            searchResultsCount.Text = hosts.Count.ToString();
-
             EnableSearchKey(true);
 
             RunPing();
@@ -489,25 +667,32 @@ namespace LiteDeploy
                 .ToList();
         }
 
-        // In-memory search of the Active Directory list (or its cache while it is updated): fast
-        // enough for the UI thread, so the search box keeps the focus while the user types.
+        // In-memory search of the Active Directory inventory (the one of Software Updates: the last
+        // refresh, else the cache), fast enough for the UI thread, so the search box keeps the focus
+        // while the user types. Disabled accounts and servers (unless included) are not listed.
         // auto: started by the window or the search box, without the message about the cache.
         private void SearchDirectory(bool auto)
         {
             if (searchInProgress) return;
-            List<String> source = ActiveDirectoryCache.cacheFound && (ActiveDirectoryCache.adUpdating || !ActiveDirectoryCache.DCAvailable)
-                ? ActiveDirectoryCache.CachedAD
-                : ActiveDirectoryCache.Computers;
-            List<String> results;
-            try { results = FindComputers((source ?? new List<String>()).ToList(), adSearchKey.Text, adSearchStartsWith.Checked, adSearchContains.Checked, adSearchCaseSensitive.Checked); }
-            catch (InvalidOperationException) { results = new List<String>(); }   // list being refreshed
+            IList<AdComputer> inventory = ActiveDirectoryCache.Inventory;
+            List<String> source;
+            try
+            {
+                source = inventory.Count > 0
+                    ? inventory.Select(c => c.Name).ToList()
+                    : (ActiveDirectoryCache.cacheFound && (ActiveDirectoryCache.adUpdating || !ActiveDirectoryCache.DCAvailable)
+                        ? ActiveDirectoryCache.CachedAD
+                        : ActiveDirectoryCache.Computers).ToList();
+            }
+            catch (InvalidOperationException) { source = new List<String>(); }   // list being refreshed
+            List<String> results = FindComputers(source, adSearchKey.Text, adSearchStartsWith.Checked, adSearchContains.Checked, adSearchCaseSensitive.Checked);
 
             candidates.BeginUpdate();
             candidates.Items.Clear();
+            hiddenCandidates.Clear();
             foreach (String currentComp in results)
                 AddCandidate(currentComp);
             candidates.EndUpdate();
-            searchResultsCount.Text = results.Count.ToString();
 
             RunPing();
 
@@ -561,7 +746,12 @@ namespace LiteDeploy
 
             else
             {
-                candidates.Items.Add(s, s, 0).StateImageIndex = 8;
+                // Search, text file, DNS scan: same filter as Software Updates (a name unknown to
+                // Active Directory is kept); blank lines of a file are skipped
+                if (String.IsNullOrWhiteSpace(s)) return;
+                String name = s.Trim();
+                if (!IsShown(name)) { hiddenCandidates.Add(name); return; }
+                candidates.Items.Add(NewItem(name, 8));
             }
         }
         
@@ -644,6 +834,12 @@ namespace LiteDeploy
                 label2.Text = status;
 
             NumSelectedComps.Text = selected.Items.Count.ToString();
+
+            String results = hiddenCandidates.Count > 0
+                ? Localization.F("ComputerListForm.ResultCount", "{0} ({1} hidden: servers or disabled accounts)", candidates.Items.Count, hiddenCandidates.Count)
+                : candidates.Items.Count.ToString();
+            if (searchResultsCount.Text != results)
+                searchResultsCount.Text = results;
         }
 
         private void adSearchKey_KeyDown(object sender, KeyEventArgs e)
@@ -715,7 +911,7 @@ namespace LiteDeploy
 
                     if (!selected.Items.ContainsKey(cand.Text))
                     {
-                        selected.Items.Add(cand.Text, cand.Text, 0).StateImageIndex = cand.StateImageIndex;                        
+                        selected.Items.Add(NewItem(cand.Text, cand.StateImageIndex));
                     }
 
                     candidates.Items.RemoveByKey(cand.Text);
@@ -899,9 +1095,11 @@ namespace LiteDeploy
             {
                 ListViewItem liTem = candidates.Items[i];
 
-                if (liTem.StateImageIndex == 0)
+                // Reachable, and allowed by the same filter as the results
+                if (liTem.StateImageIndex == 0 && IsShown(liTem.Text))
                 {
-                    selected.Items.Add(liTem.Text, liTem.Text, 0).StateImageIndex = liTem.StateImageIndex;
+                    if (!selected.Items.ContainsKey(liTem.Text))
+                        selected.Items.Add(NewItem(liTem.Text, liTem.StateImageIndex));
                     candidates.Items.RemoveAt(i);
                     --i;
                 }

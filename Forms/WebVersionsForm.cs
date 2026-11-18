@@ -7,7 +7,10 @@
 //          version of the file each module instance uses in the shared cache
 //          against the latest version known to winget (WingetId parameter),
 //          Check now, Download to the cache (checked rows, or the current row),
-//          Open vendor page; the daily check settings. The work is done by
+//          Open vendor page; the daily check settings. Every instance is listed,
+//          checked or not (No WingetId, Not checked); without a cache or an
+//          instance for this Windows user, a notice offers Open Options... or
+//          Import from catalog... (same import as the package list). The work is done by
 //          WebVersionChecker and CacheDownloader, on the administrator's
 //          computer. Built in code (no designer file).
 // -----------------------------------------------------------------------------
@@ -45,11 +48,27 @@ namespace LiteDeploy
         readonly CheckBox autoDownload = new CheckBox();
         readonly Button closeButton = new Button();
         readonly ContextMenuStrip rowMenu = new ContextMenuStrip();
+        // What is missing on this computer (no cache, no instance), with the button that fixes it
+        readonly Panel notice = new Panel();
+        readonly Label noticeLabel = new Label();
+        readonly FlowLayoutPanel noticeButtons = new FlowLayoutPanel();
+        readonly Button optionsButton = new Button();
+        readonly Button importButton = new Button();
 
         WebVersionResults results;
+        /// <summary>Instances of CachedInstaller and MsixProvision with parameters (module-settings.xml of this user).</summary>
+        List<WebVersionTarget> targets = new List<WebVersionTarget>();
+        /// <summary>Opened from the package list: the imported rows go to its grid (saved with its OK); null: to the saved list.</summary>
+        readonly Action<List<UpdatePackage>> imported;
 
-        public WebVersionsForm()
+        public WebVersionsForm() : this(null)
         {
+        }
+
+        /// <param name="onImported">Receives the package rows of an Import from catalog...; null: they are added to the saved package list.</param>
+        internal WebVersionsForm(Action<List<UpdatePackage>> onImported)
+        {
+            imported = onImported;
             Text = Localization.T("WebVersionsForm.Text", "Lite Deploy - Web Versions");
             ClientSize = new Size(900, 500);
             MinimumSize = new Size(640, 360);
@@ -59,12 +78,28 @@ namespace LiteDeploy
             MinimizeBox = false;
             RestoreSize();
 
-            String cache = UserSettings.Current.UpdateCacheShare;
-            infoLabel.Text = Localization.F("WebVersionsForm.Info",
-                "Instances of CachedInstaller and MsixProvision: version of their file in the shared cache ({0}) against the latest version known to winget (WingetId parameter). Checked from this computer only.",
-                String.IsNullOrWhiteSpace(cache) ? Localization.T("WebVersionsForm.NoCache", "none set") : cache);
             infoLabel.SetBounds(12, 8, ClientSize.Width - 24, 34);
             infoLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+
+            notice.SetBounds(12, 46, ClientSize.Width - 24, NoticeHeight - 6);
+            notice.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            notice.BorderStyle = BorderStyle.FixedSingle;
+            noticeLabel.SetBounds(6, 4, notice.Width - 14, 38);
+            noticeLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            optionsButton.Text = Localization.T("WebVersionsForm.OpenOptions", "Open Options...");
+            importButton.Text = Localization.T("WebVersionsForm.Import", "Import from catalog...");
+            foreach (Button b in new[] { optionsButton, importButton })
+            {
+                b.AutoSize = true;
+                b.MinimumSize = new Size(110, 25);
+            }
+            optionsButton.Click += (s, e) => OpenOptions();
+            importButton.Click += (s, e) => ImportCatalog();
+            noticeButtons.Controls.AddRange(new Control[] { optionsButton, importButton });
+            noticeButtons.WrapContents = false;
+            noticeButtons.SetBounds(3, 42, notice.Width - 8, 30);
+            noticeButtons.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            notice.Controls.AddRange(new Control[] { noticeLabel, noticeButtons });
 
             checkColumn.HeaderText = "";
             checkColumn.Width = 28;
@@ -160,7 +195,7 @@ namespace LiteDeploy
             closeButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             CancelButton = closeButton;
 
-            Controls.AddRange(new Control[] { infoLabel, grid, buttons, schedule, closeButton });
+            Controls.AddRange(new Control[] { infoLabel, notice, grid, buttons, schedule, closeButton });
             FormClosing += WebVersionsForm_FormClosing;
             Theme.Apply(this);
 
@@ -178,15 +213,60 @@ namespace LiteDeploy
                 case WebVersionStatus.NewerOnWeb: return Localization.T("WebVersionsForm.Newer", "Newer on the web");
                 case WebVersionStatus.NotFound: return Localization.T("WebVersionsForm.NotFound", "Not found");
                 case WebVersionStatus.NoWingetId: return Localization.T("WebVersionsForm.NoWingetId", "No WingetId");
+                case WebVersionStatus.NotChecked: return Localization.T("WebVersionsForm.NotChecked", "Not checked");
                 default: return Localization.T("WebVersionsForm.Error", "Error");
+            }
+        }
+
+        const int NoticeHeight = 86;
+
+        // Info line, and the notice when the cache or the instances are missing for this Windows user
+        void UpdateInfo()
+        {
+            String cache = UserSettings.Current.UpdateCacheShare;
+            infoLabel.Text = Localization.F("WebVersionsForm.Info",
+                "Instances of CachedInstaller and MsixProvision: version of their file in the shared cache ({0}) against the latest version known to winget (WingetId parameter). Checked from this computer only.",
+                String.IsNullOrWhiteSpace(cache) ? Localization.T("WebVersionsForm.NoCache", "none set") : cache);
+
+            WebVersionNotice missing = WebVersionChecker.NoticeOf(cache, targets.Count);
+            List<String> lines = new List<String>();
+            if ((missing & WebVersionNotice.NoCache) != 0)
+                lines.Add(Localization.T("WebVersionsForm.NoticeNoCache",
+                    "No shared installer cache is set for your Windows account on this computer (the settings are per user): set it in the options."));
+            if ((missing & WebVersionNotice.NoInstances) != 0)
+                lines.Add(Localization.T("WebVersionsForm.NoticeNoInstances",
+                    "No instance of CachedInstaller or MsixProvision has parameters for your Windows account on this computer: import the team's catalog."));
+            noticeLabel.Text = String.Join(Environment.NewLine, lines);
+            optionsButton.Visible = (missing & WebVersionNotice.NoCache) != 0;
+            importButton.Visible = (missing & WebVersionNotice.NoInstances) != 0;
+            bool show = missing != WebVersionNotice.None;
+            if (notice.Visible != show || grid.Top != (show ? 46 + NoticeHeight : 46))
+            {
+                notice.Visible = show;
+                int bottom = grid.Bottom;
+                grid.Top = show ? 46 + NoticeHeight : 46;
+                grid.Height = Math.Max(60, bottom - grid.Top);
+            }
+        }
+
+        // Instances with parameters for this user; none when module-settings.xml cannot be read
+        void LoadTargets()
+        {
+            try { targets = WebVersionChecker.Targets(ModuleSettings.Load()); }
+            catch (Exception ex)
+            {
+                targets = new List<WebVersionTarget>();
+                WebVersionChecker.Log("Web versions window: module settings: " + ex.Message);
             }
         }
 
         void Fill()
         {
+            LoadTargets();
+            UpdateInfo();
             HashSet<String> checkedKeys = new HashSet<String>(CheckedEntries().Select(e => e.Key), StringComparer.OrdinalIgnoreCase);
             grid.Rows.Clear();
-            foreach (WebVersionEntry e in results.Entries.OrderBy(x => x.Product ?? x.Key, StringComparer.CurrentCultureIgnoreCase))
+            foreach (WebVersionEntry e in WebVersionChecker.Rows(results.Entries, targets).OrderBy(x => x.Product ?? x.Key, StringComparer.CurrentCultureIgnoreCase))
             {
                 int i = grid.Rows.Add(checkedKeys.Contains(e.Key) && e.CanDownload, (e.Product ?? e.Instance) + " (" + e.Instance + ")", e.Module,
                     e.CacheVersion ?? "", e.WebVersion ?? "", StatusText(e.Status), e.InstallerUrl ?? "");
@@ -283,9 +363,44 @@ namespace LiteDeploy
                     if (error != null) MessageBox.Show(this, error, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
                     else if (results.Entries.Count == 0)
                         MessageBox.Show(this, Localization.T("WebVersionsForm.NoInstances",
-                            "No instance of CachedInstaller or MsixProvision has parameters yet (Package list > Parameters...)."), Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            "Nothing to check: no instance of CachedInstaller or MsixProvision has parameters for your Windows account on this computer. Use Import from catalog... (or Package list > Parameters...)."),
+                            Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }));
             }) { IsBackground = true, Name = "Web versions check" }.Start();
+        }
+
+        // Options on the software updates settings (cache, shared modules folder), then the window again
+        void OpenOptions()
+        {
+            using (OptionsForm options = new OptionsForm())
+            {
+                options.FocusSoftwareUpdates();
+                if (options.ShowDialog(this) != DialogResult.OK) return;
+            }
+            Fill();
+        }
+
+        // Same import as the package list editor; the rows of the new instances go to the package list
+        void ImportCatalog()
+        {
+            List<UpdatePackage> packages = CatalogImport.Run(this, Text);
+            if (packages == null) return;
+            if (imported != null) imported(packages);
+            else
+            {
+                try
+                {
+                    List<UpdatePackage> list = UpdateRunner.LoadPackages();
+                    if (CatalogImport.AddMissing(list, packages) > 0) UpdateRunner.SavePackages(list);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(this, Localization.F("WebVersionsForm.PackageListNotSaved",
+                        "The parameters were imported, but the package list could not be updated: {0}\nAdd the rows in Package list > Import from catalog...", ex.Message),
+                        Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            Fill();
         }
 
         void Download(List<WebVersionEntry> entries)

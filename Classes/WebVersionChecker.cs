@@ -11,6 +11,7 @@
 //          never on the managed computers. Results kept in
 //          %LOCALAPPDATA%\LiteDeploy\web-versions.xml; optional daily check
 //          (internal scheduler of the main window). Version comparison, targets,
+//          rows of the window (every instance, checked or not), empty states,
 //          winget arguments and schedule are pure logic, unit-tested.
 // -----------------------------------------------------------------------------
 using System;
@@ -36,7 +37,20 @@ namespace LiteDeploy
         NewerOnWeb,
         NotFound,
         NoWingetId,
-        Error
+        Error,
+        /// <summary>Instance with parameters that has no result yet (Check now).</summary>
+        NotChecked
+    }
+
+    /// <summary>What the Web versions window lacks to show anything useful on this computer (flags).</summary>
+    [Flags]
+    public enum WebVersionNotice
+    {
+        None = 0,
+        /// <summary>No shared installer cache in the settings of this Windows user.</summary>
+        NoCache = 1,
+        /// <summary>No instance of CachedInstaller or MsixProvision has parameters for this Windows user.</summary>
+        NoInstances = 2
     }
 
     /// <summary>Result of the web check of one module instance (one row of Tools > Web versions...).</summary>
@@ -286,6 +300,39 @@ namespace LiteDeploy
             return targets;
         }
 
+        /// <summary>What the window must tell the user (no cache, no instance). Pure logic, unit-tested.</summary>
+        static public WebVersionNotice NoticeOf(String cacheRoot, int instanceCount)
+        {
+            WebVersionNotice notice = WebVersionNotice.None;
+            if (String.IsNullOrWhiteSpace(cacheRoot)) notice |= WebVersionNotice.NoCache;
+            if (instanceCount <= 0) notice |= WebVersionNotice.NoInstances;
+            return notice;
+        }
+
+        /// <summary>
+        /// Rows of the window: the saved results, plus one row per instance that has none yet (status No WingetId
+        /// without a WingetId, else Not checked), so the window lists every instance before the first check.
+        /// Pure logic, unit-tested.
+        /// </summary>
+        static public List<WebVersionEntry> Rows(IEnumerable<WebVersionEntry> saved, IEnumerable<WebVersionTarget> targets)
+        {
+            List<WebVersionEntry> rows = (saved ?? Enumerable.Empty<WebVersionEntry>()).Where(e => e != null).ToList();
+            HashSet<String> keys = new HashSet<String>(rows.Select(e => e.Key ?? ""), StringComparer.OrdinalIgnoreCase);
+            foreach (WebVersionTarget t in targets ?? Enumerable.Empty<WebVersionTarget>())
+            {
+                if (!keys.Add(t.Key)) continue;
+                rows.Add(new WebVersionEntry
+                {
+                    Key = t.Key, Module = t.Module, Instance = t.Instance, Product = t.Product, WingetId = t.WingetId, Type = t.Type,
+                    Status = String.IsNullOrEmpty(t.WingetId) ? WebVersionStatus.NoWingetId : WebVersionStatus.NotChecked,
+                    Message = String.IsNullOrEmpty(t.WingetId)
+                        ? Localization.T("WebVersions.SetWingetId", "Set the WingetId parameter of this instance (Package list > Parameters...) to compare it with winget.")
+                        : null
+                });
+            }
+            return rows;
+        }
+
         /// <summary>
         /// Full path of a path relative to the cache ("CachedInstaller/Vendor/app.msi", "/" or "\");
         /// null when it is empty, rooted, has a drive or ".." or leaves the cache (same rules as the
@@ -400,7 +447,7 @@ namespace LiteDeploy
             if (String.IsNullOrEmpty(t.WingetId))
             {
                 e.Status = WebVersionStatus.NoWingetId;
-                e.Message = cacheError;
+                e.Message = cacheError ?? Localization.T("WebVersions.SetWingetId", "Set the WingetId parameter of this instance (Package list > Parameters...) to compare it with winget.");
                 return e;
             }
             if (!IsValidWingetId(t.WingetId))
@@ -472,7 +519,7 @@ namespace LiteDeploy
         static public String CacheFileOf(WebVersionTarget t, String cacheRoot)
         {
             if (String.IsNullOrWhiteSpace(cacheRoot))
-                throw new InvalidOperationException(Localization.T("WebVersions.NoCache", "No shared installer cache: set one in App > Options > Software updates."));
+                throw new InvalidOperationException(Localization.T("WebVersions.NoCache", "No shared installer cache is set for your Windows account on this computer: set it in App > Options > Software updates."));
             if (!t.IsMsix)
             {
                 String full = ResolveUnderCache(cacheRoot, t.File);
