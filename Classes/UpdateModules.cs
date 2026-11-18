@@ -13,6 +13,9 @@
 //          administrators can write to, with the parameter file of each module
 //          that has values (<Name>.params, readable by administrators and
 //          SYSTEM only; the worker deletes it, LiteDeploy too after the run).
+//          A module with "# Instances: yes" can be listed several times as
+//          "module:Name/Instance": its script is copied once, each instance has
+//          its own parameter file (Name@Instance.params).
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -34,11 +37,24 @@ namespace LiteDeploy
         public List<ModuleParameter> Parameters = new List<ModuleParameter>();
         /// <summary>The header declares "# Install: yes": the module accepts "-Action Install".</summary>
         public bool Install;
+        /// <summary>The header says "# Instances: yes": one package row per instance ("module:Name/Instance").</summary>
+        public bool Instances;
 
         /// <summary>The package line of the module: "module:Name | processes | label".</summary>
         public UpdatePackage ToPackage()
         {
             return UpdatePackage.Parse(UpdatePackage.ModulePrefix + Name + " | " + String.Join(", ", Processes) + " | " + (Label ?? Name));
+        }
+
+        /// <summary>
+        /// The package line of one instance: "module:Name/Instance | processes | label" (label: the
+        /// one given, else the instance name). Null when the module has no instances or the name is invalid.
+        /// </summary>
+        public UpdatePackage ToPackage(String instance, String label)
+        {
+            if (!Instances || !UpdatePackage.IsValidInstanceName(instance)) return null;
+            String text = String.IsNullOrWhiteSpace(label) ? instance : label.Replace("|", " ").Trim();
+            return UpdatePackage.Parse(UpdatePackage.ModuleId(Name, instance) + " | " + String.Join(", ", Processes) + " | " + text);
         }
     }
 
@@ -170,6 +186,7 @@ namespace LiteDeploy
             }
             m.Parameters = ModuleParameters.ParseHeader(lines);
             m.Install = InstallPolicy.DeclaresInstall(lines);
+            m.Instances = ModuleParameters.DeclaresInstances(lines);
             return m;
         }
 
@@ -183,12 +200,24 @@ namespace LiteDeploy
         static public Dictionary<String, String> BuildParameterValues(UpdateModule module, ModuleSettings settings,
             Func<String, String> passwordOf, out String error)
         {
+            return BuildParameterValues(module, null, settings, passwordOf, out error);
+        }
+
+        /// <summary>
+        /// The values of one instance of the module (<paramref name="instance"/>: null for the module
+        /// itself). An instance has its own values (key "Name/Instance" in module-settings.xml); it
+        /// does not inherit the values of the module.
+        /// </summary>
+        static public Dictionary<String, String> BuildParameterValues(UpdateModule module, String instance, ModuleSettings settings,
+            Func<String, String> passwordOf, out String error)
+        {
             error = null;
             Dictionary<String, String> values = new Dictionary<String, String>(StringComparer.OrdinalIgnoreCase);
             if (module == null || settings == null) return values;
+            String key = ModuleSettings.Key(module.Name, instance);
             foreach (ModuleParameter p in module.Parameters)
             {
-                ModuleParameterSetting s = settings.Get(module.Name, p.Name);
+                ModuleParameterSetting s = settings.Get(key, p.Name);
                 if (s == null) continue;
                 String value;
                 if (p.Secret)
@@ -199,7 +228,7 @@ namespace LiteDeploy
                     {
                         error = Localization.F("UpdateModules.NoCredential",
                             "The credential \"{0}\" of the parameter {1} of the module {2} no longer exists (Tools > Credentials).",
-                            s.Credential, p.Name, module.Name);
+                            s.Credential, p.Name, key);
                         return new Dictionary<String, String>(StringComparer.OrdinalIgnoreCase);
                     }
                 }
@@ -211,7 +240,7 @@ namespace LiteDeploy
                 if (value.Length > ModuleParameters.MaxValueLength)
                 {
                     error = Localization.F("UpdateModules.ValueTooLong", "The value of the parameter {0} of the module {1} is too long ({2} characters at most).",
-                        p.Name, module.Name, ModuleParameters.MaxValueLength);
+                        p.Name, key, ModuleParameters.MaxValueLength);
                     return new Dictionary<String, String>(StringComparer.OrdinalIgnoreCase);
                 }
                 values[p.Name] = value;
@@ -299,16 +328,21 @@ namespace LiteDeploy
         static String CopyModules(List<UpdatePackage> modules, String target, ModuleSettings settings, Func<String, String> passwordOf, ref bool parameterFiles)
         {
             Directory.CreateDirectory(target);
+            // Several instances of a module: its script is copied once
+            HashSet<String> copied = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
             foreach (UpdatePackage p in modules)
             {
                 UpdateModule m = Find(p.ModuleName);
                 if (m == null) return Localization.F("UpdateModules.Missing", "Module {0} not found in {1}.", p.ModuleName, String.Join(", ", Dirs));
-                File.Copy(m.Path, System.IO.Path.Combine(target, m.Name + ".ps1"), true);
+                if (p.InstanceName != null && !m.Instances)
+                    return Localization.F("UpdateModules.NoInstances", "The module {0} does not support instances ({1}).", m.Name, p.Id);
+                if (copied.Add(m.Name))
+                    File.Copy(m.Path, System.IO.Path.Combine(target, m.Name + ".ps1"), true);
 
                 // Parameter file of this run (a file left by an earlier run is replaced or removed)
-                String parametersPath = System.IO.Path.Combine(target, m.Name + ModuleParameters.FileExtension);
+                String parametersPath = System.IO.Path.Combine(target, ModuleParameters.FileName(p));
                 String error;
-                Dictionary<String, String> values = BuildParameterValues(m, settings, passwordOf, out error);
+                Dictionary<String, String> values = BuildParameterValues(m, p.InstanceName, settings, passwordOf, out error);
                 if (error != null) return error;
                 if (values.Count == 0)
                 {
@@ -334,7 +368,7 @@ namespace LiteDeploy
                 {
                     foreach (UpdatePackage p in packages.Where(x => x.IsModule))
                     {
-                        try { DeleteIfExists(System.IO.Path.Combine(target, p.ModuleName + ModuleParameters.FileExtension)); }
+                        try { DeleteIfExists(System.IO.Path.Combine(target, ModuleParameters.FileName(p))); }
                         catch (Exception) { }
                     }
                 }

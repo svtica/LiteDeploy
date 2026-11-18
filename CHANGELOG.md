@@ -21,7 +21,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `-Action Install`, with the same result line, exit codes, time limit, signature check and
   parameters as `-Action Update`; a module without that line is refused with a clear error. The
   module template shows an Install branch. See `docs/modules.md`.
-
+- Update module `CachedInstaller`: installs or updates any vendor MSI or EXE installer kept in the
+  shared cache (`<cache>\CachedInstaller`), one instance per product. Each product is described by
+  parameters (`File`, `Type`, `Arguments`, `DetectName` or `ProductCode`, `Version`, `Publisher`,
+  `CloseProcesses`). Check compares the Uninstall entry (64 and 32-bit) with the version of the
+  installer (MSI `ProductVersion`, EXE version, or `Version`); Update and Install copy the
+  installer to `%windir%\LiteDeploy\work\CachedInstaller`, refuse it unless it has a valid
+  Authenticode signature of the expected publisher (`O=<Publisher>`), run it silently and accept
+  the exit codes 0, 3010 and 1641. The module declares `# Install: yes` and accepts
+  `-Action Install`.
+- Module instances: a module that declares `# Instances: yes` can be listed once per product as
+  `module:<Name>/<Instance>`, with its own row, state and parameter values (key `<Name>/<Instance>`
+  in `module-settings.xml`, parameter file `<Name>@<Instance>.params`, `LITEDEPLOY_INSTANCE` for
+  the module process). The script is copied once per run; the worker refuses an instance of a
+  module that does not declare it. `module:<Name>` Ids are unchanged. *Add module* asks for the
+  instance name and *Parameters...* edits the values of the selected instance.
+- *Package list > Import from catalog...*: creates the instances of a JSON catalog
+  (`%LOCALAPPDATA%\LiteDeploy\catalog.local.json` by default) and their parameter values; secret
+  parameters are never read from a catalog. See `docs/modules.md`.
 - Shared update modules folder (*App > Options > Software updates*, usually a network
   share): the modules of an IT team, used by the LiteDeploy of every administrator. Modules are
   found in the shipped `modules\` folder, then the shared folder, then

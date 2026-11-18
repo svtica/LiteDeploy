@@ -468,6 +468,27 @@ Oui : par défaut. Non : jusqu'à la fermeture de LiteDeploy.</translation>
   <translation key="ModuleParametersForm.Default">(par défaut : {0})</translation>
   <translation key="ModuleParametersForm.None">(aucun)</translation>
   <translation key="ModuleParametersForm.MissingCredential">{0} (n'existe plus)</translation>
+  <translation key="ModuleParametersForm.InstanceText">Lite Deploy - Paramètres de {0} ({1})</translation>
+  <translation key="PackageListForm.importCatalogButton.Text">Importer du catalogue...</translation>
+  <translation key="PackageListForm.InstanceName">Nom de l'instance de {0} (lettres, chiffres et . - _), par exemple le produit :</translation>
+  <translation key="PackageListForm.InvalidInstance">Nom d'instance invalide : lettres (A-Z), chiffres et . - _ seulement, 64 caractères au plus.</translation>
+  <translation key="PackageListForm.InstanceListed">{0} est déjà dans la liste.</translation>
+  <translation key="PackageListForm.CatalogTitle">Catalogue de produits</translation>
+  <translation key="PackageListForm.CatalogFilter">Catalogue (*.json)|*.json|Tous les fichiers (*.*)|*.*</translation>
+  <translation key="PackageListForm.CatalogEmpty">Le catalogue n'a aucun produit valide.</translation>
+  <translation key="PackageListForm.CatalogConfirm">Importer {0} produits du module {1} : {2} ?&#10;Les valeurs des paramètres de ces instances sont remplacées par celles du catalogue (les paramètres secrets ne changent pas).</translation>
+  <translation key="UpdateModules.NoInstances">Le module {0} ne prend pas en charge les instances ({1}).</translation>
+  <translation key="ModuleCatalog.InvalidJson">JSON invalide : {0}</translation>
+  <translation key="ModuleCatalog.NoProducts">Catalogue invalide : un objet JSON avec un tableau « products » est attendu.</translation>
+  <translation key="ModuleCatalog.InvalidModule">Nom de module invalide : {0}</translation>
+  <translation key="ModuleCatalog.NotAnObject">Produit {0} : un objet est attendu.</translation>
+  <translation key="ModuleCatalog.InvalidInstance">Produit {0} : « Instance » absente ou invalide (lettres, chiffres et . - _ seulement) : {1}</translation>
+  <translation key="ModuleCatalog.Duplicate">Produit {0} : l'instance {1} est listée deux fois, ignorée.</translation>
+  <translation key="ModuleCatalog.InvalidName">{0} : nom de paramètre invalide {1}, ignoré.</translation>
+  <translation key="ModuleCatalog.NotAString">{0} : la valeur de {1} doit être une chaîne, ignorée.</translation>
+  <translation key="ModuleCatalog.Undeclared">{0} : {1} n'est pas un paramètre du module {2}, ignoré.</translation>
+  <translation key="ModuleCatalog.Secret">{0} : {1} est un paramètre secret, jamais lu dans un catalogue : réglez-le dans Paramètres... (ignoré).</translation>
+  <translation key="ModuleCatalog.TooLong">{0} : la valeur de {1} est trop longue, ignorée.</translation>
   <translation key="SoftwareUpdatesForm.Paused">En pause</translation>
   <translation key="SoftwareUpdatesForm.NightOnlyNow">{0} ordinateur(s) ne sont mis à jour qu'en dehors des heures ouvrables ({1}). Les mettre à jour maintenant quand même ?
 

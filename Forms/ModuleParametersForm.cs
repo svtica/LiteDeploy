@@ -4,7 +4,8 @@
 // Author:  LiteDeploy contributors
 // Date:    2026-11-17
 // Purpose: Package list > Parameters...: the values of the parameters of one
-//          update module (docs/modules.md), saved in module-settings.xml. A
+//          update module (docs/modules.md), or of one instance of it
+//          ("module:Name/Instance"), saved in module-settings.xml. A
 //          secret parameter takes a stored credential (Tools > Credentials),
 //          chosen in a list: its password is never shown nor typed here.
 //          Built in code (no designer file): one row per parameter.
@@ -29,11 +30,21 @@ namespace LiteDeploy
         // Value control of each parameter: TextBox (plain) or ComboBox (credential)
         readonly Dictionary<String, Control> editors = new Dictionary<String, Control>(StringComparer.OrdinalIgnoreCase);
 
-        internal ModuleParametersForm(UpdateModule module, ModuleSettings settings)
+        // Key of the values: "Name", or "Name/Instance" for an instance of the module
+        readonly String key;
+
+        internal ModuleParametersForm(UpdateModule module, ModuleSettings settings) : this(module, null, null, settings) { }
+
+        /// <summary>The values of one instance of the module (<paramref name="instance"/>: null for the module itself).</summary>
+        internal ModuleParametersForm(UpdateModule module, String instance, String instanceLabel, ModuleSettings settings)
         {
             this.module = module;
             this.settings = settings;
-            Text = Localization.F("ModuleParametersForm.Text", "Lite Deploy - Parameters of {0}", module.Label ?? module.Name);
+            key = ModuleSettings.Key(module.Name, instance);
+            Text = String.IsNullOrEmpty(instance)
+                ? Localization.F("ModuleParametersForm.Text", "Lite Deploy - Parameters of {0}", module.Label ?? module.Name)
+                : Localization.F("ModuleParametersForm.InstanceText", "Lite Deploy - Parameters of {0} ({1})",
+                    String.IsNullOrWhiteSpace(instanceLabel) ? instance : instanceLabel, module.Name + UpdatePackage.InstanceSeparator + instance);
             ClientSize = new Size(620, 380);
             MinimumSize = new Size(520, 300);
             StartPosition = FormStartPosition.CenterParent;
@@ -82,7 +93,7 @@ namespace LiteDeploy
             int row = 0;
             foreach (ModuleParameter p in module.Parameters)
             {
-                ModuleParameterSetting current = settings.Get(module.Name, p.Name);
+                ModuleParameterSetting current = settings.Get(key, p.Name);
 
                 Label name = new Label { AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(3, 8, 9, 3) };
                 name.Text = p.Name + (p.Secret ? " (" + Localization.T("ModuleParametersForm.Secret", "secret") + ")" : "")
@@ -157,11 +168,11 @@ namespace LiteDeploy
                 if (combo != null)
                 {
                     CredentialItem item = combo.SelectedItem as CredentialItem;
-                    settings.SetCredential(module.Name, p.Name, item == null ? null : item.Name);
+                    settings.SetCredential(key, p.Name, item == null ? null : item.Name);
                 }
                 else
                 {
-                    settings.SetValue(module.Name, p.Name, editor.Text.Trim());
+                    settings.SetValue(key, p.Name, editor.Text.Trim());
                 }
             }
             try { settings.Save(); }
