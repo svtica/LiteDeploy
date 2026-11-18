@@ -87,6 +87,17 @@ namespace LiteDeploy
         /// <summary>With <paramref name="cacheShare"/>: the shared cache of the installers of the modules (--cache).</summary>
         public static String BuildWorkerArguments(String command, IEnumerable<UpdatePackage> packages, bool allowUnsignedModules, String cacheShare)
         {
+            return BuildWorkerArguments(command, packages, allowUnsignedModules, cacheShare, false, false);
+        }
+
+        /// <summary>
+        /// Server guard (ServerPolicy): <paramref name="includeServers"/> adds --allow-servers
+        /// (UserSettings.IncludeServers); <paramref name="allowDomainControllers"/> adds
+        /// --allow-domain-controllers, only together with --allow-servers.
+        /// </summary>
+        public static String BuildWorkerArguments(String command, IEnumerable<UpdatePackage> packages, bool allowUnsignedModules, String cacheShare,
+            bool includeServers, bool allowDomainControllers)
+        {
             StringBuilder sb = new StringBuilder(command);
             foreach (UpdatePackage p in packages)
                 sb.Append(" --package ").Append(PsExecCommandLine.QuoteArgument(p.ToArgument(), true));
@@ -94,6 +105,11 @@ namespace LiteDeploy
             if (allowUnsignedModules && packages.Any(p => p.IsModule)) sb.Append(" --allow-unsigned-modules");
             if (!String.IsNullOrWhiteSpace(cacheShare) && packages.Any(p => p.IsModule))
                 sb.Append(" --cache ").Append(PsExecCommandLine.QuoteArgument(cacheShare.Trim().TrimEnd('\\'), true));
+            if (includeServers)
+            {
+                sb.Append(' ').Append(ServerPolicy.AllowServersOption);
+                if (allowDomainControllers) sb.Append(' ').Append(ServerPolicy.AllowDomainControllersOption);
+            }
             return sb.ToString();
         }
 
@@ -184,7 +200,8 @@ namespace LiteDeploy
                 OverwriteExisting = true,
                 ConnectionTimeout = 20,
                 Executable = WorkerPath,
-                Arguments = BuildWorkerArguments(command, packages, UserSettings.Current.AllowUnsignedModules, UserSettings.Current.UpdateCacheShare)
+                Arguments = BuildWorkerArguments(command, packages, UserSettings.Current.AllowUnsignedModules, UserSettings.Current.UpdateCacheShare,
+                    UserSettings.Current.IncludeServers, UserSettings.Current.AllowDomainControllers)
             };
         }
 

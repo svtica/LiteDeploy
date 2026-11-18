@@ -37,6 +37,7 @@ namespace LiteDeploy
             hoursStartBox.Text = current.BusinessHoursStart;
             hoursEndBox.Text = current.BusinessHoursEnd;
             unsignedModulesCheckBox.Checked = current.AllowUnsignedModules;
+            includeServersCheckBox.Checked = current.IncludeServers;
 
             // Account of the software updates: the current user or a stored credential
             accountCombo.Items.Add(Localization.T("OptionsForm.CurrentUser", "Current user"));
@@ -101,6 +102,7 @@ namespace LiteDeploy
             settings.BusinessHoursStart = start.ToString(@"hh\:mm");
             settings.BusinessHoursEnd = end.ToString(@"hh\:mm");
             settings.AllowUnsignedModules = unsignedModulesCheckBox.Checked;
+            settings.IncludeServers = includeServersCheckBox.Checked;
             settings.UpdateCredential = accountCombo.SelectedIndex > 0 ? (String)accountCombo.SelectedItem : "";
             settings.RemoteMethod = RemoteRunner.Methods[Math.Max(0, methodCombo.SelectedIndex)];
             settings.Theme = Themes[Math.Max(0, themeCombo.SelectedIndex)];

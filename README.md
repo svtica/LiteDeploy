@@ -59,7 +59,18 @@ them (and for the PsExec method of the software updates); it is asked for when t
 - Right-click a computer: *Install* one package where the last check says it is not installed
   (explicit, with a confirmation; modules only when they declare `# Install: yes`; never part of
   *Update checked* or of the schedules), pause it, outside business hours only, computer card
-  (logged-on users, pending restart...), Wake-on-LAN. Each row shows the step in progress.
+  (logged-on users, pending restart, Windows version and type...), Wake-on-LAN. Each row shows
+  the step in progress.
+- **Servers are left alone by default**: the worker reads the operating system type
+  (`Win32_OperatingSystem.ProductType`) and refuses to update or install anything on a server
+  unless *App > Options > Software updates > Include servers (updates and installs)* is checked
+  (worker option `--allow-servers`); the computer gets an error saying so. Domain controllers
+  are refused even then, unless `AllowDomainControllers` is also set to `true` by hand in
+  `%LOCALAPPDATA%\LiteDeploy\settings.xml` (worker option `--allow-domain-controllers`, no
+  window on purpose). A computer whose type cannot be read is treated as a domain controller.
+  *Check* still works on servers (report only) and records the Windows version and type of each
+  computer in `updates.xml`; scheduled updates skip the computers already known as servers that
+  are not included.
 - *Tools > Scheduled Updates*: check or update on a schedule, with the internal engine (while
   LiteDeploy is open) or Windows scheduled tasks (`LiteDeploy.exe /schedule <name>`).
 - **Update modules** for products winget does not cover: signed PowerShell scripts run as

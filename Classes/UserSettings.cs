@@ -26,6 +26,13 @@ namespace LiteDeploy
         public String Theme = LiteDeploy.Theme.Automatic;
         /// <summary>Run update modules that are not signed (tests only: they run as SYSTEM on the computers).</summary>
         public bool AllowUnsignedModules = false;
+        /// <summary>Include servers in the software updates and installs (worker option --allow-servers). Default: workstations only.</summary>
+        public bool IncludeServers = false;
+        /// <summary>
+        /// With IncludeServers, also domain controllers (worker option --allow-domain-controllers).
+        /// No window: set by hand in settings.xml, on purpose.
+        /// </summary>
+        public bool AllowDomainControllers = false;
         /// <summary>Shared cache of the installers of the update modules (\\server\share), empty: none.</summary>
         public String UpdateCacheShare = "";
         /// <summary>Shared folder of the IT team's update modules (usually a network share), empty: none.</summary>
