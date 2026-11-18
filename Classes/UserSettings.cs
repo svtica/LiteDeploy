@@ -6,9 +6,14 @@
 // Purpose: Settings of the current user, saved in
 //          %LOCALAPPDATA%\LiteDeploy\settings.xml (language, MSI logging
 //          folder, Active Directory refresh and update check at start-up...).
+//          The file is rewritten at each save with a comment before each
+//          setting that App > Options does not show (FileComments), so that
+//          it can be edited by hand (LiteDeploy closed).
 // -----------------------------------------------------------------------------
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Xml;
 using System.Xml.Serialization;
 
 namespace LiteDeploy
@@ -123,13 +128,61 @@ namespace LiteDeploy
             Apply();
         }
 
+        /// <summary>
+        /// The settings that App > Options does not show, with what they do: written as a comment before each
+        /// of them in settings.xml (no "--" in a text: not allowed in an XML comment). Keep in line with the
+        /// table of the README (Settings outside App > Options).
+        /// </summary>
+        static public readonly IList<KeyValuePair<String, String>> FileComments = new List<KeyValuePair<String, String>>
+        {
+            new KeyValuePair<String, String>("AllowDomainControllers",
+                "Edited by hand only. true: with IncludeServers, the software updates and installs also reach the domain controllers. Default: false."),
+            new KeyValuePair<String, String>("SchedulerEngine",
+                "Tools > Scheduled Updates. internal: the schedules run while LiteDeploy is open; windows: Windows scheduled tasks. Default: internal."),
+            new KeyValuePair<String, String>("ExtraLogFolders",
+                "Edited by hand only. Get the logs: extra folders, label|folder under %windir%|newest files (1 to 100, 10 when left out), separated by ;. Example: myscript|Temp\\MyScript|10. Default: empty."),
+            new KeyValuePair<String, String>("WebCheckTime",
+                "Tools > Web Versions. Daily check of the web versions at this time (HH:mm), while LiteDeploy is open. Empty: no daily check."),
+            new KeyValuePair<String, String>("WebAutoDownload",
+                "Tools > Web Versions. true: the daily check downloads the new versions to the cache; false: report only. Default: false."),
+            new KeyValuePair<String, String>("WebVersionsWindowSize",
+                "Kept by LiteDeploy: size of the Web Versions window, width,height. Empty: default."),
+            new KeyValuePair<String, String>("UpdatesStaleDays",
+                "Edited by hand only. Offline/stale filter: last logon (Active Directory) older than this many days. 0: never stale. Default: 30."),
+            new KeyValuePair<String, String>("UpdatesWindowBounds",
+                "Kept by LiteDeploy: main window, then its grid (bounds, maximized, splitter, columns, status filters). Empty or 0: default."),
+        };
+
+        /// <summary>The settings as written to settings.xml: serialized, with FileComments before their elements.</summary>
+        static public XmlDocument ToXml(UserSettings settings)
+        {
+            XmlDocument doc = new XmlDocument();
+            using (StringWriter text = new StringWriter())
+            {
+                new XmlSerializer(typeof(UserSettings)).Serialize(text, settings);
+                doc.LoadXml(text.ToString());
+            }
+            // The declaration of the serializer says utf-16 (a string): the writer writes its own
+            if (doc.FirstChild is XmlDeclaration) doc.RemoveChild(doc.FirstChild);
+            XmlElement root = doc.DocumentElement;
+            root.ParentNode.InsertBefore(doc.CreateComment(
+                " LiteDeploy settings of this user. Most are set in App > Options; the comments describe the others. Close LiteDeploy before editing: it rewrites this file. "), root);
+            foreach (KeyValuePair<String, String> c in FileComments)
+            {
+                XmlNode element = root[c.Key];
+                if (element != null) root.InsertBefore(doc.CreateComment(" " + c.Key + ": " + c.Value.Replace("--", "- -") + " "), element);
+            }
+            return doc;
+        }
+
         static public void Save(UserSettings settings)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
 
-            using (FileStream file = new FileStream(FilePath, FileMode.Create, FileAccess.Write))
+            XmlDocument doc = ToXml(settings);
+            using (XmlWriter writer = XmlWriter.Create(FilePath, new XmlWriterSettings { Indent = true, Encoding = new System.Text.UTF8Encoding(false) }))
             {
-                new XmlSerializer(typeof(UserSettings)).Serialize(file, settings);
+                doc.Save(writer);
             }
 
             Current = settings;
