@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.17] - 2026-11-18
+
 ### Changed
 
 - *Software Updates* has a single entry: *Computers > Software Updates...* (Ctrl+M). The bold
