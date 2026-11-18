@@ -198,7 +198,7 @@ namespace LiteDeploy
                 }
                 Rectangle text = new Rectangle(e.Bounds.X + 6, e.Bounds.Y, e.Bounds.Width - 8, e.Bounds.Height);
                 TextRenderer.DrawText(e.Graphics, e.Header.Text, list.Font, text, Text,
-                    TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+                    TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
             };
 
             list.DrawItem += (s, e) => { };   // everything is drawn per sub-item
@@ -242,8 +242,9 @@ namespace LiteDeploy
                 if (e.ColumnIndex == 0 || item.UseItemStyleForSubItems) fore = item.ForeColor;
                 if (fore == SystemColors.WindowText || fore == SystemColors.ControlText || fore.IsEmpty) fore = Text;
                 Rectangle text = new Rectangle(x, bounds.Y, Math.Max(0, bounds.Right - x - 2), bounds.Height);
+                // SingleLine: a text with a line break stays on the row (centred, cut with an ellipsis)
                 TextRenderer.DrawText(e.Graphics, e.SubItem.Text, item.Font ?? list.Font, text, fore,
-                    TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+                    TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
 
                 if (gridLines)
                 {
