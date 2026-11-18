@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.15] - 2026-11-18
+
 ### Changed
 
 - Update module `MsixProvision` declares `# Instances: yes`: several MSIX packages can be listed,
