@@ -57,8 +57,10 @@ them (and for the PsExec method of the software updates); it is asked for when t
 - One row per computer: OS (the one read on the computer when known, else Active Directory), last
   logon (Active Directory), status, updates available, last result, last change, *Pause* and
   *Outside business hours* (tooltip: the reason, the business hours). Every column sorts; columns
-  can be resized and moved. *Show packages*: one row per installed package. Under the list, the
-  details of the selected computer.
+  can be resized and moved. *Show packages*: one row per installed package (the window always
+  opens on one row per computer). A computer known under several spellings (`PC01`, `pc01`,
+  `PC01.example.com`, `PC01$`) is one row; the states saved under two spellings in `updates.xml`
+  are merged when it is read. Under the list, the details of the selected computer.
 - Filters, combined: search box (Ctrl+F; name, OS, OU or package), status buttons (*To update*,
   *Errors*, *Up to date*, *Not checked*, *Paused*, *Outside business hours*, *Offline/stale*: last
   logon older than 30 days by default, `UpdatesStaleDays` in `settings.xml`), and **Include
@@ -74,7 +76,7 @@ them (and for the PsExec method of the software updates); it is asked for when t
   confirmation names them (to update one now, *Allow updates during business hours* first).
 - No credential chosen: the first run of a session asks once to add one (or use the stored one);
   the credential chosen becomes the default (*App > Options*).
-- Window size and position, splitter, columns, view, status filters and *Include servers* are kept
+- Window size and position, splitter, columns, status filters and *Include servers* are kept
   in `%LOCALAPPDATA%\LiteDeploy\settings.xml`.
 - `LiteDeploy.Worker.exe` runs as SYSTEM on the computer, started by one of two methods
   (*App > Options*), with nothing to install and no stored password:

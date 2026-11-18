@@ -981,7 +981,7 @@ namespace LiteDeploy
             public ComputerRow Row(String computer)
             {
                 AdComputer ad = null;
-                try { ad = ActiveDirectoryCache.Inventory.ToList().FirstOrDefault(c => c != null && String.Equals(c.Name, computer, StringComparison.OrdinalIgnoreCase)); }
+                try { ad = ActiveDirectoryCache.Inventory.ToList().FirstOrDefault(c => c != null && ComputerName.Same(c.Name, computer)); }
                 catch (Exception) { }   // inventory being refreshed
                 ComputerUpdateState state = null;
                 WithStore(store => state = store.Find(computer), false);

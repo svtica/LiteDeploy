@@ -57,14 +57,14 @@ namespace LiteDeploy
         Form Owner { get { return host.Owner; } }
 
         /// <summary>
-        /// The computers an action applies to: the checked ones, else the selected ones; duplicates and empty
-        /// names removed (case-insensitive), sorted by name.
+        /// The computers an action applies to: the checked ones, else the selected ones; duplicates (the same
+        /// computer under two spellings: ComputerName) and empty names removed, sorted by name.
         /// </summary>
         public static List<String> Targets(IEnumerable<String> checkedNames, IEnumerable<String> selectedNames)
         {
-            List<String> source = (checkedNames ?? Enumerable.Empty<String>()).Where(n => !String.IsNullOrWhiteSpace(n)).ToList();
-            if (source.Count == 0) source = (selectedNames ?? Enumerable.Empty<String>()).Where(n => !String.IsNullOrWhiteSpace(n)).ToList();
-            List<String> result = source.Select(n => n.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            List<String> source = (checkedNames ?? Enumerable.Empty<String>()).Where(n => ComputerName.Key(n).Length > 0).ToList();
+            if (source.Count == 0) source = (selectedNames ?? Enumerable.Empty<String>()).Where(n => ComputerName.Key(n).Length > 0).ToList();
+            List<String> result = source.Select(n => n.Trim()).Distinct(ComputerName.Comparer).ToList();
             result.Sort(StringComparer.OrdinalIgnoreCase);
             return result;
         }
