@@ -293,6 +293,11 @@ namespace LiteDeploy
             public override Color ButtonPressedGradientBegin { get { return Accent; } }
             public override Color ButtonPressedGradientEnd { get { return Accent; } }
             public override Color ButtonSelectedBorder { get { return Accent; } }
+            // Toggle buttons that are on (filters of Software Updates, Show packages)
+            public override Color ButtonCheckedHighlight { get { return Selected; } }
+            public override Color ButtonCheckedGradientBegin { get { return Selected; } }
+            public override Color ButtonCheckedGradientMiddle { get { return Selected; } }
+            public override Color ButtonCheckedGradientEnd { get { return Selected; } }
             public override Color ToolStripDropDownBackground { get { return IsDark ? Theme.Surface : base.ToolStripDropDownBackground; } }
             public override Color ImageMarginGradientBegin { get { return IsDark ? Theme.Surface : base.ImageMarginGradientBegin; } }
             public override Color ImageMarginGradientMiddle { get { return IsDark ? Theme.Surface : base.ImageMarginGradientMiddle; } }

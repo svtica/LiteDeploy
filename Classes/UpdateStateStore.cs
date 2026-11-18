@@ -51,6 +51,8 @@ namespace LiteDeploy
         [XmlAttribute] public String OsCaption;
         /// <summary>Operating system type, as the worker last reported it ("ostype": ServerPolicy.Type*); null: never reported.</summary>
         [XmlAttribute] public String OsType;
+        /// <summary>Added by name in Software Updates (a computer that is not in Active Directory): kept in the list.</summary>
+        [XmlAttribute] public bool AddedByName;
         [XmlElement("Package")] public List<PackageUpdateState> Packages = new List<PackageUpdateState>();
 
         public PackageUpdateState Find(String id)

@@ -26,7 +26,10 @@ namespace LiteDeploy
         public String Theme = LiteDeploy.Theme.Automatic;
         /// <summary>Run update modules that are not signed (tests only: they run as SYSTEM on the computers).</summary>
         public bool AllowUnsignedModules = false;
-        /// <summary>Include servers in the software updates and installs (worker option --allow-servers). Default: workstations only.</summary>
+        /// <summary>
+        /// Include servers in the software updates and installs (worker option --allow-servers); the Software Updates
+        /// window also shows them then. Default: workstations only.
+        /// </summary>
         public bool IncludeServers = false;
         /// <summary>
         /// With IncludeServers, also domain controllers (worker option --allow-domain-controllers).
@@ -50,6 +53,24 @@ namespace LiteDeploy
         public bool ShowStandaloneDeployments = false;
         /// <summary>Get the logs: extra folders, "label|folder under %windir%|newest files" separated by ';' (RemoteLogs.ParseExtraFolders). Empty: none.</summary>
         public String ExtraLogFolders = "";
+
+        // ---- Software Updates window (restored when it opens; safe defaults when absent or unreadable) ----
+
+        /// <summary>Computers whose last logon (Active Directory) is older than this many days are "offline/stale"; 0: never.</summary>
+        public int UpdatesStaleDays = 30;
+        /// <summary>Normal bounds "x,y,width,height"; empty: the default size, centered.</summary>
+        public String UpdatesWindowBounds = "";
+        public bool UpdatesWindowMaximized = false;
+        /// <summary>Height of the details under the list (splitter); 0: default.</summary>
+        public int UpdatesSplitter = 0;
+        /// <summary>Columns of the computer view, "name:width:position;..." (WindowLayout.FormatColumns); empty: default.</summary>
+        public String UpdatesColumns = "";
+        /// <summary>Columns of the package view, same format.</summary>
+        public String UpdatesPackageColumns = "";
+        /// <summary>"computers" or "packages".</summary>
+        public String UpdatesView = "computers";
+        /// <summary>Active status filters (ComputerStatusFilter names separated by ','); empty: none.</summary>
+        public String UpdatesStatusFilter = "";
 
         /// <summary>A copy, so a window can change some settings and keep the others.</summary>
         public UserSettings Clone()

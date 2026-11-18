@@ -4,7 +4,10 @@
 // Author:  LiteDeploy contributors
 // Date:    2025-05-30
 // Purpose: Computer names of the current domain (LDAP search), cached in
-//          adcache.xml next to LiteDeploy.exe.
+//          adcache.xml next to LiteDeploy.exe, with the inventory of Software
+//          Updates (operating system, last logon, disabled account, OU). A
+//          cache written by an earlier version (names only) stays readable:
+//          its inventory has the names only until the next refresh.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -26,6 +29,8 @@ namespace LiteDeploy
     {
         public String DomainName;
         public List<String> Computers;
+        /// <summary>Details of the computers (absent from the files of earlier versions, ignored by them).</summary>
+        [XmlArrayItem("Computer")] public List<AdComputer> Inventory;
     }
 
     static public class ActiveDirectoryCache
@@ -41,6 +46,39 @@ namespace LiteDeploy
         static private Thread UpdateThread = new Thread( new ThreadStart(BeginADDownload) );
         static public volatile bool Abort = false;
 
+        // Replaced as a whole (never changed in place): readers can keep the list they got
+        static private volatile List<AdComputer> inventory = new List<AdComputer>();
+        // Being filled by a refresh
+        static private List<AdComputer> downloading = new List<AdComputer>();
+
+        /// <summary>
+        /// Computers of the domain with their details (Software Updates): the last refresh, else the cache.
+        /// Never changed once returned.
+        /// </summary>
+        static public IList<AdComputer> Inventory { get { return inventory; } }
+
+        /// <summary>Raised (on a worker thread) when a refresh replaced the inventory.</summary>
+        static public event EventHandler InventoryChanged;
+
+        /// <summary>Inventory of a cache file: its details, else its names only (file of an earlier version).</summary>
+        static internal List<AdComputer> InventoryOf(ActiveDirectoryCacheFile cache)
+        {
+            if (cache.Inventory != null && cache.Inventory.Count > 0)
+                return cache.Inventory.Where(c => c != null && !String.IsNullOrEmpty(c.Name)).ToList();
+            return (cache.Computers ?? new List<String>()).Where(n => !String.IsNullOrEmpty(n)).Select(n => new AdComputer { Name = n }).ToList();
+        }
+
+        static void SetInventory(List<AdComputer> list)
+        {
+            inventory = list;
+            EventHandler handler = InventoryChanged;
+            if (handler != null)
+            {
+                try { handler(null, EventArgs.Empty); }
+                catch (Exception) { }   // a window closed meanwhile
+            }
+        }
+
         static private ActiveDirectoryCacheFile LoadCacheFile()
         {
             using (FileStream file = new FileStream(Directory.GetCurrentDirectory() + "\\adcache.xml", FileMode.Open, FileAccess.Read))
@@ -55,6 +93,7 @@ namespace LiteDeploy
             ActiveDirectoryCacheFile cache = new ActiveDirectoryCacheFile();
             cache.DomainName = Environment.UserDomainName;
             cache.Computers = Computers;
+            cache.Inventory = downloading;
 
             using (FileStream file = new FileStream(Directory.GetCurrentDirectory() + "\\adcache.xml", FileMode.Create, FileAccess.Write))
             {
@@ -119,10 +158,12 @@ namespace LiteDeploy
                     cacheFound = true;
                     LastUpdate = File.GetLastWriteTime("adcache.xml");
 
-                    foreach (String s in cache.Computers)
+                    foreach (String s in cache.Computers ?? new List<String>())
                     {
                         CachedAD.Add(s);
                     }
+
+                    SetInventory(InventoryOf(cache));
                 }
             }
 
@@ -157,6 +198,7 @@ namespace LiteDeploy
                 try
                 {
                     Computers.Clear();
+                    downloading = new List<AdComputer>();
 
                     // SearchResultCollection must be disposed explicitly (it holds the
                     // unmanaged ADSI search handle), and so must every DirectoryEntry.
@@ -170,6 +212,12 @@ namespace LiteDeploy
                         mySearcher.SizeLimit = int.MaxValue;
                         mySearcher.PageSize = int.MaxValue;
                         mySearcher.PropertiesToLoad.Add("name");
+                        // Inventory of Software Updates
+                        mySearcher.PropertiesToLoad.Add("operatingSystem");
+                        mySearcher.PropertiesToLoad.Add("operatingSystemVersion");
+                        mySearcher.PropertiesToLoad.Add("lastLogonTimestamp");
+                        mySearcher.PropertiesToLoad.Add("userAccountControl");
+                        mySearcher.PropertiesToLoad.Add("distinguishedName");
 
                         using (SearchResultCollection FoundResults = mySearcher.FindAll())
                         {
@@ -178,24 +226,23 @@ namespace LiteDeploy
                                 if (Abort)
                                     return;
 
-                                if (resEnt.Properties["name"].Count == 0)
+                                SearchResult result = resEnt;
+                                AdComputer computer = AdComputer.FromProperties(p =>
+                                    result.Properties.Contains(p) && result.Properties[p].Count > 0 ? result.Properties[p][0] : null);
+                                if (computer == null)
                                     continue;
 
-                                String ComputerName = resEnt.Properties["name"][0].ToString();
-
-                                if (ComputerName.StartsWith("CN="))
-                                {
-                                    ComputerName = ComputerName.Remove(0, 3);
-                                }
-
-                                Computers.Add(ComputerName);
+                                Computers.Add(computer.Name);
+                                downloading.Add(computer);
                             }
                         }
                     }
 
                     Computers.Sort();
+                    downloading.Sort((a, b) => String.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
 
                     WriteCacheFile();
+                    SetInventory(downloading);
 
                     LastUpdate = DateTime.Now;
                 }

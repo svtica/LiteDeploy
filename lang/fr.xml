@@ -187,7 +187,6 @@
   <translation key="MainForm.optionsToolStripMenuItem1.Text">Options</translation>
   <translation key="MainForm.pingAllCheckedToolStripMenuItem.Text">Ping des ordinateurs cochés</translation>
   <translation key="MainForm.softwareUpdatesToolStripMenuItem.Text">Mises à jour logicielles...</translation>
-  <translation key="MainForm.SoftwareUpdates.Title">Mises à jour logicielles</translation>
   <translation key="MainForm.pingAllToolStripMenuItem.Text">Ping</translation>
   <translation key="MainForm.pingHost.Text">Ping</translation>
   <translation key="MainForm.priority.Items.0">Basse</translation>
@@ -358,9 +357,7 @@
   <!-- SoftwareUpdatesForm -->
   <translation key="SoftwareUpdatesForm.Text">Lite Deploy - Mises à jour logicielles</translation>
   <translation key="SoftwareUpdatesForm.checkButton.Text">Vérifier</translation>
-  <translation key="SoftwareUpdatesForm.checkButton.ToolTipText">Vérifier les versions installées et disponibles sur les ordinateurs cochés (tous les ordinateurs si aucun n'est coché)</translation>
   <translation key="SoftwareUpdatesForm.updateButton.Text">Mettre à jour la sélection</translation>
-  <translation key="SoftwareUpdatesForm.updateButton.ToolTipText">Mettre à jour les ordinateurs cochés (leurs paquets qui ont une mise à jour), ou les paquets cochés</translation>
   <translation key="SoftwareUpdatesForm.stopButton.Text">Arrêter</translation>
   <translation key="SoftwareUpdatesForm.editPackagesButton.Text">Liste des paquets...</translation>
   <translation key="SoftwareUpdatesForm.editPackagesButton.ToolTipText">Choisir les paquets winget à garder à jour</translation>
@@ -380,23 +377,18 @@
   <translation key="SoftwareUpdatesForm.Upgraded">Mis à jour {0}</translation>
   <translation key="SoftwareUpdatesForm.Failed">Échec {0} : {1}</translation>
   <translation key="SoftwareUpdatesForm.NoPackages">La liste des paquets est vide : cliquez sur « Liste des paquets... ».</translation>
-  <translation key="SoftwareUpdatesForm.Idle">{0} ordinateur(s), {1} paquet(s).</translation>
   <translation key="SoftwareUpdatesForm.ConfirmUpdate">Mettre à jour {0} paquet(s) sur {1} ordinateur(s) ? Leurs applications seront fermées sans avertissement avant la mise à jour.</translation>
   <translation key="SoftwareUpdatesForm.MissingTools">PsExec ou LiteDeploy.Worker.exe est absent à côté de LiteDeploy.exe.</translation>
   <translation key="SoftwareUpdatesForm.Running">En cours : {0} ordinateur(s) sur {1} terminé(s).</translation>
   <translation key="SoftwareUpdatesForm.ConfirmClose">Un traitement est en cours. L'arrêter et fermer ?</translation>
-  <translation key="MainForm.NoComputer">Ajoutez d'abord des ordinateurs à la liste (Ordinateurs &gt; Modifier la liste).</translation>
   <translation key="MainForm.toolsToolStripMenuItem.Text">Outils</translation>
   <translation key="MainForm.manageToolsToolStripMenuItem.Text">Gérer les outils...</translation>
   <translation key="MainForm.litePMToolStripMenuItem.Text">LitePM (processus)</translation>
   <translation key="MainForm.LitePMMissing">LitePM n'est pas installé : installez-le dans Outils &gt; Gérer les outils.</translation>
   <translation key="SoftwareUpdatesForm.selectOutdatedButton.Text">Sélectionner les désuets</translation>
-  <translation key="SoftwareUpdatesForm.selectOutdatedButton.ToolTipText">Cocher toutes les lignes qui ont une mise à jour disponible</translation>
   <translation key="SoftwareUpdatesForm.NothingOutdated">Aucune mise à jour disponible : cliquez d'abord sur « Vérifier » si la liste n'est pas à jour.</translation>
   <translation key="SoftwareUpdatesForm.selectAllButton.Text">Tout sélectionner</translation>
-  <translation key="SoftwareUpdatesForm.selectAllButton.ToolTipText">Cocher toutes les lignes (Ctrl+A)</translation>
   <translation key="SoftwareUpdatesForm.selectNoneButton.Text">Ne rien sélectionner</translation>
-  <translation key="SoftwareUpdatesForm.selectNoneButton.ToolTipText">Décocher toutes les lignes</translation>
   <translation key="SoftwareUpdatesForm.byPackageButton.Text">Afficher les paquets</translation>
   <translation key="SoftwareUpdatesForm.byPackageButton.ToolTipText">Une ligne par paquet au lieu d'une ligne par ordinateur</translation>
   <translation key="SoftwareUpdatesForm.updatesColumn.Text">Mises à jour disponibles</translation>
@@ -404,18 +396,9 @@
   <translation key="SoftwareUpdatesForm.Errors">{0} erreur(s)</translation>
   <translation key="SoftwareUpdatesForm.ErrorsAndUpdates">{0} erreur(s), {1} mise(s) à jour</translation>
   <translation key="SoftwareUpdatesForm.NothingToUpdate">Aucune mise à jour disponible sur les ordinateurs cochés : cliquez d'abord sur « Vérifier » si la liste n'est pas à jour.</translation>
-  <translation key="SoftwareUpdatesForm.OfferAddCredential">Aucun identifiant n'est enregistré : les ordinateurs sont joints avec votre compte ({0}). Ajouter un identifiant maintenant (Outils &gt; Identifiants) ?
-
-Oui : en ajouter un. Non : continuer avec votre compte.</translation>
-  <translation key="SoftwareUpdatesForm.OfferUseCredential">Aucun identifiant n'est choisi pour les mises à jour logicielles : les ordinateurs sont joints avec votre compte ({0}). Utiliser l'identifiant enregistré « {1} » ?
-
-Oui : l'utiliser. Non : continuer avec votre compte.</translation>
   <translation key="SoftwareUpdatesForm.OfferChooseCredential">Aucun identifiant n'est choisi pour les mises à jour logicielles : les ordinateurs sont joints avec votre compte ({0}). Choisir un identifiant dans Application &gt; Options maintenant ?
 
 Oui : ouvrir les options. Non : continuer avec votre compte.</translation>
-  <translation key="SoftwareUpdatesForm.OfferDefaultCredential">Utiliser « {0} » par défaut pour les mises à jour logicielles (Application &gt; Options) ?
-
-Oui : par défaut. Non : jusqu'à la fermeture de LiteDeploy.</translation>
   <translation key="PackageListForm.Text">Lite Deploy - Liste des paquets</translation>
   <translation key="PackageListForm.searchLabel.Text">Chercher dans winget :</translation>
   <translation key="PackageListForm.searchButton.Text">Chercher</translation>
@@ -490,9 +473,6 @@ Oui : par défaut. Non : jusqu'à la fermeture de LiteDeploy.</translation>
   <translation key="ModuleCatalog.Secret">{0} : {1} est un paramètre secret, jamais lu dans un catalogue : réglez-le dans Paramètres... (ignoré).</translation>
   <translation key="ModuleCatalog.TooLong">{0} : la valeur de {1} est trop longue, ignorée.</translation>
   <translation key="SoftwareUpdatesForm.Paused">En pause</translation>
-  <translation key="SoftwareUpdatesForm.NightOnlyNow">{0} ordinateur(s) ne sont mis à jour qu'en dehors des heures ouvrables ({1}). Les mettre à jour maintenant quand même ?
-
-Oui : les mettre à jour maintenant. Non : les ignorer.</translation>
   <translation key="SoftwareUpdatesForm.Connecting">Connexion...</translation>
   <translation key="SoftwareUpdatesForm.Started">Démarré</translation>
   <translation key="SoftwareUpdatesForm.StepChecking">Vérification...</translation>
@@ -501,7 +481,6 @@ Oui : les mettre à jour maintenant. Non : les ignorer.</translation>
   <translation key="SoftwareUpdatesForm.PauseReason">Raison de la pause ({0} ordinateur(s)) :</translation>
   <translation key="SoftwareUpdatesForm.pauseItem.Text">Mettre ces ordinateurs en pause...</translation>
   <translation key="SoftwareUpdatesForm.resumeItem.Text">Reprendre</translation>
-  <translation key="SoftwareUpdatesForm.nightOnlyItem.Text">Hors heures ouvrables seulement</translation>
   <translation key="Prompt.Ok">OK</translation>
   <translation key="Prompt.Cancel">Annuler</translation>
   <translation key="OptionsForm.themeLabel.Text">Thème :</translation>
@@ -539,7 +518,6 @@ Adresses IPv4 : {6}</translation>
   <translation key="SoftwareUpdatesForm.CardTitle">Fiche du poste - {0}</translation>
   <translation key="SoftwareUpdatesForm.WakeSent">Wake-on-LAN envoyé à {0} ordinateur(s). Ils peuvent prendre quelques minutes à démarrer.</translation>
   <translation key="SoftwareUpdatesForm.scheduleButton.Text">Planifier...</translation>
-  <translation key="SoftwareUpdatesForm.scheduleButton.ToolTipText">Planifier une vérification ou une mise à jour de ces ordinateurs</translation>
   <translation key="MainForm.schedulesToolStripMenuItem.Text">Mises à jour planifiées...</translation>
   <translation key="MainForm.ScheduleStarted">Mise à jour planifiée « {0} » démarrée.</translation>
   <translation key="MainForm.ScheduleFinished">Mise à jour planifiée « {0} » terminée (voir les journaux dans Outils &gt; Mises à jour planifiées).</translation>
@@ -635,9 +613,82 @@ Adresses IPv4 : {6}</translation>
   <translation key="SoftwareUpdatesForm.ConfirmInstall">Installer {0} sur {1} ordinateur(s) ?
 
 Il n'est installé que là où la vérification indique toujours qu'il n'est pas installé : {2}</translation>
-  <translation key="SoftwareUpdatesForm.NightOnlyInstallNow">{0} ordinateur(s) ne sont mis à jour qu'en dehors des heures ouvrables ({1}). Y installer maintenant quand même ?
-
-Oui : installer maintenant. Non : les ignorer.</translation>
   <translation key="SoftwareUpdatesForm.StepInstalling">Installation...</translation>
   <translation key="SoftwareUpdatesForm.Installed">Installé {0}</translation>
+  <!-- Software Updates: self-sufficient window -->
+  <translation key="MainForm.softwareUpdatesMenuButton.Text">Mises à jour logicielles</translation>
+  <translation key="MainForm.softwareUpdatesMenuButton.ToolTipText">Tous les ordinateurs d'Active Directory ; seulement les ordinateurs cochés s'il y en a</translation>
+  <translation key="MainForm.softwareUpdatesComputersMenuItem.Text">Mises à jour logicielles...</translation>
+  <translation key="SoftwareUpdatesForm.checkButton.ToolTipText">Vérifier les versions installées et disponibles sur les ordinateurs cochés, ou sur tous les ordinateurs affichés si aucun n'est coché (F5)</translation>
+  <translation key="SoftwareUpdatesForm.selectOutdatedButton.ToolTipText">Cocher exactement les lignes affichées qui ont une mise à jour disponible</translation>
+  <translation key="SoftwareUpdatesForm.selectAllButton.ToolTipText">Cocher toutes les lignes affichées (Ctrl+A)</translation>
+  <translation key="SoftwareUpdatesForm.selectNoneButton.ToolTipText">Décocher toutes les lignes, affichées ou non</translation>
+  <translation key="SoftwareUpdatesForm.updateButton.ToolTipText">Mettre à jour les ordinateurs cochés (leurs paquets qui ont une mise à jour), ou les paquets cochés (Ctrl+U)</translation>
+  <translation key="SoftwareUpdatesForm.stopButton.ToolTipText">Arrêter le traitement en cours (Échap)</translation>
+  <translation key="SoftwareUpdatesForm.actionsButton.Text">Actions</translation>
+  <translation key="SoftwareUpdatesForm.actionsButton.ToolTipText">Actions sur les ordinateurs cochés, ou sur les lignes sélectionnées si aucun n'est coché (comme le menu du clic droit)</translation>
+  <translation key="SoftwareUpdatesForm.scheduleButton.ToolTipText">Planifier une vérification ou une mise à jour des ordinateurs cochés, ou des ordinateurs affichés</translation>
+  <translation key="SoftwareUpdatesForm.searchLabel.Text">Rechercher :</translation>
+  <translation key="SoftwareUpdatesForm.searchBox.ToolTipText">Nom, système d'exploitation, UO ou paquet (Ctrl+F)</translation>
+  <translation key="SoftwareUpdatesForm.toUpdateFilter.Text">À mettre à jour</translation>
+  <translation key="SoftwareUpdatesForm.toUpdateFilter.ToolTipText">Ordinateurs qui ont des mises à jour disponibles (plusieurs filtres : l'un ou l'autre)</translation>
+  <translation key="SoftwareUpdatesForm.errorsFilter.Text">Erreurs</translation>
+  <translation key="SoftwareUpdatesForm.errorsFilter.ToolTipText">Erreurs de paquets, ou échec du dernier traitement</translation>
+  <translation key="SoftwareUpdatesForm.upToDateFilter.Text">À jour</translation>
+  <translation key="SoftwareUpdatesForm.notCheckedFilter.Text">Non vérifiés</translation>
+  <translation key="SoftwareUpdatesForm.pausedFilter.Text">En pause</translation>
+  <translation key="SoftwareUpdatesForm.nightOnlyFilter.Text">Hors heures ouvrables</translation>
+  <translation key="SoftwareUpdatesForm.nightOnlyFilter.ToolTipText">Ordinateurs mis à jour en dehors des heures ouvrables seulement</translation>
+  <translation key="SoftwareUpdatesForm.staleFilter.Text">Hors ligne/inactifs</translation>
+  <translation key="SoftwareUpdatesForm.StaleTip">Dernière ouverture de session (Active Directory) il y a plus de {0} jour(s), ou jamais</translation>
+  <translation key="SoftwareUpdatesForm.includeServersCheck.Text">Inclure les serveurs</translation>
+  <translation key="SoftwareUpdatesForm.selectionFilterButton.ToolTipText">Seulement les ordinateurs cochés dans la fenêtre principale : cliquez pour afficher tous les ordinateurs</translation>
+  <translation key="SoftwareUpdatesForm.SelectionFilter">Sélection : {0} ordinateur(s) ×</translation>
+  <translation key="SoftwareUpdatesForm.addButton.Text">Ajouter...</translation>
+  <translation key="SoftwareUpdatesForm.addButton.ToolTipText">Ajouter par leur nom des ordinateurs absents d'Active Directory (gardés dans la liste)</translation>
+  <translation key="SoftwareUpdatesForm.AddPrompt">Ordinateurs à ajouter (noms séparés par des espaces ou des virgules) :</translation>
+  <translation key="SoftwareUpdatesForm.Added">{0} ordinateur(s) ajouté(s), {1} déjà dans la liste, {2} masqué(s) par les filtres.</translation>
+  <translation key="SoftwareUpdatesForm.InvalidNames">Pas un nom d'ordinateur : {0}</translation>
+  <translation key="SoftwareUpdatesForm.osColumn.Text">SE</translation>
+  <translation key="SoftwareUpdatesForm.lastLogonColumn.Text">Dernière session (AD)</translation>
+  <translation key="SoftwareUpdatesForm.pausedColumn.Text">Pause</translation>
+  <translation key="SoftwareUpdatesForm.nightOnlyColumn.Text">Hors heures ouvrables</translation>
+  <translation key="SoftwareUpdatesForm.countsLabel.ToolTipText">Ordinateurs affichés / total / cochés</translation>
+  <translation key="SoftwareUpdatesForm.Counts">{0} affiché(s) / {1} au total / {2} coché(s)</translation>
+  <translation key="SoftwareUpdatesForm.NoComputers">Aucun ordinateur : la liste d'Active Directory n'est pas encore chargée, ou cliquez sur « Ajouter... ».</translation>
+  <translation key="SoftwareUpdatesForm.IdlePackages">{0} paquet(s) dans la liste des paquets.</translation>
+  <translation key="SoftwareUpdatesForm.PausedTip">En pause : {0}</translation>
+  <translation key="SoftwareUpdatesForm.NoReason">(aucune raison donnée)</translation>
+  <translation key="SoftwareUpdatesForm.NightOnlyTip">Mis à jour en dehors des heures ouvrables seulement (heures ouvrables : de {0} à {1}, du lundi au vendredi)</translation>
+  <translation key="SoftwareUpdatesForm.AddedByNameTip">Absent d'Active Directory : ajouté par son nom</translation>
+  <translation key="SoftwareUpdatesForm.NotInAdTip">Absent d'Active Directory</translation>
+  <translation key="SoftwareUpdatesForm.OuTip">UO : {0}</translation>
+  <translation key="SoftwareUpdatesForm.DetailsHint">Sélectionnez un ordinateur pour voir ses détails. Double-clic : fiche du poste. Clic droit : actions. F5 : vérifier, Ctrl+U : mettre à jour, Ctrl+F : rechercher.</translation>
+  <translation key="SoftwareUpdatesForm.Server">serveur</translation>
+  <translation key="SoftwareUpdatesForm.DetailsDirectory">Active Directory : {0}, dernière session {1}</translation>
+  <translation key="SoftwareUpdatesForm.Never">jamais</translation>
+  <translation key="SoftwareUpdatesForm.OfferAddCredentialOnce">Aucun identifiant n'est enregistré : les ordinateurs sont joints avec votre compte ({0}). Ajouter un identifiant maintenant ? Il devient celui des mises à jour logicielles par défaut (Application &gt; Options).
+
+Oui : en ajouter un. Non : continuer avec votre compte.</translation>
+  <translation key="SoftwareUpdatesForm.OfferUseCredentialOnce">Aucun identifiant n'est choisi pour les mises à jour logicielles : les ordinateurs sont joints avec votre compte ({0}). Utiliser l'identifiant enregistré « {1} » ? Il devient celui par défaut (Application &gt; Options).
+
+Oui : l'utiliser. Non : continuer avec votre compte.</translation>
+  <translation key="SoftwareUpdatesForm.NightOnlySkipped">{0} ordinateur(s) mis à jour hors heures ouvrables seulement sont ignorés pour l'instant (heures ouvrables) : {1}. Pour les mettre à jour maintenant, utilisez d'abord « Permettre les mises à jour pendant les heures ouvrables ».</translation>
+  <translation key="SoftwareUpdatesForm.ConfirmStop">Arrêter le traitement en cours ?</translation>
+  <translation key="SoftwareUpdatesForm.NoTargets">Aucun ordinateur coché ni sélectionné</translation>
+  <translation key="SoftwareUpdatesForm.TargetsChecked">{0} ordinateur(s) coché(s)</translation>
+  <translation key="SoftwareUpdatesForm.TargetsSelected">{0} ordinateur(s) sélectionné(s)</translation>
+  <translation key="SoftwareUpdatesForm.nightOnlyItem.Text">Mettre à jour hors heures ouvrables seulement</translation>
+  <translation key="SoftwareUpdatesForm.nightOnlyClearItem.Text">Permettre les mises à jour pendant les heures ouvrables</translation>
+  <translation key="SoftwareUpdatesForm.removeItem.Text">Retirer de la liste</translation>
+  <translation key="SoftwareUpdatesForm.removeItem.ToolTipText">Ordinateurs ajoutés par leur nom seulement : ils ne sont plus affichés (leur état enregistré est gardé)</translation>
+  <translation key="SoftwareUpdatesForm.ReadingCards">Lecture des fiches de {0} ordinateur(s)...</translation>
+  <translation key="SoftwareUpdatesForm.CardsTitle">Fiches des postes - {0} ordinateur(s)</translation>
+  <translation key="SoftwareUpdatesForm.CardDirectory">Système d'exploitation (AD) : {0}
+UO : {1}
+Dernière session (AD) : {2}</translation>
+  <translation key="SoftwareUpdatesForm.CardFailed">Non lue : {0}</translation>
+  <translation key="SoftwareUpdatesForm.FetchingLogsMany">Récupération des journaux de {0} ordinateur(s)...</translation>
+  <translation key="SoftwareUpdatesForm.LogsFetchedMany">Journaux de {0} sur {1} ordinateur(s) copiés dans {2}.</translation>
+  <translation key="TextViewForm.Copy">Copier</translation>
 </translations>
