@@ -244,6 +244,21 @@ Actions of the grid (checked computers, else the selected ones):
   files of the user kept, LiteDeploy restarted); also checked at start-up unless turned off in
   *App > Options*.
 
+### Settings outside App > Options
+`%LOCALAPPDATA%\LiteDeploy\settings.xml` also holds settings that *App > Options* does not show.
+LiteDeploy writes a comment before each of them in the file; close LiteDeploy before editing it
+(it rewrites the file at each save).
+
+| Setting | Where | What it does | Default |
+|---|---|---|---|
+| `AllowDomainControllers` | by hand only | `true`: with *Include servers*, the software updates and installs also reach the domain controllers | `false` |
+| `ExtraLogFolders` | by hand only | *Get the logs*: extra folders, `label\|folder under %windir%\|newest files` separated by `;` (see *Tools*) | empty |
+| `UpdatesStaleDays` | by hand only | *Offline/stale* filter: last logon older than this many days; `0`: never stale | `30` |
+| `SchedulerEngine` | *Tools > Scheduled Updates* | `internal` (while LiteDeploy is open) or `windows` (Windows scheduled tasks) | `internal` |
+| `WebCheckTime` | *Tools > Web Versions* | daily check of the web versions at this time (`HH:mm`); empty: none | empty |
+| `WebAutoDownload` | *Tools > Web Versions* | the daily check downloads the new versions to the cache (else report only) | `false` |
+| `WebVersionsWindowSize`, `UpdatesWindowBounds`, `UpdatesWindowMaximized`, `UpdatesSplitter`, `UpdatesColumns`, `UpdatesPackageColumns`, `UpdatesStatusFilter` | kept by LiteDeploy | size and position of the windows, columns and status filters of the grid | empty |
+
 ## Installation
 
 - **From LiteTask** (recommended): *Tools* menu > LiteDeploy. LiteTask downloads

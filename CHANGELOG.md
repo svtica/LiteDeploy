@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `settings.xml` is written with a comment before each setting that *App > Options* does not
+  show (`AllowDomainControllers`, `ExtraLogFolders`, `UpdatesStaleDays`, `SchedulerEngine`,
+  `WebCheckTime`, `WebAutoDownload`, window layout); the README lists them (*Settings outside
+  App > Options*).
+
 ### Changed
 
 - **One main window**: the grid of *Software Updates* (Active Directory computers and the
@@ -39,6 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the same file name as the current file of the instance, else the only one whose name says x64
   (`x64`, `win64`, `amd64`, `x86_64`, `64-bit`), else the only one that is not for another
   architecture (ARM64, 32-bit).
+- Soak test: the settings file it writes uses the root element of LiteDeploy
+  (`LiteDeploySettings`), so the standalone deployments it drives are shown.
 
 ## [1.0.18] - 2026-11-18
 

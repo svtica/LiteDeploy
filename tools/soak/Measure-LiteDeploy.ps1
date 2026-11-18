@@ -315,7 +315,7 @@ $env:LITEDEPLOY_LANG = 'en'
 $settingsFile = Join-Path $env:LOCALAPPDATA 'LiteDeploy\settings.xml'
 if (-not (Test-Path $settingsFile)) {
     New-Item -ItemType Directory -Force -Path (Split-Path $settingsFile) | Out-Null
-    Set-Content -Path $settingsFile -Encoding UTF8 -Value '<?xml version="1.0" encoding="utf-8"?><UserSettings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><ShowStandaloneDeployments>true</ShowStandaloneDeployments></UserSettings>'
+    Set-Content -Path $settingsFile -Encoding UTF8 -Value '<?xml version="1.0" encoding="utf-8"?><LiteDeploySettings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><ShowStandaloneDeployments>true</ShowStandaloneDeployments></LiteDeploySettings>'
 }
 Write-Host "Starting $workExe (cwd $work)"
 $proc = Start-Process -FilePath $workExe -WorkingDirectory $work -PassThru
