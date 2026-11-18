@@ -81,9 +81,11 @@ computer where the check says `notinstalled` (`-Action Update` leaves such a com
 
 ### MsixProvision
 
-One module for any MSIX package: add `module:MsixProvision` to the package list and set its
-parameters (*Parameters...*). Example, for a desktop application shipped as an MSIX bundle that
-needs a Windows optional feature:
+One module for any MSIX package: add it to the package list and set its parameters
+(*Parameters...*). It declares `# Instances: yes`, so several packages can be listed, one row per
+package (`module:MsixProvision/ExampleApp`, `module:MsixProvision/OtherApp`, each with its own
+parameters; see *Module instances*). Example, for a desktop application shipped as an MSIX bundle
+that needs a Windows optional feature:
 
 | Parameter | Example value | |
 |---|---|---|

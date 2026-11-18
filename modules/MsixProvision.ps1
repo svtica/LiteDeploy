@@ -9,6 +9,7 @@
 # Parameter: Features default= Windows optional features to enable first, separated by ; (e.g. VirtualMachinePlatform)
 # Parameter: Publisher default= Expected organisation (O=) of the package signer (default: the Publisher of the package manifest)
 # Install: yes
+# Instances: yes
 <#
 .SYNOPSIS
     LiteDeploy update module: provisions an MSIX package (and its dependency

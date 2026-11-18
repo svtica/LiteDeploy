@@ -493,6 +493,7 @@ namespace LiteDeploy.Tests
             UpdateModule msix = UpdateModules.Read(path);
             Assert.AreEqual(0, msix.Processes.Length, "nothing to close");
             Assert.AreEqual("MSIX package (provisioned)", msix.Label);
+            Assert.IsTrue(msix.Instances, "one package row per MSIX package");
             CollectionAssert.AreEqual(new[] { "PackageName", "Folder", "File", "Dependencies", "License", "Features", "Publisher" },
                 msix.Parameters.Select(p => p.Name).ToArray());
             CollectionAssert.AreEqual(new[] { "PackageName", "Folder" }, msix.Parameters.Where(p => p.Required).Select(p => p.Name).ToArray());
