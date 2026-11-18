@@ -112,7 +112,7 @@ namespace LiteDeploy.Worker
         {
             if (!UpdatePackage.IsValidId(id) || id.StartsWith(UpdatePackage.ModulePrefix, StringComparison.OrdinalIgnoreCase))
                 throw new ArgumentException("Invalid winget package Id.", "id");
-            return "install --id " + id + " -e --scope machine --silent --accept-package-agreements --accept-source-agreements --disable-interactivity";
+            return "install --id " + id + " -e --source winget --scope machine --silent --accept-package-agreements --accept-source-agreements --disable-interactivity";
         }
 
         /// <summary>

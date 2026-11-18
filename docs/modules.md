@@ -186,7 +186,7 @@ The *Install* action is explicit and opt-in:
   header of the signed script again before `-Action Install`; a module without `# Install: yes`
   is refused with a failed result: `Install refused: the module <Name> does not declare
   "# Install: yes" in its header.` No process is closed before an install.
-- winget package: `winget install --id <Id> -e --scope machine --silent
+- winget package: `winget install --id <Id> -e --source winget --scope machine --silent
   --accept-package-agreements --accept-source-agreements --disable-interactivity`, with the same
   reading of the exit code as an upgrade (0: installed; nothing to apply: skipped; any other code:
   failed, with its meaning).

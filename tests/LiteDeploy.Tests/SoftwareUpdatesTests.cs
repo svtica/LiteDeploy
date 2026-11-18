@@ -565,7 +565,7 @@ namespace LiteDeploy.Tests
         [TestMethod]
         public void Install_WingetArguments()
         {
-            Assert.AreEqual("install --id Example.Product -e --scope machine --silent --accept-package-agreements --accept-source-agreements --disable-interactivity",
+            Assert.AreEqual("install --id Example.Product -e --source winget --scope machine --silent --accept-package-agreements --accept-source-agreements --disable-interactivity",
                 WingetClient.InstallArguments("Example.Product"));
             foreach (string bad in new[] { null, "", "Bad Id", "A.B\" & calc", "module:Example" })
             {

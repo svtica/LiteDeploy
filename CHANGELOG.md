@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   of computers. Not part of *Update checked* nor of the schedules (a schedule runs check or update
   only); paused and "outside business hours only" computers are handled as for updates. The new
   worker command `install` checks first, installs only where the package is not installed, then
-  checks again. winget packages: `winget install --id <Id> -e --scope machine --silent
+  checks again. winget packages: `winget install --id <Id> -e --source winget --scope machine --silent
   --accept-package-agreements --accept-source-agreements --disable-interactivity`. Update modules
   (backward compatible): a module that declares `# Install: yes` in its header receives
   `-Action Install`, with the same result line, exit codes, time limit, signature check and
