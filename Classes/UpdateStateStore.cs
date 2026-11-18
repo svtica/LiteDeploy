@@ -5,7 +5,7 @@
 // Date:    2026-11-12
 // Purpose: State of the software updates per computer (installed and available
 //          versions, last check, last upgrade result, operating system and its
-//          type), kept in a local file,
+//          type, TeamViewer ID), kept in a local file,
 //          %LOCALAPPDATA%\LiteDeploy\updates.xml. Read when the Software
 //          Updates window opens; written only when a value changed (versions,
 //          status, results, errors): a check that finds nothing new does not
@@ -53,6 +53,8 @@ namespace LiteDeploy
         [XmlAttribute] public String OsType;
         /// <summary>Added by name in Software Updates (a computer that is not in Active Directory): kept in the list.</summary>
         [XmlAttribute] public bool AddedByName;
+        /// <summary>TeamViewer ID, as the worker last reported it ("teamviewer"); null: not installed or never reported.</summary>
+        [XmlAttribute] public String TeamViewerId;
         [XmlElement("Package")] public List<PackageUpdateState> Packages = new List<PackageUpdateState>();
 
         public PackageUpdateState Find(String id)
@@ -158,6 +160,9 @@ namespace LiteDeploy
                         // Kept for Wake-on-LAN: the adapters of a computer that is now off are still known
                         if (!String.IsNullOrEmpty(m["macs"])) c.Macs = m["macs"];
                         if (!String.IsNullOrEmpty(m["ips"])) c.Ips = m["ips"];
+                        // The card says it even when empty (TeamViewer removed); older workers do not send it
+                        if (m.Type == "info" && m.Fields.ContainsKey("teamviewer"))
+                            c.TeamViewerId = String.IsNullOrWhiteSpace(m["teamviewer"]) ? null : m["teamviewer"].Trim();
                         ApplyOs(c, m);
                         break;
                     case WorkerProtocol.TypeDone:

@@ -5,14 +5,18 @@
 // Date:    2026-11-11
 // Purpose: Actions on one remote computer offered by the right-click menus of
 //          the main window and of the process reports: ping, remote desktop,
-//          management console, admin share and public folders.
+//          management console, admin share and public folders; the local
+//          TeamViewer (connection to a TeamViewer ID).
 // -----------------------------------------------------------------------------
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading;
 using System.Windows.Forms;
+using Microsoft.Win32;
 
 namespace LiteDeploy
 {
@@ -49,6 +53,48 @@ namespace LiteDeploy
         static public void RemoteDesktop(String host)
         {
             using (Process.Start(new ProcessStartInfo("mstsc", "/v:" + host))) { }
+        }
+
+        /// <summary>The TeamViewer of this computer (TeamViewer.exe), null when it is not installed.</summary>
+        static public String LocalTeamViewer()
+        {
+            List<String> candidates = new List<String>();
+            foreach (RegistryView view in new[] { RegistryView.Registry64, RegistryView.Registry32 })
+            {
+                try
+                {
+                    using (RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, view))
+                    using (RegistryKey key = hklm.OpenSubKey(@"SOFTWARE\TeamViewer"))
+                    {
+                        String dir = key == null ? null : key.GetValue("InstallationDirectory") as String;
+                        if (!String.IsNullOrWhiteSpace(dir)) candidates.Add(Path.Combine(dir.Trim(), "TeamViewer.exe"));
+                    }
+                }
+                catch (Exception) { }
+            }
+            foreach (Environment.SpecialFolder folder in new[] { Environment.SpecialFolder.ProgramFiles, Environment.SpecialFolder.ProgramFilesX86 })
+            {
+                String root = Environment.GetFolderPath(folder);
+                if (!String.IsNullOrEmpty(root)) candidates.Add(Path.Combine(root, "TeamViewer", "TeamViewer.exe"));
+            }
+            return candidates.FirstOrDefault(File.Exists);
+        }
+
+        /// <summary>Arguments of TeamViewer.exe to connect to an ID (documented command line: -i | --id).</summary>
+        static public String TeamViewerArguments(String id)
+        {
+            String digits = new String((id ?? "").Where(Char.IsDigit).ToArray());
+            if (digits.Length == 0) throw new ArgumentException("A TeamViewer ID is required.", "id");
+            return "-i " + digits;
+        }
+
+        /// <summary>Starts the local TeamViewer connected to that ID; false when TeamViewer is not installed here.</summary>
+        static public bool ConnectTeamViewer(String id)
+        {
+            String exe = LocalTeamViewer();
+            if (exe == null) return false;
+            using (Process.Start(new ProcessStartInfo(exe, TeamViewerArguments(id)))) { }
+            return true;
         }
 
         /// <summary>Computer Management (RemoteManagement.msc, shipped next to LiteDeploy.exe) on the computer.</summary>

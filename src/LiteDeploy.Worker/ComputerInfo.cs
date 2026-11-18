@@ -5,7 +5,8 @@
 // Date:    2026-11-12
 // Purpose: "LiteDeploy.Worker.exe info": the computer card of LiteDeploy
 //          (logged-on users, last restart, pending restart, Windows version,
-//          operating system type (ServerPolicy), free space on C:, physical network adapters for Wake-on-LAN), as
+//          operating system type (ServerPolicy), free space on C:, physical network adapters for Wake-on-LAN,
+//          TeamViewer ID: empty when TeamViewer is not installed), as
 //          one WorkerProtocol message. From the identity check of the
 //          previous update panel.
 // -----------------------------------------------------------------------------
@@ -121,7 +122,82 @@ namespace LiteDeploy.Worker
                 "ostype", ServerPolicy.OsType(productType),
                 "freec", free,
                 "macs", string.Join(" ", macs),
-                "ips", string.Join(" ", ips));
+                "ips", string.Join(" ", ips),
+                "teamviewer", ReadTeamViewerId() ?? "");
+        }
+
+        /// <summary>Keys where TeamViewer keeps its ID: 64-bit, then 32-bit installation.</summary>
+        static readonly string[] TeamViewerKeys = { @"SOFTWARE\TeamViewer", @"SOFTWARE\WOW6432Node\TeamViewer" };
+
+        /// <summary>
+        /// Values holding the ID: ClientID, else ClientIDOfTSUser (the ID of the user session on a
+        /// computer with Remote Desktop Services).
+        /// </summary>
+        static readonly string[] TeamViewerValues = { "ClientID", "ClientIDOfTSUser" };
+
+        /// <summary>The TeamViewer ID of the computer (digits), null when TeamViewer is not installed.</summary>
+        public static string ReadTeamViewerId()
+        {
+            return FindTeamViewerId(RegistryValue, SubKeyNames);
+        }
+
+        /// <summary>
+        /// The first ID found under the TeamViewer keys: the key itself, then its "VersionN" subkeys
+        /// (older versions), the newest first. <paramref name="read"/>(key, value) reads a value of
+        /// HKLM, <paramref name="subKeys"/>(key) lists the subkeys (unit-tested with fakes).
+        /// </summary>
+        internal static string FindTeamViewerId(Func<string, string, object> read, Func<string, IEnumerable<string>> subKeys)
+        {
+            foreach (string root in TeamViewerKeys)
+            {
+                List<string> keys = new List<string> { root };
+                keys.AddRange((subKeys(root) ?? Enumerable.Empty<string>())
+                    .Where(n => n != null && n.StartsWith("Version", StringComparison.OrdinalIgnoreCase))
+                    .OrderByDescending(n => VersionNumber(n))
+                    .Select(n => root + @"\" + n));
+                foreach (string key in keys)
+                {
+                    foreach (string value in TeamViewerValues)
+                    {
+                        string id = FormatTeamViewerId(read(key, value));
+                        if (id != null) return id;
+                    }
+                }
+            }
+            return null;
+        }
+
+        static int VersionNumber(string subKey)
+        {
+            int n;
+            return int.TryParse(subKey.Substring("Version".Length), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out n) ? n : 0;
+        }
+
+        /// <summary>
+        /// A registry value as a TeamViewer ID: a DWORD (read as a signed Int32: taken as unsigned), a
+        /// QWORD or a string of digits (spaces allowed); null when empty, zero or not a number.
+        /// </summary>
+        internal static string FormatTeamViewerId(object value)
+        {
+            long id;
+            if (value is int)
+                id = unchecked((uint)(int)value);
+            else if (value is long)
+                id = (long)value;
+            else if (value is string text)
+            {
+                text = text.Replace(" ", "").Trim();
+                if (!long.TryParse(text, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out id)) return null;
+            }
+            else
+                return null;
+            return id > 0 ? id.ToString(System.Globalization.CultureInfo.InvariantCulture) : null;
+        }
+
+        static IEnumerable<string> SubKeyNames(string key)
+        {
+            try { using (RegistryKey k = Registry.LocalMachine.OpenSubKey(key)) return k == null ? new string[0] : k.GetSubKeyNames(); }
+            catch (Exception) { return new string[0]; }
         }
 
         /// <summary>
