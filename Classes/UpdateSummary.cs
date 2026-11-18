@@ -3,7 +3,7 @@
 // File:    UpdateSummary.cs
 // Author:  LiteDeploy contributors
 // Date:    2026-11-17
-// Purpose: One line per computer in Software Updates: from the saved state of
+// Purpose: One line per computer in the grid: from the saved state of
 //          a computer and the package list, its kind (not checked, paused,
 //          unreachable, updates available, errors, up to date), the packages
 //          with an update and the packages in error. Packages that are not

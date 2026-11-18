@@ -52,7 +52,7 @@ namespace LiteDeploy
         static private List<AdComputer> downloading = new List<AdComputer>();
 
         /// <summary>
-        /// Computers of the domain with their details (Software Updates): the last refresh, else the cache.
+        /// Computers of the domain with their details (the grid): the last refresh, else the cache.
         /// Never changed once returned.
         /// </summary>
         static public IList<AdComputer> Inventory { get { return inventory; } }
@@ -212,7 +212,7 @@ namespace LiteDeploy
                         mySearcher.SizeLimit = int.MaxValue;
                         mySearcher.PageSize = int.MaxValue;
                         mySearcher.PropertiesToLoad.Add("name");
-                        // Inventory of Software Updates
+                        // Inventory of the grid
                         mySearcher.PropertiesToLoad.Add("operatingSystem");
                         mySearcher.PropertiesToLoad.Add("operatingSystemVersion");
                         mySearcher.PropertiesToLoad.Add("lastLogonTimestamp");

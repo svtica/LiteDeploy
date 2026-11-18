@@ -97,10 +97,25 @@ namespace LiteDeploy
 
             String formName = form.GetType().Name;
             form.Text = T(formName + ".Text", form.Text);
+            ApplyFields(form);
+        }
 
-            foreach (FieldInfo field in form.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public))
+        /// <summary>Same as a window, for a user control: "Control.field.Text" (no title).</summary>
+        static public void Apply(UserControl control)
+        {
+            if (translations.Count == 0)
+                return;
+
+            ApplyFields(control);
+        }
+
+        static void ApplyFields(Control owner)
+        {
+            String formName = owner.GetType().Name;
+
+            foreach (FieldInfo field in owner.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public))
             {
-                Object value = field.GetValue(form);
+                Object value = field.GetValue(owner);
                 String key = formName + "." + field.Name;
 
                 if (value is ComboBox)

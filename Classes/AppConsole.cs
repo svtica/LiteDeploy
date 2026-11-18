@@ -104,9 +104,10 @@ namespace LiteDeploy
 
         static private String Mask(String message)
         {
-            // Never show the password typed in the main window.
-            if (parent != null && parent.credentials.Checked && parent.password.Text.Length > 0)
-                return message.Replace(parent.password.Text, "******");
+            // Never show the password typed in the deployment window.
+            String secret = parent != null ? parent.SecretToMask() : null;
+            if (secret != null)
+                return message.Replace(secret, "******");
 
             return message;
         }

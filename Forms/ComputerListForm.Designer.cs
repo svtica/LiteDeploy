@@ -217,7 +217,7 @@ namespace LiteDeploy
             this.Use.Name = "Use";
             this.Use.Size = new System.Drawing.Size(75, 23);
             this.Use.TabIndex = 7;
-            this.Use.Text = "Use List";
+            this.Use.Text = "Add";
             this.Use.UseVisualStyleBackColor = true;
             this.Use.Click += new System.EventHandler(this.Use_Click);
             // 
@@ -700,7 +700,7 @@ namespace LiteDeploy
             this.MinimizeBox = false;
             this.Name = "ComputerListForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Lite Deploy - Computers";
+            this.Text = "Lite Deploy - Computers to Add";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ComputerListForm_FormClosing);
             this.Load += new System.EventHandler(this.ComputerListForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.octet1)).EndInit();

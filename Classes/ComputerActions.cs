@@ -3,8 +3,8 @@
 // File:    ComputerActions.cs
 // Author:  LiteDeploy contributors
 // Date:    2026-11-18
-// Purpose: Actions on computers shared by the Software Updates window and the
-//          computer list of the main window (IComputerActionHost): computer
+// Purpose: Actions on computers of the grid of the main window
+//          (IComputerActionHost, ComputerGrid): computer
 //          card, TeamViewer ID, remote desktop (one window per computer),
 //          command prompt on the computer (RemoteConsole), quick commands
 //          (QuickCommands, run as SYSTEM by the worker, output in a text
@@ -162,14 +162,14 @@ namespace LiteDeploy
             if (targets.Count == 0) return;
             Dictionary<String, String> directory = targets.ToDictionary(c => c, DirectoryText, StringComparer.OrdinalIgnoreCase);
             host.SetStatus(targets.Count == 1
-                ? Localization.F("SoftwareUpdatesForm.ReadingCard", "Reading the computer card of {0}...", targets[0])
-                : Localization.F("SoftwareUpdatesForm.ReadingCards", "Reading the computer cards of {0} computer(s)...", targets.Count));
+                ? Localization.F("ComputerGrid.ReadingCard", "Reading the computer card of {0}...", targets[0])
+                : Localization.F("ComputerGrid.ReadingCards", "Reading the computer cards of {0} computer(s)...", targets.Count));
             ForEachInBackground(targets, c => ReadCard(c, directory[c]), cards =>
             {
                 host.SetStatus(null);
                 String title = targets.Count == 1
-                    ? Localization.F("SoftwareUpdatesForm.CardTitle", "Computer card - {0}", targets[0])
-                    : Localization.F("SoftwareUpdatesForm.CardsTitle", "Computer cards - {0} computer(s)", targets.Count);
+                    ? Localization.F("ComputerGrid.CardTitle", "Computer card - {0}", targets[0])
+                    : Localization.F("ComputerGrid.CardsTitle", "Computer cards - {0} computer(s)", targets.Count);
                 TextViewForm.ShowText(Owner, title, String.Join("\n\n", cards));
                 host.StoreChanged();
             });
@@ -180,11 +180,11 @@ namespace LiteDeploy
         {
             ComputerRow row = host.Row(computer);
             if (row == null || !row.InAd)
-                return Localization.T("SoftwareUpdatesForm.NotInAdTip", "Not in Active Directory");
-            return Localization.F("SoftwareUpdatesForm.CardDirectory", "Operating system (AD): {0}\nOU: {1}\nLast logon (AD): {2}",
+                return Localization.T("ComputerGrid.NotInAdTip", "Not in Active Directory");
+            return Localization.F("ComputerGrid.CardDirectory", "Operating system (AD): {0}\nOU: {1}\nLast logon (AD): {2}",
                 String.IsNullOrEmpty(row.Os) ? "?" : row.Os + (String.IsNullOrEmpty(row.OsVersion) ? "" : " (" + row.OsVersion + ")"),
                 String.IsNullOrEmpty(row.Ou) ? "?" : row.Ou,
-                row.LastLogon.HasValue ? row.LastLogon.Value.ToString("yyyy-MM-dd HH:mm") : Localization.T("SoftwareUpdatesForm.Never", "never"));
+                row.LastLogon.HasValue ? row.LastLogon.Value.ToString("yyyy-MM-dd HH:mm") : Localization.T("ComputerGrid.Never", "never"));
         }
 
         // Runs on a reader thread: the info of the worker, saved (adapters, operating system, TeamViewer ID)
@@ -210,16 +210,16 @@ namespace LiteDeploy
             sb.Append("== ").Append(computer).Append(" ==\n").Append(directory).Append('\n');
             if (info == null)
             {
-                sb.Append(Localization.F("SoftwareUpdatesForm.CardFailed", "Not read: {0}", failure));
+                sb.Append(Localization.F("ComputerGrid.CardFailed", "Not read: {0}", failure));
                 return sb.ToString();
             }
-            String none = Localization.T("SoftwareUpdatesForm.CardNone", "(none)");
-            sb.Append(Localization.F("SoftwareUpdatesForm.Card",
+            String none = Localization.T("ComputerGrid.CardNone", "(none)");
+            sb.Append(Localization.F("ComputerGrid.Card",
                 "Logged-on users: {0}\nLast restart: {1}\nRestart pending: {2}\nWindows: {3}\nType: {7}\nFree space on C: {4}\nAdapters (Wake-on-LAN): {5}\nIPv4 addresses: {6}\nTeamViewer ID: {8}",
-                Empty(info["users"], none), info["lastboot"], info["pendingrestart"] == "yes" ? Localization.T("SoftwareUpdatesForm.Yes", "yes") : Localization.T("SoftwareUpdatesForm.No", "no"),
+                Empty(info["users"], none), info["lastboot"], info["pendingrestart"] == "yes" ? Localization.T("ComputerGrid.Yes", "yes") : Localization.T("ComputerGrid.No", "no"),
                 info["os"], info["freec"], Empty(info["macs"], none), Empty(info["ips"], none),
-                Empty(ComputerUpdateState.OsTypeText(info["ostype"]), Localization.T("SoftwareUpdatesForm.CardUnknown", "(unknown)")),
-                info["teamviewer"] == null ? Localization.T("SoftwareUpdatesForm.CardUnknown", "(unknown)")
+                Empty(ComputerUpdateState.OsTypeText(info["ostype"]), Localization.T("ComputerGrid.CardUnknown", "(unknown)")),
+                info["teamviewer"] == null ? Localization.T("ComputerGrid.CardUnknown", "(unknown)")
                     : Empty(info["teamviewer"], Localization.T("ComputerActions.TeamViewerNotInstalled", "(TeamViewer not installed)"))));
             return sb.ToString();
         }
@@ -372,7 +372,7 @@ namespace LiteDeploy
                 return;
             if (RemoteRunner.Prerequisite() != null)
             {
-                MessageBox.Show(Owner, Localization.T("SoftwareUpdatesForm.MissingTools", "PsExec or LiteDeploy.Worker.exe is missing next to LiteDeploy.exe."),
+                MessageBox.Show(Owner, Localization.T("ComputerGrid.MissingTools", "PsExec or LiteDeploy.Worker.exe is missing next to LiteDeploy.exe."),
                     Owner.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
@@ -424,7 +424,7 @@ namespace LiteDeploy
             }
             if (RemoteRunner.Prerequisite() != null)
             {
-                MessageBox.Show(Owner, Localization.T("SoftwareUpdatesForm.MissingTools", "PsExec or LiteDeploy.Worker.exe is missing next to LiteDeploy.exe."),
+                MessageBox.Show(Owner, Localization.T("ComputerGrid.MissingTools", "PsExec or LiteDeploy.Worker.exe is missing next to LiteDeploy.exe."),
                     Owner.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
@@ -456,7 +456,7 @@ namespace LiteDeploy
                     ? Localization.T("ComputerActions.QuickDone", "Done.")
                     : Localization.F("ComputerActions.QuickExitCode", "Exit code {0}.", result["code"]));
             else
-                sb.Append(Localization.F("SoftwareUpdatesForm.CardFailed", "Not read: {0}", error != null ? error["message"] : failure ?? "?"));
+                sb.Append(Localization.F("ComputerGrid.CardFailed", "Not read: {0}", error != null ? error["message"] : failure ?? "?"));
             return sb.ToString();
         }
 
@@ -482,15 +482,15 @@ namespace LiteDeploy
                     if (WakeOnLan.Wake(c.Macs, c.Ips) > 0) computersWoken++;
                 }
             }, false);
-            host.SetStatus(Localization.F("SoftwareUpdatesForm.WakeSent", "Wake-on-LAN sent to {0} computer(s). They can take a few minutes to start.", computersWoken));
+            host.SetStatus(Localization.F("ComputerGrid.WakeSent", "Wake-on-LAN sent to {0} computer(s). They can take a few minutes to start.", computersWoken));
         }
 
         public void FetchLogs(List<String> targets)
         {
             if (targets.Count == 0) return;
             host.SetStatus(targets.Count == 1
-                ? Localization.F("SoftwareUpdatesForm.FetchingLogs", "Getting the logs of {0}...", targets[0])
-                : Localization.F("SoftwareUpdatesForm.FetchingLogsMany", "Getting the logs of {0} computer(s)...", targets.Count));
+                ? Localization.F("ComputerGrid.FetchingLogs", "Getting the logs of {0}...", targets[0])
+                : Localization.F("ComputerGrid.FetchingLogsMany", "Getting the logs of {0} computer(s)...", targets.Count));
             Owner.Cursor = Cursors.WaitCursor;
             new Thread(() =>
             {
@@ -524,8 +524,8 @@ namespace LiteDeploy
                         // One computer: its folder; several: the folder of every computer
                         String open = targets.Count == 1 ? folder : ScheduleRunner.LogDir;
                         host.SetStatus(targets.Count == 1
-                            ? Localization.F("SoftwareUpdatesForm.LogsFetched", "{0} log(s) of {1} copied to {2}.", total, targets[0], folder)
-                            : Localization.F("SoftwareUpdatesForm.LogsFetchedMany", "Logs of {0} of {1} computer(s) copied to {2}.", fetched, targets.Count, open));
+                            ? Localization.F("ComputerGrid.LogsFetched", "{0} log(s) of {1} copied to {2}.", total, targets[0], folder)
+                            : Localization.F("ComputerGrid.LogsFetchedMany", "Logs of {0} of {1} computer(s) copied to {2}.", fetched, targets.Count, open));
                         if (errors.Count > 0) TextViewForm.ShowText(Owner, Owner.Text, String.Join("\n", errors));
                         try { using (Process.Start(new ProcessStartInfo(open) { UseShellExecute = true })) { } } catch (Exception) { }
                     }));
@@ -554,7 +554,7 @@ namespace LiteDeploy
         {
             if (targets.Count == 0) return;
             String reason = Prompt.Show(Owner, Owner.Text,
-                Localization.F("SoftwareUpdatesForm.PauseReason", "Reason of the pause ({0} computer(s)):", targets.Count), "");
+                Localization.F("ComputerGrid.PauseReason", "Reason of the pause ({0} computer(s)):", targets.Count), "");
             if (reason == null) return;
             Change(targets, c => { c.Paused = true; c.PauseReason = reason.Length > 0 ? reason : null; });
         }

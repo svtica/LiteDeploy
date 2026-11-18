@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **One main window**: the grid of *Software Updates* (Active Directory computers and the
+  computers added, states, filters, search, check boxes, actions) is now the main window; the
+  checked list of the main window, *Computers > Edit List* and the separate *Software Updates*
+  window are gone. The console is under the grid (splitter). Menus: *App*, *Tools*, *Help*.
+  Shortcuts kept: F5 check, Ctrl+U update, Ctrl+F search, Ctrl+A check the rows shown, Esc stop.
+  Size, position, splitter, columns and filters are kept in the same settings as before.
+- **Add computers...** (tool bar and *Tools* menu) opens the computer search (Active Directory,
+  DNS scan, file, names typed); *Add* puts the computers in the grid and checks them (the ones that
+  are not in Active Directory are kept in `updates.xml`, as with the former *Add...*).
+- **Deploy a file or command...** (*Tools* menu, *Deploy...* in the tool bar and in the actions
+  of the grid; shown with *App > Options > Show the standalone deployments*): the former
+  deployment fields of the main window, in a non-modal window that deploys to the checked
+  computers of the grid, else the selected rows (named at the top, followed live), and keeps its
+  fields. *Restart* and *Shutdown* fill the command there.
+- **Ping** (*Tools* menu and actions of the grid): the checked computers, else every computer
+  shown; *Check all OK* and *Uncheck all FAIL* change the checks of the grid, *Remove* unchecks
+  (and takes out the computers added by name). *Remove all FAIL* and *Remove all ERROR* now remove
+  only what they name.
+- New actions of the grid: ping, management console, administrative share (C$, public desktop,
+  start menu), copy the names.
+- Soak test (`tools/soak`): drives the new interface, and still the former one, so that a pull
+  request can be compared with an older base.
+
 ### Fixed
 
 - *Download to the cache*: a zip installer holding several installers of the type of the instance

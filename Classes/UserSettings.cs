@@ -27,8 +27,8 @@ namespace LiteDeploy
         /// <summary>Run update modules that are not signed (tests only: they run as SYSTEM on the computers).</summary>
         public bool AllowUnsignedModules = false;
         /// <summary>
-        /// Include servers in the software updates and installs (worker option --allow-servers); the Software Updates
-        /// window also shows them then. Default: workstations only.
+        /// Include servers in the software updates and installs (worker option --allow-servers); the grid of
+        /// the main window also shows them then. Default: workstations only.
         /// </summary>
         public bool IncludeServers = false;
         /// <summary>
@@ -60,7 +60,7 @@ namespace LiteDeploy
         /// <summary>Size of the Web versions window, "width,height" (empty: default).</summary>
         public String WebVersionsWindowSize = "";
 
-        // ---- Software Updates window (restored when it opens; safe defaults when absent or unreadable) ----
+        // ---- Main window and its grid (restored when it opens; safe defaults when absent or unreadable) ----
 
         /// <summary>Computers whose last logon (Active Directory) is older than this many days are "offline/stale"; 0: never.</summary>
         public int UpdatesStaleDays = 30;

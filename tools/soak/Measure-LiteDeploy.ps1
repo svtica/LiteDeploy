@@ -8,12 +8,16 @@
     stand-in next to it (tools/soak/PsExecStub.cs: no network, no service),
     starts LiteDeploy and drives it with UI Automation, the way an
     administrator uses it during a working day:
-      - fills the computer list (Computers > Add, then "Use List");
-      - every cycle: "Start Deploy" on all the computers (one PsExec per
-        computer, output parsed into the process report);
-      - every 3rd cycle: Computers > Ping, wait for the end, close;
-      - every 5th cycle: edit the computer list again ("Use List" and the
-        confirmation), check all computers again.
+      - fills the computer list (Tools > Add computers..., then "Add": the
+        computers are added to the grid and checked);
+      - every cycle: "Start Deploy" of the deployment window (Tools > Deploy
+        a file or command...) on all the computers (one PsExec per computer,
+        output parsed into the process report);
+      - every 3rd cycle: Tools > Ping, wait for the end, close;
+      - every 5th cycle: add a computer again (Tools > Add computers...).
+    Revisions before the computer grid (main window with a checked list, a
+    "Computers" button and the deployment fields) are driven the old way, so
+    that a pull request can be compared with such a base.
     Message boxes are answered automatically (Yes, else OK) and counted.
 
     Samples every SampleSeconds: Private Bytes, Working Set, kernel handles,
@@ -307,7 +311,7 @@ $workExe = Join-Path $work (Split-Path $exe -Leaf)
 # Windows are found by their English titles and menu names: English interface whatever the runner language
 $env:LITEDEPLOY_LANG = 'en'
 # The soak drives "Start Deploy": the standalone deployments (hidden by default)
-# must be shown. Older revisions ignore the setting. An existing settings file is kept.
+# must be shown (Tools > Deploy a file or command...). Older revisions ignore the setting. An existing settings file is kept.
 $settingsFile = Join-Path $env:LOCALAPPDATA 'LiteDeploy\settings.xml'
 if (-not (Test-Path $settingsFile)) {
     New-Item -ItemType Directory -Force -Path (Split-Path $settingsFile) | Out-Null
@@ -430,10 +434,40 @@ function Get-Main {
     return $w
 }
 
+# Revisions before the computer grid: the main window holds the checked list, the
+# "Computers" button and the deployment fields
+$script:legacy = $null -ne [SoakUi]::FindById((Get-Main), 'ListEditButton')
+Write-Host "User interface: $(if ($script:legacy) { 'checked list (before the computer grid)' } else { 'computer grid' })"
+
+# A menu item of the main window, with mouse clicks like a user (see SoakUi.ClickCenter)
+function Invoke-MenuItem([string] $menuName, [string] $itemName) {
+    # The process reports window opens over the main window: keep the menu bar visible
+    $reports = [SoakUi]::FindWindow($procId, 'Lite Deploy - Process Reports')
+    if ($reports) { [SoakUi]::Minimize($reports) }
+    $main = Get-Main
+    if (-not $main) { Write-ActionFailure "main window not found (windows: $([SoakUi]::Titles($procId)))"; return $false }
+    [SoakUi]::Activate($main)
+    Start-Sleep -Milliseconds 300
+    $menu = [SoakUi]::FindMenuItem($procId, $menuName)
+    if (-not $menu) { Write-ActionFailure "$menuName menu not found"; return $false }
+    if (-not [SoakUi]::ClickCenter($menu)) { Write-ActionFailure "click on the $menuName menu"; return $false }
+    $script:menuItem = $null
+    if (-not (Wait-Until { $script:menuItem = [SoakUi]::FindMenuItem($procId, $itemName); $null -ne $script:menuItem } 10)) {
+        Write-ActionFailure "$menuName > $itemName menu item not found"
+        return $false
+    }
+    if (-not [SoakUi]::ClickCenter($script:menuItem)) { Write-ActionFailure "click on $menuName > $itemName"; return $false }
+    return $true
+}
+
 function Open-ComputerList {
-    $button = [SoakUi]::FindById((Get-Main), 'ListEditButton')
-    if (-not $button) { Write-ActionFailure 'Computers button not found'; return $null }
-    [SoakUi]::InvokeAsync($button)
+    if ($script:legacy) {
+        $button = [SoakUi]::FindById((Get-Main), 'ListEditButton')
+        if (-not $button) { Write-ActionFailure 'Computers button not found'; return $null }
+        [SoakUi]::InvokeAsync($button)
+    } else {
+        if (-not (Invoke-MenuItem 'Tools' 'Add computers...')) { return $null }
+    }
     $script:designer = $null
     if (-not (Wait-Until { $script:designer = [SoakUi]::FindWindowPrefix($procId, 'Lite Deploy - Computers'); $null -ne $script:designer } 20)) {
         Write-ActionFailure 'computer list window did not open'
@@ -444,35 +478,59 @@ function Open-ComputerList {
 
 function Use-ComputerList($designer) {
     $use = [SoakUi]::FindById($designer, 'Use')
-    if (-not $use) { Write-ActionFailure '"Use List" button not found'; return $false }
+    if (-not $use) { Write-ActionFailure '"Use List" / "Add" button not found'; return $false }
     [SoakUi]::InvokeAsync($use)
-    # The confirmation ("This will clear the Selected Computers List") is answered Yes
+    # Before the grid, the confirmation ("This will clear the Selected Computers List") is answered Yes
     if (-not (Wait-Until { $null -eq [SoakUi]::FindWindowPrefix($procId, 'Lite Deploy - Computers') } 20)) {
         Write-ActionFailure 'computer list window did not close'
         return $false
     }
-    $checkAll = [SoakUi]::FindById((Get-Main), 'checkAll')
-    if (-not $checkAll) { Write-ActionFailure '"Check All" button not found'; return $false }
-    [SoakUi]::InvokeAsync($checkAll)
+    # The grid checks the computers added; the checked list needs "Check All"
+    if ($script:legacy) {
+        $checkAll = [SoakUi]::FindById((Get-Main), 'checkAll')
+        if (-not $checkAll) { Write-ActionFailure '"Check All" button not found'; return $false }
+        [SoakUi]::InvokeAsync($checkAll)
+    }
     [void](Wait-Until { [SoakUi]::Pending -eq 0 } 10)
     return $true
+}
+
+function Add-Hosts($designer, $names) {
+    $manualPC = [SoakUi]::FindById($designer, 'manualPC')
+    $manAdd = [SoakUi]::FindById($designer, 'manAdd')
+    if (-not $manualPC -or -not $manAdd) { return $false }
+    foreach ($h in $names) {
+        if (-not [SoakUi]::SetValue($manualPC, $h)) { Write-ActionFailure "set computer name $h"; continue }
+        [SoakUi]::InvokeAsync($manAdd)
+        [void](Wait-Until { [SoakUi]::Pending -eq 0 } 10)
+    }
+    return $true
+}
+
+# The window that holds "Start Deploy" and the command: the main window before the grid, else
+# the deployment window (Tools > Deploy a file or command..., non-modal, kept open)
+function Get-DeployWindow {
+    if ($script:legacy) { return Get-Main }
+    $w = [SoakUi]::FindWindow($procId, 'Lite Deploy - Deploy')
+    if ($w) { return $w }
+    if (-not (Invoke-MenuItem 'Tools' 'Deploy a file or command...')) { return $null }
+    $script:deployWindow = $null
+    if (-not (Wait-Until { $script:deployWindow = [SoakUi]::FindWindow($procId, 'Lite Deploy - Deploy'); $null -ne $script:deployWindow } 20)) {
+        Write-ActionFailure 'deployment window did not open'
+        return $null
+    }
+    return $script:deployWindow
 }
 
 # Fill the computer list
 $designer = Open-ComputerList
 if (-not $designer) { $designer = Open-ComputerList }   # one retry: the first click can come too early
 if (-not $designer) { throw "Could not open the computer list (windows: $([SoakUi]::Titles($procId)))" }
-$manualPC = [SoakUi]::FindById($designer, 'manualPC')
-$manAdd = [SoakUi]::FindById($designer, 'manAdd')
-if (-not $manualPC -or -not $manAdd) { throw "Computer list controls not found" }
-foreach ($h in $hosts) {
-    if (-not [SoakUi]::SetValue($manualPC, $h)) { Write-ActionFailure "set computer name $h"; continue }
-    [SoakUi]::InvokeAsync($manAdd)
-    [void](Wait-Until { [SoakUi]::Pending -eq 0 } 10)
-}
+if (-not (Add-Hosts $designer $hosts)) { throw "Computer list controls not found" }
 if (-not (Use-ComputerList $designer)) { throw "Could not fill the computer list" }
 
-$arguments = [SoakUi]::FindById((Get-Main), 'arguments')
+$deployWindow = Get-DeployWindow
+$arguments = if ($deployWindow) { [SoakUi]::FindById($deployWindow, 'arguments') } else { $null }
 if (-not $arguments -or -not [SoakUi]::SetValue($arguments, 'cmd /c echo soak-%computername%')) {
     throw "Could not set the command to deploy"
 }
@@ -480,7 +538,8 @@ Write-Host "Computer list filled with $($hosts.Count) computers"
 
 # ---- Load cycles -------------------------------------------------------------
 function Start-Deployment {
-    $start = [SoakUi]::FindById((Get-Main), 'startDeploy')
+    $window = Get-DeployWindow
+    $start = if ($window) { [SoakUi]::FindById($window, 'startDeploy') } else { $null }
     if (-not $start) { Write-ActionFailure '"Start Deploy" button not found'; return }
     [SoakUi]::InvokeAsync($start)
     # The button is disabled while the deployment runs
@@ -494,23 +553,8 @@ function Start-Deployment {
 }
 
 function Start-PingAll {
-    # The process reports window opens over the main window: keep the menu bar visible
-    $reports = [SoakUi]::FindWindow($procId, 'Lite Deploy - Process Reports')
-    if ($reports) { [SoakUi]::Minimize($reports) }
-    $main = Get-Main
-    if (-not $main) { Write-ActionFailure "main window not found (windows: $([SoakUi]::Titles($procId)))"; return }
-    [SoakUi]::Activate($main)
-    Start-Sleep -Milliseconds 300
-    $menu = [SoakUi]::FindMenuItem($procId, 'Computers')
-    if (-not $menu) { Write-ActionFailure 'Computers menu not found'; return }
-    # Mouse clicks, like a user: see SoakUi.ClickCenter
-    if (-not [SoakUi]::ClickCenter($menu)) { Write-ActionFailure 'click on the Computers menu'; return }
-    $script:pingItem = $null
-    if (-not (Wait-Until { $script:pingItem = [SoakUi]::FindMenuItem($procId, 'Ping'); $null -ne $script:pingItem } 10)) {
-        Write-ActionFailure 'Computers > Ping menu item not found'
-        return
-    }
-    if (-not [SoakUi]::ClickCenter($script:pingItem)) { Write-ActionFailure 'click on Computers > Ping'; return }
+    if ($script:legacy) { $ok = Invoke-MenuItem 'Computers' 'Ping' } else { $ok = Invoke-MenuItem 'Tools' 'Ping' }
+    if (-not $ok) { return }
     $script:pingWindow = $null
     if (-not (Wait-Until { $script:pingWindow = [SoakUi]::FindWindow($procId, 'Lite Deploy - Ping'); $null -ne $script:pingWindow } 20)) {
         Write-ActionFailure 'ping window did not open'
@@ -528,6 +572,8 @@ function Start-PingAll {
 
 function Edit-ComputerList {
     $d = Open-ComputerList
+    # The grid keeps its computers: the dialog opens empty, one computer is added again
+    if ($d -and -not $script:legacy) { [void](Add-Hosts $d @($hosts[0])) }
     if ($d -and (Use-ComputerList $d)) { $stats.ListEdits++ }
 }
 

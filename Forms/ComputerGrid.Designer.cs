@@ -1,13 +1,13 @@
 ﻿// -----------------------------------------------------------------------------
 // LiteDeploy - part of LiteSuite. Released under The Unlicense (see LICENSE).
-// File:    SoftwareUpdatesForm.Designer.cs
+// File:    ComputerGrid.Designer.cs
 // Author:  LiteDeploy contributors
 // Date:    2026-11-12
-// Purpose: Controls of the Software Updates window.
+// Purpose: Controls of the computer grid (main window).
 // -----------------------------------------------------------------------------
 namespace LiteDeploy
 {
-    partial class SoftwareUpdatesForm
+    partial class ComputerGrid
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -48,6 +48,17 @@ namespace LiteDeploy
             this.quickCommandsItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exportSeparator = new System.Windows.Forms.ToolStripSeparator();
             this.royalTsItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.pingItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.managementConsoleItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.adminShareItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.adminShareRootItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.publicDesktopItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.startMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.copyNameItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.deploySeparator = new System.Windows.Forms.ToolStripSeparator();
+            this.deployItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.deployButton = new System.Windows.Forms.ToolStripButton();
+            this.separator4 = new System.Windows.Forms.ToolStripSeparator();
             this.checkButton = new System.Windows.Forms.ToolStripButton();
             this.selectOutdatedButton = new System.Windows.Forms.ToolStripButton();
             this.selectAllButton = new System.Windows.Forms.ToolStripButton();
@@ -73,7 +84,6 @@ namespace LiteDeploy
             this.staleFilter = new System.Windows.Forms.ToolStripButton();
             this.filterSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.includeServersCheck = new System.Windows.Forms.CheckBox();
-            this.selectionFilterButton = new System.Windows.Forms.ToolStripButton();
             this.addButton = new System.Windows.Forms.ToolStripButton();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
             this.updatesList = new System.Windows.Forms.ListView();
@@ -108,6 +118,8 @@ namespace LiteDeploy
             //
             this.toolStrip.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.toolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.addButton,
+            this.separator4,
             this.selectAllButton,
             this.selectNoneButton,
             this.selectOutdatedButton,
@@ -117,6 +129,7 @@ namespace LiteDeploy
             this.stopButton,
             this.separator3,
             this.actionsButton,
+            this.deployButton,
             this.separator1,
             this.byPackageButton,
             this.editPackagesButton,
@@ -236,9 +249,7 @@ namespace LiteDeploy
             this.nightOnlyFilter,
             this.staleFilter,
             this.filterSeparator2,
-            new System.Windows.Forms.ToolStripControlHost(this.includeServersCheck),
-            this.selectionFilterButton,
-            this.addButton});
+            new System.Windows.Forms.ToolStripControlHost(this.includeServersCheck)});
             this.filterStrip.Location = new System.Drawing.Point(0, 25);
             this.filterStrip.Name = "filterStrip";
             this.filterStrip.Size = new System.Drawing.Size(1084, 25);
@@ -335,23 +346,26 @@ namespace LiteDeploy
             this.includeServersCheck.UseVisualStyleBackColor = false;
             this.includeServersCheck.CheckedChanged += new System.EventHandler(this.includeServersCheck_CheckedChanged);
             //
-            // selectionFilterButton
-            //
-            this.selectionFilterButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.selectionFilterButton.Name = "selectionFilterButton";
-            this.selectionFilterButton.Text = "Selection";
-            this.selectionFilterButton.ToolTipText = "Only the computers checked in the main window: click to show every computer";
-            this.selectionFilterButton.Visible = false;
-            this.selectionFilterButton.Click += new System.EventHandler(this.selectionFilterButton_Click);
-            //
             // addButton
             //
-            this.addButton.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
             this.addButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.addButton.Name = "addButton";
-            this.addButton.Text = "Add...";
-            this.addButton.ToolTipText = "Add computers that are not in Active Directory, by name (kept in the list)";
+            this.addButton.Text = "Add computers...";
+            this.addButton.ToolTipText = "Add computers to the list: Active Directory search, subnet scan, file or names typed (the ones not in Active Directory are kept in the list)";
             this.addButton.Click += new System.EventHandler(this.addButton_Click);
+            //
+            // separator4
+            //
+            this.separator4.Name = "separator4";
+            //
+            // deployButton
+            //
+            this.deployButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.deployButton.Name = "deployButton";
+            this.deployButton.Text = "Deploy...";
+            this.deployButton.ToolTipText = "Run a file or a command on the checked computers, or on the selected rows, through PsExec";
+            this.deployButton.Visible = false;
+            this.deployButton.Click += new System.EventHandler(this.deployItem_Click);
             //
             // splitContainer
             //
@@ -470,6 +484,12 @@ namespace LiteDeploy
             this.litePMItem,
             this.logsItem,
             this.wakeItem,
+            this.pingItem,
+            this.managementConsoleItem,
+            this.adminShareItem,
+            this.copyNameItem,
+            this.deploySeparator,
+            this.deployItem,
             this.exportSeparator,
             this.royalTsItem,
             this.removeSeparator,
@@ -533,6 +553,35 @@ namespace LiteDeploy
             this.removeItem.Text = "Remove from the list";
             this.removeItem.ToolTipText = "Computers added by name only: they are no longer shown (their saved state is kept)";
             this.removeItem.Click += new System.EventHandler(this.removeItem_Click);
+            this.pingItem.Name = "pingItem";
+            this.pingItem.Text = "Ping...";
+            this.pingItem.Click += new System.EventHandler(this.pingItem_Click);
+            this.managementConsoleItem.Name = "managementConsoleItem";
+            this.managementConsoleItem.Text = "Management console";
+            this.managementConsoleItem.Click += new System.EventHandler(this.managementConsoleItem_Click);
+            this.adminShareItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.adminShareRootItem,
+            this.publicDesktopItem,
+            this.startMenuItem});
+            this.adminShareItem.Name = "adminShareItem";
+            this.adminShareItem.Text = "Open admin share";
+            this.adminShareRootItem.Name = "adminShareRootItem";
+            this.adminShareRootItem.Text = "C$";
+            this.adminShareRootItem.Click += new System.EventHandler(this.adminShareRootItem_Click);
+            this.publicDesktopItem.Name = "publicDesktopItem";
+            this.publicDesktopItem.Text = "Public desktop";
+            this.publicDesktopItem.Click += new System.EventHandler(this.publicDesktopItem_Click);
+            this.startMenuItem.Name = "startMenuItem";
+            this.startMenuItem.Text = "Start menu (all users)";
+            this.startMenuItem.Click += new System.EventHandler(this.startMenuItem_Click);
+            this.copyNameItem.Name = "copyNameItem";
+            this.copyNameItem.Text = "Copy the names";
+            this.copyNameItem.Click += new System.EventHandler(this.copyNameItem_Click);
+            this.deploySeparator.Name = "deploySeparator";
+            this.deployItem.Name = "deployItem";
+            this.deployItem.Text = "Deploy a file or command...";
+            this.deployItem.ToolTipText = "Run a file or a command on these computers through PsExec";
+            this.deployItem.Click += new System.EventHandler(this.deployItem_Click);
             //
             // statusStrip
             //
@@ -561,23 +610,16 @@ namespace LiteDeploy
             this.progressBar.Name = "progressBar";
             this.progressBar.Size = new System.Drawing.Size(150, 16);
             //
-            // SoftwareUpdatesForm
+            // ComputerGrid
             //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1084, 561);
             this.Controls.Add(this.splitContainer);
             this.Controls.Add(this.statusStrip);
             this.Controls.Add(this.filterStrip);
             this.Controls.Add(this.toolStrip);
-            this.KeyPreview = true;
-            this.MinimumSize = new System.Drawing.Size(700, 360);
-            this.Name = "SoftwareUpdatesForm";
-            this.ShowIcon = false;
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Lite Deploy - Software Updates";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.SoftwareUpdatesForm_FormClosing);
-            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.SoftwareUpdatesForm_FormClosed);
+            this.Name = "ComputerGrid";
+            this.Size = new System.Drawing.Size(1084, 561);
             this.toolStrip.ResumeLayout(false);
             this.toolStrip.PerformLayout();
             this.filterStrip.ResumeLayout(false);
@@ -644,8 +686,18 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripButton staleFilter;
         private System.Windows.Forms.ToolStripSeparator filterSeparator2;
         private System.Windows.Forms.CheckBox includeServersCheck;
-        private System.Windows.Forms.ToolStripButton selectionFilterButton;
         private System.Windows.Forms.ToolStripButton addButton;
+        private System.Windows.Forms.ToolStripSeparator separator4;
+        private System.Windows.Forms.ToolStripButton deployButton;
+        private System.Windows.Forms.ToolStripMenuItem pingItem;
+        private System.Windows.Forms.ToolStripMenuItem managementConsoleItem;
+        private System.Windows.Forms.ToolStripMenuItem adminShareItem;
+        private System.Windows.Forms.ToolStripMenuItem adminShareRootItem;
+        private System.Windows.Forms.ToolStripMenuItem publicDesktopItem;
+        private System.Windows.Forms.ToolStripMenuItem startMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem copyNameItem;
+        private System.Windows.Forms.ToolStripSeparator deploySeparator;
+        private System.Windows.Forms.ToolStripMenuItem deployItem;
         private System.Windows.Forms.SplitContainer splitContainer;
         private System.Windows.Forms.ListView updatesList;
         private System.Windows.Forms.TextBox detailsBox;

@@ -22,7 +22,7 @@
         powershell.exe -File <Name>.ps1 -Action Install  (install the product: only
                                                           with the header line "# Install: yes")
     The processes listed in the header are closed by the worker before Update.
-    Install is an explicit action of the administrator (Software Updates, right-click >
+    Install is an explicit action of the administrator (grid of the main window, right-click >
     Install), run only where Check reported notinstalled; without "# Install: yes" the
     worker refuses it. Remove that line and the Install branch if the module cannot install.
     Parameters (header lines "# Parameter: Name [secret] [default=value] description")

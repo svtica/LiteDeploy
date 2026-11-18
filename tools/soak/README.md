@@ -14,11 +14,17 @@ What it does:
 - starts LiteDeploy and drives its UI with UI Automation:
   - fills the computer list with 16 computers (`127.0.0.1`, `localhost`,
     `SOAK-PC01`..`SOAK-PC11`, and `SOAK-ERR01`..`SOAK-ERR03`, which the
-    stand-in reports as unreachable);
-  - every cycle (20 s): **Start Deploy** of `cmd /c echo` on every computer;
-  - every 3rd cycle: **Computers > Ping**, wait for the end, close the window;
-  - every 5th cycle: edit the computer list again (**Use List**, answer the
-    confirmation, **Check All**);
+    stand-in reports as unreachable),
+    through **Tools > Add computers...** and **Add** (the grid checks them);
+  - every cycle (20 s): **Start Deploy** of `cmd /c echo` on every computer,
+    in the deployment window (**Tools > Deploy a file or command...**, kept
+    open);
+  - every 3rd cycle: **Tools > Ping**, wait for the end, close the window;
+  - every 5th cycle: add a computer again (**Tools > Add computers...**);
+  - a revision from before the computer grid (checked list in the main
+    window) is driven the old way (**Computers**, **Use List**, **Check
+    All**, **Computers > Ping**), so that `main` and a pull request can
+    still be compared;
   - answers any message box (Yes, else OK) and counts it;
 - records how long the main window takes to appear, then samples every 30 s:
   Private Bytes, Working Set, kernel handles, GDI objects, USER objects,

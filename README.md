@@ -6,38 +6,52 @@
 
 **Lightweight deployment tool: runs a program, a command or an MSI package on many Windows computers at once through PsExec.**
 
-LiteDeploy is a Windows Forms application for system administrators. Build a list of computers,
-choose what to run and how, start the deployment, and follow each computer in the process reports.
+LiteDeploy is a Windows Forms application for system administrators. Its main window is one grid of
+computers (Active Directory and the computers added): check the computers, then keep their
+software up to date, act on them, or run a file or a command on them through PsExec and follow
+each computer in the process reports.
 
 ## Features
 
-### Computer list
-- Add computers by name or IP address, or from an **Active Directory** search (cached locally,
-  refreshed on demand or at start-up; the domain computers are listed when the window opens and
-  filtered as you type), or a **DNS scan** of a /24 subnet.
-- Same computers as *Software Updates*: the search uses the same Active Directory inventory,
-  disabled computer accounts are never listed and servers only when **Include servers** is checked
-  (the same setting as in *Software Updates* and *App > Options*; changing it in one window changes
-  it everywhere). Both lists show the operating system and the last logon (columns sort on click;
-  the tooltip adds the version and the OU). Computers that are not in Active Directory (typed by
-  hand, read from a text file, found by a DNS scan) have no known operating system and are kept.
-  *Use List* applies the same filter to the main window's list.
+### Main window: the computer grid
+- One grid for everything: every enabled computer of **Active Directory** (from the local cache,
+  refreshed in the background) and the computers added, with their state, filters, search and
+  check boxes (see *Software updates* below for the columns and the filters). Menus: *App*
+  (options, exit), *Tools* (add computers, deploy, ping, process reports, scheduled updates, web
+  versions, credentials, tools, LitePM, console) and *Help*. The console of LiteDeploy is under
+  the grid (splitter). Shortcuts: F5 check, Ctrl+U update, Ctrl+F search, Ctrl+A check all the
+  rows shown, Esc stop.
+- **Add computers...** (tool bar or *Tools* menu) opens the computer search: by name or IP address,
+  an **Active Directory** search (the domain computers are listed when the window opens and
+  filtered as you type), a **DNS scan** of a /24 subnet, or a text file. *Add* puts the computers
+  chosen in the grid and checks them; the ones that are not in Active Directory are kept in the
+  grid (`updates.xml`) until *Remove from the list*.
+- Same rules everywhere: disabled computer accounts are never listed, servers only when **Include
+  servers** is checked (the same setting in the grid, the computer search and *App > Options*).
+  The search lists show the operating system and the last logon (columns sort on click; the
+  tooltip adds the version and the OU). Computers that are not in Active Directory (typed by hand,
+  read from a text file, found by a DNS scan) have no known operating system and are kept.
 - *Subnets* menu: the subnets of this computer and saved subnets with a name. *Edit subnets...*
   takes one subnet per line (`10.1.2.0/24 Garage`, /20 to /22 split into /24, `#` for comments)
   and imports a text or CSV file. A `subnets.txt` next to `LiteDeploy.exe` gives the team's
   list; it is site data, kept out of this public repository.
-- Save and open lists; check the computers to deploy to.
-- **Ping** all or the checked computers before deploying.
-- Right-click the list: ping, management console and administrative share of the selected
-  computer; and, on the checked computers (else the selected one), the same actions as in
-  *Software Updates*: remote desktop, computer card, TeamViewer ID, command prompt, quick commands,
-  send a message, Wake-on-LAN, get the logs, pause / resume, outside business hours only, and
-  *Export to Royal TS...* (see *Remote tools*).
+- Save and open lists in the computer search.
+- **Ping** (*Tools* menu, or the actions of the grid) the checked computers, else every computer
+  shown; at the end, check the ones that answer, uncheck or remove the ones that do not.
+- Actions (right-click, or the *Actions* menu of the tool bar) on the checked computers, else the
+  selected rows: the software update actions, the remote tools (remote desktop, computer card,
+  TeamViewer ID, command prompt, quick commands, send a message, Wake-on-LAN, get the logs),
+  ping, management console and administrative share (one computer), copy the names, deploy a file
+  or command, and *Export to Royal TS...* (see *Remote tools*).
 
 ### Standalone deployments (PsExec)
 Hidden by default: *App > Options > Show the standalone deployments*. PsExec is needed only for
 them (and for the PsExec method of the software updates); it is asked for when they are used.
-- Run an executable with arguments, or a command, on every checked computer.
+- *Deploy a file or command...* (*Tools* menu, *Deploy...* in the tool bar, or the actions of the
+  grid) opens the deployment window, non-modal: it deploys to the checked computers of the grid,
+  else the selected rows (named at the top of the window, followed live), and keeps its fields
+  from one deployment to the next.
+- Run an executable with arguments, or a command, on every target computer.
 - **MSI packages**: product name and version read from the package, `msiexec` options and logging.
 - PsExec options: copy the executable, overwrite, working directory, connection time-out,
   interactive session, run priority, don't wait for each process.
@@ -47,17 +61,14 @@ them (and for the PsExec method of the software updates); it is asked for when t
 - Stop the current PsExec or all processing.
 
 ### Software updates
-- **Software Updates** (*Computers > Software Updates...*, Ctrl+M) opens a window of its own,
-  non-modal, that needs no prior selection: every enabled
-  computer of **Active Directory** (from the local cache, refreshed in the background), the
-  computers of the main window's list, and computers added by name (*Add...*, for computers that
-  are not in Active Directory; kept in `updates.xml`). When computers are checked in the main
-  window, it opens filtered to them (*Selection: N computers ×* removes the filter). Typical use:
-  open it, *Select outdated*, *Update checked* (one confirmation).
+- In the grid of the main window, which needs no prior selection: every enabled computer of
+  **Active Directory** and the computers added (*Add computers...*; the ones that are not in Active
+  Directory are kept in `updates.xml`). Typical use: *Select outdated*, *Update checked* (one
+  confirmation).
 - One row per computer: OS (the one read on the computer when known, else Active Directory), last
   logon (Active Directory), status, updates available, last result, last change, *Pause* and
   *Outside business hours* (tooltip: the reason, the business hours). Every column sorts; columns
-  can be resized and moved. *Show packages*: one row per installed package (the window always
+  can be resized and moved. *Show packages*: one row per installed package (LiteDeploy always
   opens on one row per computer). A computer known under several spellings (`PC01`, `pc01`,
   `PC01.example.com`, `PC01$`) is one row; the states saved under two spellings in `updates.xml`
   are merged when it is read. Under the list, the details of the selected computer.
@@ -90,8 +101,8 @@ them (and for the PsExec method of the software updates); it is asked for when t
   (`%LOCALAPPDATA%\LiteDeploy\packages.txt`). State kept in
   `%LOCALAPPDATA%\LiteDeploy\updates.xml`.
 - The account is the current user or a stored credential (*Tools > Credentials*), chosen in
-  *App > Options*. The deployment credentials of the main window (*Saved...*) come from the
-  same store.
+  *App > Options*. The credentials of the deployment window (*Saved...*) come from the same
+  store.
 - Actions (right-click, or the *Actions* menu of the tool bar) apply to the checked computers, else
   to the selected rows: *Install* one package where the last check says it is not installed
   (explicit, with a confirmation; modules only when they declare `# Install: yes`; never part of
@@ -101,10 +112,10 @@ them (and for the PsExec method of the software updates); it is asked for when t
   Wake-on-LAN, get the logs. Each row shows the step in progress.
 
 ### Remote tools
-Shared by *Software Updates* and the main window's list (checked computers, else the selected ones):
+Actions of the grid (checked computers, else the selected ones):
 - **TeamViewer ID**: read on the computer by the worker (`ClientID`, else `ClientIDOfTSUser`, under
   `HKLM\SOFTWARE\TeamViewer` or its 32-bit `WOW6432Node` key), shown in the computer card, the
-  details and the tooltip of *Software Updates*, and kept in `updates.xml`. *TeamViewer ID...*
+  details and the tooltip of the grid, and kept in `updates.xml`. *TeamViewer ID...*
   shows the saved IDs at once (read from the computers when none is known, or with *Read from the
   computers*), with *Copy* and, when TeamViewer is installed on the administrator's computer,
   *Connect* (`TeamViewer.exe -i <ID>`).
@@ -208,7 +219,7 @@ Shared by *Software Updates* and the main window's list (checked computers, else
   progress bar, the item and step under way, the elapsed and estimated remaining time, and update
   each row as soon as its result is known; their button becomes *Cancel* (stops after the current
   item, keeps and saves the results already obtained).
-- Right-click a computer in Software Updates: processes and handles, get the logs.
+- Right-click a computer in the grid: processes and handles, get the logs.
   *Get the logs* copies the newest `*.log` files of the update modules (`%windir%\LiteDeploy\work`)
   and of winget (SYSTEM) to `%LOCALAPPDATA%\LiteDeploy\logs\<computer>\<date>`. Other folders
   are added in `%LOCALAPPDATA%\LiteDeploy\settings.xml` (no window for it), one entry
@@ -250,10 +261,12 @@ Shared by *Software Updates* and the main window's list (checked computers, else
 
 ## Usage
 
-1. **Computers > Edit List**: add the computers (manually, Active Directory, DNS scan), then
-   **Use List**.
-2. Choose the file to execute (or an MSI package) and its arguments, or type a command.
-3. Set the PsExec options and the identity (current user, credentials or SYSTEM).
+1. Check computers in the grid; **Add computers...** for the ones that are not in Active
+   Directory (manually, DNS scan, file).
+2. Software updates: **Check** (F5), **Select outdated**, **Update checked** (Ctrl+U).
+3. Deployment (shown in *App > Options*): **Tools > Deploy a file or command...**, choose the file
+   to execute (or an MSI package) and its arguments, or type a command; set the PsExec options and
+   the identity (current user, credentials or SYSTEM).
 4. **Start Deploy**, then follow each computer in **Process Reports**.
 
 ## Technology Stack

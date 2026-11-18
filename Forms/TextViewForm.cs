@@ -4,7 +4,7 @@
 // Author:  LiteDeploy contributors
 // Date:    2026-11-18
 // Purpose: Resizable, read-only text window with Copy and Close (computer
-//          cards of Software Updates): the text can be selected and copied,
+//          cards of the grid): the text can be selected and copied,
 //          unlike a message box. Built in code (no designer file).
 // -----------------------------------------------------------------------------
 using System;
