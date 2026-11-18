@@ -136,7 +136,14 @@ namespace LiteDeploy
 
             Current = settings;
             Apply();
+
+            // Windows that show a setting kept elsewhere too (Include servers) follow the change
+            EventHandler handler = Saved;
+            if (handler != null) handler(null, EventArgs.Empty);
         }
+
+        /// <summary>Raised (on the thread that saved, the UI thread) once new settings are saved and current.</summary>
+        static public event EventHandler Saved;
 
         static void Apply()
         {

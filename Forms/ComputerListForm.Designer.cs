@@ -88,6 +88,11 @@ namespace LiteDeploy
             this.main = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.selected = new System.Windows.Forms.ListView();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.candOsColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.candLastLogonColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.selOsColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.selLastLogonColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.includeServersCheck = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.octet1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.octet2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.octet3)).BeginInit();
@@ -589,9 +594,12 @@ namespace LiteDeploy
             | System.Windows.Forms.AnchorStyles.Right)));
             this.candidates.CausesValidation = false;
             this.candidates.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.main});
+            this.main,
+            this.candOsColumn,
+            this.candLastLogonColumn});
             this.candidates.FullRowSelect = true;
-            this.candidates.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
+            this.candidates.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Clickable;
+            this.candidates.ShowItemToolTips = true;
             this.candidates.HideSelection = false;
             this.candidates.LabelWrap = false;
             this.candidates.Location = new System.Drawing.Point(24, 203);
@@ -602,10 +610,22 @@ namespace LiteDeploy
             this.candidates.UseCompatibleStateImageBehavior = false;
             this.candidates.View = System.Windows.Forms.View.Details;
             this.candidates.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.candidates_MouseDoubleClick);
-            // 
+            this.candidates.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.list_ColumnClick);
+            //
             // main
-            // 
-            this.main.Width = 200;
+            //
+            this.main.Text = "Name";
+            this.main.Width = 105;
+            //
+            // candOsColumn
+            //
+            this.candOsColumn.Text = "Operating system";
+            this.candOsColumn.Width = 108;
+            //
+            // candLastLogonColumn
+            //
+            this.candLastLogonColumn.Text = "Last logon";
+            this.candLastLogonColumn.Width = 72;
             // 
             // selected
             // 
@@ -613,9 +633,12 @@ namespace LiteDeploy
             | System.Windows.Forms.AnchorStyles.Right)));
             this.selected.CausesValidation = false;
             this.selected.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.columnHeader1});
+            this.columnHeader1,
+            this.selOsColumn,
+            this.selLastLogonColumn});
             this.selected.FullRowSelect = true;
-            this.selected.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
+            this.selected.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Clickable;
+            this.selected.ShowItemToolTips = true;
             this.selected.HideSelection = false;
             this.selected.LabelWrap = false;
             this.selected.Location = new System.Drawing.Point(435, 203);
@@ -626,16 +649,40 @@ namespace LiteDeploy
             this.selected.UseCompatibleStateImageBehavior = false;
             this.selected.View = System.Windows.Forms.View.Details;
             this.selected.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.selected_MouseDoubleClick);
-            // 
+            this.selected.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.list_ColumnClick);
+            //
             // columnHeader1
-            // 
-            this.columnHeader1.Width = 200;
+            //
+            this.columnHeader1.Text = "Name";
+            this.columnHeader1.Width = 105;
+            //
+            // selOsColumn
+            //
+            this.selOsColumn.Text = "Operating system";
+            this.selOsColumn.Width = 108;
+            //
+            // selLastLogonColumn
+            //
+            this.selLastLogonColumn.Text = "Last logon";
+            this.selLastLogonColumn.Width = 72;
+            //
+            // includeServersCheck
+            //
+            this.includeServersCheck.AutoSize = true;
+            this.includeServersCheck.Location = new System.Drawing.Point(190, 185);
+            this.includeServersCheck.Name = "includeServersCheck";
+            this.includeServersCheck.Size = new System.Drawing.Size(98, 17);
+            this.includeServersCheck.TabIndex = 38;
+            this.includeServersCheck.Text = "Include servers";
+            this.includeServersCheck.UseVisualStyleBackColor = true;
+            this.includeServersCheck.CheckedChanged += new System.EventHandler(this.includeServersCheck_CheckedChanged);
             // 
             // ComputerListForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(764, 709);
+            this.Controls.Add(this.includeServersCheck);
             this.Controls.Add(this.selected);
             this.Controls.Add(this.candidates);
             this.Controls.Add(this.ListIOGroup);
@@ -724,6 +771,11 @@ namespace LiteDeploy
         private System.Windows.Forms.ImageList imageList;
         private System.Windows.Forms.ColumnHeader main;
         private System.Windows.Forms.ColumnHeader columnHeader1;
+        private System.Windows.Forms.ColumnHeader candOsColumn;
+        private System.Windows.Forms.ColumnHeader candLastLogonColumn;
+        private System.Windows.Forms.ColumnHeader selOsColumn;
+        private System.Windows.Forms.ColumnHeader selLastLogonColumn;
+        private System.Windows.Forms.CheckBox includeServersCheck;
         public System.Windows.Forms.ListView selected;
         private System.Windows.Forms.Button AddAllAvailable;
         private System.Windows.Forms.ToolStripMenuItem hostsToolStripMenuItem;

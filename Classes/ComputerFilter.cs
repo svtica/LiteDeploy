@@ -8,7 +8,9 @@
 //          building a row, server and "offline/stale" classification, the
 //          filters (search, status chips, servers, disabled accounts, the
 //          selection of the main window) and the checking of rows (select
-//          all visible, select outdated, targets of an action). Unit-tested.
+//          all visible, select outdated, targets of an action). The same
+//          server and disabled-account rules for the computer list and the
+//          main window's list (ComputerListFilter). Unit-tested.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -244,6 +246,60 @@ namespace LiteDeploy
         static bool Contains(String text, String part)
         {
             return text != null && text.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+    }
+
+    /// <summary>
+    /// Filters of the computer list (Computers > Edit list) and of the main window's list, the same as the
+    /// ones of Software Updates: a disabled Active Directory account is never shown, a server only when the
+    /// servers are included (UserSettings.IncludeServers). A computer unknown to Active Directory (typed by
+    /// hand, read from a text file, found by a DNS scan or a ping) has no known operating system: it is
+    /// kept, as a workstation.
+    /// </summary>
+    public static class ComputerListFilter
+    {
+        /// <summary>The Active Directory inventory by name (case-insensitive); entries without a name are skipped.</summary>
+        public static Dictionary<String, AdComputer> ByName(IEnumerable<AdComputer> inventory)
+        {
+            Dictionary<String, AdComputer> result = new Dictionary<String, AdComputer>(StringComparer.OrdinalIgnoreCase);
+            foreach (AdComputer c in inventory ?? Enumerable.Empty<AdComputer>())
+            {
+                if (c != null && !String.IsNullOrWhiteSpace(c.Name)) result[c.Name.Trim()] = c;
+            }
+            return result;
+        }
+
+        /// <summary>Shown or not: unknown to Active Directory (null): yes; disabled: no; server: only with includeServers.</summary>
+        public static bool IsShown(AdComputer ad, bool includeServers)
+        {
+            if (ad == null) return true;
+            if (ad.Disabled) return false;
+            return includeServers || !ad.IsServer;
+        }
+
+        /// <summary>
+        /// The names to keep, in their order; <paramref name="hidden"/> receives the others (servers not included,
+        /// disabled accounts). Empty names are dropped.
+        /// </summary>
+        public static List<String> Shown(IEnumerable<String> names, IDictionary<String, AdComputer> inventory, bool includeServers, out List<String> hidden)
+        {
+            List<String> shown = new List<String>();
+            hidden = new List<String>();
+            foreach (String n in names ?? Enumerable.Empty<String>())
+            {
+                if (String.IsNullOrWhiteSpace(n)) continue;
+                String name = n.Trim();
+                AdComputer ad = null;
+                if (inventory != null) inventory.TryGetValue(name, out ad);
+                if (IsShown(ad, includeServers)) shown.Add(name); else hidden.Add(name);
+            }
+            return shown;
+        }
+
+        /// <summary>Last logon as shown (and sorted) in the lists: "yyyy-MM-dd", empty when unknown.</summary>
+        public static String FormatLastLogon(DateTime? lastLogon)
+        {
+            return lastLogon.HasValue ? lastLogon.Value.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) : "";
         }
     }
 

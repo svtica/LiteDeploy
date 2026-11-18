@@ -152,6 +152,8 @@
     <Compile Include="Classes\ToolManager.cs" />
     <Compile Include="Classes\CacheDownloader.cs" />
     <Compile Include="Classes\ModuleCatalog.cs" />
+    <Compile Include="Classes\CatalogImport.cs" />
+    <Compile Include="Classes\SharedFolders.cs" />
     <Compile Include="Classes\MsixManifest.cs" />
     <Compile Include="Classes\WebVersionChecker.cs" />
     <Compile Include="Classes\WingetShowParser.cs" />
