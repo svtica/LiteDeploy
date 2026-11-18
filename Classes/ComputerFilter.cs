@@ -56,6 +56,8 @@ namespace LiteDeploy
         public bool Paused;
         public String PauseReason;
         public bool NightOnly;
+        /// <summary>TeamViewer ID last read on the computer; null: unknown or not installed.</summary>
+        public String TeamViewerId;
         /// <summary>Display names of the packages known on the computer (installed, outdated or in error): searched too.</summary>
         public List<String> PackageNames = new List<String>();
 
@@ -82,6 +84,7 @@ namespace LiteDeploy
                 row.PauseReason = state.PauseReason;
                 row.NightOnly = state.NightOnly;
                 row.AddedByName = state.AddedByName;
+                row.TeamViewerId = state.TeamViewerId;
                 if (packages != null)
                 {
                     foreach (UpdatePackage p in packages)
