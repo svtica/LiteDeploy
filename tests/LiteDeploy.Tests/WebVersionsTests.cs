@@ -151,7 +151,7 @@ namespace LiteDeploy.Tests
             Assert.AreEqual("show --id Contoso.ExampleApp -e --source winget --architecture x64 --installer-type wix --accept-source-agreements --disable-interactivity",
                 WebVersionChecker.ShowArguments("Contoso.ExampleApp", "wix"));
             foreach (string bad in new[] { null, "", "a b", "x\" --override y", "module:CachedInstaller" })
-                Assert.ThrowsException<ArgumentException>(() => WebVersionChecker.ShowArguments(bad, "msi"), bad);
+                Assert.ThrowsException<ArgumentException>(() => WebVersionChecker.ShowArguments(bad, "msi"), bad ?? "(null)");
             CollectionAssert.AreEqual(new[] { "msi", "wix" }, WebVersionChecker.InstallerTypesOf("MSI"));
             CollectionAssert.AreEqual(new[] { "msix" }, WebVersionChecker.InstallerTypesOf("msix"));
             Assert.AreEqual("exe", WebVersionChecker.InstallerTypesOf("exe")[0]);
