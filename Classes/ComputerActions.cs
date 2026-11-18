@@ -8,7 +8,9 @@
 //          card, TeamViewer ID, remote desktop (one window per computer),
 //          command prompt on the computer (RemoteConsole), quick commands
 //          (QuickCommands, run as SYSTEM by the worker, output in a text
-//          window), Wake-on-LAN, logs, pause and "outside business hours
+//          window), a message to the logged-on users (UserMessage, worker
+//          "message"; also "Ask the users to restart" in the quick
+//          commands), Wake-on-LAN, logs, pause and "outside business hours
 //          only" flags (updates.xml), export to Royal TS (RoyalTsExport).
 //          Targets: the checked computers, else the selected one(s)
 //          (Targets, unit-tested).
@@ -39,6 +41,46 @@ namespace LiteDeploy
         void StoreChanged();
     }
 
+    internal enum MessageResultKind
+    {
+        /// <summary>Shown in at least one session.</summary>
+        Sent,
+        /// <summary>Reached the computer, but nobody is logged on (or every session is disconnected).</summary>
+        NoUser,
+        /// <summary>Not shown: the computer could not be reached, or no session could get it.</summary>
+        Failed
+    }
+
+    /// <summary>What the worker said of a message on one computer (its type=message line).</summary>
+    internal sealed class MessageResult
+    {
+        public MessageResultKind Kind;
+        public int Sessions;
+        public String Users = "";
+        public String Error = "";
+
+        /// <summary>From the worker's messages, or the failure of the run when it wrote nothing.</summary>
+        public static MessageResult From(IList<WorkerMessage> messages, String failure)
+        {
+            WorkerMessage line = (messages ?? new List<WorkerMessage>()).FirstOrDefault(m => m.Type == UserMessage.TypeResult);
+            if (line == null)
+            {
+                WorkerMessage error = (messages ?? new List<WorkerMessage>()).FirstOrDefault(m => m.Type == WorkerProtocol.TypeError);
+                return new MessageResult { Kind = MessageResultKind.Failed, Error = error != null ? error["message"] ?? "" : failure ?? "" };
+            }
+            int sessions, failed;
+            Int32.TryParse(line["sessions"], out sessions);
+            Int32.TryParse(line["failed"], out failed);
+            return new MessageResult
+            {
+                Kind = sessions > 0 ? MessageResultKind.Sent : failed > 0 ? MessageResultKind.Failed : MessageResultKind.NoUser,
+                Sessions = sessions,
+                Users = line["users"] ?? "",
+                Error = line["error"] ?? ""
+            };
+        }
+    }
+
     internal sealed class ComputerActions
     {
         /// <summary>Computers read at the same time (cards, TeamViewer IDs, quick commands).</summary>
@@ -57,14 +99,14 @@ namespace LiteDeploy
         Form Owner { get { return host.Owner; } }
 
         /// <summary>
-        /// The computers an action applies to: the checked ones, else the selected ones; duplicates and empty
-        /// names removed (case-insensitive), sorted by name.
+        /// The computers an action applies to: the checked ones, else the selected ones; duplicates (the same
+        /// computer under two spellings: ComputerName) and empty names removed, sorted by name.
         /// </summary>
         public static List<String> Targets(IEnumerable<String> checkedNames, IEnumerable<String> selectedNames)
         {
-            List<String> source = (checkedNames ?? Enumerable.Empty<String>()).Where(n => !String.IsNullOrWhiteSpace(n)).ToList();
-            if (source.Count == 0) source = (selectedNames ?? Enumerable.Empty<String>()).Where(n => !String.IsNullOrWhiteSpace(n)).ToList();
-            List<String> result = source.Select(n => n.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            List<String> source = (checkedNames ?? Enumerable.Empty<String>()).Where(n => ComputerName.Key(n).Length > 0).ToList();
+            if (source.Count == 0) source = (selectedNames ?? Enumerable.Empty<String>()).Where(n => ComputerName.Key(n).Length > 0).ToList();
+            List<String> result = source.Select(n => n.Trim()).Distinct(ComputerName.Comparer).ToList();
             result.Sort(StringComparer.OrdinalIgnoreCase);
             return result;
         }
@@ -282,7 +324,91 @@ namespace LiteDeploy
                 item.Click += (s, e) => RunQuickCommand(c, targets());
                 parent.DropDownItems.Add(item);
             }
+            // Not a command run on the computer: the message window, with the restart request ready
+            parent.DropDownItems.Add(new ToolStripSeparator());
+            ToolStripMenuItem askRestart = new ToolStripMenuItem(Localization.T("ComputerActions.AskRestart", "Ask the users to restart..."));
+            askRestart.Click += (s, e) => SendMessage(targets(), RestartRequestText);
+            parent.DropDownItems.Add(askRestart);
             Theme.Apply(parent.DropDown);
+        }
+
+        // ---- Message to the logged-on users -------------------------------------------------
+
+        static String RestartRequestText
+        {
+            get { return Localization.T("ComputerActions.MessageRestart", "Please restart your computer when convenient. Thank you!"); }
+        }
+
+        /// <summary>The ready texts of the message window.</summary>
+        public static List<String> MessagePresets()
+        {
+            return new List<String>
+            {
+                RestartRequestText,
+                Localization.T("ComputerActions.MessageSaveWork", "Please save your work: a maintenance of your computer starts in a few minutes. Thank you!"),
+                Localization.T("ComputerActions.MessageLogOff", "Please close your session when you are done. Thank you!")
+            };
+        }
+
+        /// <summary>
+        /// The message window, then (after a confirmation that names the number of computers) the message sent to the
+        /// users logged on to each computer, a few computers at a time; one line per computer in a text window.
+        /// </summary>
+        public void SendMessage(List<String> targets, String text)
+        {
+            if (targets.Count == 0) return;
+            String message;
+            int seconds;
+            using (UserMessageForm form = new UserMessageForm(targets.Count, MessagePresets(), text))
+            {
+                if (form.ShowDialog(Owner) != DialogResult.OK) return;
+                message = form.MessageText;
+                seconds = form.Seconds;
+            }
+            if (UserMessage.Validate(message) != null) return;
+            String names = String.Join(", ", targets.Take(10)) + (targets.Count > 10 ? ", ..." : "");
+            if (MessageBox.Show(Owner, Localization.F("ComputerActions.ConfirmMessage", "Send this message to the users logged on to {0} computer(s)?\n\n{1}\n\n{2}", targets.Count, names, message),
+                    Owner.Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+                return;
+            if (RemoteRunner.Prerequisite() != null)
+            {
+                MessageBox.Show(Owner, Localization.T("SoftwareUpdatesForm.MissingTools", "PsExec or LiteDeploy.Worker.exe is missing next to LiteDeploy.exe."),
+                    Owner.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            String title = Localization.T("ComputerActions.MessageTitle", "Message from your administrator");
+            host.SetStatus(Localization.F("ComputerActions.SendingMessage", "Sending the message to {0} computer(s)...", targets.Count));
+            MessageResult[] results = new MessageResult[targets.Count];
+            ForEachInBackground(targets, c =>
+            {
+                UpdateRunResult r = UpdateRunner.Message(c, message, seconds, title);
+                MessageResult m = MessageResult.From(r.Messages, r.Failure);
+                results[targets.IndexOf(c)] = m;
+                return FormatMessageResult(c, m);
+            }, lines =>
+            {
+                host.SetStatus(null);
+                String summary = Localization.F("ComputerActions.MessageSummary", "Sent: {0} computer(s), no user logged on: {1}, failed: {2}.",
+                    results.Count(m => m != null && m.Kind == MessageResultKind.Sent),
+                    results.Count(m => m != null && m.Kind == MessageResultKind.NoUser),
+                    results.Count(m => m == null || m.Kind == MessageResultKind.Failed));
+                TextViewForm.ShowText(Owner, Localization.T("UserMessageForm.Text", "Send a message"), summary + "\n\n" + String.Join("\n", lines));
+            });
+        }
+
+        /// <summary>The line shown for one computer: sent to N session(s) (and the users), no user logged on, or failed.</summary>
+        public static String FormatMessageResult(String computer, MessageResult result)
+        {
+            switch (result.Kind)
+            {
+                case MessageResultKind.Sent:
+                    return Localization.F("ComputerActions.MessageSent", "{0}: sent to {1} session(s) ({2})", computer, result.Sessions, result.Users)
+                        + (result.Error.Length > 0 ? " - " + result.Error : "");
+                case MessageResultKind.NoUser:
+                    return Localization.F("ComputerActions.MessageNoUser", "{0}: no user logged on", computer);
+                default:
+                    return Localization.F("ComputerActions.MessageFailed", "{0}: failed: {1}", computer, result.Error.Length > 0 ? result.Error : "?");
+            }
         }
 
         /// <summary>Runs a quick command on the computers (a few at a time), after a question when it disturbs the users or targets several computers.</summary>

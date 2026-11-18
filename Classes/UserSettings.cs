@@ -73,8 +73,6 @@ namespace LiteDeploy
         public String UpdatesColumns = "";
         /// <summary>Columns of the package view, same format.</summary>
         public String UpdatesPackageColumns = "";
-        /// <summary>"computers" or "packages".</summary>
-        public String UpdatesView = "computers";
         /// <summary>Active status filters (ComputerStatusFilter names separated by ','); empty: none.</summary>
         public String UpdatesStatusFilter = "";
 

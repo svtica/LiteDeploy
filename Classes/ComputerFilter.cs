@@ -10,14 +10,80 @@
 //          selection of the main window) and the checking of rows (select
 //          all visible, select outdated, targets of an action). The same
 //          server and disabled-account rules for the computer list and the
-//          main window's list (ComputerListFilter). Unit-tested.
+//          main window's list (ComputerListFilter). One key per computer
+//          whatever its spelling (ComputerName): one row per computer.
+//          Unit-tested.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace LiteDeploy
 {
+    /// <summary>
+    /// One key per computer, whatever the spelling: its short (NetBIOS) name in upper case. "pc01",
+    /// "PC01.example.com", "PC01$" (account name), " PC01 " and "PC01" are the same computer; an IP address
+    /// is kept whole. The rows, the saved states (updates.xml), the checks and the targets of the actions
+    /// are matched with it, so that a computer known under two spellings (Active Directory, the main
+    /// window's list, a name typed in "Add", an older updates.xml) is one row, not two.
+    /// </summary>
+    public static class ComputerName
+    {
+        static readonly Regex Ipv4 = new Regex(@"^\d{1,3}(\.\d{1,3}){3}$", RegexOptions.CultureInvariant);
+
+        /// <summary>The key of a name ("" for null or blank).</summary>
+        public static String Key(String name)
+        {
+            if (name == null) return "";
+            String n = name;
+            // An Active Directory conflict object is named "PC01", a line feed, then "CNF:<guid>"
+            int lineBreak = n.IndexOfAny(new[] { '\r', '\n' });
+            if (lineBreak >= 0) n = n.Substring(0, lineBreak);
+            n = n.Trim().TrimStart((char)0x5C, '/').Trim().TrimEnd('.');
+            if (n.Length == 0) return "";
+            if (n.IndexOf(':') >= 0 || Ipv4.IsMatch(n)) return n.ToUpperInvariant();   // IP address
+            int dot = n.IndexOf('.');
+            if (dot > 0) n = n.Substring(0, dot);
+            return n.TrimEnd('$').Trim().ToUpperInvariant();
+        }
+
+        /// <summary>True when both names are the same computer.</summary>
+        public static bool Same(String a, String b)
+        {
+            return Key(a) == Key(b);
+        }
+
+        /// <summary>Compares computer names by their key (dictionaries and sets of computers).</summary>
+        public static readonly IEqualityComparer<String> Comparer = new KeyComparer();
+
+        sealed class KeyComparer : IEqualityComparer<String>
+        {
+            public bool Equals(String x, String y) { return Key(x) == Key(y); }
+            public int GetHashCode(String obj) { return StringComparer.Ordinal.GetHashCode(Key(obj)); }
+        }
+
+        /// <summary>
+        /// Of two Active Directory entries of the same computer (a conflict object, an old account), the one
+        /// to keep: an enabled account first, then the most recent logon.
+        /// </summary>
+        public static AdComputer Better(AdComputer a, AdComputer b)
+        {
+            if (a == null) return b;
+            if (b == null) return a;
+            if (a.Disabled != b.Disabled) return a.Disabled ? b : a;
+            DateTime la = a.LastLogon ?? DateTime.MinValue, lb = b.LastLogon ?? DateTime.MinValue;
+            return lb > la ? b : a;
+        }
+
+        /// <summary>A text shown in a cell of a list: on one line (line breaks and tabs become spaces).</summary>
+        public static String OneLine(String text)
+        {
+            if (String.IsNullOrEmpty(text)) return text ?? "";
+            return Regex.Replace(text, @"\s*[\r\n]+\s*", " ").Replace('\t', ' ');
+        }
+    }
+
     /// <summary>Status chips of Software Updates. Several chips: a row matching any of them is shown.</summary>
     [Flags]
     public enum ComputerStatusFilter
@@ -127,7 +193,7 @@ namespace LiteDeploy
         public ComputerStatusFilter Statuses = ComputerStatusFilter.None;
         public bool IncludeServers;
         public int StaleDays = 30;
-        /// <summary>Only these computers (checked in the main window; case-insensitive set); null: no such filter.</summary>
+        /// <summary>Only these computers (checked in the main window; a set with ComputerName.Comparer); null: no such filter.</summary>
         public HashSet<String> Selection;
     }
 
@@ -136,26 +202,47 @@ namespace LiteDeploy
         /// <summary>
         /// Computers of the window, with their Active Directory entry (null when not in AD): the Active Directory
         /// inventory, the computers added by name (updates.xml), and the computers of the main window's list.
-        /// Without any Active Directory inventory (no domain), every computer of updates.xml too. Sorted by name.
+        /// Without any Active Directory inventory (no domain), every computer of updates.xml too. One entry per
+        /// computer (ComputerName.Key: "PC01", "pc01" and "PC01.example.com" are one computer), named as Active
+        /// Directory names it, else as first saved or listed. Sorted by name.
         /// </summary>
         public static List<KeyValuePair<String, AdComputer>> Universe(IEnumerable<AdComputer> ad, IEnumerable<ComputerUpdateState> saved, IEnumerable<String> listed)
         {
-            Dictionary<String, AdComputer> result = new Dictionary<String, AdComputer>(StringComparer.OrdinalIgnoreCase);
+            Dictionary<String, AdComputer> byKey = new Dictionary<String, AdComputer>();
+            Dictionary<String, String> names = new Dictionary<String, String>();
             foreach (AdComputer c in ad ?? Enumerable.Empty<AdComputer>())
             {
-                if (c != null && !String.IsNullOrWhiteSpace(c.Name)) result[c.Name.Trim()] = c;
+                String key = c == null ? "" : ComputerName.Key(c.Name);
+                if (key.Length == 0) continue;
+                AdComputer kept;
+                AdComputer best = byKey.TryGetValue(key, out kept) ? ComputerName.Better(kept, c) : c;
+                byKey[key] = best;
+                names[key] = DisplayName(best.Name);
             }
-            bool noDirectory = result.Count == 0;
+            bool noDirectory = byKey.Count == 0;
             foreach (ComputerUpdateState s in saved ?? Enumerable.Empty<ComputerUpdateState>())
             {
-                if (s == null || String.IsNullOrWhiteSpace(s.Name) || result.ContainsKey(s.Name.Trim())) continue;
-                if (s.AddedByName || noDirectory) result[s.Name.Trim()] = null;
+                String key = s == null ? "" : ComputerName.Key(s.Name);
+                if (key.Length == 0 || names.ContainsKey(key)) continue;
+                if (s.AddedByName || noDirectory) { byKey[key] = null; names[key] = s.Name.Trim(); }
             }
             foreach (String name in listed ?? Enumerable.Empty<String>())
             {
-                if (!String.IsNullOrWhiteSpace(name) && !result.ContainsKey(name.Trim())) result[name.Trim()] = null;
+                String key = ComputerName.Key(name);
+                if (key.Length == 0 || names.ContainsKey(key)) continue;
+                byKey[key] = null;
+                names[key] = name.Trim();
             }
-            return result.OrderBy(e => e.Key, StringComparer.OrdinalIgnoreCase).ToList();
+            return byKey.Select(e => new KeyValuePair<String, AdComputer>(names[e.Key], e.Value))
+                .OrderBy(e => e.Key, StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        // The name of an Active Directory entry as shown: without the conflict suffix
+        static String DisplayName(String adName)
+        {
+            String n = adName ?? "";
+            int lineBreak = n.IndexOfAny(new[] { '\r', '\n' });
+            return (lineBreak >= 0 ? n.Substring(0, lineBreak) : n).Trim();
         }
 
         /// <summary>
@@ -261,13 +348,18 @@ namespace LiteDeploy
     /// </summary>
     public static class ComputerListFilter
     {
-        /// <summary>The Active Directory inventory by name (case-insensitive); entries without a name are skipped.</summary>
+        /// <summary>
+        /// The Active Directory inventory by name (ComputerName.Comparer: "pc01.example.com" finds "PC01"); entries
+        /// without a name are skipped; of two entries of the same computer, ComputerName.Better.
+        /// </summary>
         public static Dictionary<String, AdComputer> ByName(IEnumerable<AdComputer> inventory)
         {
-            Dictionary<String, AdComputer> result = new Dictionary<String, AdComputer>(StringComparer.OrdinalIgnoreCase);
+            Dictionary<String, AdComputer> result = new Dictionary<String, AdComputer>(ComputerName.Comparer);
             foreach (AdComputer c in inventory ?? Enumerable.Empty<AdComputer>())
             {
-                if (c != null && !String.IsNullOrWhiteSpace(c.Name)) result[c.Name.Trim()] = c;
+                if (c == null || ComputerName.Key(c.Name).Length == 0) continue;
+                AdComputer kept;
+                result[c.Name.Trim()] = result.TryGetValue(c.Name.Trim(), out kept) ? ComputerName.Better(kept, c) : c;
             }
             return result;
         }
@@ -306,7 +398,7 @@ namespace LiteDeploy
         }
     }
 
-    /// <summary>Checked computers of the computer view: kept across filter changes, case-insensitive.</summary>
+    /// <summary>Checked computers of the computer view: kept across filter changes, matched with ComputerName.Comparer.</summary>
     public static class ComputerSelection
     {
         /// <summary>Select all: checks every visible row (the rows hidden by the filters keep their state).</summary>
@@ -329,11 +421,11 @@ namespace LiteDeploy
         /// </summary>
         public static List<String> Targets(IEnumerable<ComputerRow> all, ICollection<String> checkedNames, IEnumerable<String> selectedNames, bool includeServers)
         {
-            Dictionary<String, ComputerRow> byName = new Dictionary<String, ComputerRow>(StringComparer.OrdinalIgnoreCase);
+            Dictionary<String, ComputerRow> byName = new Dictionary<String, ComputerRow>(ComputerName.Comparer);
             foreach (ComputerRow r in all) byName[r.Name] = r;
             IEnumerable<String> source = checkedNames.Count > 0 ? (IEnumerable<String>)checkedNames : selectedNames ?? Enumerable.Empty<String>();
             List<String> result = new List<String>();
-            HashSet<String> seen = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
+            HashSet<String> seen = new HashSet<String>(ComputerName.Comparer);
             foreach (String name in source)
             {
                 ComputerRow r;

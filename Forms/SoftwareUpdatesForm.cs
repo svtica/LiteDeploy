@@ -25,9 +25,11 @@
 //          chosen explicitly, never part of Update checked or of the
 //          schedules), pause, outside business hours only, computer card,
 //          TeamViewer ID, remote desktop, command prompt, quick commands,
-//          Wake-on-LAN, logs, export to Royal TS (ComputerActions, shared with
-//          the main window). Size, splitter, columns, view and filters are
-//          kept in the user settings.
+//          message to the logged-on users, Wake-on-LAN, logs, export to
+//          Royal TS (ComputerActions, shared with the main window).
+//          A computer known under several spellings (ComputerName) is one row.
+//          Size, splitter, columns and filters are kept in the user settings;
+//          the window always opens on one row per computer.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -45,9 +47,6 @@ namespace LiteDeploy
     {
         /// <summary>Computers processed at the same time.</summary>
         const int Parallelism = 4;
-
-        public const String ViewComputers = "computers";
-        public const String ViewPackages = "packages";
 
         /// <summary>One package to work on, on one computer.</summary>
         sealed class RowKey
@@ -67,15 +66,17 @@ namespace LiteDeploy
         readonly Object storeLock = new Object();
         /// <summary>Card, TeamViewer, remote desktop, command prompt, quick commands, logs, flags: shared with the main window.</summary>
         readonly ComputerActions actions;
+        /// <summary>Send a message... (created here: shared texts with the main window).</summary>
+        readonly ToolStripMenuItem messageItem = new ToolStripMenuItem();
         readonly List<Process> running = new List<Process>();
         /// <summary>Checked package rows (package view), by row key.</summary>
         readonly HashSet<String> checkedKeys = new HashSet<String>();
         /// <summary>Checked computers (computer view), kept across filter changes.</summary>
-        readonly HashSet<String> checkedComputers = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
+        readonly HashSet<String> checkedComputers = new HashSet<String>(ComputerName.Comparer);
         /// <summary>Step in progress, by row key (computer|package, or computer| for the computer).</summary>
         readonly Dictionary<String, String> live = new Dictionary<String, String>();
         /// <summary>Computers of the main window's list (shown even when they are not in Active Directory).</summary>
-        readonly HashSet<String> listed = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
+        readonly HashSet<String> listed = new HashSet<String>(ComputerName.Comparer);
         /// <summary>Computers checked in the main window when the window was opened (filter); null: none.</summary>
         HashSet<String> selection;
         readonly ListViewColumnSorter sorter = new ListViewColumnSorter { SortColumn = 0, Order = SortOrder.Ascending };
@@ -85,7 +86,7 @@ namespace LiteDeploy
         List<UpdatePackage> packages;
         /// <summary>Every computer of the window (filters not applied), by name; rebuilt at each refresh.</summary>
         List<ComputerRow> rows = new List<ComputerRow>();
-        Dictionary<String, ComputerRow> rowsByName = new Dictionary<String, ComputerRow>(StringComparer.OrdinalIgnoreCase);
+        Dictionary<String, ComputerRow> rowsByName = new Dictionary<String, ComputerRow>(ComputerName.Comparer);
         /// <summary>Rows shown (filters applied).</summary>
         List<ComputerRow> visible = new List<ComputerRow>();
         String computerColumnsLayout, packageColumnsLayout;
@@ -125,6 +126,11 @@ namespace LiteDeploy
 
             store = UpdateStateStore.Load(UpdateStateStore.DefaultPath);
             actions = new ComputerActions(this);
+            messageItem.Text = Localization.T("SoftwareUpdatesForm.messageItem.Text", "Send a message...");
+            messageItem.ToolTipText = Localization.T("SoftwareUpdatesForm.messageItem.ToolTipText", "A message box for the users logged on to the computers (replaces msg *)");
+            messageItem.Click += (s, e) => actions.SendMessage(ActionTargets(), "");
+            // In the right-click menu of the designer, after the quick commands (then moved with the other actions)
+            rowMenu.Items.Insert(rowMenu.Items.IndexOf(quickCommandsItem) + 1, messageItem);
             packages = UpdateRunner.LoadPackages();
             AddListedComputers(listedComputers);
             SetSelectionFilter(checkedInMain);
@@ -162,7 +168,7 @@ namespace LiteDeploy
         public void SetSelectionFilter(IEnumerable<String> names)
         {
             List<String> list = (names ?? Enumerable.Empty<String>()).Where(n => !String.IsNullOrWhiteSpace(n)).Select(n => n.Trim()).ToList();
-            selection = list.Count == 0 ? null : new HashSet<String>(list, StringComparer.OrdinalIgnoreCase);
+            selection = list.Count == 0 ? null : new HashSet<String>(list, ComputerName.Comparer);
             selectionFilterButton.Visible = selection != null;
             if (selection != null)
                 selectionFilterButton.Text = Localization.F("SoftwareUpdatesForm.SelectionFilter", "Selection: {0} computer(s) ×", selection.Count);
@@ -177,7 +183,9 @@ namespace LiteDeploy
         {
             UserSettings s = UserSettings.Current;
             includeServersCheck.Checked = s.IncludeServers;
-            byPackageButton.Checked = s.UpdatesView == ViewPackages;
+            // The window always opens on one row per computer: "Show packages" is a detail view, not kept
+            // (kept, it showed one row per package of every computer at each opening)
+            byPackageButton.Checked = false;
             ComputerStatusFilter statuses = ComputerFilter.ParseStatuses(s.UpdatesStatusFilter);
             foreach (KeyValuePair<ToolStripButton, ComputerStatusFilter> chip in chips)
                 chip.Key.Checked = (statuses & chip.Value) != 0;
@@ -212,7 +220,6 @@ namespace LiteDeploy
             CaptureColumns();
             UserSettings s = UserSettings.Current.Clone();
             s.IncludeServers = includeServersCheck.Checked;
-            s.UpdatesView = ByPackage ? ViewPackages : ViewComputers;
             s.UpdatesStatusFilter = ComputerFilter.FormatStatuses(Statuses);
             s.UpdatesColumns = computerColumnsLayout;
             s.UpdatesPackageColumns = packageColumnsLayout;
@@ -315,7 +322,7 @@ namespace LiteDeploy
                 result.Add(ComputerRow.Build(entry.Key, entry.Value, state, summary, packages));
             }
             rows = result;
-            rowsByName = result.ToDictionary(r => r.Name, StringComparer.OrdinalIgnoreCase);
+            rowsByName = result.ToDictionary(r => r.Name, ComputerName.Comparer);
         }
 
         void RefreshList()
@@ -337,8 +344,8 @@ namespace LiteDeploy
                 DateTime now = DateTime.Now;
                 lock (storeLock)
                 {
-                    Dictionary<String, ComputerUpdateState> states = new Dictionary<String, ComputerUpdateState>(StringComparer.OrdinalIgnoreCase);
-                    Dictionary<String, ComputerSummary> summaries = new Dictionary<String, ComputerSummary>(StringComparer.OrdinalIgnoreCase);
+                    Dictionary<String, ComputerUpdateState> states = new Dictionary<String, ComputerUpdateState>(ComputerName.Comparer);
+                    Dictionary<String, ComputerSummary> summaries = new Dictionary<String, ComputerSummary>(ComputerName.Comparer);
                     BuildRows(states, summaries);
                     visible = ComputerFilter.Apply(rows, CurrentFilter(), now);
                     foreach (ComputerRow row in visible)
@@ -393,6 +400,7 @@ namespace LiteDeploy
                 };
             int statusCell = ByPackage ? 4 : 3;
             if (step.Length > 0) cells[statusCell] = step;
+            for (int i = 0; i < cells.Length; i++) cells[i] = ComputerName.OneLine(cells[i]);
 
             ListViewItem item = new ListViewItem(cells) { Tag = new RowKey { Computer = computer }, ToolTipText = RowTip(row) };
             if (ComputerFilter.IsStale(row, now, StaleDays)) item.ForeColor = SystemColors.GrayText;
@@ -475,6 +483,7 @@ namespace LiteDeploy
                         step = "";
                 }
                 if (step.Length > 0) cells[4] = step;
+                for (int i = 0; i < cells.Length; i++) cells[i] = ComputerName.OneLine(cells[i]);
                 ListViewItem item = new ListViewItem(cells) { Tag = key, ToolTipText = RowTip(row) };
                 if (s.Status == WorkerProtocol.StatusOutdated) item.ForeColor = Theme.WarningColor;
                 if (s.Status == WorkerProtocol.StatusError || (s.Status == WorkerProtocol.StatusOutdated && s.LastResult == WorkerProtocol.ResultFailed)) item.ForeColor = Theme.ErrorColor;
@@ -855,7 +864,7 @@ namespace LiteDeploy
         List<String> SelectedComputers()
         {
             return updatesList.SelectedItems.Cast<ListViewItem>().Select(i => ((RowKey)i.Tag).Computer)
-                .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                .Distinct(ComputerName.Comparer).ToList();
         }
 
         // ---- Account ----------------------------------------------------------------
@@ -1303,7 +1312,7 @@ namespace LiteDeploy
                 return new ToolStripItem[]
                 {
                     targetsItem, targetsSeparator, installItem, installSeparator, pauseItem, resumeItem, nightOnlyItem, nightOnlyClearItem,
-                    menuSeparator, cardItem, teamViewerItem, remoteDesktopItem, commandPromptItem, quickCommandsItem,
+                    menuSeparator, cardItem, teamViewerItem, remoteDesktopItem, commandPromptItem, quickCommandsItem, messageItem,
                     processesItem, litePMItem, logsItem, wakeItem, exportSeparator, royalTsItem, removeSeparator, removeItem
                 };
             }
@@ -1333,7 +1342,7 @@ namespace LiteDeploy
             nightOnlyItem.Enabled = idle && targets.Any(c => !IsNightOnly(c));
             nightOnlyClearItem.Enabled = idle && targets.Any(IsNightOnly);
             cardItem.Enabled = logsItem.Enabled = targets.Count > 0;
-            teamViewerItem.Enabled = remoteDesktopItem.Enabled = commandPromptItem.Enabled = quickCommandsItem.Enabled = targets.Count > 0;
+            teamViewerItem.Enabled = remoteDesktopItem.Enabled = commandPromptItem.Enabled = quickCommandsItem.Enabled = messageItem.Enabled = targets.Count > 0;
             actions.FillQuickCommands(quickCommandsItem, ActionTargets);
             royalTsItem.Enabled = ExportTargets().Count > 0;
             processesItem.Enabled = litePMItem.Enabled = targets.Count == 1;
@@ -1533,7 +1542,7 @@ namespace LiteDeploy
             // The new computers are shown even when the window is filtered to a selection
             if (selection != null) foreach (String name in added.Concat(known)) selection.Add(name);
             RefreshList();
-            int hidden = added.Count(n => !visible.Any(r => String.Equals(r.Name, n, StringComparison.OrdinalIgnoreCase)));
+            int hidden = added.Count(n => !visible.Any(r => ComputerName.Same(r.Name, n)));
             statusLabel.Text = Localization.F("SoftwareUpdatesForm.Added", "{0} computer(s) added, {1} already in the list, {2} hidden by the filters.", added.Count, known.Count, hidden);
             if (invalid.Count > 0)
                 MessageBox.Show(this, Localization.F("SoftwareUpdatesForm.InvalidNames", "Not a computer name: {0}", String.Join(", ", invalid)), Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);

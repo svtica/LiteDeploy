@@ -10,6 +10,9 @@
 //          Updates window opens; written only when a value changed (versions,
 //          status, results, errors): a check that finds nothing new does not
 //          rewrite the file. LastChange is the time of the last such change.
+//          A computer is found whatever the spelling of its name
+//          (ComputerName.Key); states saved under two spellings are merged
+//          when the file is read.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -95,9 +98,80 @@ namespace LiteDeploy
             get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LiteDeploy", "updates.xml"); }
         }
 
+        /// <summary>The state of a computer, whatever the spelling of its name (ComputerName.Key); null when none.</summary>
         public ComputerUpdateState Find(String computer)
         {
-            return Computers.FirstOrDefault(c => String.Equals(c.Name, computer, StringComparison.OrdinalIgnoreCase));
+            String key = ComputerName.Key(computer);
+            if (key.Length == 0) return null;
+            return Computers.FirstOrDefault(c => ComputerName.Key(c.Name) == key);
+        }
+
+        /// <summary>
+        /// One state per computer: the states saved under several spellings of the same name ("PC01",
+        /// "pc01.example.com") by earlier versions are merged (MergeStates). Returns the number of states removed.
+        /// </summary>
+        public int MergeDuplicates()
+        {
+            List<ComputerUpdateState> merged = new List<ComputerUpdateState>();
+            int removed = 0;
+            foreach (IGrouping<String, ComputerUpdateState> g in Computers.Where(c => c != null).GroupBy(c => ComputerName.Key(c.Name)))
+            {
+                if (g.Key.Length == 0 || g.Count() == 1) { merged.AddRange(g); continue; }
+                merged.Add(MergeStates(g.ToList()));
+                removed += g.Count() - 1;
+            }
+            if (removed == 0) return 0;
+            merged.Sort((a, b) => String.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
+            Computers = merged;
+            return removed;
+        }
+
+        /// <summary>
+        /// The states of one computer saved under several names, as one: the most recent data (LastChange) wins
+        /// for each value, the flags (paused, outside business hours only, added by name) are kept when any
+        /// spelling has them, every package known under any spelling is kept (the most recent one for each).
+        /// The name is the short one when there is one ("PC01" rather than "PC01.example.com").
+        /// </summary>
+        public static ComputerUpdateState MergeStates(IList<ComputerUpdateState> states)
+        {
+            List<ComputerUpdateState> newest = states.Where(s => s != null)
+                .OrderByDescending(s => s.LastChange ?? DateTime.MinValue).ToList();
+            if (newest.Count == 0) return null;
+            ComputerUpdateState first = newest[0];
+            ComputerUpdateState paused = newest.FirstOrDefault(s => s.Paused);
+            ComputerUpdateState result = new ComputerUpdateState
+            {
+                Name = (newest.FirstOrDefault(s => IsShortName(s.Name)) ?? first).Name.Trim(),
+                LastChange = first.LastChange,
+                LastError = first.LastError,
+                Paused = paused != null,
+                PauseReason = paused == null ? null : newest.Where(s => s.Paused).Select(s => s.PauseReason).FirstOrDefault(r => !String.IsNullOrEmpty(r)),
+                NightOnly = newest.Any(s => s.NightOnly),
+                AddedByName = newest.Any(s => s.AddedByName),
+                Macs = FirstValue(newest, s => s.Macs),
+                Ips = FirstValue(newest, s => s.Ips),
+                OsCaption = FirstValue(newest, s => s.OsCaption),
+                OsType = FirstValue(newest, s => s.OsType),
+                TeamViewerId = FirstValue(newest, s => s.TeamViewerId)
+            };
+            foreach (ComputerUpdateState s in newest)
+            {
+                foreach (PackageUpdateState p in s.Packages ?? new List<PackageUpdateState>())
+                {
+                    if (p != null && !String.IsNullOrEmpty(p.Id) && result.Find(p.Id) == null) result.Packages.Add(p);
+                }
+            }
+            return result;
+        }
+
+        static bool IsShortName(String name)
+        {
+            return !String.IsNullOrWhiteSpace(name) && name.Trim().IndexOfAny(new[] { '.', '$', (char)0x5C, '/' }) < 0;
+        }
+
+        static String FirstValue(IEnumerable<ComputerUpdateState> newest, Func<ComputerUpdateState, String> value)
+        {
+            return newest.Select(value).FirstOrDefault(v => !String.IsNullOrEmpty(v));
         }
 
         public ComputerUpdateState GetOrAdd(String computer)
@@ -212,10 +286,14 @@ namespace LiteDeploy
             {
                 if (File.Exists(path))
                 {
+                    UpdateStateStore store;
                     using (FileStream file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
-                        return (UpdateStateStore)new XmlSerializer(typeof(UpdateStateStore)).Deserialize(file) ?? new UpdateStateStore();
+                        store = (UpdateStateStore)new XmlSerializer(typeof(UpdateStateStore)).Deserialize(file) ?? new UpdateStateStore();
                     }
+                    // Written merged at the next change of the file
+                    store.MergeDuplicates();
+                    return store;
                 }
             }
             catch (Exception)

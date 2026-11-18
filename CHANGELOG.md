@@ -30,6 +30,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   computers (else the selected one): computer card, TeamViewer ID, remote desktop, command
   prompt, quick commands, Wake-on-LAN, logs, pause / resume, outside business hours only, export
   to Royal TS. Both windows share the same code (`ComputerActions`).
+- **Send a message...** to the users logged on to the checked computers (else the selected ones),
+  in *Software Updates* and the main window's list; replaces a `msg *` script. Up to 255
+  characters with a counter, ready texts (restart request, save your work, close your session),
+  display time (300 seconds by default, 0: until the user closes it), a confirmation naming the
+  number of computers. New worker command `message --text <base64 UTF-8> [--seconds N] [--title
+  <base64 UTF-8>]`, run as SYSTEM by the usual method (WinRM or PsExec): the text never travels as
+  raw text on a command line. The worker shows it in every active session with a logged-on user
+  through `WTSSendMessage` (`msg.exe` is missing on Home editions) and does not wait for the users.
+  Result per computer: sent to N session(s), no user logged on, or failed.
+- *Quick commands > Ask the users to restart...* opens the same window with the restart request
+  ready.
+
+### Fixed
+
+- *Software Updates* could show two rows for one computer: the computers of Active Directory, of
+  the main window's list, added by name and saved in `updates.xml` were matched by their exact name
+  (case aside), so `PC01` and `PC01.example.com` (or `PC01$`, or an Active Directory conflict
+  object) were two computers, each with part of the saved state. Every name is now matched by one
+  key (the short name, upper case; an IP address is kept whole): one row per computer, in
+  *Software Updates*, the targets of the actions, the selection of the main window and the filters
+  of the computer lists. States saved under two spellings in `updates.xml` are merged when the
+  file is read (the most recent data, the flags of either spelling, every package).
+- *Software Updates* always opens on one row per computer: *Show packages* (one row per installed
+  package) is no longer kept from one opening to the next.
+- In the dark theme, a text with a line break in a cell of a list was drawn on two lines inside
+  one row; cells are now drawn on one line (and the texts of *Software Updates* are put on one
+  line).
 
 ### Changed
 

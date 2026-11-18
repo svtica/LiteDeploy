@@ -397,7 +397,6 @@ namespace LiteDeploy.Tests
             UserSettings defaults = new UserSettings();
             Assert.IsFalse(defaults.IncludeServers);
             Assert.AreEqual(30, defaults.UpdatesStaleDays);
-            Assert.AreEqual("computers", defaults.UpdatesView);
             Assert.AreEqual("", defaults.UpdatesStatusFilter);
 
             XmlSerializer serializer = new XmlSerializer(typeof(UserSettings));
@@ -406,7 +405,7 @@ namespace LiteDeploy.Tests
             {
                 IncludeServers = true, UpdatesStaleDays = 45, UpdatesWindowBounds = "10,20,900,600", UpdatesWindowMaximized = true,
                 UpdatesSplitter = 120, UpdatesColumns = "computerColumn:140:0", UpdatesPackageColumns = "packageColumn:200:1",
-                UpdatesView = "packages", UpdatesStatusFilter = "ToUpdate,Errors"
+                UpdatesStatusFilter = "ToUpdate,Errors"
             });
             UserSettings read = (UserSettings)serializer.Deserialize(new StringReader(writer.ToString()));
             Assert.IsTrue(read.IncludeServers);
@@ -416,8 +415,11 @@ namespace LiteDeploy.Tests
             Assert.AreEqual(120, read.UpdatesSplitter);
             Assert.AreEqual("computerColumn:140:0", read.UpdatesColumns);
             Assert.AreEqual("packageColumn:200:1", read.UpdatesPackageColumns);
-            Assert.AreEqual("packages", read.UpdatesView);
             Assert.AreEqual("ToUpdate,Errors", read.UpdatesStatusFilter);
+
+            // The view is no longer kept (the window opens on one row per computer): an older file still loads
+            UserSettings withView = (UserSettings)serializer.Deserialize(new StringReader("<LiteDeploySettings><UpdatesView>packages</UpdatesView><UpdatesStaleDays>12</UpdatesStaleDays></LiteDeploySettings>"));
+            Assert.AreEqual(12, withView.UpdatesStaleDays);
 
             UserSettings old = (UserSettings)serializer.Deserialize(new StringReader("<LiteDeploySettings><Language>en</Language></LiteDeploySettings>"));
             Assert.IsFalse(old.IncludeServers, "a file of an earlier version: servers hidden");
