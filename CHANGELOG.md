@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.19] - 2026-11-18
+
 ### Added
 
 - `settings.xml` is written with a comment before each setting that *App > Options* does not
