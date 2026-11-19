@@ -99,6 +99,7 @@ namespace LiteDeploy
             notice.SetBounds(12, 46, ClientSize.Width - 24, NoticeHeight - 6);
             notice.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             notice.BorderStyle = BorderStyle.FixedSingle;
+            notice.Visible = false;   // shown by UpdateInfo when the cache or the instances are missing
             noticeLabel.SetBounds(6, 4, notice.Width - 14, 38);
             noticeLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             optionsButton.Text = Localization.T("WebVersionsForm.OpenOptions", "Open Options...");
@@ -274,12 +275,15 @@ namespace LiteDeploy
             optionsButton.Visible = (missing & WebVersionNotice.NoCache) != 0;
             importButton.Visible = (missing & WebVersionNotice.NoInstances) != 0;
             bool show = missing != WebVersionNotice.None;
-            if (notice.Visible != show || grid.Top != (show ? 46 + NoticeHeight : 46))
+            // Always set: before the window is shown, Visible reads false even for a visible control, so
+            // comparing with it left the empty notice over the top of the grid
+            notice.Visible = show;
+            int top = show ? 46 + NoticeHeight : 46;
+            if (grid.Top != top)
             {
-                notice.Visible = show;
                 int bottom = grid.Bottom;
-                grid.Top = show ? 46 + NoticeHeight : 46;
-                grid.Height = Math.Max(60, bottom - grid.Top);
+                grid.Top = top;
+                grid.Height = Math.Max(60, bottom - top);
             }
         }
 

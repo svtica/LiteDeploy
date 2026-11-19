@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- *Web Versions*: the notice panel (no shared cache, no instance) stayed over the top of the list,
+  empty, when nothing was missing; it is now hidden then.
+
 ## [1.0.20] - 2026-11-18
 
 ### Added
