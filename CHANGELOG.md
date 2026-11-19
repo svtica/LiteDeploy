@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.20] - 2026-11-18
+
 ### Added
 
 - **Remove from the list...** for any computer of the grid (with a confirmation): a computer added
