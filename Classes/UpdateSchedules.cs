@@ -39,6 +39,8 @@ namespace LiteDeploy
         public DateTime? OnceAt;
         /// <summary>Wake-on-LAN first (then wait two minutes).</summary>
         [XmlAttribute] public bool WakeFirst;
+        /// <summary>Profile of the software (SoftwareProfiles); empty: the whole catalog (as before the profiles).</summary>
+        [XmlAttribute] public String Profile = "";
         public DateTime? LastRun;
         public String LastResult;
         [XmlElement("Computer")] public List<String> Computers = new List<String>();
@@ -120,6 +122,19 @@ namespace LiteDeploy
             }
             catch (Exception) { }
             return new UpdateSchedules();
+        }
+
+        /// <summary>A renamed profile: the schedules that use it follow (saved when one changed).</summary>
+        static public void RenameProfile(String oldName, String newName)
+        {
+            UpdateSchedules all = Load();
+            bool changed = false;
+            foreach (UpdateSchedule s in all.Items.Where(s => String.Equals(s.Profile, oldName, StringComparison.OrdinalIgnoreCase)))
+            {
+                s.Profile = newName;
+                changed = true;
+            }
+            if (changed) all.Save();
         }
 
         public void Save()

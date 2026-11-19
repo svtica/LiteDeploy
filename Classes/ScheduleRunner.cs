@@ -56,7 +56,16 @@ namespace LiteDeploy
             }
 
             UpdateStateStore store = UpdateStateStore.Load(UpdateStateStore.DefaultPath);
-            List<UpdatePackage> packages = UpdateRunner.LoadPackages();
+            // The software of the profile of the schedule (the whole catalog when it has none); a profile that
+            // no longer exists: nothing is done (never the whole catalog by mistake)
+            bool profileFound;
+            List<UpdatePackage> packages = SoftwareProfiles.Load().Filter(UpdateRunner.LoadPackages(), schedule.Profile, out profileFound);
+            if (!profileFound)
+            {
+                Finish(schedule.Name, started, "Refused: profile \"" + schedule.Profile + "\" not found (Software catalog...)");
+                return -1;
+            }
+            if (!String.IsNullOrWhiteSpace(schedule.Profile)) Log("  Profile \"" + schedule.Profile + "\": " + packages.Count + " package(s)");
             bool businessHours = UserSettings.Current.IsBusinessHours(started);
             List<String> computers = new List<String>();
             foreach (String computer in schedule.Computers.Distinct(StringComparer.OrdinalIgnoreCase))

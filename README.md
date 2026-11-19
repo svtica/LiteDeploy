@@ -113,9 +113,25 @@ them (and for the PsExec method of the software updates); it is asked for when t
     `%windir%\LiteDeploy\work`, then deletes the task and the file (leftovers of a stopped run
     are deleted at the next run). Needs WinRM on the computers.
   - **PsExec** (`-s -c -f`): the worker is copied and started by PsExec.
-- Package list: *Package list...* searches the winget catalog
-  (`%LOCALAPPDATA%\LiteDeploy\packages.txt`). State kept in
-  `%LOCALAPPDATA%\LiteDeploy\updates.xml`.
+- **Software catalog...** (tool bar, *Tools* menu): every software kept up to date, winget packages
+  and update modules (`%LOCALAPPDATA%\LiteDeploy\packages.txt`); search winget, add a module,
+  *Parameters...*, *Import instances...* (catalog of module instances), *Web versions...*. State
+  kept in `%LOCALAPPDATA%\LiteDeploy\updates.xml`.
+- **Profiles**: named selections of the catalog (for example *Base*: the software of every
+  computer; *Java*: the computers that have it), one check box column per profile in the catalog
+  (*New profile...*, *Rename profile...*, *Delete profile*; `%LOCALAPPDATA%\LiteDeploy\profiles.xml`).
+  The **Profile** button of the main window (bold, left of *Check*) shows the active profile and
+  opens a dialog to choose another one (no drop-down list that a mouse wheel could change): *Check*,
+  *Update checked*, *Install* and the *To update* filter work on the software of that profile only,
+  which makes a check faster and avoids updating or installing the whole catalog by mistake. The
+  update confirmation names the profile. *All the catalog* is the former behaviour. A profile that
+  no longer exists gives no software at all (never the whole catalog).
+- Each scheduled update has its profile too (*Software profile* in the schedule; *All the
+  catalog* for the schedules made before the profiles); a schedule whose profile no longer exists
+  is refused and logged.
+- *Export...* / *Import...* of the catalog: the software and the profiles in one JSON file
+  (`LiteDeploy.SoftwareCatalog`), to share with the team or keep; an import only adds (missing
+  software, missing profiles, and software of a profile of the same name), never removes.
 - The account is the current user or a stored credential (*Tools > Credentials*), chosen in
   *App > Options*. The credentials of the deployment window (*Saved...*) come from the same
   store.
@@ -179,7 +195,7 @@ Actions of the grid (checked computers, else the selected ones):
   `TeamsBootstrapper`. A team's own modules can live in a shared modules folder (same options).
 - **Import from a catalog**: `CachedInstaller` and `MsixProvision` take one row per product
   (`module:<Name>/<Instance>`). Instead of adding each row by hand, describe the products in a
-  JSON file and use *Package list... > Import from catalog...*: it adds the missing rows and sets
+  JSON file and use *Software catalog... > Import instances...*: it adds the missing rows and sets
   their parameters. The dialog opens the team's `catalogs` folder when there is one next to the
   shared modules folder (modules in `...\LiteDeploy\modules`: catalogs in
   `...\LiteDeploy\catalogs`), else `%LOCALAPPDATA%\LiteDeploy` (`catalog.local.json`); any other
@@ -210,7 +226,7 @@ Actions of the grid (checked computers, else the selected ones):
   administrator account that runs LiteDeploy, set once in *App > Options > Software updates* the
   shared installer cache and the shared modules folder (type or paste the network path; *Save*
   warns when this computer cannot read it), choose the credential (*Tools > Credentials*), then
-  open *Package list...* and *Import from catalog...* the team's catalogs (from the shared
+  open *Software catalog...* and *Import instances...* the team's catalogs (from the shared
   `catalogs` folder): this writes the package list and the module parameters of that user. See
   [docs/modules.md](docs/modules.md#setting-up-another-administrator-computer).
 
@@ -274,7 +290,7 @@ LiteDeploy writes a comment before each of them in the file; close LiteDeploy be
 | `WebCheckTime` | *Tools > Web Versions* | daily check of the web versions at this time (`HH:mm`); empty: none | empty |
 | `WebAutoDownload` | *Tools > Web Versions* | the daily check downloads the new versions to the cache (else report only) | `false` |
 | `UpdatesHiddenColumns` | *Columns* menu of the main window | columns hidden (column names separated by `,`) | empty |
-| `WebVersionsWindowSize`, `UpdatesOnlineOnly`, `UpdatesWindowBounds`, `UpdatesWindowMaximized`, `UpdatesSplitter`, `UpdatesColumns`, `UpdatesPackageColumns`, `UpdatesStatusFilter` | kept by LiteDeploy | size and position of the windows, columns and status filters of the grid | empty |
+| `WebVersionsWindowSize`, `UpdatesOnlineOnly`, `UpdatesProfile`, `UpdatesWindowBounds`, `UpdatesWindowMaximized`, `UpdatesSplitter`, `UpdatesColumns`, `UpdatesPackageColumns`, `UpdatesStatusFilter` | kept by LiteDeploy | size and position of the windows, columns and status filters of the grid | empty |
 
 ## Installation
 

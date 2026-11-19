@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Software catalog** (former *Package list*, also in the *Tools* menu) and **profiles**: named
+  selections of the catalog (`profiles.xml`), one check box column per profile. The **Profile**
+  button of the main window (a dialog, no drop-down list) limits *Check*, *Update checked*,
+  *Install* and the *To update* filter to the software of the active profile; the update
+  confirmation names it. Each scheduled update has its profile (*All the catalog* for the existing
+  ones). A missing profile gives no software, never the whole catalog.
+- *Export...* / *Import...* of the software catalog and its profiles (JSON); an import only adds.
 - **State** of the computers in the grid: a dot left of the name and a *State* column (answers the
   ping, does not, not pinged yet). The computers shown are pinged when LiteDeploy opens, every 5
   minutes and with *Refresh state* (Shift+F5). **Online only**, on by default, hides the computers

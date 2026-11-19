@@ -39,6 +39,12 @@ namespace LiteDeploy
             this.processesColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.labelColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.parametersButton = new System.Windows.Forms.Button();
+            this.profilePanel = new System.Windows.Forms.FlowLayoutPanel();
+            this.newProfileButton = new System.Windows.Forms.Button();
+            this.renameProfileButton = new System.Windows.Forms.Button();
+            this.deleteProfileButton = new System.Windows.Forms.Button();
+            this.importButton = new System.Windows.Forms.Button();
+            this.exportButton = new System.Windows.Forms.Button();
             this.importCatalogButton = new System.Windows.Forms.Button();
             this.webVersionsButton = new System.Windows.Forms.Button();
             this.okButton = new System.Windows.Forms.Button();
@@ -136,7 +142,7 @@ namespace LiteDeploy
             this.listLabel.AutoSize = true;
             this.listLabel.Location = new System.Drawing.Point(12, 230);
             this.listLabel.Name = "listLabel";
-            this.listLabel.Text = "Packages kept up to date (processes: closed before the update, without .exe, comma-separated):";
+            this.listLabel.Text = "Software of the catalog (processes: closed before the update, without .exe, comma-separated); one column per profile:";
             //
             // packagesGrid
             //
@@ -150,7 +156,7 @@ namespace LiteDeploy
             this.packagesGrid.Location = new System.Drawing.Point(12, 248);
             this.packagesGrid.Name = "packagesGrid";
             this.packagesGrid.RowHeadersWidth = 24;
-            this.packagesGrid.Size = new System.Drawing.Size(660, 170);
+            this.packagesGrid.Size = new System.Drawing.Size(660, 140);
             this.packagesGrid.TabIndex = 4;
             this.idColumn.HeaderText = "winget Id";
             this.idColumn.Name = "idColumn";
@@ -159,6 +165,46 @@ namespace LiteDeploy
             this.labelColumn.HeaderText = "Label";
             this.labelColumn.Name = "labelColumn";
             this.packagesGrid.CurrentCellChanged += new System.EventHandler(this.packagesGrid_CurrentCellChanged);
+            //
+            // profilePanel
+            //
+            this.profilePanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.profilePanel.Controls.AddRange(new System.Windows.Forms.Control[] { this.newProfileButton, this.renameProfileButton, this.deleteProfileButton, this.importButton, this.exportButton });
+            this.profilePanel.Location = new System.Drawing.Point(12, 392);
+            this.profilePanel.Name = "profilePanel";
+            this.profilePanel.Size = new System.Drawing.Size(660, 30);
+            this.profilePanel.WrapContents = false;
+            this.newProfileButton.AutoSize = true;
+            this.newProfileButton.MinimumSize = new System.Drawing.Size(90, 25);
+            this.newProfileButton.Name = "newProfileButton";
+            this.newProfileButton.Text = "New profile...";
+            this.newProfileButton.UseVisualStyleBackColor = true;
+            this.newProfileButton.Click += new System.EventHandler(this.newProfileButton_Click);
+            this.renameProfileButton.AutoSize = true;
+            this.renameProfileButton.MinimumSize = new System.Drawing.Size(90, 25);
+            this.renameProfileButton.Name = "renameProfileButton";
+            this.renameProfileButton.Text = "Rename profile...";
+            this.renameProfileButton.UseVisualStyleBackColor = true;
+            this.renameProfileButton.Click += new System.EventHandler(this.renameProfileButton_Click);
+            this.deleteProfileButton.AutoSize = true;
+            this.deleteProfileButton.MinimumSize = new System.Drawing.Size(90, 25);
+            this.deleteProfileButton.Name = "deleteProfileButton";
+            this.deleteProfileButton.Text = "Delete profile";
+            this.deleteProfileButton.UseVisualStyleBackColor = true;
+            this.deleteProfileButton.Click += new System.EventHandler(this.deleteProfileButton_Click);
+            this.importButton.AutoSize = true;
+            this.importButton.MinimumSize = new System.Drawing.Size(90, 25);
+            this.importButton.Name = "importButton";
+            this.importButton.Text = "Import...";
+            this.importButton.UseVisualStyleBackColor = true;
+            this.importButton.Click += new System.EventHandler(this.importButton_Click);
+            this.exportButton.AutoSize = true;
+            this.exportButton.MinimumSize = new System.Drawing.Size(90, 25);
+            this.exportButton.Name = "exportButton";
+            this.exportButton.Text = "Export...";
+            this.exportButton.UseVisualStyleBackColor = true;
+            this.exportButton.Click += new System.EventHandler(this.exportButton_Click);
+            this.exportButton.Margin = new System.Windows.Forms.Padding(20, 3, 3, 3);
             //
             // parametersButton
             //
@@ -178,7 +224,7 @@ namespace LiteDeploy
             this.importCatalogButton.Name = "importCatalogButton";
             this.importCatalogButton.Size = new System.Drawing.Size(150, 23);
             this.importCatalogButton.TabIndex = 10;
-            this.importCatalogButton.Text = "Import from catalog...";
+            this.importCatalogButton.Text = "Import instances...";
             this.importCatalogButton.Click += new System.EventHandler(this.importCatalogButton_Click);
             //
             // webVersionsButton
@@ -228,6 +274,7 @@ namespace LiteDeploy
             this.Controls.Add(this.addModuleButton);
             this.Controls.Add(this.listLabel);
             this.Controls.Add(this.packagesGrid);
+            this.Controls.Add(this.profilePanel);
             this.Controls.Add(this.parametersButton);
             this.Controls.Add(this.importCatalogButton);
             this.Controls.Add(this.webVersionsButton);
@@ -239,7 +286,7 @@ namespace LiteDeploy
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Lite Deploy - Package List";
+            this.Text = "Lite Deploy - Software Catalog";
             ((System.ComponentModel.ISupportInitialize)(this.packagesGrid)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -266,5 +313,11 @@ namespace LiteDeploy
         private System.Windows.Forms.Button webVersionsButton;
         private System.Windows.Forms.Button okButton;
         private System.Windows.Forms.Button cancelButton;
+        private System.Windows.Forms.Button newProfileButton;
+        private System.Windows.Forms.Button renameProfileButton;
+        private System.Windows.Forms.Button deleteProfileButton;
+        private System.Windows.Forms.Button importButton;
+        private System.Windows.Forms.Button exportButton;
+        private System.Windows.Forms.FlowLayoutPanel profilePanel;
     }
 }

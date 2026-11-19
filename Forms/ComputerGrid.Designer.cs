@@ -61,6 +61,7 @@ namespace LiteDeploy
             this.deployItem = new System.Windows.Forms.ToolStripMenuItem();
             this.deployButton = new System.Windows.Forms.ToolStripButton();
             this.onlineOnlyButton = new System.Windows.Forms.ToolStripButton();
+            this.profileButton = new System.Windows.Forms.ToolStripButton();
             this.refreshStateButton = new System.Windows.Forms.ToolStripButton();
             this.columnsButton = new System.Windows.Forms.ToolStripDropDownButton();
             this.stateColumn = new System.Windows.Forms.ColumnHeader();
@@ -132,6 +133,7 @@ namespace LiteDeploy
             this.selectNoneButton,
             this.selectOutdatedButton,
             this.separator2,
+            this.profileButton,
             this.checkButton,
             this.updateButton,
             this.stopButton,
@@ -230,8 +232,8 @@ namespace LiteDeploy
             //
             this.editPackagesButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.editPackagesButton.Name = "editPackagesButton";
-            this.editPackagesButton.Text = "Package list...";
-            this.editPackagesButton.ToolTipText = "Choose the winget packages to keep up to date";
+            this.editPackagesButton.Text = "Software catalog...";
+            this.editPackagesButton.ToolTipText = "The software kept up to date (winget packages and modules) and the profiles";
             this.editPackagesButton.Click += new System.EventHandler(this.editPackagesButton_Click);
             //
             // scheduleButton
@@ -241,6 +243,15 @@ namespace LiteDeploy
             this.scheduleButton.Text = "Schedule...";
             this.scheduleButton.ToolTipText = "Schedule a check or an update of the checked computers, or of the computers shown";
             this.scheduleButton.Click += new System.EventHandler(this.scheduleButton_Click);
+            //
+            // profileButton
+            //
+            this.profileButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.profileButton.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.profileButton.Name = "profileButton";
+            this.profileButton.Text = "Profile: All";
+            this.profileButton.ToolTipText = "The software that Check, Update checked and Install work on: click to choose another profile";
+            this.profileButton.Click += new System.EventHandler(this.profileButton_Click);
             //
             // onlineOnlyButton
             //
@@ -754,6 +765,7 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripSeparator separator4;
         private System.Windows.Forms.ToolStripButton deployButton;
         private System.Windows.Forms.ToolStripButton onlineOnlyButton;
+        private System.Windows.Forms.ToolStripButton profileButton;
         private System.Windows.Forms.ToolStripButton refreshStateButton;
         private System.Windows.Forms.ToolStripDropDownButton columnsButton;
         private System.Windows.Forms.ColumnHeader stateColumn;

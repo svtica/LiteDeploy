@@ -328,8 +328,8 @@
   <translation key="ComputerGrid.checkButton.Text">Vérifier</translation>
   <translation key="ComputerGrid.updateButton.Text">Mettre à jour la sélection</translation>
   <translation key="ComputerGrid.stopButton.Text">Arrêter</translation>
-  <translation key="ComputerGrid.editPackagesButton.Text">Liste des paquets...</translation>
-  <translation key="ComputerGrid.editPackagesButton.ToolTipText">Choisir les paquets winget à garder à jour</translation>
+  <translation key="ComputerGrid.editPackagesButton.Text">Catalogue des logiciels...</translation>
+  <translation key="ComputerGrid.editPackagesButton.ToolTipText">Les logiciels tenus à jour (paquets winget et modules) et les profils</translation>
   <translation key="ComputerGrid.computerColumn.Text">Ordinateur</translation>
   <translation key="ComputerGrid.packageColumn.Text">Paquet</translation>
   <translation key="ComputerGrid.installedColumn.Text">Installée</translation>
@@ -345,8 +345,6 @@
   <translation key="ComputerGrid.Error">Erreur</translation>
   <translation key="ComputerGrid.Upgraded">Mis à jour {0}</translation>
   <translation key="ComputerGrid.Failed">Échec {0} : {1}</translation>
-  <translation key="ComputerGrid.NoPackages">La liste des paquets est vide : cliquez sur « Liste des paquets... ».</translation>
-  <translation key="ComputerGrid.ConfirmUpdate">Mettre à jour {0} paquet(s) sur {1} ordinateur(s) ? Leurs applications seront fermées sans avertissement avant la mise à jour.</translation>
   <translation key="ComputerGrid.MissingTools">PsExec ou LiteDeploy.Worker.exe est absent à côté de LiteDeploy.exe.</translation>
   <translation key="ComputerGrid.Running">En cours : {0} ordinateur(s) sur {1} terminé(s).</translation>
   <translation key="ComputerGrid.ConfirmClose">Un traitement est en cours. L'arrêter et fermer ?</translation>
@@ -368,11 +366,11 @@
   <translation key="ComputerGrid.OfferChooseCredential">Aucun identifiant n'est choisi pour les mises à jour logicielles : les ordinateurs sont joints avec votre compte ({0}). Choisir un identifiant dans Application &gt; Options maintenant ?
 
 Oui : ouvrir les options. Non : continuer avec votre compte.</translation>
-  <translation key="PackageListForm.Text">Lite Deploy - Liste des paquets</translation>
+  <translation key="PackageListForm.Text">Lite Deploy - Catalogue des logiciels</translation>
   <translation key="PackageListForm.searchLabel.Text">Chercher dans winget :</translation>
   <translation key="PackageListForm.searchButton.Text">Chercher</translation>
   <translation key="PackageListForm.addButton.Text">Ajouter à la liste</translation>
-  <translation key="PackageListForm.listLabel.Text">Paquets gardés à jour (processus : fermés avant la mise à jour, sans .exe, séparés par des virgules) :</translation>
+  <translation key="PackageListForm.listLabel.Text">Logiciels du catalogue (processus : fermés avant la mise à jour, sans .exe, séparés par des virgules) ; une colonne par profil :</translation>
   <translation key="PackageListForm.okButton.Text">Enregistrer</translation>
   <translation key="PackageListForm.cancelButton.Text">Annuler</translation>
   <translation key="PackageListForm.resultNameColumn.Text">Nom</translation>
@@ -421,7 +419,7 @@ Oui : ouvrir les options. Non : continuer avec votre compte.</translation>
   <translation key="ModuleParametersForm.None">(aucun)</translation>
   <translation key="ModuleParametersForm.MissingCredential">{0} (n'existe plus)</translation>
   <translation key="ModuleParametersForm.InstanceText">Lite Deploy - Paramètres de {0} ({1})</translation>
-  <translation key="PackageListForm.importCatalogButton.Text">Importer du catalogue...</translation>
+  <translation key="PackageListForm.importCatalogButton.Text">Importer des instances...</translation>
   <translation key="PackageListForm.InstanceName">Nom de l'instance de {0} (lettres, chiffres et . - _), par exemple le produit :</translation>
   <translation key="PackageListForm.InvalidInstance">Nom d'instance invalide : lettres (A-Z), chiffres et . - _ seulement, 64 caractères au plus.</translation>
   <translation key="PackageListForm.InstanceListed">{0} est déjà dans la liste.</translation>
@@ -620,7 +618,6 @@ Il n'est installé que là où la vérification indique toujours qu'il n'est pas
   <translation key="ComputerGrid.countsLabel.ToolTipText">Ordinateurs affichés / total / cochés</translation>
   <translation key="ComputerGrid.Counts">{0} affiché(s) / {1} au total / {2} coché(s)</translation>
   <translation key="ComputerGrid.NoComputers">Aucun ordinateur : la liste d'Active Directory n'est pas encore chargée, ou cliquez sur « Ajouter des ordinateurs... ».</translation>
-  <translation key="ComputerGrid.IdlePackages">{0} paquet(s) dans la liste des paquets.</translation>
   <translation key="ComputerGrid.PausedTip">En pause : {0}</translation>
   <translation key="ComputerGrid.NoReason">(aucune raison donnée)</translation>
   <translation key="ComputerGrid.NightOnlyTip">Mis à jour en dehors des heures ouvrables seulement (heures ouvrables : de {0} à {1}, du lundi au vendredi)</translation>
@@ -897,4 +894,38 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="ComputerGrid.Pinging">Ping de {0} ordinateur(s)...</translation>
   <translation key="ComputerGrid.AllColumns">Afficher toutes les colonnes</translation>
   <translation key="ComputerGrid.DetailsState">État : {0} ; utilisateur : {1} ; dernier scan : {2}</translation>
+  <translation key="ComputerGrid.AllSoftware">Tous</translation>
+  <translation key="ComputerGrid.ConfirmUpdateProfile">Profil {2} : mettre à jour {0} paquet(s) sur {1} ordinateur(s) ? Leurs applications sont fermées sans avertissement avant la mise à jour.</translation>
+  <translation key="ComputerGrid.IdleProfile">{0} logiciel(s) dans le profil {1} ({2} dans le catalogue).</translation>
+  <translation key="ComputerGrid.NoPackagesInProfile">Aucun logiciel dans ce profil : cliquez sur « Catalogue des logiciels... » ou choisissez un autre profil.</translation>
+  <translation key="ComputerGrid.ProfileButton">Profil : {0}</translation>
+  <translation key="ComputerGrid.ProfileMissing">Le profil {0} n'existe plus : choisissez un autre profil (rien n'est vérifié ni mis à jour d'ici là).</translation>
+  <translation key="ComputerGrid.profileButton.Text">Profil : Tous</translation>
+  <translation key="ComputerGrid.profileButton.ToolTipText">Les logiciels visés par Vérifier, Mettre à jour la sélection et Installer : cliquez pour choisir un autre profil</translation>
+  <translation key="PackageListForm.ConfirmDeleteProfile">Supprimer le profil {0} ? Les logiciels restent dans le catalogue.</translation>
+  <translation key="PackageListForm.ExportTitle">Exporter le catalogue des logiciels</translation>
+  <translation key="PackageListForm.ImportTitle">Importer un catalogue des logiciels</translation>
+  <translation key="PackageListForm.SoftwareCatalogFilter">Catalogue des logiciels (*.json)|*.json</translation>
+  <translation key="PackageListForm.Imported">{0} logiciel(s) ajouté(s), {1} profil(s) ajouté(s), {2} logiciel(s) ajouté(s) aux profils existants. Rien n'a été retiré ; Enregistrer garde le résultat.</translation>
+  <translation key="PackageListForm.ImportInvalid">Écartés (invalides) : {0}</translation>
+  <translation key="PackageListForm.InvalidProfileName">Nom de profil invalide.</translation>
+  <translation key="PackageListForm.ProfileExists">Le profil {0} existe déjà.</translation>
+  <translation key="PackageListForm.ProfileName">Nom du profil (lettres, chiffres, espaces et . - _ + ( ), 40 au plus) :</translation>
+  <translation key="PackageListForm.ProfileTip">Coché : dans le profil {0}</translation>
+  <translation key="PackageListForm.SelectProfile">Cliquez d'abord sur une cellule de la colonne du profil.</translation>
+  <translation key="PackageListForm.newProfileButton.Text">Nouveau profil...</translation>
+  <translation key="PackageListForm.renameProfileButton.Text">Renommer le profil...</translation>
+  <translation key="PackageListForm.deleteProfileButton.Text">Supprimer le profil</translation>
+  <translation key="PackageListForm.importButton.Text">Importer...</translation>
+  <translation key="PackageListForm.exportButton.Text">Exporter...</translation>
+  <translation key="ProfilePickerForm.Title">Lite Deploy - Profil</translation>
+  <translation key="ProfilePickerForm.Hint">Vérifier, Mettre à jour la sélection et Installer visent les logiciels du profil (Catalogue des logiciels... pour modifier les profils).</translation>
+  <translation key="ProfilePickerForm.Cancel">Annuler</translation>
+  <translation key="ProfilePickerForm.Item">{0} ({1})</translation>
+  <translation key="ProfilePickerForm.All">Tout le catalogue ({0})</translation>
+  <translation key="ScheduleEditForm.AllSoftware">Tout le catalogue</translation>
+  <translation key="ScheduleEditForm.profileLabel.Text">Profil des logiciels :</translation>
+  <translation key="SchedulesForm.AllSoftware">Tous</translation>
+  <translation key="SchedulesForm.profileColumn.Text">Profil</translation>
+  <translation key="MainForm.softwareCatalogToolStripMenuItem.Text">Catalogue des logiciels...</translation>
 </translations>

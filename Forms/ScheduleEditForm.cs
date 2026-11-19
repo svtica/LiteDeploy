@@ -3,8 +3,9 @@
 // File:    ScheduleEditForm.cs
 // Author:  LiteDeploy contributors
 // Date:    2026-11-12
-// Purpose: Edits one scheduled check or update: name, action, once or on some
-//          days at a time, Wake-on-LAN first, computers.
+// Purpose: Edits one scheduled check or update: name, action, profile of the
+//          software (the whole catalog or one profile), once or on some days at
+//          a time, Wake-on-LAN first, computers.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -48,6 +49,19 @@ namespace LiteDeploy
             timePicker.Value = DateTime.Today + time;
             oncePicker.Value = schedule.OnceAt ?? DateTime.Today.AddDays(1) + time;
             wakeCheck.Checked = schedule.WakeFirst;
+            // Profiles of the software: "All" first, then the profiles; a missing profile stays shown (marked)
+            profileCombo.Items.Add(Localization.T("ScheduleEditForm.AllSoftware", "All the catalog"));
+            foreach (SoftwareProfile p in SoftwareProfiles.Load().Items.OrderBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase))
+                profileCombo.Items.Add(p.Name);
+            String profile = schedule.Profile ?? "";
+            if (profile.Length == 0) profileCombo.SelectedIndex = 0;
+            else
+            {
+                int index = profileCombo.Items.Cast<Object>().Skip(1).Select(o => o.ToString()).ToList()
+                    .FindIndex(n => String.Equals(n, profile, StringComparison.OrdinalIgnoreCase));
+                if (index < 0) { profileCombo.Items.Add(profile); index = profileCombo.Items.Count - 2; }
+                profileCombo.SelectedIndex = index + 1;
+            }
             enabledCheck.Checked = schedule.Enabled;
             computersBox.Text = String.Join(Environment.NewLine, schedule.Computers);
             Recurrence_Changed(null, EventArgs.Empty);
@@ -92,6 +106,7 @@ namespace LiteDeploy
                 Time = timePicker.Value.ToString("HH:mm", CultureInfo.InvariantCulture),
                 OnceAt = onceRadio.Checked ? oncePicker.Value : (DateTime?)null,
                 WakeFirst = wakeCheck.Checked,
+                Profile = profileCombo.SelectedIndex <= 0 ? "" : profileCombo.SelectedItem.ToString(),
                 Computers = computers
             };
             DialogResult = DialogResult.OK;

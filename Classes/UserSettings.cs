@@ -80,6 +80,8 @@ namespace LiteDeploy
         public String UpdatesPackageColumns = "";
         /// <summary>Active status filters (ComputerStatusFilter names separated by ','); empty: none.</summary>
         public String UpdatesStatusFilter = "";
+        /// <summary>Active profile of the software (main window, Profile button); empty: the whole catalog.</summary>
+        public String UpdatesProfile = "";
         /// <summary>Online only: the computers that do not answer the ping are hidden (on by default).</summary>
         public bool UpdatesOnlineOnly = true;
         /// <summary>Columns of the computer view hidden with the Columns menu (column names separated by ','); empty: every column.</summary>
