@@ -99,7 +99,9 @@ namespace LiteDeploy
         /// <summary>Updated outside business hours only.</summary>
         NightOnly = 32,
         /// <summary>Last logon (Active Directory) older than the stale delay, or never.</summary>
-        Stale = 64
+        Stale = 64,
+        /// <summary>Removed from the list (hidden): shown only with this chip.</summary>
+        Hidden = 128
     }
 
     /// <summary>One computer of the computer view: what the filters, the sort and the columns need.</summary>
@@ -117,6 +119,8 @@ namespace LiteDeploy
         public bool Disabled;
         public bool IsServer;
         public bool AddedByName;
+        /// <summary>Removed from the list by the user: shown only with the Hidden chip.</summary>
+        public bool Hidden;
         public ComputerSummaryKind Kind = ComputerSummaryKind.NotChecked;
         public int UpdateCount;
         public bool Paused;
@@ -150,6 +154,7 @@ namespace LiteDeploy
                 row.PauseReason = state.PauseReason;
                 row.NightOnly = state.NightOnly;
                 row.AddedByName = state.AddedByName;
+                row.Hidden = state.Hidden;
                 row.TeamViewerId = state.TeamViewerId;
                 if (packages != null)
                 {
@@ -283,6 +288,7 @@ namespace LiteDeploy
             if ((statuses & ComputerStatusFilter.Paused) != 0 && row.Paused) return true;
             if ((statuses & ComputerStatusFilter.NightOnly) != 0 && row.NightOnly) return true;
             if ((statuses & ComputerStatusFilter.Stale) != 0 && IsStale(row, now, staleDays)) return true;
+            if ((statuses & ComputerStatusFilter.Hidden) != 0 && row.Hidden) return true;
             return false;
         }
 
@@ -296,12 +302,13 @@ namespace LiteDeploy
         }
 
         /// <summary>
-        /// Every filter at once: disabled accounts are never shown, servers only with IncludeServers, then
-        /// the selection, the search and the status chips.
+        /// Every filter at once: disabled accounts are never shown, hidden computers only with the Hidden chip,
+        /// servers only with IncludeServers, then the selection, the search and the status chips.
         /// </summary>
         public static bool Matches(ComputerRow row, ComputerFilterState filter, DateTime now)
         {
             if (row == null || row.Disabled) return false;
+            if (row.Hidden && (filter.Statuses & ComputerStatusFilter.Hidden) == 0) return false;
             if (row.IsServer && !filter.IncludeServers) return false;
             if (filter.Selection != null && !filter.Selection.Contains(row.Name)) return false;
             if (!MatchesSearch(row, filter.Search)) return false;

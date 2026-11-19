@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Remove from the list...** for any computer of the grid (with a confirmation): a computer added
+  by name leaves the list, a computer of Active Directory is hidden (new `Hidden` attribute in
+  `updates.xml`; older files load unchanged). Hidden computers are not shown, not updated, and
+  skipped by the scheduled updates; the new **Hidden** filter shows them and *Show in the list
+  again* brings them back (adding one again too).
+
+### Changed
+
+- The Active Directory inventory leaves out the computer objects that are not computers: managed
+  service accounts (standalone, group or delegated, read from `objectCategory`) and the Seamless
+  SSO account of Entra ID (`AZUREADSSOACC`).
+
 ## [1.0.19] - 2026-11-18
 
 ### Added

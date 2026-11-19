@@ -62,6 +62,7 @@ namespace LiteDeploy
             foreach (String computer in schedule.Computers.Distinct(StringComparer.OrdinalIgnoreCase))
             {
                 ComputerUpdateState c = store.Find(computer);
+                if (c != null && c.Hidden) { Log("  " + computer + ": removed from the list (hidden), skipped"); continue; }
                 if (c != null && c.Paused) { Log("  " + computer + ": paused, skipped" + (c.PauseReason != null ? " (" + c.PauseReason + ")" : "")); continue; }
                 if (c != null && c.NightOnly && businessHours && schedule.Command == "upgrade") { Log("  " + computer + ": outside business hours only, skipped"); continue; }
                 if (SkipsServer(c, schedule.Command, UserSettings.Current)) { Log("  " + computer + ": server (" + c.OsType + "), skipped: servers not included (App > Options)"); continue; }

@@ -644,8 +644,8 @@ Oui : l'utiliser. Non : continuer avec votre compte.</translation>
   <translation key="ComputerGrid.TargetsSelected">{0} ordinateur(s) sélectionné(s)</translation>
   <translation key="ComputerGrid.nightOnlyItem.Text">Mettre à jour hors heures ouvrables seulement</translation>
   <translation key="ComputerGrid.nightOnlyClearItem.Text">Permettre les mises à jour pendant les heures ouvrables</translation>
-  <translation key="ComputerGrid.removeItem.Text">Retirer de la liste</translation>
-  <translation key="ComputerGrid.removeItem.ToolTipText">Ordinateurs ajoutés par leur nom seulement : ils ne sont plus affichés (leur état enregistré est gardé)</translation>
+  <translation key="ComputerGrid.removeItem.Text">Retirer de la liste...</translation>
+  <translation key="ComputerGrid.removeItem.ToolTipText">Les ordinateurs ne sont plus affichés ni mis à jour : ceux ajoutés par leur nom quittent la liste, ceux d'Active Directory sont masqués (filtre Masqués, Remettre dans la liste)</translation>
   <translation key="ComputerGrid.ReadingCards">Lecture des fiches de {0} ordinateur(s)...</translation>
   <translation key="ComputerGrid.CardsTitle">Fiches des postes - {0} ordinateur(s)</translation>
   <translation key="ComputerGrid.CardDirectory">Système d'exploitation (AD) : {0}
@@ -877,4 +877,9 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="ComputerGrid.copyNameItem.Text">Copier les noms</translation>
   <translation key="ComputerGrid.deployItem.Text">Déployer un fichier ou une commande...</translation>
   <translation key="ComputerGrid.deployItem.ToolTipText">Exécuter un fichier ou une commande par PsExec sur ces ordinateurs</translation>
+  <translation key="ComputerGrid.unhideItem.Text">Remettre dans la liste</translation>
+  <translation key="ComputerGrid.hiddenFilter.Text">Masqués</translation>
+  <translation key="ComputerGrid.hiddenFilter.ToolTipText">Ordinateurs retirés de la liste (Retirer de la liste...) : affichés seulement avec ce filtre</translation>
+  <translation key="ComputerGrid.ConfirmRemove">Retirer {0} ordinateur(s) de la liste ? {1}&#10;&#10;Ils ne sont plus affichés ni mis à jour. Ceux d'Active Directory restent accessibles avec le filtre « Masqués » (Remettre dans la liste).</translation>
+  <translation key="ComputerGrid.HiddenTip">Retiré de la liste (filtre Masqués) : jamais mis à jour avant d'être remis dans la liste</translation>
 </translations>

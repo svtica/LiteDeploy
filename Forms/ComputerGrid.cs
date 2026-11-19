@@ -117,7 +117,8 @@ namespace LiteDeploy
                 { notCheckedFilter, ComputerStatusFilter.NotChecked },
                 { pausedFilter, ComputerStatusFilter.Paused },
                 { nightOnlyFilter, ComputerStatusFilter.NightOnly },
-                { staleFilter, ComputerStatusFilter.Stale }
+                { staleFilter, ComputerStatusFilter.Stale },
+                { hiddenFilter, ComputerStatusFilter.Hidden }
             };
 
             store = UpdateStateStore.Load(UpdateStateStore.DefaultPath);
@@ -441,6 +442,8 @@ namespace LiteDeploy
             if (row.NightOnly)
                 lines.Add(Localization.F("ComputerGrid.NightOnlyTip", "Updated outside business hours only (business hours: {0} to {1}, Monday to Friday)",
                     UserSettings.Current.BusinessHoursStart, UserSettings.Current.BusinessHoursEnd));
+            if (row.Hidden)
+                lines.Add(Localization.T("ComputerGrid.HiddenTip", "Removed from the list (Hidden filter): never updated until shown in the list again"));
             if (!row.InAd)
                 lines.Add(row.AddedByName
                     ? Localization.T("ComputerGrid.AddedByNameTip", "Not in Active Directory: added by name")
@@ -1295,7 +1298,7 @@ namespace LiteDeploy
                     targetsItem, targetsSeparator, installItem, installSeparator, pauseItem, resumeItem, nightOnlyItem, nightOnlyClearItem,
                     menuSeparator, cardItem, teamViewerItem, remoteDesktopItem, commandPromptItem, quickCommandsItem, messageItem,
                     processesItem, litePMItem, logsItem, wakeItem, pingItem, managementConsoleItem, adminShareItem, copyNameItem,
-                    deploySeparator, deployItem, exportSeparator, royalTsItem, removeSeparator, removeItem
+                    deploySeparator, deployItem, exportSeparator, royalTsItem, removeSeparator, removeItem, unhideItem
                 };
             }
         }
@@ -1331,9 +1334,13 @@ namespace LiteDeploy
             pingItem.Enabled = copyNameItem.Enabled = targets.Count > 0;
             deployItem.Enabled = targets.Count > 0 && deployEnabled;
             lock (storeLock) wakeItem.Enabled = targets.Any(c => { ComputerUpdateState s = store.Find(c); return s != null && !String.IsNullOrEmpty(s.Macs); });
-            bool anyAdded = targets.Any(c => { ComputerRow r; return rowsByName.TryGetValue(c, out r) && r.AddedByName && !r.InAd; });
-            removeItem.Visible = removeSeparator.Visible = anyAdded;
-            removeItem.Enabled = idle && anyAdded;
+            bool anyShown = targets.Any(c => { ComputerRow r; return rowsByName.TryGetValue(c, out r) && !r.Hidden; });
+            bool anyHidden = targets.Any(c => { ComputerRow r; return rowsByName.TryGetValue(c, out r) && r.Hidden; });
+            removeItem.Visible = anyShown;
+            unhideItem.Visible = anyHidden;
+            removeSeparator.Visible = anyShown || anyHidden;
+            removeItem.Enabled = idle && anyShown;
+            unhideItem.Enabled = idle && anyHidden;
             return targets.Count > 0;
         }
 
@@ -1484,12 +1491,35 @@ namespace LiteDeploy
             actions.SetNightOnly(ActionTargets(), false);
         }
 
-        // Computers added by name: no longer shown (the rest of their saved state is kept)
+        // Remove from the list: a computer added by name leaves the list; a computer of Active Directory is hidden
+        // (kept in updates.xml: Hidden filter, Show in the list again), never updated by a schedule. Their other
+        // saved state is kept.
         void removeItem_Click(object sender, EventArgs e)
         {
-            List<String> added = ActionTargets().Where(c => { ComputerRow r; return rowsByName.TryGetValue(c, out r) && r.AddedByName && !r.InAd; }).ToList();
+            List<String> added = new List<String>(), hidden = new List<String>();
+            foreach (String c in ActionTargets())
+            {
+                ComputerRow r;
+                if (!rowsByName.TryGetValue(c, out r) || r.Hidden) continue;
+                if (r.AddedByName && !r.InAd) added.Add(c);
+                else hidden.Add(c);
+            }
+            if (added.Count + hidden.Count == 0) return;
+            String names = String.Join(", ", added.Concat(hidden).Take(10)) + (added.Count + hidden.Count > 10 ? ", ..." : "");
+            if (MessageBox.Show(this, Localization.F("ComputerGrid.ConfirmRemove",
+                    "Remove {0} computer(s) from the list? {1}\n\nThey are no longer shown nor updated. The computers of Active Directory stay available with the \"Hidden\" filter (Show in the list again).",
+                    added.Count + hidden.Count, names), Caption, MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+                return;
             ChangeComputers(added, c => c.AddedByName = false);
-            foreach (String c in added) checkedComputers.Remove(c);
+            ChangeComputers(hidden, c => c.Hidden = true);
+            foreach (String c in added.Concat(hidden)) checkedComputers.Remove(c);
+            RefreshList();
+        }
+
+        void unhideItem_Click(object sender, EventArgs e)
+        {
+            List<String> hidden = ActionTargets().Where(c => { ComputerRow r; return rowsByName.TryGetValue(c, out r) && r.Hidden; }).ToList();
+            ChangeComputers(hidden, c => c.Hidden = false);
             RefreshList();
         }
 
@@ -1530,7 +1560,13 @@ namespace LiteDeploy
                     String name = ComputerFilter.NormalizeName(part);
                     if (name == null) { if (!String.IsNullOrWhiteSpace(part)) invalid.Add(part.Trim()); continue; }
                     ComputerRow row;
-                    if (rowsByName.TryGetValue(name, out row) && (row.InAd || row.AddedByName)) { known.Add(row.Name); continue; }
+                    if (rowsByName.TryGetValue(name, out row) && (row.InAd || row.AddedByName))
+                    {
+                        // A computer removed from the list (hidden) comes back when it is added again
+                        if (row.Hidden) { store.GetOrAdd(row.Name).Hidden = false; added.Add(row.Name); }
+                        else known.Add(row.Name);
+                        continue;
+                    }
                     store.GetOrAdd(name).AddedByName = true;
                     added.Add(name);
                 }
