@@ -6,7 +6,9 @@
 // Purpose: One computer of the Active Directory inventory (name, operating
 //          system, last logon, disabled account, organizational unit), as
 //          cached in adcache.xml, and the pure parsing of the LDAP attributes
-//          it comes from (unit-tested on fake property values).
+//          it comes from (unit-tested on fake property values). Accounts that
+//          are computer objects without being computers (managed service
+//          accounts, the Seamless SSO account of Entra ID) are left out.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -62,13 +64,14 @@ namespace LiteDeploy
         /// <summary>
         /// A computer from the LDAP attributes of a search result. <paramref name="first"/> returns the first
         /// value of an attribute (lower-case name, as DirectorySearcher returns them), or null when absent.
-        /// Null when there is no name.
+        /// Null when there is no name, and for an account that is not a computer (IsNotAComputer).
         /// </summary>
         public static AdComputer FromProperties(Func<String, Object> first)
         {
             String name = AsString(first("name"));
             if (String.IsNullOrEmpty(name)) return null;
             if (name.StartsWith("CN=", StringComparison.OrdinalIgnoreCase)) name = name.Substring(3);
+            if (IsNotAComputer(name, AsString(first("objectcategory")))) return null;
             return new AdComputer
             {
                 Name = name,
@@ -78,6 +81,31 @@ namespace LiteDeploy
                 Disabled = IsDisabled(first("useraccountcontrol")),
                 Ou = ParentContainer(AsString(first("distinguishedname")))
             };
+        }
+
+        /// <summary>Accounts of the Seamless SSO of Entra ID: a computer object, never a computer.</summary>
+        static readonly String[] NotComputerNames = { "AZUREADSSOACC" };
+
+        /// <summary>
+        /// True for an object of class computer that is not a computer: a managed service account (standalone,
+        /// group or delegated: its objectCategory is not "CN=Computer,CN=Schema,..."; the accounts of directory
+        /// synchronization tools are often of this kind), or a known account name (NotComputerNames). An
+        /// unknown category (attribute not read) keeps the computer. Pure logic, unit-tested.
+        /// </summary>
+        public static bool IsNotAComputer(String name, String objectCategory)
+        {
+            String n = (name ?? "").Trim().TrimEnd('$');
+            foreach (String known in NotComputerNames)
+            {
+                if (String.Equals(n, known, StringComparison.OrdinalIgnoreCase)) return true;
+            }
+            if (String.IsNullOrWhiteSpace(objectCategory)) return false;
+            List<String> parts = SplitDn(objectCategory.Trim());
+            if (parts.Count == 0) return false;
+            String first = parts[0];
+            int eq = first.IndexOf('=');
+            String category = eq < 0 ? first : first.Substring(eq + 1);
+            return !String.Equals(category.Trim(), "Computer", StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>

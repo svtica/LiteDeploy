@@ -218,6 +218,8 @@ namespace LiteDeploy
                         mySearcher.PropertiesToLoad.Add("lastLogonTimestamp");
                         mySearcher.PropertiesToLoad.Add("userAccountControl");
                         mySearcher.PropertiesToLoad.Add("distinguishedName");
+                        // Managed service accounts are computer objects too: left out (AdComputer.IsNotAComputer)
+                        mySearcher.PropertiesToLoad.Add("objectCategory");
 
                         using (SearchResultCollection FoundResults = mySearcher.FindAll())
                         {

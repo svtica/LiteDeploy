@@ -56,6 +56,8 @@ namespace LiteDeploy
         [XmlAttribute] public String OsType;
         /// <summary>Added by name in the grid (a computer that is not in Active Directory): kept in the list.</summary>
         [XmlAttribute] public bool AddedByName;
+        /// <summary>Removed from the list by the user (a computer of Active Directory that is not wanted): not shown, never updated, until shown again.</summary>
+        [XmlAttribute] public bool Hidden;
         /// <summary>TeamViewer ID, as the worker last reported it ("teamviewer"); null: not installed or never reported.</summary>
         [XmlAttribute] public String TeamViewerId;
         [XmlElement("Package")] public List<PackageUpdateState> Packages = new List<PackageUpdateState>();
@@ -129,7 +131,7 @@ namespace LiteDeploy
         /// <summary>
         /// The states of one computer saved under several names, as one: the most recent data (LastChange) wins
         /// for each value, the flags (paused, outside business hours only, added by name) are kept when any
-        /// spelling has them, every package known under any spelling is kept (the most recent one for each).
+        /// spelling has them (hidden too), every package known under any spelling is kept (the most recent one for each).
         /// The name is the short one when there is one ("PC01" rather than "PC01.example.com").
         /// </summary>
         public static ComputerUpdateState MergeStates(IList<ComputerUpdateState> states)
@@ -148,6 +150,7 @@ namespace LiteDeploy
                 PauseReason = paused == null ? null : newest.Where(s => s.Paused).Select(s => s.PauseReason).FirstOrDefault(r => !String.IsNullOrEmpty(r)),
                 NightOnly = newest.Any(s => s.NightOnly),
                 AddedByName = newest.Any(s => s.AddedByName),
+                Hidden = newest.Any(s => s.Hidden),
                 Macs = FirstValue(newest, s => s.Macs),
                 Ips = FirstValue(newest, s => s.Ips),
                 OsCaption = FirstValue(newest, s => s.OsCaption),

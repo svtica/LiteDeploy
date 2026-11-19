@@ -26,6 +26,15 @@ each computer in the process reports.
   filtered as you type), a **DNS scan** of a /24 subnet, or a text file. *Add* puts the computers
   chosen in the grid and checks them; the ones that are not in Active Directory are kept in the
   grid (`updates.xml`) until *Remove from the list*.
+- **Remove from the list...** (actions of the grid, with a confirmation): the computers are no
+  longer shown nor updated (also skipped by the scheduled updates). A computer added by name leaves
+  the list; a computer of Active Directory is hidden (`Hidden` in `updates.xml`): the **Hidden**
+  filter shows the hidden computers, *Show in the list again* brings them back (adding one again
+  does too).
+- Computer objects of Active Directory that are not computers are left out: managed service
+  accounts (standalone, group or delegated; for example the accounts of directory
+  synchronization tools) and the Seamless SSO account of Entra ID (`AZUREADSSOACC`). They leave
+  the grid at the next Active Directory refresh.
 - Same rules everywhere: disabled computer accounts are never listed, servers only when **Include
   servers** is checked (the same setting in the grid, the computer search and *App > Options*).
   The search lists show the operating system and the last logon (columns sort on click; the

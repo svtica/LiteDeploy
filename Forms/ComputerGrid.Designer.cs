@@ -40,6 +40,8 @@ namespace LiteDeploy
             this.logsItem = new System.Windows.Forms.ToolStripMenuItem();
             this.removeSeparator = new System.Windows.Forms.ToolStripSeparator();
             this.removeItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.unhideItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.hiddenFilter = new System.Windows.Forms.ToolStripButton();
             this.installItem = new System.Windows.Forms.ToolStripMenuItem();
             this.installSeparator = new System.Windows.Forms.ToolStripSeparator();
             this.teamViewerItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -248,6 +250,7 @@ namespace LiteDeploy
             this.pausedFilter,
             this.nightOnlyFilter,
             this.staleFilter,
+            this.hiddenFilter,
             this.filterSeparator2,
             new System.Windows.Forms.ToolStripControlHost(this.includeServersCheck)});
             this.filterStrip.Location = new System.Drawing.Point(0, 25);
@@ -331,6 +334,15 @@ namespace LiteDeploy
             this.staleFilter.Text = "Offline/stale";
             this.staleFilter.ToolTipText = "Last logon (Active Directory) older than the delay of the settings, or never";
             this.staleFilter.CheckedChanged += new System.EventHandler(this.statusFilter_CheckedChanged);
+            //
+            // hiddenFilter
+            //
+            this.hiddenFilter.CheckOnClick = true;
+            this.hiddenFilter.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.hiddenFilter.Name = "hiddenFilter";
+            this.hiddenFilter.Text = "Hidden";
+            this.hiddenFilter.ToolTipText = "Computers removed from the list (Remove from the list...): shown only with this filter";
+            this.hiddenFilter.CheckedChanged += new System.EventHandler(this.statusFilter_CheckedChanged);
             //
             // filterSeparator2
             //
@@ -493,7 +505,8 @@ namespace LiteDeploy
             this.exportSeparator,
             this.royalTsItem,
             this.removeSeparator,
-            this.removeItem});
+            this.removeItem,
+            this.unhideItem});
             this.rowMenu.Name = "rowMenu";
             this.rowMenu.Opening += new System.ComponentModel.CancelEventHandler(this.rowMenu_Opening);
             this.targetsItem.Enabled = false;
@@ -550,9 +563,12 @@ namespace LiteDeploy
             this.logsItem.Click += new System.EventHandler(this.logsItem_Click);
             this.removeSeparator.Name = "removeSeparator";
             this.removeItem.Name = "removeItem";
-            this.removeItem.Text = "Remove from the list";
-            this.removeItem.ToolTipText = "Computers added by name only: they are no longer shown (their saved state is kept)";
+            this.removeItem.Text = "Remove from the list...";
+            this.removeItem.ToolTipText = "The computers are no longer shown nor updated: the ones added by name leave the list, the ones of Active Directory are hidden (Hidden filter, Show in the list again)";
             this.removeItem.Click += new System.EventHandler(this.removeItem_Click);
+            this.unhideItem.Name = "unhideItem";
+            this.unhideItem.Text = "Show in the list again";
+            this.unhideItem.Click += new System.EventHandler(this.unhideItem_Click);
             this.pingItem.Name = "pingItem";
             this.pingItem.Text = "Ping...";
             this.pingItem.Click += new System.EventHandler(this.pingItem_Click);
@@ -653,6 +669,8 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripMenuItem logsItem;
         private System.Windows.Forms.ToolStripSeparator removeSeparator;
         private System.Windows.Forms.ToolStripMenuItem removeItem;
+        private System.Windows.Forms.ToolStripMenuItem unhideItem;
+        private System.Windows.Forms.ToolStripButton hiddenFilter;
         private System.Windows.Forms.ToolStripMenuItem installItem;
         private System.Windows.Forms.ToolStripSeparator installSeparator;
         private System.Windows.Forms.ToolStripMenuItem teamViewerItem;
