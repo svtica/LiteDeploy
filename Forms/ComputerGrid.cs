@@ -128,8 +128,8 @@ namespace LiteDeploy
             messageItem.Click += (s, e) => actions.SendMessage(ActionTargets(), "");
             // In the right-click menu of the designer, after the quick commands (then moved with the other actions)
             rowMenu.Items.Insert(rowMenu.Items.IndexOf(quickCommandsItem) + 1, messageItem);
-            packages = UpdateRunner.LoadPackages();
             RestoreSettings();
+            LoadPackages();
 
             updatesList.ListViewItemSorter = sorter;
             updatesList.SmallImageList = StateImages();
@@ -206,6 +206,7 @@ namespace LiteDeploy
             computerColumnsLayout = s.UpdatesColumns ?? "";
             packageColumnsLayout = s.UpdatesPackageColumns ?? "";
             onlineOnlyButton.Checked = s.UpdatesOnlineOnly;
+            profileName = s.UpdatesProfile ?? "";
             hiddenColumns = new HashSet<String>(WindowLayout.ParseNames(s.UpdatesHiddenColumns), StringComparer.OrdinalIgnoreCase);
         }
 
@@ -738,11 +739,13 @@ namespace LiteDeploy
         void SetIdleStatus()
         {
             if (packages.Count == 0)
-                statusLabel.Text = Localization.T("ComputerGrid.NoPackages", "The package list is empty: click \"Package list...\".");
+                statusLabel.Text = profileFound
+                    ? Localization.T("ComputerGrid.NoPackagesInProfile", "No software in this profile: click \"Software catalog...\" or choose another profile.")
+                    : Localization.F("ComputerGrid.ProfileMissing", "The profile {0} no longer exists: choose another profile (nothing is checked or updated meanwhile).", profileName);
             else if (ActiveDirectoryCache.Inventory.Count == 0 && rows.Count == 0)
                 statusLabel.Text = Localization.T("ComputerGrid.NoComputers", "No computer: the Active Directory list is not loaded yet, or click \"Add computers...\".");
             else
-                statusLabel.Text = Localization.F("ComputerGrid.IdlePackages", "{0} package(s) in the package list.", packages.Count);
+                statusLabel.Text = Localization.F("ComputerGrid.IdleProfile", "{0} software in the profile {1} ({2} in the catalog).", packages.Count, ProfileDisplayName, catalog.Count);
         }
 
         void UpdateCounts()
@@ -760,7 +763,7 @@ namespace LiteDeploy
             checkButton.Enabled = idle && packages.Count > 0 && (visible.Count > 0 || checkedComputers.Count > 0);
             selectOutdatedButton.Enabled = selectAllButton.Enabled = selectNoneButton.Enabled = idle;
             updateButton.Enabled = idle && packages.Count > 0 && anyTarget;
-            editPackagesButton.Enabled = idle;
+            editPackagesButton.Enabled = profileButton.Enabled = idle;
             byPackageButton.Enabled = idle;
             stopButton.Enabled = !idle;
         }
@@ -983,7 +986,7 @@ namespace LiteDeploy
         {
             if (pending > 0) return;
             if (!OfferCredential()) return;
-            packages = UpdateRunner.LoadPackages();
+            LoadPackages();
             // The checked computers, or every computer shown when none is checked
             List<String> targets = CheckedComputers();
             if (targets.Count == 0) targets = visible.Select(r => r.Name).ToList();
@@ -1031,8 +1034,8 @@ namespace LiteDeploy
                 statusLabel.Text = skipped;
                 return;
             }
-            String question = Localization.F("ComputerGrid.ConfirmUpdate", "Update {0} package(s) on {1} computer(s)? Their applications are closed without warning before the update.",
-                jobs.Sum(j => j.Packages.Count), jobs.Count);
+            String question = Localization.F("ComputerGrid.ConfirmUpdateProfile", "Profile {2}: update {0} package(s) on {1} computer(s)? Their applications are closed without warning before the update.",
+                jobs.Sum(j => j.Packages.Count), jobs.Count, ProfileDisplayName);
             if (skipped != null) question += "\n\n" + skipped;
             if (MessageBox.Show(this, question, Caption, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
@@ -1826,12 +1829,29 @@ namespace LiteDeploy
 
         void editPackagesButton_Click(object sender, EventArgs e)
         {
-            using (PackageListForm editor = new PackageListForm(packages))
+            ShowCatalog();
+        }
+
+        /// <summary>Software catalog... (tool bar and Tools menu): the catalog and its profiles; refused while work is in progress.</summary>
+        internal void ShowCatalog()
+        {
+            if (pending > 0) return;
+            using (PackageListForm editor = new PackageListForm(UpdateRunner.LoadPackages(), SoftwareProfiles.Load()))
             {
                 if (editor.ShowDialog(this) != DialogResult.OK) return;
                 try
                 {
                     UpdateRunner.SavePackages(editor.Packages);
+                    editor.Profiles.KeepOnly(editor.Packages);
+                    editor.Profiles.Save();
+                    // A renamed profile stays the active one, and the one of its schedules
+                    String active = profileName;
+                    foreach (KeyValuePair<String, String> r in editor.Renamed)
+                    {
+                        if (String.Equals(active, r.Key, StringComparison.OrdinalIgnoreCase)) active = r.Value;
+                        UpdateSchedules.RenameProfile(r.Key, r.Value);
+                    }
+                    if (active != profileName) SetProfile(active);
                 }
                 catch (Exception ex)
                 {
@@ -1839,7 +1859,57 @@ namespace LiteDeploy
                     return;
                 }
             }
-            packages = UpdateRunner.LoadPackages();
+            LoadPackages();
+            RefreshList();
+            SetIdleStatus();
+        }
+
+        // ---- Profile of the software -----------------------------------------------------
+        // Check, Update checked and Install work on the packages of the active profile only (faster, and
+        // no update of the whole catalog by mistake). No drop-down list on the main window: the profile
+        // changes through a dialog only, never with a turn of the mouse wheel.
+
+        /// <summary>Every package of the catalog (packages.txt).</summary>
+        List<UpdatePackage> catalog = new List<UpdatePackage>();
+        /// <summary>Active profile; empty: the whole catalog. Kept in the settings.</summary>
+        String profileName = "";
+        bool profileFound = true;
+
+        String ProfileDisplayName
+        {
+            get { return String.IsNullOrWhiteSpace(profileName) ? Localization.T("ComputerGrid.AllSoftware", "All") : profileName; }
+        }
+
+        /// <summary>The catalog, the profiles and the packages of the active profile (a missing profile: none).</summary>
+        void LoadPackages()
+        {
+            catalog = UpdateRunner.LoadPackages();
+            packages = SoftwareProfiles.Load().Filter(catalog, profileName, out profileFound);
+            profileButton.Text = Localization.F("ComputerGrid.ProfileButton", "Profile: {0}", ProfileDisplayName);
+            profileButton.ForeColor = profileFound ? (Theme.IsDark ? Theme.Text : SystemColors.ControlText) : Theme.ErrorColor;
+        }
+
+        void SetProfile(String name)
+        {
+            profileName = name ?? "";
+            UserSettings s = UserSettings.Current.Clone();
+            s.UpdatesProfile = profileName;
+            try { UserSettings.Save(s); }
+            catch (Exception ex) { AppConsole.WriteLine("Software updates: could not save " + UserSettings.FilePath + ": " + ex.Message); }
+        }
+
+        /// <summary>The active profile (schedules created from the main window start with it).</summary>
+        internal String ActiveProfile { get { return profileName; } }
+
+        void profileButton_Click(object sender, EventArgs e)
+        {
+            if (pending > 0) return;
+            String chosen = ProfilePickerForm.Pick(FindForm(), UpdateRunner.LoadPackages(), SoftwareProfiles.Load(), profileName);
+            if (chosen == null || String.Equals(chosen, profileName, StringComparison.Ordinal)) return;
+            SetProfile(chosen);
+            // Checked package rows of another profile are not kept
+            checkedKeys.Clear();
+            LoadPackages();
             RefreshList();
             SetIdleStatus();
         }

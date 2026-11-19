@@ -6,7 +6,7 @@ on the computers through `LiteDeploy.Worker.exe`, as SYSTEM, like the winget pac
 
 ## How it runs
 
-1. In *Package list...* (tool bar of the main window), *Add module* puts `module:<Name>` in the
+1. In *Software catalog...* (tool bar of the main window), *Add module* puts `module:<Name>` in the
    package list (processes and label come from the module header); *Parameters...* sets the
    values of its parameters, if it has any (see *Module parameters*). A module that declares
    `# Instances: yes` is added once per product, as `module:<Name>/<Instance>` (see *Module
@@ -270,7 +270,7 @@ values; it has its own row (label), its own state in the summary and its own las
 
 ### Catalog
 
-Typing the same fields for every product is error-prone: *Package list > Import from catalog...*
+Typing the same fields for every product is error-prone: *Software catalog > Import instances...*
 reads a JSON catalog and creates one instance per product with its parameter values. Where the
 dialog opens:
 
@@ -327,7 +327,7 @@ files and arguments that the administrators import.
 
 ## Web versions
 
-*Tools > Web versions...* (also *Package list > Web versions...*) tells which products of the
+*Tools > Web versions...* (also *Software catalog > Web versions...*) tells which products of the
 shared cache have a newer version on the web, and can put that version in the cache. It runs in
 LiteDeploy, on the **administrator's computer**, with the administrator's account: the managed
 computers never check the web nor download anything for it.
@@ -438,15 +438,15 @@ computer, for each administrator account, once:
 | Shared modules folder (network path) | *App > Options > Software updates* | `settings.xml` (`SharedModulesFolder`) |
 | Credential of the software updates | *Tools > Credentials*, then *App > Options* | Windows Credential Manager, `settings.xml` (`UpdateCredential`) |
 | Include servers, remote method, business hours | *App > Options > Software updates* | `settings.xml` |
-| Package list | *Package list...* (tool bar of the main window) | `packages.txt` |
-| Module parameters (instances) | *Package list... > Import from catalog...* (or *Parameters...*) | `module-settings.xml` |
+| Software catalog | *Software catalog...* (tool bar of the main window) | `packages.txt` |
+| Module parameters (instances) | *Software catalog... > Import instances...* (or *Parameters...*) | `module-settings.xml` |
 
 1. Type or paste the network paths of the cache and of the shared modules folder (the boxes show
    the expected form; *Select* starts at the typed path, shares are under *Network*). *Save*
    checks that this computer can read them with this account and warns otherwise (*Save anyway*
    keeps them, for a share that is down for a moment).
 2. Add the credential and choose it.
-3. Open *Package list...*, *Import from catalog...*: the dialog opens the shared `catalogs` folder
+3. Open *Software catalog...*, *Import instances...*: the dialog opens the shared `catalogs` folder
    next to the shared modules folder (see *Catalog*). Import each catalog of the team; secret
    parameters are then set in *Parameters...*.
 4. *Tools > Web versions...* lists the instances; *Check now*.
@@ -540,7 +540,7 @@ first 20 lines of the script:
 | `default=<value>` | Optional, right after the name: value used when none is set (`default="a b"` for spaces, `default=` for an empty value). Without default, the parameter is **required** |
 | Description | The rest of the line, shown in LiteDeploy |
 
-The administrator sets the values in *Package list...* (tool bar of the main window): select a
+The administrator sets the values in *Software catalog...* (tool bar of the main window): select a
 `module:` row, then *Parameters...*. They are saved on the administrator's computer in
 `%LOCALAPPDATA%\LiteDeploy\module-settings.xml` (not in `packages.txt`, whose format does not
 change). A secret parameter holds the **name** of a credential of *Tools > Credentials*, never

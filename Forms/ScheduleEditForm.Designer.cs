@@ -41,7 +41,17 @@ namespace LiteDeploy
             this.computersBox = new System.Windows.Forms.TextBox();
             this.okButton = new System.Windows.Forms.Button();
             this.cancelButton = new System.Windows.Forms.Button();
+            this.profileLabel = new System.Windows.Forms.Label();
+            this.profileCombo = new System.Windows.Forms.ComboBox();
             this.SuspendLayout();
+            this.profileLabel.AutoSize = true;
+            this.profileLabel.Location = new System.Drawing.Point(250, 168);
+            this.profileLabel.Name = "profileLabel";
+            this.profileLabel.Text = "Software profile:";
+            this.profileCombo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.profileCombo.Location = new System.Drawing.Point(250, 186);
+            this.profileCombo.Name = "profileCombo";
+            this.profileCombo.Size = new System.Drawing.Size(170, 21);
             this.nameLabel.AutoSize = true;
             this.nameLabel.Location = new System.Drawing.Point(12, 15);
             this.nameLabel.Name = "nameLabel";
@@ -131,6 +141,7 @@ namespace LiteDeploy
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(434, 429);
             this.Controls.AddRange(new System.Windows.Forms.Control[] {
+                this.profileLabel, this.profileCombo,
                 this.nameLabel, this.nameBox, this.actionLabel, this.actionCombo, this.onceRadio, this.oncePicker,
                 this.weeklyRadio, this.dayMonday, this.dayTuesday, this.dayWednesday, this.dayThursday, this.dayFriday,
                 this.daySaturday, this.daySunday, this.timeLabel, this.timePicker, this.wakeCheck, this.enabledCheck,
@@ -169,5 +180,7 @@ namespace LiteDeploy
         private System.Windows.Forms.TextBox computersBox;
         private System.Windows.Forms.Button okButton;
         private System.Windows.Forms.Button cancelButton;
+        private System.Windows.Forms.Label profileLabel;
+        private System.Windows.Forms.ComboBox profileCombo;
     }
 }

@@ -22,6 +22,7 @@ namespace LiteDeploy
             this.schedulesList = new System.Windows.Forms.ListView();
             this.nameColumn = new System.Windows.Forms.ColumnHeader();
             this.actionColumn = new System.Windows.Forms.ColumnHeader();
+            this.profileColumn = new System.Windows.Forms.ColumnHeader();
             this.whenColumn = new System.Windows.Forms.ColumnHeader();
             this.computersColumn = new System.Windows.Forms.ColumnHeader();
             this.nextColumn = new System.Windows.Forms.ColumnHeader();
@@ -40,7 +41,7 @@ namespace LiteDeploy
             this.SuspendLayout();
             this.schedulesList.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.schedulesList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.nameColumn, this.actionColumn, this.whenColumn, this.computersColumn, this.nextColumn, this.lastColumn});
+            this.nameColumn, this.actionColumn, this.profileColumn, this.whenColumn, this.computersColumn, this.nextColumn, this.lastColumn});
             this.schedulesList.FullRowSelect = true;
             this.schedulesList.HideSelection = false;
             this.schedulesList.Location = new System.Drawing.Point(12, 12);
@@ -55,6 +56,8 @@ namespace LiteDeploy
             this.nameColumn.Width = 150;
             this.actionColumn.Text = "Action";
             this.actionColumn.Width = 90;
+            this.profileColumn.Text = "Profile";
+            this.profileColumn.Width = 90;
             this.whenColumn.Text = "When";
             this.whenColumn.Width = 160;
             this.computersColumn.Text = "Computers";
@@ -132,6 +135,7 @@ namespace LiteDeploy
         private System.Windows.Forms.ListView schedulesList;
         private System.Windows.Forms.ColumnHeader nameColumn;
         private System.Windows.Forms.ColumnHeader actionColumn;
+        private System.Windows.Forms.ColumnHeader profileColumn;
         private System.Windows.Forms.ColumnHeader whenColumn;
         private System.Windows.Forms.ColumnHeader computersColumn;
         private System.Windows.Forms.ColumnHeader nextColumn;

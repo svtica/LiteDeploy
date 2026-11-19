@@ -50,6 +50,7 @@ namespace LiteDeploy
                 {
                     s.Name,
                     s.Command == "upgrade" ? Localization.T("SchedulesForm.Update", "Update") : Localization.T("SchedulesForm.Check", "Check"),
+                    String.IsNullOrWhiteSpace(s.Profile) ? Localization.T("SchedulesForm.AllSoftware", "All") : s.Profile,
                     s.Describe(),
                     s.Computers.Count.ToString(),
                     s.Enabled ? (next.HasValue ? next.Value.ToString("yyyy-MM-dd HH:mm") : "") : Localization.T("SchedulesForm.Disabled", "Disabled"),
@@ -79,7 +80,8 @@ namespace LiteDeploy
 
         void addButton_Click(object sender, EventArgs e)
         {
-            UpdateSchedule s = new UpdateSchedule { Name = "", Days = "Monday,Tuesday,Wednesday,Thursday,Friday", Time = "22:00", Computers = defaultComputers.ToList() };
+            UpdateSchedule s = new UpdateSchedule { Name = "", Days = "Monday,Tuesday,Wednesday,Thursday,Friday", Time = "22:00", Computers = defaultComputers.ToList(),
+                Profile = UserSettings.Current.UpdatesProfile ?? "" };
             Edit(s, null);
         }
 

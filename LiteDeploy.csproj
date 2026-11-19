@@ -211,6 +211,8 @@
     <Compile Include="Classes\AdComputer.cs" />
     <Compile Include="Classes\ComputerFilter.cs" />
     <Compile Include="Classes\OnlineStatus.cs" />
+    <Compile Include="Classes\SoftwareProfiles.cs" />
+    <Compile Include="Classes\SoftwareCatalogFile.cs" />
     <Compile Include="Classes\WindowLayout.cs" />
     <Compile Include="Forms\TextViewForm.cs">
       <SubType>Form</SubType>
@@ -223,6 +225,9 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\UserMessageForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\ProfilePickerForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\ComputerGrid.cs">

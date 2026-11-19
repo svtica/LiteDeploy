@@ -453,6 +453,12 @@ namespace LiteDeploy
             }
         }
 
+        // Software catalog and its profiles (also the tool bar of the grid)
+        private void softwareCatalogToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            grid.ShowCatalog();
+        }
+
         // Scheduled updates: the checked computers, else every computer shown, as the default targets
         private void schedulesToolStripMenuItem_Click(object sender, EventArgs e)
         {
