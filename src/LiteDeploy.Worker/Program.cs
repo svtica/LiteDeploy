@@ -170,7 +170,8 @@ namespace LiteDeploy.Worker
                 "command", command,
                 "winget", wingetPath ?? "",
                 "macs", string.Join(" ", macs),
-                "ips", string.Join(" ", ips)));
+                "ips", string.Join(" ", ips),
+                "users", string.Join(", ", ComputerInfo.LoggedOnUsers())));
 
             // Server guard: nothing is checked, closed, upgraded or installed on a server that is not allowed
             ServerDecision guard = ServerPolicy.Decide(command, productType, allowServers, allowDomainControllers);

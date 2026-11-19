@@ -128,6 +128,12 @@ namespace LiteDeploy
         public bool NightOnly;
         /// <summary>TeamViewer ID last read on the computer; null: unknown or not installed.</summary>
         public String TeamViewerId;
+        /// <summary>Users with a desktop at the last check, update or card; null: unknown or nobody.</summary>
+        public String Users;
+        /// <summary>End of the last check or update that reached the computer; null: never.</summary>
+        public DateTime? LastScan;
+        /// <summary>Answered the last ping (true), did not (false), not pinged yet (null).</summary>
+        public bool? Online;
         /// <summary>Display names of the packages known on the computer (installed, outdated or in error): searched too.</summary>
         public List<String> PackageNames = new List<String>();
 
@@ -156,6 +162,8 @@ namespace LiteDeploy
                 row.AddedByName = state.AddedByName;
                 row.Hidden = state.Hidden;
                 row.TeamViewerId = state.TeamViewerId;
+                row.Users = state.Users;
+                row.LastScan = state.LastScan;
                 if (packages != null)
                 {
                     foreach (UpdatePackage p in packages)
@@ -197,6 +205,8 @@ namespace LiteDeploy
         public String Search = "";
         public ComputerStatusFilter Statuses = ComputerStatusFilter.None;
         public bool IncludeServers;
+        /// <summary>Only the computers that answered the last ping (and the ones not pinged yet).</summary>
+        public bool OnlineOnly;
         public int StaleDays = 30;
         /// <summary>Only these computers (a set with ComputerName.Comparer); null: no such filter.</summary>
         public HashSet<String> Selection;
@@ -297,19 +307,21 @@ namespace LiteDeploy
         {
             if (String.IsNullOrWhiteSpace(search)) return true;
             String s = search.Trim();
-            return Contains(row.Name, s) || Contains(row.Os, s) || Contains(row.Ou, s)
+            return Contains(row.Name, s) || Contains(row.Os, s) || Contains(row.Ou, s) || Contains(row.Users, s)
                 || row.PackageNames.Any(p => Contains(p, s));
         }
 
         /// <summary>
         /// Every filter at once: disabled accounts are never shown, hidden computers only with the Hidden chip,
-        /// servers only with IncludeServers, then the selection, the search and the status chips.
+        /// servers only with IncludeServers, offline computers not with OnlineOnly (a computer not pinged yet is
+        /// shown), then the selection, the search and the status chips.
         /// </summary>
         public static bool Matches(ComputerRow row, ComputerFilterState filter, DateTime now)
         {
             if (row == null || row.Disabled) return false;
             if (row.Hidden && (filter.Statuses & ComputerStatusFilter.Hidden) == 0) return false;
             if (row.IsServer && !filter.IncludeServers) return false;
+            if (filter.OnlineOnly && row.Online == false) return false;
             if (filter.Selection != null && !filter.Selection.Contains(row.Name)) return false;
             if (!MatchesSearch(row, filter.Search)) return false;
             return MatchesStatus(row, filter.Statuses, now, filter.StaleDays);

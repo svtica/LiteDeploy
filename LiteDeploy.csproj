@@ -210,6 +210,7 @@
     <Compile Include="Classes\UpdateSummary.cs" />
     <Compile Include="Classes\AdComputer.cs" />
     <Compile Include="Classes\ComputerFilter.cs" />
+    <Compile Include="Classes\OnlineStatus.cs" />
     <Compile Include="Classes\WindowLayout.cs" />
     <Compile Include="Forms\TextViewForm.cs">
       <SubType>Form</SubType>

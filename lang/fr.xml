@@ -596,7 +596,7 @@ Il n'est installé que là où la vérification indique toujours qu'il n'est pas
   <translation key="ComputerGrid.actionsButton.ToolTipText">Actions sur les ordinateurs cochés, ou sur les lignes sélectionnées si aucun n'est coché (comme le menu du clic droit)</translation>
   <translation key="ComputerGrid.scheduleButton.ToolTipText">Planifier une vérification ou une mise à jour des ordinateurs cochés, ou des ordinateurs affichés</translation>
   <translation key="ComputerGrid.searchLabel.Text">Rechercher :</translation>
-  <translation key="ComputerGrid.searchBox.ToolTipText">Nom, système d'exploitation, UO ou paquet (Ctrl+F)</translation>
+  <translation key="ComputerGrid.searchBox.ToolTipText">Nom, système d'exploitation, UO, utilisateur ou paquet (Ctrl+F)</translation>
   <translation key="ComputerGrid.toUpdateFilter.Text">À mettre à jour</translation>
   <translation key="ComputerGrid.toUpdateFilter.ToolTipText">Ordinateurs qui ont des mises à jour disponibles (plusieurs filtres : l'un ou l'autre)</translation>
   <translation key="ComputerGrid.errorsFilter.Text">Erreurs</translation>
@@ -882,4 +882,19 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="ComputerGrid.hiddenFilter.ToolTipText">Ordinateurs retirés de la liste (Retirer de la liste...) : affichés seulement avec ce filtre</translation>
   <translation key="ComputerGrid.ConfirmRemove">Retirer {0} ordinateur(s) de la liste ? {1}&#10;&#10;Ils ne sont plus affichés ni mis à jour. Ceux d'Active Directory restent accessibles avec le filtre « Masqués » (Remettre dans la liste).</translation>
   <translation key="ComputerGrid.HiddenTip">Retiré de la liste (filtre Masqués) : jamais mis à jour avant d'être remis dans la liste</translation>
+  <translation key="ComputerGrid.onlineOnlyButton.Text">En ligne seulement</translation>
+  <translation key="ComputerGrid.onlineOnlyButton.ToolTipText">Seulement les ordinateurs qui répondent au ping (et ceux pas encore testés) ; cliquez pour afficher tous les ordinateurs</translation>
+  <translation key="ComputerGrid.refreshStateButton.Text">Rafraîchir l'état</translation>
+  <translation key="ComputerGrid.refreshStateButton.ToolTipText">Refaire le ping des ordinateurs (fait seul toutes les 5 minutes ; Maj+F5)</translation>
+  <translation key="ComputerGrid.columnsButton.Text">Colonnes</translation>
+  <translation key="ComputerGrid.columnsButton.ToolTipText">Choisir les colonnes affichées (une ligne par ordinateur)</translation>
+  <translation key="ComputerGrid.stateColumn.Text">État</translation>
+  <translation key="ComputerGrid.userColumn.Text">Utilisateur</translation>
+  <translation key="ComputerGrid.lastScanColumn.Text">Dernier scan</translation>
+  <translation key="ComputerGrid.Online">En ligne</translation>
+  <translation key="ComputerGrid.Offline">Hors ligne</translation>
+  <translation key="ComputerGrid.PingDone">Ping : {0} ordinateur(s) sur {1} répondent.</translation>
+  <translation key="ComputerGrid.Pinging">Ping de {0} ordinateur(s)...</translation>
+  <translation key="ComputerGrid.AllColumns">Afficher toutes les colonnes</translation>
+  <translation key="ComputerGrid.DetailsState">État : {0} ; utilisateur : {1} ; dernier scan : {2}</translation>
 </translations>

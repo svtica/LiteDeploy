@@ -63,25 +63,12 @@ namespace LiteDeploy.Worker
             return lines;
         }
 
-        public static string Collect()
+        /// <summary>Users with a desktop (console or remote desktop): owners of explorer.exe; empty when none or unreadable.</summary>
+        public static List<string> LoggedOnUsers()
         {
             List<string> users = new List<string>();
-            string lastBoot = null, os;
-            int productType = ReadOperatingSystem(out os);
             try
             {
-                using (ManagementObjectSearcher s = new ManagementObjectSearcher("SELECT LastBootUpTime FROM Win32_OperatingSystem"))
-                using (ManagementObjectCollection results = s.Get())
-                {
-                    foreach (ManagementObject o in results)
-                    {
-                        using (o)
-                        {
-                            lastBoot = ManagementDateTimeConverter.ToDateTime((string)o["LastBootUpTime"]).ToString("yyyy-MM-dd HH:mm");
-                        }
-                    }
-                }
-                // Users with a desktop (console or remote desktop): owners of explorer.exe
                 using (ManagementObjectSearcher s = new ManagementObjectSearcher("SELECT Handle FROM Win32_Process WHERE Name = 'explorer.exe'"))
                 using (ManagementObjectCollection results = s.Get())
                 {
@@ -100,6 +87,30 @@ namespace LiteDeploy.Worker
                 }
             }
             catch (Exception) { }
+            return users;
+        }
+
+        public static string Collect()
+        {
+            List<string> users = new List<string>();
+            string lastBoot = null, os;
+            int productType = ReadOperatingSystem(out os);
+            try
+            {
+                using (ManagementObjectSearcher s = new ManagementObjectSearcher("SELECT LastBootUpTime FROM Win32_OperatingSystem"))
+                using (ManagementObjectCollection results = s.Get())
+                {
+                    foreach (ManagementObject o in results)
+                    {
+                        using (o)
+                        {
+                            lastBoot = ManagementDateTimeConverter.ToDateTime((string)o["LastBootUpTime"]).ToString("yyyy-MM-dd HH:mm");
+                        }
+                    }
+                }
+            }
+            catch (Exception) { }
+            users = LoggedOnUsers();
 
             string free = null;
             try

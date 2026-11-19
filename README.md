@@ -21,6 +21,13 @@ each computer in the process reports.
   versions, credentials, tools, LitePM, console) and *Help*. The console of LiteDeploy is under
   the grid (splitter). Shortcuts: F5 check, Ctrl+U update, Ctrl+F search, Ctrl+A check all the
   rows shown, Esc stop.
+- **State** (green dot: answers the ping, red: does not, grey: not pinged yet): the computers the
+  other filters show are pinged when LiteDeploy opens, then every 5 minutes and with *Refresh
+  state* (Shift+F5), 32 at a time, 1 s each. **Online only** (on by default) hides the computers
+  that do not answer; click it to show every computer. The State column sorts like the others.
+- Columns **User** (users with a desktop at the last check, update or computer card) and **Last
+  scan** (end of the last check or update that reached the computer); the search box finds the
+  user too. **Columns** (right of the filters) hides or shows each column; kept in the settings.
 - **Add computers...** (tool bar or *Tools* menu) opens the computer search: by name or IP address,
   an **Active Directory** search (the domain computers are listed when the window opens and
   filtered as you type), a **DNS scan** of a /24 subnet, or a text file. *Add* puts the computers
@@ -266,7 +273,8 @@ LiteDeploy writes a comment before each of them in the file; close LiteDeploy be
 | `SchedulerEngine` | *Tools > Scheduled Updates* | `internal` (while LiteDeploy is open) or `windows` (Windows scheduled tasks) | `internal` |
 | `WebCheckTime` | *Tools > Web Versions* | daily check of the web versions at this time (`HH:mm`); empty: none | empty |
 | `WebAutoDownload` | *Tools > Web Versions* | the daily check downloads the new versions to the cache (else report only) | `false` |
-| `WebVersionsWindowSize`, `UpdatesWindowBounds`, `UpdatesWindowMaximized`, `UpdatesSplitter`, `UpdatesColumns`, `UpdatesPackageColumns`, `UpdatesStatusFilter` | kept by LiteDeploy | size and position of the windows, columns and status filters of the grid | empty |
+| `UpdatesHiddenColumns` | *Columns* menu of the main window | columns hidden (column names separated by `,`) | empty |
+| `WebVersionsWindowSize`, `UpdatesOnlineOnly`, `UpdatesWindowBounds`, `UpdatesWindowMaximized`, `UpdatesSplitter`, `UpdatesColumns`, `UpdatesPackageColumns`, `UpdatesStatusFilter` | kept by LiteDeploy | size and position of the windows, columns and status filters of the grid | empty |
 
 ## Installation
 

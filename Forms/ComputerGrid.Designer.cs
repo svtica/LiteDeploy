@@ -60,6 +60,12 @@ namespace LiteDeploy
             this.deploySeparator = new System.Windows.Forms.ToolStripSeparator();
             this.deployItem = new System.Windows.Forms.ToolStripMenuItem();
             this.deployButton = new System.Windows.Forms.ToolStripButton();
+            this.onlineOnlyButton = new System.Windows.Forms.ToolStripButton();
+            this.refreshStateButton = new System.Windows.Forms.ToolStripButton();
+            this.columnsButton = new System.Windows.Forms.ToolStripDropDownButton();
+            this.stateColumn = new System.Windows.Forms.ColumnHeader();
+            this.userColumn = new System.Windows.Forms.ColumnHeader();
+            this.lastScanColumn = new System.Windows.Forms.ColumnHeader();
             this.separator4 = new System.Windows.Forms.ToolStripSeparator();
             this.checkButton = new System.Windows.Forms.ToolStripButton();
             this.selectOutdatedButton = new System.Windows.Forms.ToolStripButton();
@@ -236,6 +242,32 @@ namespace LiteDeploy
             this.scheduleButton.ToolTipText = "Schedule a check or an update of the checked computers, or of the computers shown";
             this.scheduleButton.Click += new System.EventHandler(this.scheduleButton_Click);
             //
+            // onlineOnlyButton
+            //
+            this.onlineOnlyButton.CheckOnClick = true;
+            this.onlineOnlyButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.onlineOnlyButton.Name = "onlineOnlyButton";
+            this.onlineOnlyButton.Text = "Online only";
+            this.onlineOnlyButton.ToolTipText = "Only the computers that answer the ping (the ones not pinged yet too); click to show every computer";
+            this.onlineOnlyButton.CheckedChanged += new System.EventHandler(this.onlineOnlyButton_CheckedChanged);
+            //
+            // refreshStateButton
+            //
+            this.refreshStateButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.refreshStateButton.Name = "refreshStateButton";
+            this.refreshStateButton.Text = "Refresh state";
+            this.refreshStateButton.ToolTipText = "Ping the computers again (done by itself every 5 minutes; Shift+F5)";
+            this.refreshStateButton.Click += new System.EventHandler(this.refreshStateButton_Click);
+            //
+            // columnsButton
+            //
+            this.columnsButton.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+            this.columnsButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.columnsButton.Name = "columnsButton";
+            this.columnsButton.Text = "Columns";
+            this.columnsButton.ToolTipText = "Choose the columns shown (one row per computer)";
+            this.columnsButton.DropDownOpening += new System.EventHandler(this.columnsButton_DropDownOpening);
+            //
             // filterStrip
             //
             this.filterStrip.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
@@ -252,7 +284,10 @@ namespace LiteDeploy
             this.staleFilter,
             this.hiddenFilter,
             this.filterSeparator2,
-            new System.Windows.Forms.ToolStripControlHost(this.includeServersCheck)});
+            this.onlineOnlyButton,
+            this.refreshStateButton,
+            new System.Windows.Forms.ToolStripControlHost(this.includeServersCheck),
+            this.columnsButton});
             this.filterStrip.Location = new System.Drawing.Point(0, 25);
             this.filterStrip.Name = "filterStrip";
             this.filterStrip.Size = new System.Drawing.Size(1084, 25);
@@ -267,7 +302,7 @@ namespace LiteDeploy
             //
             this.searchBox.Name = "searchBox";
             this.searchBox.Size = new System.Drawing.Size(170, 25);
-            this.searchBox.ToolTipText = "Name, operating system, OU or package (Ctrl+F)";
+            this.searchBox.ToolTipText = "Name, operating system, OU, user or package (Ctrl+F)";
             this.searchBox.TextChanged += new System.EventHandler(this.searchBox_TextChanged);
             this.searchBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.searchBox_KeyDown);
             //
@@ -398,6 +433,8 @@ namespace LiteDeploy
             this.updatesList.AllowColumnReorder = true;
             this.updatesList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.computerColumn,
+            this.stateColumn,
+            this.userColumn,
             this.osColumn,
             this.lastLogonColumn,
             this.statusColumn,
@@ -438,6 +475,15 @@ namespace LiteDeploy
             this.computerColumn.Name = "computerColumn";
             this.computerColumn.Text = "Computer";
             this.computerColumn.Width = 130;
+            this.stateColumn.Name = "stateColumn";
+            this.stateColumn.Text = "State";
+            this.stateColumn.Width = 70;
+            this.userColumn.Name = "userColumn";
+            this.userColumn.Text = "User";
+            this.userColumn.Width = 130;
+            this.lastScanColumn.Name = "lastScanColumn";
+            this.lastScanColumn.Text = "Last scan";
+            this.lastScanColumn.Width = 110;
             this.osColumn.Name = "osColumn";
             this.osColumn.Text = "OS";
             this.osColumn.Width = 170;
@@ -707,6 +753,12 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripButton addButton;
         private System.Windows.Forms.ToolStripSeparator separator4;
         private System.Windows.Forms.ToolStripButton deployButton;
+        private System.Windows.Forms.ToolStripButton onlineOnlyButton;
+        private System.Windows.Forms.ToolStripButton refreshStateButton;
+        private System.Windows.Forms.ToolStripDropDownButton columnsButton;
+        private System.Windows.Forms.ColumnHeader stateColumn;
+        private System.Windows.Forms.ColumnHeader userColumn;
+        private System.Windows.Forms.ColumnHeader lastScanColumn;
         private System.Windows.Forms.ToolStripMenuItem pingItem;
         private System.Windows.Forms.ToolStripMenuItem managementConsoleItem;
         private System.Windows.Forms.ToolStripMenuItem adminShareItem;
