@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **State** of the computers in the grid: a dot left of the name and a *State* column (answers the
+  ping, does not, not pinged yet). The computers shown are pinged when LiteDeploy opens, every 5
+  minutes and with *Refresh state* (Shift+F5). **Online only**, on by default, hides the computers
+  that do not answer.
+- Columns **User** (users with a desktop: the worker now sends them at the start of a check or an
+  update, and the computer card keeps them) and **Last scan** (end of the last check or update that
+  reached the computer); new `Users` and `LastScan` in `updates.xml` (older files load unchanged).
+- **Columns** menu: hide or show each column of the computer view (`UpdatesHiddenColumns`).
+
 ## [1.0.21] - 2026-11-18
 
 ### Fixed

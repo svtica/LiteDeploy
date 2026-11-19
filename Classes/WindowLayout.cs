@@ -72,6 +72,13 @@ namespace LiteDeploy
             return sb.ToString();
         }
 
+        /// <summary>Names separated by commas or semicolons (hidden columns), trimmed, empty ones left out.</summary>
+        public static List<String> ParseNames(String text)
+        {
+            if (String.IsNullOrWhiteSpace(text)) return new List<String>();
+            return text.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries).Select(n => n.Trim()).Where(n => n.Length > 0).ToList();
+        }
+
         /// <summary>Columns read from the settings, by name; unreadable entries are skipped, widths kept at least MinColumnWidth.</summary>
         public static Dictionary<String, ColumnLayout> ParseColumns(String text)
         {

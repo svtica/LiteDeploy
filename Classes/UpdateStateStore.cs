@@ -42,6 +42,8 @@ namespace LiteDeploy
         /// <summary>When a value of this computer last changed (not every check: see the file comment).</summary>
         public DateTime? LastChange;
         public String LastError;
+        /// <summary>End of the last check or update that reached the computer (worker "done" line); null: never.</summary>
+        public DateTime? LastScan;
         /// <summary>Paused (or excluded): skipped by Check and Update until resumed.</summary>
         [XmlAttribute] public bool Paused;
         public String PauseReason;
@@ -60,6 +62,8 @@ namespace LiteDeploy
         [XmlAttribute] public bool Hidden;
         /// <summary>TeamViewer ID, as the worker last reported it ("teamviewer"); null: not installed or never reported.</summary>
         [XmlAttribute] public String TeamViewerId;
+        /// <summary>Users with a desktop on the computer at the last check, update or card (DOMAIN\user, comma-separated); null: unknown or nobody.</summary>
+        [XmlAttribute] public String Users;
         [XmlElement("Package")] public List<PackageUpdateState> Packages = new List<PackageUpdateState>();
 
         public PackageUpdateState Find(String id)
@@ -155,7 +159,9 @@ namespace LiteDeploy
                 Ips = FirstValue(newest, s => s.Ips),
                 OsCaption = FirstValue(newest, s => s.OsCaption),
                 OsType = FirstValue(newest, s => s.OsType),
-                TeamViewerId = FirstValue(newest, s => s.TeamViewerId)
+                TeamViewerId = FirstValue(newest, s => s.TeamViewerId),
+                Users = FirstValue(newest, s => s.Users),
+                LastScan = newest.Max(s => s.LastScan)
             };
             foreach (ComputerUpdateState s in newest)
             {
@@ -240,10 +246,17 @@ namespace LiteDeploy
                         // The card says it even when empty (TeamViewer removed); older workers do not send it
                         if (m.Type == "info" && m.Fields.ContainsKey("teamviewer"))
                             c.TeamViewerId = String.IsNullOrWhiteSpace(m["teamviewer"]) ? null : m["teamviewer"].Trim();
+                        // Users with a desktop: the card ("info") and the start line of a check or update
+                        // (newer workers); empty: nobody logged on
+                        if (m.Fields.ContainsKey("users"))
+                            c.Users = String.IsNullOrWhiteSpace(m["users"]) ? null : m["users"].Trim();
                         ApplyOs(c, m);
                         break;
                     case WorkerProtocol.TypeDone:
                         ApplyOs(c, m);
+                        // The worker ran to its end on the computer: last scan (not part of the fingerprint,
+                        // so a check that finds nothing new does not change LastChange)
+                        c.LastScan = now;
                         break;
                     case WorkerProtocol.TypeError:
                         errors.Add(m["message"]);

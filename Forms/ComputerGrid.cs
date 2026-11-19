@@ -132,7 +132,10 @@ namespace LiteDeploy
             RestoreSettings();
 
             updatesList.ListViewItemSorter = sorter;
+            updatesList.SmallImageList = StateImages();
             updatesList.ItemChecked += updatesList_ItemChecked;
+            pingTimer.Tick += (s, e) => StartPing(false);
+            Load += (s, e) => { StartPing(false); pingTimer.Start(); };
             searchTimer.Tick += (s, e) => { searchTimer.Stop(); RefreshList(); };
             ActiveDirectoryCache.InventoryChanged += ActiveDirectoryCache_InventoryChanged;
             UserSettings.Saved += UserSettings_Saved;
@@ -202,6 +205,8 @@ namespace LiteDeploy
             staleFilter.ToolTipText = Localization.F("ComputerGrid.StaleTip", "Last logon (Active Directory) older than {0} day(s), or never", StaleDays);
             computerColumnsLayout = s.UpdatesColumns ?? "";
             packageColumnsLayout = s.UpdatesPackageColumns ?? "";
+            onlineOnlyButton.Checked = s.UpdatesOnlineOnly;
+            hiddenColumns = new HashSet<String>(WindowLayout.ParseNames(s.UpdatesHiddenColumns), StringComparer.OrdinalIgnoreCase);
         }
 
         // The splitter once the window has its size: the height of the details under the list
@@ -225,6 +230,8 @@ namespace LiteDeploy
             s.UpdatesStatusFilter = ComputerFilter.FormatStatuses(Statuses);
             s.UpdatesColumns = computerColumnsLayout;
             s.UpdatesPackageColumns = packageColumnsLayout;
+            s.UpdatesOnlineOnly = onlineOnlyButton.Checked;
+            s.UpdatesHiddenColumns = String.Join(",", hiddenColumns.OrderBy(n => n, StringComparer.OrdinalIgnoreCase));
             Form form = FindForm();
             if (form == null || form.WindowState != FormWindowState.Minimized)
                 s.UpdatesSplitter = splitContainer.Height - splitContainer.SplitterWidth - splitContainer.SplitterDistance;
@@ -253,6 +260,8 @@ namespace LiteDeploy
                 if (saved.TryGetValue(c.Name, out l)) c.Width = l.Width;
             }
             List<String> order = WindowLayout.Order(columns.Select(c => c.Name).ToList(), saved);
+            // The State column, new to a saved layout, goes next to the Computer column (not last)
+            if (!saved.ContainsKey(stateColumn.Name) && order.Remove(stateColumn.Name)) order.Insert(Math.Min(1, order.Count), stateColumn.Name);
             for (int i = 0; i < order.Count; i++)
             {
                 ColumnHeader c = columns.First(x => x.Name == order[i]);
@@ -285,15 +294,29 @@ namespace LiteDeploy
                 Search = searchBox.Text,
                 Statuses = Statuses,
                 IncludeServers = IncludeServers,
-                StaleDays = StaleDays
+                StaleDays = StaleDays,
+                OnlineOnly = onlineOnlyButton.Checked
             };
         }
+
+        /// <summary>Every column of the computer view, in the default order; the Computer column is always shown.</summary>
+        ColumnHeader[] ComputerColumns
+        {
+            get
+            {
+                return new[] { computerColumn, stateColumn, userColumn, osColumn, lastLogonColumn, statusColumn, updatesColumn, resultColumn,
+                    lastScanColumn, changedColumn, pausedColumn, nightOnlyColumn };
+            }
+        }
+
+        /// <summary>Columns of the computer view the user hid (Columns menu), by name; kept in the settings.</summary>
+        HashSet<String> hiddenColumns = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
 
         void SetColumns()
         {
             ColumnHeader[] wanted = ByPackage
                 ? new[] { computerColumn, packageColumn, installedColumn, availableColumn, statusColumn, resultColumn, changedColumn }
-                : new[] { computerColumn, osColumn, lastLogonColumn, statusColumn, updatesColumn, resultColumn, changedColumn, pausedColumn, nightOnlyColumn };
+                : ComputerColumns.Where(c => c == computerColumn || !hiddenColumns.Contains(c.Name)).ToArray();
             if (columnsReady && updatesList.Columns.Count == wanted.Length && wanted.Select((c, i) => updatesList.Columns[i] == c).All(b => b)) return;
             // The layout of the view left (not the columns of the designer, before the saved layout is applied)
             if (columnsReady) CaptureColumns();
@@ -319,7 +342,9 @@ namespace LiteDeploy
                 states.TryGetValue(entry.Key, out state);
                 ComputerSummary summary = ComputerSummary.Of(state, packages);
                 summaries[entry.Key] = summary;
-                result.Add(ComputerRow.Build(entry.Key, entry.Value, state, summary, packages));
+                ComputerRow row = ComputerRow.Build(entry.Key, entry.Value, state, summary, packages);
+                row.Online = online.Get(entry.Key);
+                result.Add(row);
             }
             rows = result;
             rowsByName = result.ToDictionary(r => r.Name, ComputerName.Comparer);
@@ -384,25 +409,35 @@ namespace LiteDeploy
         {
             String computer = row.Name;
             String step = LiveStep(computer);
-            String[] cells = ByPackage
-                ? new[] { computer, "", "", "", SummaryText(summary), ComputerResult(c, summary), Format(c?.LastChange) }
-                : new[]
+            String[] cells;
+            if (ByPackage)
+            {
+                cells = new[] { computer, "", "", "", SummaryText(summary), ComputerResult(c, summary), Format(c?.LastChange) };
+                if (step.Length > 0) cells[4] = step;
+            }
+            else
+            {
+                // The value of every column of the computer view, then the ones shown, in their order
+                Dictionary<ColumnHeader, String> values = new Dictionary<ColumnHeader, String>
                 {
-                    computer,
-                    row.Os ?? "",
-                    row.LastLogon.HasValue ? row.LastLogon.Value.ToString("yyyy-MM-dd") : "",
-                    SummaryText(summary),
-                    UpdatesText(c, summary),
-                    ComputerResult(c, summary),
-                    Format(c?.LastChange),
-                    row.Paused ? Localization.T("ComputerGrid.Paused", "Paused") : "",
-                    row.NightOnly ? Localization.T("ComputerGrid.Yes", "yes") : ""
+                    { computerColumn, computer },
+                    { stateColumn, OnlineText(row.Online) },
+                    { userColumn, row.Users ?? "" },
+                    { osColumn, row.Os ?? "" },
+                    { lastLogonColumn, row.LastLogon.HasValue ? row.LastLogon.Value.ToString("yyyy-MM-dd") : "" },
+                    { statusColumn, step.Length > 0 ? step : SummaryText(summary) },
+                    { updatesColumn, UpdatesText(c, summary) },
+                    { resultColumn, ComputerResult(c, summary) },
+                    { lastScanColumn, Format(row.LastScan) },
+                    { changedColumn, Format(c?.LastChange) },
+                    { pausedColumn, row.Paused ? Localization.T("ComputerGrid.Paused", "Paused") : "" },
+                    { nightOnlyColumn, row.NightOnly ? Localization.T("ComputerGrid.Yes", "yes") : "" }
                 };
-            int statusCell = ByPackage ? 4 : 3;
-            if (step.Length > 0) cells[statusCell] = step;
+                cells = updatesList.Columns.Cast<ColumnHeader>().Select(h => { String v; return values.TryGetValue(h, out v) ? v : ""; }).ToArray();
+            }
             for (int i = 0; i < cells.Length; i++) cells[i] = ComputerName.OneLine(cells[i]);
 
-            ListViewItem item = new ListViewItem(cells) { Tag = new RowKey { Computer = computer }, ToolTipText = RowTip(row) };
+            ListViewItem item = new ListViewItem(cells) { Tag = new RowKey { Computer = computer }, ToolTipText = RowTip(row), ImageIndex = OnlineImage(row.Online) };
             if (ComputerFilter.IsStale(row, now, StaleDays)) item.ForeColor = SystemColors.GrayText;
             switch (summary.Kind)
             {
@@ -486,7 +521,7 @@ namespace LiteDeploy
                 }
                 if (step.Length > 0) cells[4] = step;
                 for (int i = 0; i < cells.Length; i++) cells[i] = ComputerName.OneLine(cells[i]);
-                ListViewItem item = new ListViewItem(cells) { Tag = key, ToolTipText = RowTip(row) };
+                ListViewItem item = new ListViewItem(cells) { Tag = key, ToolTipText = RowTip(row), ImageIndex = OnlineImage(row.Online) };
                 if (s.Status == WorkerProtocol.StatusOutdated) item.ForeColor = Theme.WarningColor;
                 if (s.Status == WorkerProtocol.StatusError || (s.Status == WorkerProtocol.StatusOutdated && s.LastResult == WorkerProtocol.ResultFailed)) item.ForeColor = Theme.ErrorColor;
                 if (step.Length > 0) item.ForeColor = Theme.Accent;
@@ -643,6 +678,11 @@ namespace LiteDeploy
                     row.LastLogon.HasValue ? row.LastLogon.Value.ToString("yyyy-MM-dd HH:mm") : Localization.T("ComputerGrid.Never", "never")));
             foreach (String line in FlagsText(row).Split('\n').Where(l => l.Length > 0)) sb.AppendLine(line);
             if (!String.IsNullOrEmpty(row.TeamViewerId)) sb.AppendLine(TeamViewerText(row.TeamViewerId));
+            if (row.Online.HasValue || !String.IsNullOrEmpty(row.Users) || row.LastScan.HasValue)
+                sb.AppendLine(Localization.F("ComputerGrid.DetailsState", "State: {0}; user: {1}; last scan: {2}",
+                    row.Online.HasValue ? OnlineText(row.Online) : "?",
+                    String.IsNullOrEmpty(row.Users) ? "?" : row.Users,
+                    row.LastScan.HasValue ? Format(row.LastScan) : Localization.T("ComputerGrid.Never", "never")));
             lock (storeLock)
             {
                 ComputerUpdateState c = store.Find(row.Name);
@@ -787,6 +827,9 @@ namespace LiteDeploy
                     return true;
                 case Keys.F5:
                     if (checkButton.Enabled) checkButton_Click(this, EventArgs.Empty);
+                    return true;
+                case Keys.Shift | Keys.F5:
+                    StartPing(true);
                     return true;
                 case Keys.Control | Keys.U:
                     if (updateButton.Enabled) updateButton_Click(this, EventArgs.Empty);
@@ -1269,6 +1312,7 @@ namespace LiteDeploy
         /// <summary>LiteDeploy closes (the question was asked by the main window, which saves the settings): stops the work.</summary>
         internal void Shutdown()
         {
+            pingTimer.Stop();
             if (pending > 0) StopAll();
             ActiveDirectoryCache.InventoryChanged -= ActiveDirectoryCache_InventoryChanged;
             UserSettings.Saved -= UserSettings_Saved;
@@ -1526,6 +1570,112 @@ namespace LiteDeploy
         void ChangeComputers(List<String> targets, Action<ComputerUpdateState> change)
         {
             actions.Change(targets, change);
+        }
+
+        // ---- Online state (ping) ------------------------------------------------------------
+        // The computers the other filters show are pinged when the grid opens, then every 5 minutes and on
+        // demand (Refresh state, Shift+F5). "Online only" (on by default) hides the computers that did not
+        // answer; a computer not pinged yet stays shown.
+
+        readonly OnlineStatus online = new OnlineStatus();
+        readonly System.Windows.Forms.Timer pingTimer = new System.Windows.Forms.Timer { Interval = 5 * 60 * 1000 };
+
+        const int ImageUnknown = 0, ImageOnline = 1, ImageOffline = 2;
+
+        static int OnlineImage(bool? state)
+        {
+            return state == true ? ImageOnline : state == false ? ImageOffline : ImageUnknown;
+        }
+
+        static String OnlineText(bool? state)
+        {
+            return state == true ? Localization.T("ComputerGrid.Online", "Online")
+                : state == false ? Localization.T("ComputerGrid.Offline", "Offline")
+                : "";
+        }
+
+        // A dot per state: grey (not pinged), green (answers), red (does not answer)
+        ImageList StateImages()
+        {
+            ImageList images = new ImageList { ColorDepth = ColorDepth.Depth32Bit, ImageSize = new Size(12, 12) };
+            foreach (Color color in new[] { Color.Silver, Color.FromArgb(46, 160, 67), Color.FromArgb(215, 58, 73) })
+            {
+                Bitmap dot = new Bitmap(12, 12);
+                using (Graphics g = Graphics.FromImage(dot))
+                using (SolidBrush brush = new SolidBrush(color))
+                {
+                    g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                    g.FillEllipse(brush, 2, 2, 8, 8);
+                }
+                images.Images.Add(dot);
+            }
+            components.Add(images);
+            return images;
+        }
+
+        /// <summary>Pings the computers the other filters show (offline ones included); <paramref name="asked"/>: by the user (status line).</summary>
+        void StartPing(bool asked)
+        {
+            if (IsDisposed) return;
+            ComputerFilterState filter = CurrentFilter();
+            filter.OnlineOnly = false;
+            List<String> names = ComputerFilter.Apply(rows, filter, DateTime.Now).Select(r => r.Name).ToList();
+            if (names.Count == 0) return;
+            bool started = online.PingAll(names, (c, up) => RefreshLater(), () =>
+            {
+                try
+                {
+                    if (!IsDisposed && IsHandleCreated)
+                        BeginInvoke(new MethodInvoker(() =>
+                        {
+                            refreshStateButton.Enabled = true;
+                            if (pending == 0)
+                                statusLabel.Text = Localization.F("ComputerGrid.PingDone", "Ping: {0} of {1} computer(s) answer.",
+                                    names.Count(n => online.Get(n) == true), names.Count);
+                        }));
+                }
+                catch (InvalidOperationException) { }
+            });
+            if (!started) return;
+            refreshStateButton.Enabled = false;
+            if (asked && pending == 0)
+                statusLabel.Text = Localization.F("ComputerGrid.Pinging", "Ping of {0} computer(s)...", names.Count);
+        }
+
+        void refreshStateButton_Click(object sender, EventArgs e)
+        {
+            StartPing(true);
+        }
+
+        void onlineOnlyButton_CheckedChanged(object sender, EventArgs e)
+        {
+            if (!loading) RefreshList();
+        }
+
+        // Columns menu: one item per column of the computer view (Computer always shown)
+        void columnsButton_DropDownOpening(object sender, EventArgs e)
+        {
+            while (columnsButton.DropDownItems.Count > 0)
+            {
+                ToolStripItem old = columnsButton.DropDownItems[0];
+                columnsButton.DropDownItems.RemoveAt(0);
+                old.Dispose();
+            }
+            foreach (ColumnHeader column in ComputerColumns.Where(c => c != computerColumn))
+            {
+                ColumnHeader c = column;
+                ToolStripMenuItem item = new ToolStripMenuItem(c.Text) { Checked = !hiddenColumns.Contains(c.Name), CheckOnClick = true };
+                item.CheckedChanged += (s, a) =>
+                {
+                    if (item.Checked) hiddenColumns.Remove(c.Name);
+                    else hiddenColumns.Add(c.Name);
+                    RefreshList();
+                };
+                columnsButton.DropDownItems.Add(item);
+            }
+            columnsButton.DropDownItems.Add(new ToolStripSeparator());
+            columnsButton.DropDownItems.Add(Localization.T("ComputerGrid.AllColumns", "Show every column"), null, (s, a) => { hiddenColumns.Clear(); RefreshList(); });
+            Theme.Apply(columnsButton.DropDown);
         }
 
         // ---- Add computers -----------------------------------------------------------------
