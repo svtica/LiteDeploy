@@ -689,6 +689,35 @@ namespace LiteDeploy.Tests
         }
 
         [TestMethod]
+        public void PackageChoices_UpdateInstallOrState()
+        {
+            UpdateStateStore store = new UpdateStateStore();
+            store.Apply("PC01", Messages(
+                WorkerProtocol.Format("type", "package", "id", "Example.Editor", "status", "outdated", "installed", "1.0", "available", "2.0"),
+                WorkerProtocol.Format("type", "package", "id", "Example.Viewer", "status", "notinstalled"),
+                WorkerProtocol.Format("type", "package", "id", "Example.Player", "status", "uptodate", "installed", "3.0")), null, DateTime.Now);
+            store.Apply("PC02", Messages(
+                WorkerProtocol.Format("type", "package", "id", "Example.Editor", "status", "uptodate", "installed", "2.0"),
+                WorkerProtocol.Format("type", "package", "id", "Example.Viewer", "status", "outdated", "installed", "1.0", "available", "1.1"),
+                WorkerProtocol.Format("type", "package", "id", "Example.Player", "status", "uptodate", "installed", "3.0")), null, DateTime.Now);
+            store.Apply("PC03", Messages(
+                WorkerProtocol.Format("type", "package", "id", "Example.Editor", "status", "outdated", "installed", "1.0", "available", "2.0")), null, DateTime.Now);
+            store.GetOrAdd("PC03").Paused = true;
+            List<UpdatePackage> packages = new[] { "Example.Editor", "Example.Viewer", "Example.Player", "Example.New" }.Select(UpdatePackage.Parse).ToList();
+
+            List<PackageChoice> c = UpdateRunner.PackageChoices(new[] { "PC01", "PC02", "PC03", "PC04" }, packages, store.Find, null);
+            Assert.AreEqual(4, c.Count, "every software of the profile, in its order");
+            CollectionAssert.AreEqual(new[] { "PC01" }, c[0].Update, "outdated; PC03 is paused");
+            Assert.AreEqual(1, c[0].UpToDate);
+            CollectionAssert.AreEqual(new[] { "PC02" }, c[1].Update);
+            CollectionAssert.AreEqual(new[] { "PC01" }, c[1].Install);
+            Assert.AreEqual(0, c[2].Update.Count + c[2].Install.Count);
+            Assert.AreEqual(2, c[2].UpToDate);
+            Assert.AreEqual(1, c[2].NotChecked, "PC04 never checked");
+            Assert.AreEqual(3, c[3].NotChecked);
+        }
+
+        [TestMethod]
         public void Install_WorkerArguments()
         {
             string command; List<UpdatePackage> packages; int timeout; bool unsigned;

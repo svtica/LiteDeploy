@@ -1075,29 +1075,78 @@ namespace LiteDeploy
         // on the target computers where the last check says "notinstalled" (a module only when
         // its header declares "# Install: yes").
 
+        // Install or update: every software of the active profile, with what can be done on the targets after
+        // their last check (update where outdated, install where missing and allowed), else its state, greyed
         void BuildInstallMenu(List<String> targets)
         {
+            foreach (ToolStripItem old in installItem.DropDownItems.Cast<ToolStripItem>().ToList()) old.Dispose();
             installItem.DropDownItems.Clear();
             HashSet<String> installable = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
             if (packages.Any(p => p.IsModule))
             {
                 foreach (UpdateModule m in UpdateModules.List().Where(m => m.Install)) installable.Add(m.Name);
             }
-            List<KeyValuePair<UpdatePackage, List<String>>> candidates;
-            lock (storeLock) candidates = UpdateRunner.InstallCandidates(targets, packages, store.Find, installable);
-            foreach (KeyValuePair<UpdatePackage, List<String>> entry in candidates)
+            List<PackageChoice> choices;
+            lock (storeLock) choices = UpdateRunner.PackageChoices(targets, packages, store.Find, installable);
+            bool any = false;
+            foreach (PackageChoice choice in choices)
             {
-                UpdatePackage package = entry.Key;
-                List<String> computers = entry.Value;
-                ToolStripMenuItem item = new ToolStripMenuItem(
-                    Localization.F("ComputerGrid.InstallPackageItem", "{0} ({1} computer(s))", package.DisplayName, computers.Count));
-                item.Click += (s, e) => InstallPackage(package, computers);
-                installItem.DropDownItems.Add(item);
+                UpdatePackage package = choice.Package;
+                if (choice.Update.Count > 0)
+                {
+                    List<String> computers = choice.Update;
+                    ToolStripMenuItem item = new ToolStripMenuItem(
+                        Localization.F("ComputerGrid.UpdatePackageItem", "{0}: update ({1} computer(s))", package.DisplayName, computers.Count));
+                    item.Font = new Font(item.Font, FontStyle.Bold);
+                    item.Click += (s, e) => UpdateOnePackage(package, computers);
+                    installItem.DropDownItems.Add(item);
+                    any = true;
+                }
+                if (choice.Install.Count > 0)
+                {
+                    List<String> computers = choice.Install;
+                    ToolStripMenuItem item = new ToolStripMenuItem(
+                        Localization.F("ComputerGrid.InstallPackageItem2", "{0}: install ({1} computer(s))", package.DisplayName, computers.Count));
+                    item.Click += (s, e) => InstallPackage(package, computers);
+                    installItem.DropDownItems.Add(item);
+                    any = true;
+                }
+                if (choice.Update.Count == 0 && choice.Install.Count == 0)
+                {
+                    String state = choice.UpToDate > 0 && choice.NotChecked == 0 && choice.Other == 0
+                        ? Localization.T("ComputerGrid.UpToDate", "Up to date")
+                        : Localization.F("ComputerGrid.PackageState", "up to date: {0}, not checked: {1}, other: {2}", choice.UpToDate, choice.NotChecked, choice.Other);
+                    installItem.DropDownItems.Add(new ToolStripMenuItem(package.DisplayName + " - " + state) { Enabled = false });
+                }
             }
+            if (choices.Count == 0)
+                installItem.DropDownItems.Add(new ToolStripMenuItem(Localization.T("ComputerGrid.NoSoftwareInProfile", "No software in the profile")) { Enabled = false });
             Theme.Apply(installItem.DropDown);
-            installItem.Enabled = candidates.Count > 0 && pending == 0;
-            installItem.ToolTipText = candidates.Count > 0 ? null
-                : Localization.T("ComputerGrid.NothingToInstall", "No package to install: the last check of the selected computers says every package is installed, or the module does not declare the Install action.");
+            installItem.Enabled = choices.Count > 0 && pending == 0;
+            installItem.ToolTipText = any ? null
+                : Localization.T("ComputerGrid.NothingToInstallOrUpdate", "Nothing to update or install: the last check of these computers says the software of the profile is up to date (or not checked yet: Check first).");
+        }
+
+        // One software of the profile updated on the computers where it is outdated (the others of the profile are not touched)
+        void UpdateOnePackage(UpdatePackage package, List<String> targets)
+        {
+            if (pending > 0) return;
+            List<Job> jobs = targets.Where(c => !IsPaused(c))
+                .Select(c => new Job { Computer = c, Packages = new List<UpdatePackage> { package } }).ToList();
+            String skipped;
+            jobs = SkipNightOnly(jobs, out skipped);
+            if (jobs.Count == 0)
+            {
+                if (skipped != null) statusLabel.Text = skipped;
+                return;
+            }
+            String question = Localization.F("ComputerGrid.ConfirmUpdateOne", "Update {0} on {1} computer(s)? The application is closed without warning before the update: {2}",
+                package.DisplayName, jobs.Count, String.Join(", ", jobs.Select(j => j.Computer).Take(10)) + (jobs.Count > 10 ? ", ..." : ""));
+            if (skipped != null) question += "\n\n" + skipped;
+            if (MessageBox.Show(this, question, Caption, MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+                return;
+            if (!OfferCredential()) return;
+            Start("upgrade", jobs);
         }
 
         void InstallPackage(UpdatePackage package, List<String> targets)

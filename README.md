@@ -145,9 +145,11 @@ them (and for the PsExec method of the software updates); it is asked for when t
   *App > Options*. The credentials of the deployment window (*Saved...*) come from the same
   store.
 - Actions (right-click, or the *Actions* menu of the tool bar) apply to the checked computers, else
-  to the selected rows: *Install* one package where the last check says it is not installed
-  (explicit, with a confirmation; modules only when they declare `# Install: yes`; never part of
-  *Update checked* or of the schedules), pause / resume, outside business hours only (set or
+  to the selected rows: *Install or update* lists every software of the active profile, each with
+  what can be done on those computers after their last check: *update* where it is outdated (that
+  software only), *install* where it is not installed (modules only when they declare
+  `# Install: yes`; never part of *Update checked* or of the schedules), else its state, greyed
+  (up to date, not checked yet); one confirmation each, pause / resume, outside business hours only (set or
   clear), computer card (Active Directory data, logged-on users, pending restart, TeamViewer
   ID...; in a window that can be copied; also on double-click), the remote tools below,
   Wake-on-LAN, get the logs. Each row shows the step in progress.

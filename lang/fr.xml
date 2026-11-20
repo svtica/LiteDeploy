@@ -575,9 +575,7 @@ ID TeamViewer : {8}</translation>
   <translation key="RemoteRunner.PsExecFileNotFound">PsExec a copié le worker, mais Windows n'a pas pu le lancer (un antivirus retire souvent un exécutable déposé dans ADMIN$). Essayez la méthode WinRM (App &gt; Options).</translation>
   <translation key="OptionsForm.deploymentsCheckBox.Text">Afficher les déploiements autonomes (fichier ou commande par PsExec)</translation>
   <translation key="DeployForm.PsExecNeeded">Les déploiements ont besoin de PsExec : téléchargez-le dans Outils &gt; Gérer les outils, ou placez PsExec.exe à côté de LiteDeploy.exe.</translation>
-  <translation key="ComputerGrid.installItem.Text">Installer</translation>
-  <translation key="ComputerGrid.InstallPackageItem">{0} ({1} ordinateur(s))</translation>
-  <translation key="ComputerGrid.NothingToInstall">Aucun paquet à installer : selon la dernière vérification des ordinateurs sélectionnés, chaque paquet est installé, ou le module ne déclare pas l'action Installer.</translation>
+  <translation key="ComputerGrid.installItem.Text">Installer ou mettre à jour</translation>
   <translation key="ComputerGrid.ConfirmInstall">Installer {0} sur {1} ordinateur(s) ?
 
 Il n'est installé que là où la vérification indique toujours qu'il n'est pas installé : {2}</translation>
@@ -974,4 +972,10 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="ComputerGrid.exportInventoryItem.ToolTipText">Inventaire des ordinateurs cochés, sinon de tous les ordinateurs affichés : classeur Excel (.xlsx) ou CSV</translation>
   <translation key="MainForm.exportInventoryToolStripMenuItem.Text">Exporter l'inventaire...</translation>
   <translation key="MainForm.exportInventoryToolStripMenuItem.ToolTipText">Inventaire des ordinateurs cochés, sinon de tous les ordinateurs affichés : classeur Excel (.xlsx) ou CSV</translation>
+  <translation key="ComputerGrid.UpdatePackageItem">{0} : mettre à jour ({1} ordinateur(s))</translation>
+  <translation key="ComputerGrid.InstallPackageItem2">{0} : installer ({1} ordinateur(s))</translation>
+  <translation key="ComputerGrid.PackageState">à jour : {0}, non vérifiés : {1}, autre : {2}</translation>
+  <translation key="ComputerGrid.NoSoftwareInProfile">Aucun logiciel dans le profil</translation>
+  <translation key="ComputerGrid.NothingToInstallOrUpdate">Rien à mettre à jour ni à installer : selon la dernière vérification de ces ordinateurs, les logiciels du profil sont à jour (ou pas encore vérifiés : Vérifier d'abord).</translation>
+  <translation key="ComputerGrid.ConfirmUpdateOne">Mettre à jour {0} sur {1} ordinateur(s) ? L'application est fermée sans avertissement avant la mise à jour : {2}</translation>
 </translations>

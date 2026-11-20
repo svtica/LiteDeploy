@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- *Install* becomes **Install or update**: every software of the active profile is listed, with
+  *update* on the computers where the last check says it is outdated (that software only, one
+  confirmation), *install* where it is not installed, else its state greyed (up to date, not
+  checked yet). Before, the software already installed was not listed at all.
+
 ## [1.0.22] - 2026-11-20
 
 ### Added

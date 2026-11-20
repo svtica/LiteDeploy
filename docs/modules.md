@@ -486,9 +486,10 @@ a module without `# Install: yes` line never receives `-Action Install`):
 By default LiteDeploy only updates: a computer where a package is `notinstalled` is never touched.
 The *Install* action is explicit and opt-in:
 
-- In the grid of the main window, select computers, right-click, *Install* and pick **one**
-  package. The menu lists only the packages whose last check says `notinstalled` on at least one
-  selected computer (paused computers excluded), and for a module only when its header has the
+- In the grid of the main window, select computers, right-click, *Install or update* and pick
+  **one** package. The menu lists every software of the active profile: *update* where the last
+  check says `outdated`, *install* only where it says `notinstalled` on at least one selected
+  computer (paused computers excluded), and for a module only when its header has the
   line `# Install: yes` (key and value case-insensitive; any other value means no). A dialog
   names the package and the number of computers before anything starts.
 - *Install* is never part of *Update checked* nor of the scheduled updates (a schedule runs `scan`
