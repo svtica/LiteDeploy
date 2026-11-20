@@ -142,6 +142,40 @@ namespace LiteDeploy
             return result;
         }
 
+        /// <summary>
+        /// For each package (the active profile), what can be done on the target computers after their last check:
+        /// update where it is outdated, install where it is not installed (InstallCandidates rules), and how many
+        /// are up to date, not checked yet or in another state. Paused computers are left out. Pure logic, unit-tested.
+        /// </summary>
+        public static List<PackageChoice> PackageChoices(IEnumerable<String> computers, IEnumerable<UpdatePackage> packages,
+            Func<String, ComputerUpdateState> find, ICollection<String> installableModules)
+        {
+            List<String> list = computers.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            List<UpdatePackage> all = packages.ToList();
+            Dictionary<String, List<String>> install = InstallCandidates(list, all, find, installableModules)
+                .ToDictionary(e => e.Key.Id, e => e.Value, StringComparer.OrdinalIgnoreCase);
+            List<PackageChoice> result = new List<PackageChoice>();
+            foreach (UpdatePackage p in all)
+            {
+                PackageChoice choice = new PackageChoice { Package = p };
+                List<String> toInstall;
+                if (install.TryGetValue(p.Id, out toInstall)) choice.Install = toInstall;
+                foreach (String computer in list)
+                {
+                    ComputerUpdateState c = find(computer);
+                    if (c != null && c.Paused) continue;
+                    PackageUpdateState s = c == null ? null : c.Find(p.Id);
+                    String status = s == null ? null : s.Status;
+                    if (status == WorkerProtocol.StatusOutdated) choice.Update.Add(computer);
+                    else if (status == WorkerProtocol.StatusUpToDate) choice.UpToDate++;
+                    else if (status == null) choice.NotChecked++;
+                    else if (!choice.Install.Contains(computer)) choice.Other++;
+                }
+                result.Add(choice);
+            }
+            return result;
+        }
+
         /// <summary>Credential chosen for this session only (not saved), used when Options names none.</summary>
         public static String SessionCredential;
 
@@ -365,5 +399,16 @@ namespace LiteDeploy
         UseStored,
         /// <summary>Several stored, none chosen: offer to choose one in Options.</summary>
         ChooseInOptions
+    }
+
+    /// <summary>What Install or update offers for one package on the target computers.</summary>
+    internal sealed class PackageChoice
+    {
+        public UpdatePackage Package;
+        /// <summary>Computers where the last check says an update is available.</summary>
+        public List<String> Update = new List<String>();
+        /// <summary>Computers where it can be installed (not installed, install allowed).</summary>
+        public List<String> Install = new List<String>();
+        public int UpToDate, NotChecked, Other;
     }
 }

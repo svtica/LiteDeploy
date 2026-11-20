@@ -611,7 +611,7 @@ namespace LiteDeploy
             this.targetsItem.Text = "Computers";
             this.targetsSeparator.Name = "targetsSeparator";
             this.installItem.Name = "installItem";
-            this.installItem.Text = "Install";
+            this.installItem.Text = "Install or update";
             this.installSeparator.Name = "installSeparator";
             this.pauseItem.Name = "pauseItem";
             this.pauseItem.Text = "Pause these computers...";
