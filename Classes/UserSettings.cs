@@ -85,7 +85,10 @@ namespace LiteDeploy
         /// <summary>Online only: the computers that do not answer the ping are hidden (on by default).</summary>
         public bool UpdatesOnlineOnly = true;
         /// <summary>Columns of the computer view hidden with the Columns menu (column names separated by ','); empty: every column.</summary>
-        public String UpdatesHiddenColumns = "";
+        public String UpdatesHiddenColumns = DefaultHiddenColumns;
+
+        /// <summary>Columns hidden until the user shows them: the hardware inventory.</summary>
+        public const String DefaultHiddenColumns = "manufacturerColumn,modelColumn,serialColumn,yearColumn,cpuColumn,coresColumn,ramColumn,diskColumn,diskFreeColumn";
 
         /// <summary>A copy, so a window can change some settings and keep the others.</summary>
         public UserSettings Clone()
@@ -158,7 +161,7 @@ namespace LiteDeploy
             new KeyValuePair<String, String>("UpdatesWindowBounds",
                 "Kept by LiteDeploy: main window, then its grid (bounds, maximized, splitter, columns, status filters). Empty or 0: default."),
             new KeyValuePair<String, String>("UpdatesHiddenColumns",
-                "Columns menu of the main window: columns hidden (stateColumn, userColumn, osColumn, lastLogonColumn, statusColumn, updatesColumn, resultColumn, lastScanColumn, changedColumn, pausedColumn, nightOnlyColumn), separated by commas. Empty: every column."),
+                "Columns menu of the main window: columns hidden (stateColumn, userColumn, osColumn, lastLogonColumn, statusColumn, updatesColumn, resultColumn, lastScanColumn, changedColumn, pausedColumn, nightOnlyColumn, manufacturerColumn, modelColumn, serialColumn, yearColumn, cpuColumn, coresColumn, ramColumn, diskColumn, diskFreeColumn), separated by commas. Empty: every column. Default: the hardware columns."),
         };
 
         /// <summary>The settings as written to settings.xml: serialized, with FileComments before their elements.</summary>

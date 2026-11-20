@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   update, and the computer card keeps them) and **Last scan** (end of the last check or update that
   reached the computer); new `Users` and `LastScan` in `updates.xml` (older files load unchanged).
 - **Columns** menu: hide or show each column of the computer view (`UpdatesHiddenColumns`).
+- **Hardware inventory**: manufacturer, model, serial number, BIOS date (year), processor, cores and
+  threads, memory, system disk; read by the worker with every check and update and with *Read the
+  inventory*; kept in `updates.xml`, optional columns and computer card. **Export the inventory...**
+  as an Excel workbook (`.xlsx`) or CSV (`;`). Numeric columns of the grid sort by value.
 
 ## [1.0.21] - 2026-11-18
 

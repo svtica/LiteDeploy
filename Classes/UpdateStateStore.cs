@@ -64,6 +64,20 @@ namespace LiteDeploy
         [XmlAttribute] public String TeamViewerId;
         /// <summary>Users with a desktop on the computer at the last check, update or card (DOMAIN\user, comma-separated); null: unknown or nobody.</summary>
         [XmlAttribute] public String Users;
+        // ---- Hardware inventory (worker "info" and start line of a check or an update; strings as read) ----
+        /// <summary>When the inventory was last read; null: never.</summary>
+        public DateTime? InventoryDate;
+        [XmlAttribute] public String Manufacturer;
+        [XmlAttribute] public String Model;
+        [XmlAttribute] public String Serial;
+        [XmlAttribute] public String BiosDate;
+        [XmlAttribute] public String Cpu;
+        [XmlAttribute] public String Sockets;
+        [XmlAttribute] public String Cores;
+        [XmlAttribute] public String Threads;
+        [XmlAttribute] public String RamGb;
+        [XmlAttribute] public String DiskGb;
+        [XmlAttribute] public String DiskFreeGb;
         [XmlElement("Package")] public List<PackageUpdateState> Packages = new List<PackageUpdateState>();
 
         public PackageUpdateState Find(String id)
@@ -161,6 +175,19 @@ namespace LiteDeploy
                 OsType = FirstValue(newest, s => s.OsType),
                 TeamViewerId = FirstValue(newest, s => s.TeamViewerId),
                 Users = FirstValue(newest, s => s.Users),
+                InventoryDate = newest.Max(s => s.InventoryDate),
+                Manufacturer = FirstValue(newest, s => s.Manufacturer),
+                Model = FirstValue(newest, s => s.Model),
+                Serial = FirstValue(newest, s => s.Serial),
+                BiosDate = FirstValue(newest, s => s.BiosDate),
+                Cpu = FirstValue(newest, s => s.Cpu),
+                Sockets = FirstValue(newest, s => s.Sockets),
+                Cores = FirstValue(newest, s => s.Cores),
+                Threads = FirstValue(newest, s => s.Threads),
+                RamGb = FirstValue(newest, s => s.RamGb),
+                DiskGb = FirstValue(newest, s => s.DiskGb),
+                DiskFreeGb = FirstValue(newest, s => s.DiskFreeGb),
+
                 LastScan = newest.Max(s => s.LastScan)
             };
             foreach (ComputerUpdateState s in newest)
@@ -250,6 +277,7 @@ namespace LiteDeploy
                         // (newer workers); empty: nobody logged on
                         if (m.Fields.ContainsKey("users"))
                             c.Users = String.IsNullOrWhiteSpace(m["users"]) ? null : m["users"].Trim();
+                        ApplyHardware(c, m, now);
                         ApplyOs(c, m);
                         break;
                     case WorkerProtocol.TypeDone:
@@ -265,6 +293,25 @@ namespace LiteDeploy
             }
             c.LastError = errors.Count == 0 ? null : String.Join(" | ", errors);
             if (Fingerprint(c) != before) c.LastChange = now;
+        }
+
+        // Hardware inventory (newer workers): every value of the line replaces the saved one, a value the line
+        // does not have is kept (read again at the next check)
+        static void ApplyHardware(ComputerUpdateState c, WorkerMessage m, DateTime now)
+        {
+            if (!m.Fields.ContainsKey("model") && !m.Fields.ContainsKey("cpu") && !m.Fields.ContainsKey("ram")) return;
+            if (!String.IsNullOrWhiteSpace(m["manufacturer"])) c.Manufacturer = m["manufacturer"].Trim();
+            if (!String.IsNullOrWhiteSpace(m["model"])) c.Model = m["model"].Trim();
+            if (!String.IsNullOrWhiteSpace(m["serial"])) c.Serial = m["serial"].Trim();
+            if (!String.IsNullOrWhiteSpace(m["biosdate"])) c.BiosDate = m["biosdate"].Trim();
+            if (!String.IsNullOrWhiteSpace(m["cpu"])) c.Cpu = m["cpu"].Trim();
+            if (!String.IsNullOrWhiteSpace(m["sockets"])) c.Sockets = m["sockets"].Trim();
+            if (!String.IsNullOrWhiteSpace(m["cores"])) c.Cores = m["cores"].Trim();
+            if (!String.IsNullOrWhiteSpace(m["threads"])) c.Threads = m["threads"].Trim();
+            if (!String.IsNullOrWhiteSpace(m["ram"])) c.RamGb = m["ram"].Trim();
+            if (!String.IsNullOrWhiteSpace(m["disk"])) c.DiskGb = m["disk"].Trim();
+            if (!String.IsNullOrWhiteSpace(m["diskfree"])) c.DiskFreeGb = m["diskfree"].Trim();
+            c.InventoryDate = now;
         }
 
         // Operating system of the info card and of the done line (older workers: no such field, kept as is)

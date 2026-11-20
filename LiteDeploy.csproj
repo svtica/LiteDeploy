@@ -213,6 +213,7 @@
     <Compile Include="Classes\OnlineStatus.cs" />
     <Compile Include="Classes\SoftwareProfiles.cs" />
     <Compile Include="Classes\SoftwareCatalogFile.cs" />
+    <Compile Include="Classes\InventoryTable.cs" />
     <Compile Include="Classes\WindowLayout.cs" />
     <Compile Include="Forms\TextViewForm.cs">
       <SubType>Form</SubType>

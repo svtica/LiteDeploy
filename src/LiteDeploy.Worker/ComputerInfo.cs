@@ -12,6 +12,7 @@
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Management;
@@ -123,7 +124,8 @@ namespace LiteDeploy.Worker
             List<string> macs, ips;
             Network(out macs, out ips);
 
-            return WorkerProtocol.Format(
+            List<string> fields = new List<string>
+            {
                 "type", TypeInfo,
                 "computer", Environment.MachineName,
                 "users", string.Join(", ", users),
@@ -134,7 +136,92 @@ namespace LiteDeploy.Worker
                 "freec", free,
                 "macs", string.Join(" ", macs),
                 "ips", string.Join(" ", ips),
-                "teamviewer", ReadTeamViewerId() ?? "");
+                "teamviewer", ReadTeamViewerId() ?? ""
+            };
+            fields.AddRange(Hardware());
+            return WorkerProtocol.Format(fields.ToArray());
+        }
+
+        /// <summary>
+        /// Inventory of the hardware, as key/value pairs for a worker line (also on the start line of a check or an
+        /// update): manufacturer, model, serial (BIOS serial number), biosdate (yyyy-MM-dd, release date of the
+        /// BIOS: about the year of manufacture), cpu (name of the first processor), sockets, cores, threads, ram
+        /// (installed memory, GB), disk and diskfree (system drive, GB). A value that cannot be read is left out.
+        /// </summary>
+        public static List<string> Hardware()
+        {
+            CultureInfo inv = CultureInfo.InvariantCulture;
+            List<string> pairs = new List<string>();
+            Action<string, string> add = (k, v) => { if (!string.IsNullOrWhiteSpace(v)) { pairs.Add(k); pairs.Add(v.Trim()); } };
+            try
+            {
+                foreach (ManagementObject o in Query("SELECT Manufacturer, Model, TotalPhysicalMemory FROM Win32_ComputerSystem"))
+                {
+                    add("manufacturer", Convert.ToString(o["Manufacturer"], inv));
+                    add("model", Convert.ToString(o["Model"], inv));
+                }
+            }
+            catch (Exception) { }
+            try
+            {
+                foreach (ManagementObject o in Query("SELECT SerialNumber, ReleaseDate FROM Win32_BIOS"))
+                {
+                    add("serial", Convert.ToString(o["SerialNumber"], inv));
+                    string release = Convert.ToString(o["ReleaseDate"], inv);
+                    if (!string.IsNullOrEmpty(release))
+                    {
+                        try { add("biosdate", ManagementDateTimeConverter.ToDateTime(release).ToString("yyyy-MM-dd", inv)); }
+                        catch (Exception) { }
+                    }
+                }
+            }
+            catch (Exception) { }
+            try
+            {
+                string cpu = null;
+                int sockets = 0, cores = 0, threads = 0;
+                foreach (ManagementObject o in Query("SELECT Name, NumberOfCores, NumberOfLogicalProcessors FROM Win32_Processor"))
+                {
+                    sockets++;
+                    if (cpu == null) cpu = Convert.ToString(o["Name"], inv);
+                    cores += Convert.ToInt32(o["NumberOfCores"] ?? 0, inv);
+                    threads += Convert.ToInt32(o["NumberOfLogicalProcessors"] ?? 0, inv);
+                }
+                add("cpu", cpu == null ? null : System.Text.RegularExpressions.Regex.Replace(cpu, @"\s+", " "));
+                if (sockets > 0) add("sockets", sockets.ToString(inv));
+                if (cores > 0) add("cores", cores.ToString(inv));
+                if (threads > 0) add("threads", threads.ToString(inv));
+            }
+            catch (Exception) { }
+            try
+            {
+                ulong bytes = 0;
+                foreach (ManagementObject o in Query("SELECT Capacity FROM Win32_PhysicalMemory"))
+                    bytes += Convert.ToUInt64(o["Capacity"] ?? 0UL, inv);
+                if (bytes > 0) add("ram", Math.Round(bytes / 1073741824.0).ToString(inv));
+            }
+            catch (Exception) { }
+            try
+            {
+                DriveInfo system = new DriveInfo(Path.GetPathRoot(Environment.SystemDirectory));
+                add("disk", Math.Round(system.TotalSize / 1073741824.0).ToString(inv));
+                add("diskfree", Math.Round(system.AvailableFreeSpace / 1073741824.0, 1).ToString(inv));
+            }
+            catch (Exception) { }
+            return pairs;
+        }
+
+        // The objects of a WMI query, disposed after use by the caller's loop
+        static IEnumerable<ManagementObject> Query(string wql)
+        {
+            using (ManagementObjectSearcher s = new ManagementObjectSearcher(wql))
+            using (ManagementObjectCollection results = s.Get())
+            {
+                foreach (ManagementObject o in results)
+                {
+                    using (o) yield return o;
+                }
+            }
         }
 
         /// <summary>Keys where TeamViewer keeps its ID: 64-bit, then 32-bit installation.</summary>

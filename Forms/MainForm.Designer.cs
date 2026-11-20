@@ -51,6 +51,7 @@ namespace LiteDeploy
             this.killAllProcessesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.schedulesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.softwareCatalogToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.exportInventoryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.webVersionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.credentialsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.manageToolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -122,6 +123,7 @@ namespace LiteDeploy
             this.toolStripSeparator4,
             this.softwareCatalogToolStripMenuItem,
             this.schedulesToolStripMenuItem,
+            this.exportInventoryToolStripMenuItem,
             this.webVersionsToolStripMenuItem,
             this.credentialsToolStripMenuItem,
             this.manageToolsToolStripMenuItem,
@@ -182,6 +184,10 @@ namespace LiteDeploy
             this.softwareCatalogToolStripMenuItem.Name = "softwareCatalogToolStripMenuItem";
             this.softwareCatalogToolStripMenuItem.Text = "Software Catalog...";
             this.softwareCatalogToolStripMenuItem.Click += new System.EventHandler(this.softwareCatalogToolStripMenuItem_Click);
+            this.exportInventoryToolStripMenuItem.Name = "exportInventoryToolStripMenuItem";
+            this.exportInventoryToolStripMenuItem.Text = "Export the Inventory...";
+            this.exportInventoryToolStripMenuItem.ToolTipText = "Inventory of the checked computers, else of every computer shown: Excel workbook (.xlsx) or CSV";
+            this.exportInventoryToolStripMenuItem.Click += new System.EventHandler(this.exportInventoryToolStripMenuItem_Click);
             // 
             // schedulesToolStripMenuItem
             // 
@@ -329,6 +335,7 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripMenuItem killAllProcessesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem schedulesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem softwareCatalogToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem exportInventoryToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem webVersionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem credentialsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem manageToolsToolStripMenuItem;

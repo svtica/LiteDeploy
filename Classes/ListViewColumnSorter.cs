@@ -59,7 +59,7 @@ namespace LiteDeploy
             listviewY = (ListViewItem)y;
 
             // Compare the two items
-            compareResult = ObjectCompare.Compare(listviewX.SubItems[ColumnToSort].Text, listviewY.SubItems[ColumnToSort].Text);
+            compareResult = CompareTexts(listviewX.SubItems[ColumnToSort].Text, listviewY.SubItems[ColumnToSort].Text);
 
             // Calculate correct return value based on object comparison
             if (OrderOfSort == SortOrder.Ascending)
@@ -77,6 +77,19 @@ namespace LiteDeploy
                 // Return '0' to indicate they are equal
                 return 0;
             }
+        }
+
+        /// <summary>
+        /// Two cell texts: numbers (RAM, cores, disk: "8" before "16") by value, anything else without regard to
+        /// case. Unit-tested.
+        /// </summary>
+        public static int CompareTexts(string a, string b)
+        {
+            double x, y;
+            if (double.TryParse(a, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out x)
+                && double.TryParse(b, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out y))
+                return x.CompareTo(y);
+            return CaseInsensitiveComparer.Default.Compare(a, b);
         }
 
         /// <summary>

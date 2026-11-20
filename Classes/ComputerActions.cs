@@ -221,6 +221,16 @@ namespace LiteDeploy
                 Empty(ComputerUpdateState.OsTypeText(info["ostype"]), Localization.T("ComputerGrid.CardUnknown", "(unknown)")),
                 info["teamviewer"] == null ? Localization.T("ComputerGrid.CardUnknown", "(unknown)")
                     : Empty(info["teamviewer"], Localization.T("ComputerActions.TeamViewerNotInstalled", "(TeamViewer not installed)"))));
+            // Hardware (newer workers)
+            if (info.Fields.ContainsKey("model") || info.Fields.ContainsKey("cpu"))
+            {
+                String unknown = Localization.T("ComputerGrid.CardUnknown", "(unknown)");
+                sb.Append('\n').Append(Localization.F("ComputerGrid.CardHardware",
+                    "Manufacturer and model: {0} {1}\nSerial number: {2}\nBIOS date: {3}\nProcessor: {4} ({5} core(s), {6} thread(s))\nMemory: {7} GB\nSystem disk: {8} GB, {9} GB free",
+                    Empty(info["manufacturer"], ""), Empty(info["model"], unknown), Empty(info["serial"], unknown), Empty(info["biosdate"], unknown),
+                    Empty(info["cpu"], unknown), Empty(info["cores"], "?"), Empty(info["threads"], "?"), Empty(info["ram"], "?"),
+                    Empty(info["disk"], "?"), Empty(info["diskfree"], "?")));
+            }
             return sb.ToString();
         }
 
