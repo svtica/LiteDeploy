@@ -52,7 +52,7 @@ namespace LiteDeploy
         }
 
         /// <summary>The document of a catalog and its profiles.</summary>
-        public static SoftwareCatalogFile From(IEnumerable<UpdatePackage> packages, SoftwareProfiles profiles)
+        internal static SoftwareCatalogFile From(IEnumerable<UpdatePackage> packages, SoftwareProfiles profiles)
         {
             SoftwareCatalogFile f = new SoftwareCatalogFile();
             foreach (UpdatePackage p in packages ?? Enumerable.Empty<UpdatePackage>())
@@ -108,7 +108,7 @@ namespace LiteDeploy
         /// (never removes or changes an existing package). Invalid packages and profile names are left out and named
         /// in the result; a profile keeps only the packages of the catalog.
         /// </summary>
-        public MergeResult MergeInto(List<UpdatePackage> catalog, SoftwareProfiles profiles)
+        internal MergeResult MergeInto(List<UpdatePackage> catalog, SoftwareProfiles profiles)
         {
             MergeResult result = new MergeResult();
             foreach (CatalogPackage cp in Packages)
