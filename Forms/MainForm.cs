@@ -459,6 +459,12 @@ namespace LiteDeploy
             grid.ShowCatalog();
         }
 
+        // Hardware inventory of the grid: Excel workbook or CSV
+        private void exportInventoryToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            grid.ExportInventory();
+        }
+
         // Scheduled updates: the checked computers, else every computer shown, as the default targets
         private void schedulesToolStripMenuItem_Click(object sender, EventArgs e)
         {

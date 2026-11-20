@@ -62,11 +62,22 @@ namespace LiteDeploy
             this.deployButton = new System.Windows.Forms.ToolStripButton();
             this.onlineOnlyButton = new System.Windows.Forms.ToolStripButton();
             this.profileButton = new System.Windows.Forms.ToolStripButton();
+            this.inventoryItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.exportInventoryItem = new System.Windows.Forms.ToolStripMenuItem();
             this.refreshStateButton = new System.Windows.Forms.ToolStripButton();
             this.columnsButton = new System.Windows.Forms.ToolStripDropDownButton();
             this.stateColumn = new System.Windows.Forms.ColumnHeader();
             this.userColumn = new System.Windows.Forms.ColumnHeader();
             this.lastScanColumn = new System.Windows.Forms.ColumnHeader();
+            this.manufacturerColumn = new System.Windows.Forms.ColumnHeader();
+            this.modelColumn = new System.Windows.Forms.ColumnHeader();
+            this.serialColumn = new System.Windows.Forms.ColumnHeader();
+            this.yearColumn = new System.Windows.Forms.ColumnHeader();
+            this.cpuColumn = new System.Windows.Forms.ColumnHeader();
+            this.coresColumn = new System.Windows.Forms.ColumnHeader();
+            this.ramColumn = new System.Windows.Forms.ColumnHeader();
+            this.diskColumn = new System.Windows.Forms.ColumnHeader();
+            this.diskFreeColumn = new System.Windows.Forms.ColumnHeader();
             this.separator4 = new System.Windows.Forms.ToolStripSeparator();
             this.checkButton = new System.Windows.Forms.ToolStripButton();
             this.selectOutdatedButton = new System.Windows.Forms.ToolStripButton();
@@ -495,6 +506,33 @@ namespace LiteDeploy
             this.lastScanColumn.Name = "lastScanColumn";
             this.lastScanColumn.Text = "Last scan";
             this.lastScanColumn.Width = 110;
+            this.manufacturerColumn.Name = "manufacturerColumn";
+            this.manufacturerColumn.Text = "Manufacturer";
+            this.manufacturerColumn.Width = 110;
+            this.modelColumn.Name = "modelColumn";
+            this.modelColumn.Text = "Model";
+            this.modelColumn.Width = 140;
+            this.serialColumn.Name = "serialColumn";
+            this.serialColumn.Text = "Serial number";
+            this.serialColumn.Width = 110;
+            this.yearColumn.Name = "yearColumn";
+            this.yearColumn.Text = "Year (BIOS)";
+            this.yearColumn.Width = 70;
+            this.cpuColumn.Name = "cpuColumn";
+            this.cpuColumn.Text = "Processor";
+            this.cpuColumn.Width = 200;
+            this.coresColumn.Name = "coresColumn";
+            this.coresColumn.Text = "Cores/threads";
+            this.coresColumn.Width = 80;
+            this.ramColumn.Name = "ramColumn";
+            this.ramColumn.Text = "RAM (GB)";
+            this.ramColumn.Width = 65;
+            this.diskColumn.Name = "diskColumn";
+            this.diskColumn.Text = "Disk (GB)";
+            this.diskColumn.Width = 65;
+            this.diskFreeColumn.Name = "diskFreeColumn";
+            this.diskFreeColumn.Text = "Free (GB)";
+            this.diskFreeColumn.Width = 65;
             this.osColumn.Name = "osColumn";
             this.osColumn.Text = "OS";
             this.osColumn.Width = 170;
@@ -560,6 +598,8 @@ namespace LiteDeploy
             this.deploySeparator,
             this.deployItem,
             this.exportSeparator,
+            this.inventoryItem,
+            this.exportInventoryItem,
             this.royalTsItem,
             this.removeSeparator,
             this.removeItem,
@@ -606,6 +646,14 @@ namespace LiteDeploy
             this.royalTsItem.Text = "Export to Royal TS...";
             this.royalTsItem.ToolTipText = "Remote Desktop connections of the checked computers, else of every computer shown (CSV or RoyalJSON)";
             this.royalTsItem.Click += new System.EventHandler(this.royalTsItem_Click);
+            this.inventoryItem.Name = "inventoryItem";
+            this.inventoryItem.Text = "Read the inventory";
+            this.inventoryItem.ToolTipText = "Read the hardware of these computers now (manufacturer, model, serial number, BIOS, processor, memory, disk); a check reads it too";
+            this.inventoryItem.Click += new System.EventHandler(this.inventoryItem_Click);
+            this.exportInventoryItem.Name = "exportInventoryItem";
+            this.exportInventoryItem.Text = "Export the inventory...";
+            this.exportInventoryItem.ToolTipText = "Inventory of the checked computers, else of every computer shown: Excel workbook (.xlsx) or CSV";
+            this.exportInventoryItem.Click += new System.EventHandler(this.exportInventoryItem_Click);
             this.wakeItem.Name = "wakeItem";
             this.wakeItem.Text = "Wake up (Wake-on-LAN)";
             this.wakeItem.Click += new System.EventHandler(this.wakeItem_Click);
@@ -736,6 +784,8 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripMenuItem quickCommandsItem;
         private System.Windows.Forms.ToolStripSeparator exportSeparator;
         private System.Windows.Forms.ToolStripMenuItem royalTsItem;
+        private System.Windows.Forms.ToolStripMenuItem inventoryItem;
+        private System.Windows.Forms.ToolStripMenuItem exportInventoryItem;
         private System.Windows.Forms.ToolStripButton checkButton;
         private System.Windows.Forms.ToolStripButton selectOutdatedButton;
         private System.Windows.Forms.ToolStripButton selectAllButton;
@@ -771,6 +821,15 @@ namespace LiteDeploy
         private System.Windows.Forms.ColumnHeader stateColumn;
         private System.Windows.Forms.ColumnHeader userColumn;
         private System.Windows.Forms.ColumnHeader lastScanColumn;
+        private System.Windows.Forms.ColumnHeader manufacturerColumn;
+        private System.Windows.Forms.ColumnHeader modelColumn;
+        private System.Windows.Forms.ColumnHeader serialColumn;
+        private System.Windows.Forms.ColumnHeader yearColumn;
+        private System.Windows.Forms.ColumnHeader cpuColumn;
+        private System.Windows.Forms.ColumnHeader coresColumn;
+        private System.Windows.Forms.ColumnHeader ramColumn;
+        private System.Windows.Forms.ColumnHeader diskColumn;
+        private System.Windows.Forms.ColumnHeader diskFreeColumn;
         private System.Windows.Forms.ToolStripMenuItem pingItem;
         private System.Windows.Forms.ToolStripMenuItem managementConsoleItem;
         private System.Windows.Forms.ToolStripMenuItem adminShareItem;

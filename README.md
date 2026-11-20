@@ -28,6 +28,15 @@ each computer in the process reports.
 - Columns **User** (users with a desktop at the last check, update or computer card) and **Last
   scan** (end of the last check or update that reached the computer); the search box finds the
   user too. **Columns** (right of the filters) hides or shows each column; kept in the settings.
+- **Hardware inventory**: the worker reads the manufacturer, the model, the serial number, the BIOS
+  date (about the year of manufacture), the processor (name, processors, cores, threads), the
+  installed memory and the size and free space of the system disk, through WMI, with every check
+  and update and with *Read the inventory* (actions of the grid, 8 computers at a time). Kept in
+  `updates.xml`; optional columns (hidden at first: *Columns* menu), the computer card shows them.
+  **Export the inventory...** (actions, *Tools* menu): the checked computers, else every computer
+  shown, as an Excel workbook (`.xlsx`, header frozen, numbers as numbers) or a CSV file
+  (separator `;`, UTF-8), with the state, the user, the OS, the OU, the last logon and scan, the
+  hardware, the IPv4 and MAC addresses and the TeamViewer ID. Numeric columns sort by value.
 - **Add computers...** (tool bar or *Tools* menu) opens the computer search: by name or IP address,
   an **Active Directory** search (the domain computers are listed when the window opens and
   filtered as you type), a **DNS scan** of a /24 subnet, or a text file. *Add* puts the computers
@@ -289,7 +298,7 @@ LiteDeploy writes a comment before each of them in the file; close LiteDeploy be
 | `SchedulerEngine` | *Tools > Scheduled Updates* | `internal` (while LiteDeploy is open) or `windows` (Windows scheduled tasks) | `internal` |
 | `WebCheckTime` | *Tools > Web Versions* | daily check of the web versions at this time (`HH:mm`); empty: none | empty |
 | `WebAutoDownload` | *Tools > Web Versions* | the daily check downloads the new versions to the cache (else report only) | `false` |
-| `UpdatesHiddenColumns` | *Columns* menu of the main window | columns hidden (column names separated by `,`) | empty |
+| `UpdatesHiddenColumns` | *Columns* menu of the main window | columns hidden (column names separated by `,`) | the hardware columns |
 | `WebVersionsWindowSize`, `UpdatesOnlineOnly`, `UpdatesProfile`, `UpdatesWindowBounds`, `UpdatesWindowMaximized`, `UpdatesSplitter`, `UpdatesColumns`, `UpdatesPackageColumns`, `UpdatesStatusFilter` | kept by LiteDeploy | size and position of the windows, columns and status filters of the grid | empty |
 
 ## Installation

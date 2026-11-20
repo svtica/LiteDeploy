@@ -306,7 +306,8 @@ namespace LiteDeploy
             get
             {
                 return new[] { computerColumn, stateColumn, userColumn, osColumn, lastLogonColumn, statusColumn, updatesColumn, resultColumn,
-                    lastScanColumn, changedColumn, pausedColumn, nightOnlyColumn };
+                    lastScanColumn, changedColumn, pausedColumn, nightOnlyColumn,
+                    manufacturerColumn, modelColumn, serialColumn, yearColumn, cpuColumn, coresColumn, ramColumn, diskColumn, diskFreeColumn };
             }
         }
 
@@ -432,7 +433,16 @@ namespace LiteDeploy
                     { lastScanColumn, Format(row.LastScan) },
                     { changedColumn, Format(c?.LastChange) },
                     { pausedColumn, row.Paused ? Localization.T("ComputerGrid.Paused", "Paused") : "" },
-                    { nightOnlyColumn, row.NightOnly ? Localization.T("ComputerGrid.Yes", "yes") : "" }
+                    { nightOnlyColumn, row.NightOnly ? Localization.T("ComputerGrid.Yes", "yes") : "" },
+                    { manufacturerColumn, c?.Manufacturer ?? "" },
+                    { modelColumn, c?.Model ?? "" },
+                    { serialColumn, c?.Serial ?? "" },
+                    { yearColumn, InventoryTable.Year(c?.BiosDate) },
+                    { cpuColumn, c?.Cpu ?? "" },
+                    { coresColumn, InventoryTable.CoresText(c) },
+                    { ramColumn, c?.RamGb ?? "" },
+                    { diskColumn, c?.DiskGb ?? "" },
+                    { diskFreeColumn, c?.DiskFreeGb ?? "" }
                 };
                 cells = updatesList.Columns.Cast<ColumnHeader>().Select(h => { String v; return values.TryGetValue(h, out v) ? v : ""; }).ToArray();
             }
@@ -1345,7 +1355,7 @@ namespace LiteDeploy
                     targetsItem, targetsSeparator, installItem, installSeparator, pauseItem, resumeItem, nightOnlyItem, nightOnlyClearItem,
                     menuSeparator, cardItem, teamViewerItem, remoteDesktopItem, commandPromptItem, quickCommandsItem, messageItem,
                     processesItem, litePMItem, logsItem, wakeItem, pingItem, managementConsoleItem, adminShareItem, copyNameItem,
-                    deploySeparator, deployItem, exportSeparator, royalTsItem, removeSeparator, removeItem, unhideItem
+                    deploySeparator, deployItem, exportSeparator, inventoryItem, exportInventoryItem, royalTsItem, removeSeparator, removeItem, unhideItem
                 };
             }
         }
@@ -1376,7 +1386,8 @@ namespace LiteDeploy
             cardItem.Enabled = logsItem.Enabled = targets.Count > 0;
             teamViewerItem.Enabled = remoteDesktopItem.Enabled = commandPromptItem.Enabled = quickCommandsItem.Enabled = messageItem.Enabled = targets.Count > 0;
             actions.FillQuickCommands(quickCommandsItem, ActionTargets);
-            royalTsItem.Enabled = ExportTargets().Count > 0;
+            royalTsItem.Enabled = exportInventoryItem.Enabled = ExportTargets().Count > 0;
+            inventoryItem.Enabled = idle && targets.Count > 0 && !readingInventory;
             processesItem.Enabled = litePMItem.Enabled = managementConsoleItem.Enabled = adminShareItem.Enabled = targets.Count == 1;
             pingItem.Enabled = copyNameItem.Enabled = targets.Count > 0;
             deployItem.Enabled = targets.Count > 0 && deployEnabled;
@@ -1435,6 +1446,111 @@ namespace LiteDeploy
         {
             List<String> targets = CheckedComputers();
             return targets.Count > 0 ? targets : visible.Select(r => r.Name).ToList();
+        }
+
+        // ---- Hardware inventory --------------------------------------------------------------
+
+        bool readingInventory;
+
+        void inventoryItem_Click(object sender, EventArgs e)
+        {
+            ReadInventory(ActionTargets());
+        }
+
+        /// <summary>Reads the hardware of the computers (worker "info", a few at a time), kept in updates.xml.</summary>
+        void ReadInventory(List<String> targets)
+        {
+            if (targets.Count == 0 || readingInventory) return;
+            if (RemoteRunner.Prerequisite() != null)
+            {
+                MessageBox.Show(this, Localization.T("ComputerGrid.MissingTools", "PsExec or LiteDeploy.Worker.exe is missing next to LiteDeploy.exe."),
+                    Caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            readingInventory = true;
+            statusLabel.Text = Localization.F("ComputerGrid.ReadingInventory", "Reading the inventory of {0} computer(s)...", targets.Count);
+            Queue<String> queue = new Queue<String>(targets);
+            int left = Math.Min(8, targets.Count), read = 0, failed = 0;
+            for (int i = 0; i < left; i++)
+            {
+                new Thread(() =>
+                {
+                    while (true)
+                    {
+                        String computer;
+                        lock (queue) { if (queue.Count == 0) break; computer = queue.Dequeue(); }
+                        UpdateRunResult r = UpdateRunner.Info(computer);
+                        bool ok = r.Messages.Any(m => m.Type == "info");
+                        if (ok)
+                        {
+                            lock (storeLock)
+                            {
+                                store.Apply(computer, r.Messages, null, DateTime.Now);
+                                try { store.SaveIfChanged(UpdateStateStore.DefaultPath); }
+                                catch (Exception ex) { AppConsole.WriteLine("Inventory: could not save " + UpdateStateStore.DefaultPath + ": " + ex.Message); }
+                            }
+                            Interlocked.Increment(ref read);
+                        }
+                        else
+                        {
+                            Interlocked.Increment(ref failed);
+                            AppConsole.WriteLine(Localization.F("ComputerGrid.InventoryFailed", "Inventory of {0}: {1}", computer, r.Failure ?? "?"));
+                        }
+                        RefreshLater();
+                    }
+                    if (Interlocked.Decrement(ref left) > 0) return;
+                    try
+                    {
+                        if (!IsDisposed && IsHandleCreated)
+                            BeginInvoke(new MethodInvoker(() =>
+                            {
+                                readingInventory = false;
+                                statusLabel.Text = Localization.F("ComputerGrid.InventoryDone", "Inventory read on {0} computer(s), {1} not reached (see the console).", read, failed);
+                            }));
+                    }
+                    catch (InvalidOperationException) { }
+                }) { IsBackground = true, Name = "Inventory" }.Start();
+            }
+        }
+
+        void exportInventoryItem_Click(object sender, EventArgs e)
+        {
+            ExportInventory();
+        }
+
+        /// <summary>Export the inventory... (actions and Tools menu): the checked computers, else every computer shown.</summary>
+        internal void ExportInventory()
+        {
+            List<String> targets = ExportTargets();
+            if (targets.Count == 0) return;
+            List<KeyValuePair<ComputerRow, ComputerUpdateState>> list = new List<KeyValuePair<ComputerRow, ComputerUpdateState>>();
+            lock (storeLock)
+            {
+                foreach (String name in targets)
+                {
+                    ComputerRow row;
+                    if (rowsByName.TryGetValue(name, out row)) list.Add(new KeyValuePair<ComputerRow, ComputerUpdateState>(row, store.Find(name)));
+                }
+            }
+            InventoryTable table = InventoryTable.Build(list.OrderBy(p => p.Key.Name, StringComparer.OrdinalIgnoreCase));
+            using (SaveFileDialog dialog = new SaveFileDialog())
+            {
+                dialog.Title = Localization.T("ComputerGrid.ExportInventoryTitle", "Export the inventory");
+                dialog.Filter = Localization.T("ComputerGrid.ExportInventoryFilter", "Excel workbook (*.xlsx)|*.xlsx|CSV file, separator ; (*.csv)|*.csv");
+                dialog.FileName = "LiteDeploy-inventory-" + DateTime.Now.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+                dialog.OverwritePrompt = true;
+                if (dialog.ShowDialog(this) != DialogResult.OK) return;
+                try
+                {
+                    if (dialog.FilterIndex == 2 || dialog.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)) table.SaveCsv(dialog.FileName);
+                    else table.SaveXlsx(dialog.FileName, Localization.T("ComputerGrid.InventorySheet", "Inventory"));
+                    statusLabel.Text = Localization.F("ComputerGrid.InventoryExported", "Inventory of {0} computer(s) exported: {1}", table.Rows.Count, dialog.FileName);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(this, ex.Message, Caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
         }
 
         void royalTsItem_Click(object sender, EventArgs e)

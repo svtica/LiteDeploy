@@ -163,7 +163,8 @@ namespace LiteDeploy.Worker
             string os;
             int productType = ComputerInfo.ReadOperatingSystem(out os);
             string osType = ServerPolicy.OsType(productType);
-            Emit(WorkerProtocol.Format(
+            List<string> start = new List<string>
+            {
                 "type", "start",
                 "computer", Environment.MachineName,
                 "user", WindowsIdentity.GetCurrent().Name,
@@ -171,7 +172,11 @@ namespace LiteDeploy.Worker
                 "winget", wingetPath ?? "",
                 "macs", string.Join(" ", macs),
                 "ips", string.Join(" ", ips),
-                "users", string.Join(", ", ComputerInfo.LoggedOnUsers())));
+                "users", string.Join(", ", ComputerInfo.LoggedOnUsers())
+            };
+            // The hardware inventory comes with every check or update (a few WMI queries)
+            start.AddRange(ComputerInfo.Hardware());
+            Emit(WorkerProtocol.Format(start.ToArray()));
 
             // Server guard: nothing is checked, closed, upgraded or installed on a server that is not allowed
             ServerDecision guard = ServerPolicy.Decide(command, productType, allowServers, allowDomainControllers);
