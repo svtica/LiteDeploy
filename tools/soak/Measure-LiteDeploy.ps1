@@ -311,11 +311,12 @@ $workExe = Join-Path $work (Split-Path $exe -Leaf)
 # Windows are found by their English titles and menu names: English interface whatever the runner language
 $env:LITEDEPLOY_LANG = 'en'
 # The soak drives "Start Deploy": the standalone deployments (hidden by default)
-# must be shown (Tools > Deploy a file or command...). Older revisions ignore the setting. An existing settings file is kept.
+# must be shown (Tools > Deploy a file or command...). The update check at start-up is off: its offer
+# (a modal window) would block the run, and the automatic answers would install the newest release. Older revisions ignore the setting. An existing settings file is kept.
 $settingsFile = Join-Path $env:LOCALAPPDATA 'LiteDeploy\settings.xml'
 if (-not (Test-Path $settingsFile)) {
     New-Item -ItemType Directory -Force -Path (Split-Path $settingsFile) | Out-Null
-    Set-Content -Path $settingsFile -Encoding UTF8 -Value '<?xml version="1.0" encoding="utf-8"?><LiteDeploySettings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><ShowStandaloneDeployments>true</ShowStandaloneDeployments></LiteDeploySettings>'
+    Set-Content -Path $settingsFile -Encoding UTF8 -Value '<?xml version="1.0" encoding="utf-8"?><LiteDeploySettings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><CheckUpdatesOnStartup>false</CheckUpdatesOnStartup><ShowStandaloneDeployments>true</ShowStandaloneDeployments></LiteDeploySettings>'
 }
 Write-Host "Starting $workExe (cwd $work)"
 $proc = Start-Process -FilePath $workExe -WorkingDirectory $work -PassThru
@@ -460,6 +461,14 @@ function Invoke-MenuItem([string] $menuName, [string] $itemName) {
     return $true
 }
 
+# The computer list: "Lite Deploy - Computers" before the grid, "Lite Deploy - Computers to Add" since
+# (both followed by " - " and the Active Directory state)
+function Find-ComputerList {
+    $w = [SoakUi]::FindWindowPrefix($procId, 'Lite Deploy - Computers to Add')
+    if (-not $w) { $w = [SoakUi]::FindWindowPrefix($procId, 'Lite Deploy - Computers') }
+    return $w
+}
+
 function Open-ComputerList {
     if ($script:legacy) {
         $button = [SoakUi]::FindById((Get-Main), 'ListEditButton')
@@ -469,7 +478,7 @@ function Open-ComputerList {
         if (-not (Invoke-MenuItem 'Tools' 'Add computers...')) { return $null }
     }
     $script:designer = $null
-    if (-not (Wait-Until { $script:designer = [SoakUi]::FindWindowPrefix($procId, 'Lite Deploy - Computers'); $null -ne $script:designer } 20)) {
+    if (-not (Wait-Until { $script:designer = (Find-ComputerList); $null -ne $script:designer } 20)) {
         Write-ActionFailure 'computer list window did not open'
         return $null
     }
@@ -481,7 +490,7 @@ function Use-ComputerList($designer) {
     if (-not $use) { Write-ActionFailure '"Use List" / "Add" button not found'; return $false }
     [SoakUi]::InvokeAsync($use)
     # Before the grid, the confirmation ("This will clear the Selected Computers List") is answered Yes
-    if (-not (Wait-Until { $null -eq [SoakUi]::FindWindowPrefix($procId, 'Lite Deploy - Computers') } 20)) {
+    if (-not (Wait-Until { $null -eq (Find-ComputerList) } 20)) {
         Write-ActionFailure 'computer list window did not close'
         return $false
     }
