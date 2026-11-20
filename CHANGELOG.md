@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   confirmation), *install* where it is not installed, else its state greyed (up to date, not
   checked yet). Before, the software already installed was not listed at all.
 
+### Fixed
+
+- winget packages read as **not installed** while they were (7-Zip, Notepad++, VLC...), and
+  outdated ones read as **up to date**: recent versions of winget leave the *Source* column out of
+  `winget list --source winget`, and the worker needed it. The columns are now recognized whatever
+  their number (3: up to date; 4: *Available*, or *Source* with an older winget; 5: both). Run a
+  *Check* again to correct the states.
+
 ## [1.0.22] - 2026-11-20
 
 ### Added

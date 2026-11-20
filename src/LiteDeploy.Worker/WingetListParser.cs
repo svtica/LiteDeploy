@@ -68,8 +68,13 @@ namespace LiteDeploy.Worker
 
             string header = lines[dashes - 1];
             List<int> starts = ColumnStarts(header);
-            if (starts.Count < 4) return rows;           // Name, Id, Version, Source at least
-            bool hasAvailable = starts.Count >= 5;
+            // Name, Id, Version, then Available and Source. winget leaves the Source column out when the
+            // list is limited to one source (--source winget), and Available out when nothing is newer:
+            // 3 columns (up to date), 4 (Available, or Source with an older winget), 5 (both).
+            if (starts.Count < 3) return rows;
+            int availableColumn = starts.Count >= 5 ? 3 : -1;
+            bool fourthMayBeSource = starts.Count == 4;
+            bool fourthIsSourceHeader = fourthMayBeSource && IsSourceHeader(header.Substring(starts[3]).Trim());
 
             for (int i = dashes + 1; i < lines.Count; i++)
             {
@@ -78,16 +83,33 @@ namespace LiteDeploy.Worker
                 // A footer such as "2 upgrades available." has no Id column
                 if (line.Length <= starts[1]) continue;
                 string[] cells = Cells(line, starts);
+                string available = availableColumn >= 0 ? cells[availableColumn] : null;
+                // A fourth column is Available unless its header says Source, or its value is a source name
+                if (fourthMayBeSource && !fourthIsSourceHeader && !IsSourceName(cells[3])) available = cells[3];
                 WingetListRow row = new WingetListRow
                 {
                     Name = cells[0],
                     Id = cells[1],
                     Version = cells[2],
-                    Available = hasAvailable && cells[3].Length > 0 ? cells[3] : null
+                    Available = string.IsNullOrEmpty(available) ? null : available
                 };
                 if (row.Id.Length > 0 && row.Id.IndexOf(' ') < 0) rows.Add(row);
             }
             return rows;
+        }
+
+        /// <summary>Header of the Source column in the languages of Windows (first word of the column).</summary>
+        static readonly string[] SourceHeaders = { "Source", "Quelle", "Origen", "Origine", "Fonte", "Bron", "Kilde", "K\u00e4lla", "L\u00e4hde", "\u0179r\u00f3d\u0142o", "Zdroj", "Kaynak", "\u0418\u0441\u0442\u043e\u0447\u043d\u0438\u043a" };
+
+        static bool IsSourceHeader(string word)
+        {
+            return SourceHeaders.Any(h => string.Equals(h, word, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>Names of the winget sources: a value of the Source column, never a version.</summary>
+        static bool IsSourceName(string value)
+        {
+            return string.Equals(value, "winget", StringComparison.OrdinalIgnoreCase) || string.Equals(value, "msstore", StringComparison.OrdinalIgnoreCase);
         }
 
         // Removes the progress spinner and bars winget writes before the table: keeps, for each line,

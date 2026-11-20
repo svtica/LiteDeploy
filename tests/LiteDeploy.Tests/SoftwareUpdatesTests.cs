@@ -129,6 +129,43 @@ namespace LiteDeploy.Tests
         }
 
         [TestMethod]
+        public void Winget_OneSource_NoSourceColumn_ThreeColumns()
+        {
+            // winget limited to one source (--source winget) has no Source column: up to date gives 3 columns
+            const string output =
+                "Nom                       ID        Version\r\n" +
+                "----------------------------------------------\r\n" +
+                "7-Zip 26.06 (x64 edition) 7zip.7zip 26.06.00.0\r\n";
+            WingetListRow row = WingetListParser.FindRow(output, "7zip.7zip");
+            Assert.IsNotNull(row, "installed, not \"not installed\"");
+            Assert.AreEqual("26.06.00.0", row.Version);
+            Assert.IsNull(row.Available);
+            WingetListRow found;
+            Assert.AreEqual(WorkerProtocol.StatusUpToDate, WingetListParser.Classify(0, output, "7zip.7zip", out found));
+        }
+
+        [TestMethod]
+        public void Winget_OneSource_AvailableAsFourthColumn()
+        {
+            // An update available, no Source column: the fourth column is Available (it was read as Source)
+            const string output =
+                "Nom                    ID                  Version Disponible\r\n" +
+                "-------------------------------------------------------------\r\n" +
+                "Notepad++ (64-bit x64) Notepad++.Notepad++ 8.6.4   8.6.9\r\n";
+            WingetListRow row = WingetListParser.FindRow(output, "Notepad++.Notepad++");
+            Assert.AreEqual("8.6.9", row.Available);
+            WingetListRow found;
+            Assert.AreEqual(WorkerProtocol.StatusOutdated, WingetListParser.Classify(0, output, "Notepad++.Notepad++", out found));
+
+            // A fourth column holding the source name is not a version, whatever its header says
+            const string unknownHeader =
+                "Name           Id           Version Herkunft\r\n" +
+                "--------------------------------------------\r\n" +
+                "VLC media      VideoLAN.VLC 3.0.21  winget\r\n";
+            Assert.IsNull(WingetListParser.FindRow(unknownHeader, "VideoLAN.VLC").Available);
+        }
+
+        [TestMethod]
         public void Winget_NoTableOrOtherPackage_ReturnsNull()
         {
             Assert.IsNull(WingetListParser.FindRow("No installed package found matching input criteria.", "A.B"));
