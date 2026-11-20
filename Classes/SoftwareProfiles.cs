@@ -102,7 +102,7 @@ namespace LiteDeploy
         /// packages of the profile that are still in the catalog otherwise. <paramref name="found"/>: false when the
         /// profile does not exist (then nothing: never the whole catalog by mistake).
         /// </summary>
-        public List<UpdatePackage> Filter(IEnumerable<UpdatePackage> catalog, String profile, out bool found)
+        internal List<UpdatePackage> Filter(IEnumerable<UpdatePackage> catalog, String profile, out bool found)
         {
             List<UpdatePackage> all = (catalog ?? Enumerable.Empty<UpdatePackage>()).ToList();
             if (String.IsNullOrWhiteSpace(profile))
@@ -117,7 +117,7 @@ namespace LiteDeploy
         }
 
         /// <summary>Ids of the profiles that are no longer in the catalog are dropped (the catalog was edited).</summary>
-        public void KeepOnly(IEnumerable<UpdatePackage> catalog)
+        internal void KeepOnly(IEnumerable<UpdatePackage> catalog)
         {
             HashSet<String> ids = new HashSet<String>((catalog ?? Enumerable.Empty<UpdatePackage>()).Select(p => p.Id), StringComparer.OrdinalIgnoreCase);
             foreach (SoftwareProfile p in Items) p.Packages = p.Packages.Where(ids.Contains).ToList();
