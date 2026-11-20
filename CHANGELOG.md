@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.23] - 2026-11-20
+
 ### Changed
 
 - *Install* becomes **Install or update**: every software of the active profile is listed, with
