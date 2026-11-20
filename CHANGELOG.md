@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `winget list --source winget`, and the worker needed it. The columns are now recognized whatever
   their number (3: up to date; 4: *Available*, or *Source* with an older winget; 5: both). Run a
   *Check* again to correct the states.
+- Soak test: it found the computer list under its former title only, and the update check at
+  start-up (an offer in a modal window) blocked a run of an older version; its settings file now
+  turns that check off.
 
 ## [1.0.22] - 2026-11-20
 
