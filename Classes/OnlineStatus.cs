@@ -5,16 +5,16 @@
 // Date:    2026-11-19
 // Purpose: Online state of the computers of the grid: the result of the last
 //          ping of each computer (in memory, for the session), and a ping of
-//          many computers at once in the background (asynchronous pings, short
-//          time-out), the grid being told of each result. Not saved: a state
-//          is only worth what the network says now.
+//          many computers at once in the background (threads kept for the
+//          session, short time-out), the grid being told of each result. Not
+//          saved: a state is only worth what the network says now.
 // -----------------------------------------------------------------------------
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace LiteDeploy
 {
@@ -57,54 +57,83 @@ namespace LiteDeploy
 
         /// <summary>
         /// Pings the computers in the background, <see cref="Parallelism"/> at a time; <paramref name="result"/> is
-        /// called (on a pool thread) after each one, <paramref name="done"/> once at the end. False when a ping of
-        /// several computers is already running (nothing started). The pings are asynchronous: no thread is
-        /// created for a run (a new thread per run kept its handle until the next full garbage collection, so the
-        /// handles of the process grew with the periodic pings).
+        /// called (on a worker thread) after each one, <paramref name="done"/> once at the end. False when a ping of
+        /// several computers is already running (nothing started). The pings run on <see cref="Parallelism"/>
+        /// threads created once and kept for the session: a run creates no thread (new threads for every run, or
+        /// the asynchronous pings and their pool threads, made the handles of the process grow over the hours).
         /// </summary>
         public bool PingAll(IEnumerable<String> computers, Action<String, bool> result, Action done)
         {
             if (Interlocked.CompareExchange(ref running, 1, 0) != 0) return false;
             List<String> list = (computers ?? Enumerable.Empty<String>())
                 .Where(c => !String.IsNullOrWhiteSpace(c)).Distinct(ComputerName.Comparer).ToList();
-            Task.Run(() => PingAllAsync(list, result)).ContinueWith(t =>
+            Action finish = () =>
             {
                 Volatile.Write(ref running, 0);
                 if (done != null) done();
-            }, TaskContinuationOptions.ExecuteSynchronously);
-            return true;
-        }
-
-        async Task PingAllAsync(List<String> computers, Action<String, bool> result)
-        {
-            using (SemaphoreSlim gate = new SemaphoreSlim(Parallelism))
+            };
+            if (list.Count == 0)
             {
-                await Task.WhenAll(computers.Select(async computer =>
+                Workers.Add(finish);
+                return true;
+            }
+            int left = list.Count;
+            foreach (String computer in list)
+            {
+                String c = computer;
+                Workers.Add(() =>
                 {
-                    await gate.WaitAsync().ConfigureAwait(false);
                     try
                     {
-                        bool online = await AnswersAsync(computer).ConfigureAwait(false);
-                        Set(computer, online);
-                        if (result != null) result(computer, online);
+                        bool online = Answers(c);
+                        Set(c, online);
+                        if (result != null) result(c, online);
                     }
                     finally
                     {
-                        gate.Release();
+                        if (Interlocked.Decrement(ref left) == 0) finish();
                     }
-                })).ConfigureAwait(false);
+                });
+            }
+            return true;
+        }
+
+        static BlockingCollection<Action> workers;
+        static readonly Object workersSync = new Object();
+
+        /// <summary>The queue of the ping threads, started the first time.</summary>
+        static BlockingCollection<Action> Workers
+        {
+            get
+            {
+                lock (workersSync)
+                {
+                    if (workers != null) return workers;
+                    workers = new BlockingCollection<Action>();
+                    for (int i = 0; i < Parallelism; i++)
+                    {
+                        new Thread(() =>
+                        {
+                            foreach (Action work in workers.GetConsumingEnumerable())
+                            {
+                                try { work(); }
+                                catch (Exception) { }
+                            }
+                        }) { IsBackground = true, Name = "Online state" }.Start();
+                    }
+                    return workers;
+                }
             }
         }
 
         /// <summary>One ping; false when it does not answer in time or the name does not resolve.</summary>
-        static async Task<bool> AnswersAsync(String computer)
+        static bool Answers(String computer)
         {
             try
             {
                 using (Ping ping = new Ping())
                 {
-                    PingReply reply = await ping.SendPingAsync(computer, TimeoutMs).ConfigureAwait(false);
-                    return reply.Status == IPStatus.Success;
+                    return ping.Send(computer, TimeoutMs).Status == IPStatus.Success;
                 }
             }
             catch (Exception)
