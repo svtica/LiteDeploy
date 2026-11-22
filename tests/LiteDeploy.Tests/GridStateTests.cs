@@ -98,5 +98,27 @@ namespace LiteDeploy.Tests
             Assert.AreEqual(0, WindowLayout.ParseNames(null).Count);
             Assert.IsTrue(new UserSettings().UpdatesOnlineOnly, "online only by default");
         }
+
+        [TestMethod]
+        public void OnlineStatus_PingAll_ResultsThenDone()
+        {
+            OnlineStatus status = new OnlineStatus();
+            List<String> results = new List<String>();
+            using (System.Threading.ManualResetEventSlim done = new System.Threading.ManualResetEventSlim())
+            {
+                Assert.IsTrue(status.PingAll(new[] { "127.0.0.1", "127.0.0.1", "" }, (c, up) => { lock (results) results.Add(c); }, () => done.Set()));
+                Assert.IsTrue(done.Wait(10000), "done is called");
+            }
+            Assert.AreEqual(1, results.Count, "one ping per computer");
+            Assert.AreEqual(true, status.Get("127.0.0.1"));
+            Assert.IsFalse(status.Busy);
+
+            // Nothing to ping: done all the same, and a new run can start
+            using (System.Threading.ManualResetEventSlim done = new System.Threading.ManualResetEventSlim())
+            {
+                Assert.IsTrue(status.PingAll(new String[0], null, () => done.Set()));
+                Assert.IsTrue(done.Wait(10000));
+            }
+        }
     }
 }

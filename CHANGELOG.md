@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The handles of LiteDeploy no longer grow while it stays open: the online state of the grid
+  (pinged every 5 minutes) used new threads for each run, whose handles stayed open until the
+  next full garbage collection. The pings are now asynchronous.
+
 ## [1.0.23] - 2026-11-20
 
 ### Changed
