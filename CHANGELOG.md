@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The actions created by LiteDeploy itself (*Uninstall*, *Update when available...*, *Remove from
+  the queue*) were missing from the right-click menu until the *Actions* menu had been opened once:
+  in the uninstall mode, *Uninstall* could not be found.
+- *App > Options*: on a low screen resolution, *Save* and *Cancel* could be off the screen. The
+  settings now scroll above a bar that keeps both buttons visible, and a window taller than the
+  screen is shortened to fit it.
+
+### Changed
+
+- In the uninstall mode, *Uninstall* takes the place of *Install or update* in the actions (before,
+  *Install or update* stayed there, disabled).
+
 ## [1.0.25] - 2026-11-23
 
 ### Added

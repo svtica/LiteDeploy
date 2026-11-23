@@ -11,7 +11,9 @@
 //          SIW report: the folder that holds SIW (checked the same way, then
 //          its executables and their signature) and the HTML option; the
 //          folder of the portable report tools (same check, then the
-//          signature of each tool of the table it holds).
+//          signature of each tool of the table it holds). The settings
+//          scroll above a bar that keeps Save and Cancel visible; a window
+//          taller than the screen is shortened to fit it.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -27,8 +29,54 @@ namespace LiteDeploy
         public OptionsForm()
         {
             InitializeComponent();
+            MakeScrollable();
             Localization.Apply(this);
             Theme.Apply(this);
+            Load += (s, e) => FitScreen();
+        }
+
+        // The settings scroll above a bar that keeps Save and Cancel in view (low screen resolutions)
+        void MakeScrollable()
+        {
+            int barTop = siwGroup.Bottom + 4;
+            Panel bar = new Panel { Dock = DockStyle.Bottom, Height = ClientSize.Height - barTop };
+            Panel content = new Panel { Dock = DockStyle.Fill, AutoScroll = true, AutoScrollMargin = new System.Drawing.Size(0, 8) };
+            SuspendLayout();
+            foreach (Control c in new Control[] { groupBox2, updatesGroup, siwGroup })
+            {
+                Controls.Remove(c);
+                content.Controls.Add(c);
+            }
+            foreach (Button b in new[] { ApplyButton, cancelButton })
+            {
+                Controls.Remove(b);
+                b.Top -= barTop;
+                bar.Controls.Add(b);
+            }
+            Controls.Add(bar);
+            Controls.Add(content);
+            content.BringToFront();
+            ResumeLayout(true);
+        }
+
+        /// <summary>The height of the window on a screen whose working area is <paramref name="available"/> pixels high (a small margin kept). Unit-tested.</summary>
+        internal static int FittingHeight(int wanted, int available)
+        {
+            const int Margin = 16;
+            return Math.Max(200, Math.Min(wanted, available - Margin));
+        }
+
+        // Taller than the screen: the window fits it (the settings scroll), wider by the scroll bar, centered again
+        void FitScreen()
+        {
+            System.Drawing.Rectangle area = Screen.FromControl(Owner ?? (Control)this).WorkingArea;
+            int height = FittingHeight(Height, area.Height);
+            if (height >= Height) return;
+            Height = height;
+            Width += SystemInformation.VerticalScrollBarWidth;
+            CenterToParent();
+            if (Top < area.Top) Top = area.Top;
+            if (Bottom > area.Bottom) Top = Math.Max(area.Top, area.Bottom - Height);
         }
 
         private void OptionsForm_Load(object sender, EventArgs e)

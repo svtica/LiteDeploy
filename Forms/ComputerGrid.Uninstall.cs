@@ -7,7 +7,8 @@
 //          only while the "Uninstall mode" check box of the filter bar is on:
 //          never saved (off at each opening), an orange banner above the grid
 //          with "Leave the uninstall mode", the window title and the status bar
-//          marked, Update checked and Install or update disabled. The mode
+//          marked, Update checked disabled, and Uninstall shown in place of
+//          Install or update (right-click and Actions menu). The mode
 //          turns itself off after each uninstall run, after 15 minutes without
 //          one, and when the window closes. The Uninstall menu (actions of the
 //          grid) exists only in this mode: one package of the active profile,
@@ -96,7 +97,9 @@ namespace LiteDeploy
         {
             bool on = UninstallMode;
             uninstallBanner.Visible = on;
+            // Uninstall takes the place of Install or update in the actions
             uninstallItem.Visible = on;
+            installItem.Visible = !on;
             Form form = FindForm();
             if (on)
             {

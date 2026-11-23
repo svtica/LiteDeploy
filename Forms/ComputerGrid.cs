@@ -1434,10 +1434,13 @@ namespace LiteDeploy
         }
 
         // The items move to the menu being opened (an item belongs to one menu at a time)
+        // Every action, also the ones created in code (Uninstall, Update when available...), which the menu of the
+        // designer does not hold: checking targetsItem alone left them out of the right-click menu
         void MoveActionsTo(ToolStripItemCollection target)
         {
-            if (target.Contains(targetsItem)) return;
-            target.AddRange(ActionItems);
+            ToolStripItem[] items = ActionItems;
+            if (items.All(target.Contains)) return;
+            target.AddRange(items);
         }
 
         /// <summary>Enables the actions for their targets; false when there is no target.</summary>
@@ -1453,8 +1456,8 @@ namespace LiteDeploy
                     : Localization.F("ComputerGrid.TargetsSelected", "{0} selected computer(s)", targets.Count);
             BuildInstallMenu(targets);
             BuildUninstallMenu(targets);
-            // Uninstall mode: no update nor install from the menu (one kind of change at a time)
-            if (UninstallMode) installItem.Enabled = false;
+            // Uninstall mode: Uninstall takes the place of Install or update (one kind of change at a time)
+            installItem.Visible = !UninstallMode;
             PrepareQueueItems(targets, idle);
             pauseItem.Enabled = idle && targets.Any(c => !IsPaused(c));
             resumeItem.Enabled = idle && targets.Any(IsPaused);
