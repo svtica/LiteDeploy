@@ -65,6 +65,23 @@ namespace LiteDeploy
         /// <summary>Size of the Web versions window, "width,height" (empty: default).</summary>
         public String WebVersionsWindowSize = "";
 
+        // ---- SIW report (SIW is never shipped: each administrator points to a folder that holds it) ----
+
+        /// <summary>Folder that holds SIW (siw64.exe, siw-arm64.exe, siw32.exe, siw.lic); empty: SIW report not available.</summary>
+        public String SiwFolder = "";
+        /// <summary>Also the HTML report of SIW itself (SIW runs twice); off: the XML report only, shown by LiteDeploy.</summary>
+        public bool SiwHtml = false;
+        /// <summary>O= of the signer of the SIW executables; any other signer is refused.</summary>
+        public String SiwPublisher = SiwPolicy.DefaultPublisher;
+        /// <summary>SIW sections (/s:, /h:, /n: of its command line); the Licenses and account sections are always removed.</summary>
+        public ulong SiwSoftware = SiwPolicy.DefaultSoftware;
+        public ulong SiwHardware = SiwPolicy.DefaultHardware;
+        public ulong SiwNetwork = SiwPolicy.DefaultNetwork;
+        /// <summary>Time limit of one SIW run on the computer, in seconds (30 to 1800).</summary>
+        public int SiwTimeoutSeconds = SiwPolicy.DefaultTimeoutSeconds;
+        /// <summary>Fields of the summary of several reports, "Page/Group/Property" separated by ';' (SiwReport); empty: the default fields.</summary>
+        public String SiwSummaryFields = "";
+
         // ---- Main window and its grid (restored when it opens; safe defaults when absent or unreadable) ----
 
         /// <summary>Computers whose last logon (Active Directory) is older than this many days are "offline/stale"; 0: never.</summary>
@@ -156,12 +173,24 @@ namespace LiteDeploy
                 "Tools > Web Versions. true: the daily check downloads the new versions to the cache; false: report only. Default: false."),
             new KeyValuePair<String, String>("WebVersionsWindowSize",
                 "Kept by LiteDeploy: size of the Web Versions window, width,height. Empty: default."),
+            new KeyValuePair<String, String>("SiwPublisher",
+                "Edited by hand only. SIW report: O= of the signer of the SIW executables; any other signer is refused, on this computer and by the worker. Default: Topala Software Solutions."),
+            new KeyValuePair<String, String>("SiwSoftware",
+                "Edited by hand only. SIW report: software sections, the /s: number of the SIW command line (sum of the values of its documentation). The Licenses section (product keys) is always removed. Default: 5 (Operating System, Installed Programs)."),
+            new KeyValuePair<String, String>("SiwHardware",
+                "Edited by hand only. SIW report: hardware sections, the /h: number. Default: 136079 (System Summary, Motherboard, BIOS, CPU, Memory, Video, Storage Devices, Network Adapters, Logical Disks)."),
+            new KeyValuePair<String, String>("SiwNetwork",
+                "Edited by hand only. SIW report: network sections, the /n: number. The account and Active Directory sections are always removed. Default: 1 (Network Information)."),
+            new KeyValuePair<String, String>("SiwTimeoutSeconds",
+                "Edited by hand only. SIW report: time limit of one SIW run on the computer, in seconds (30 to 1800). Default: 300."),
+            new KeyValuePair<String, String>("SiwSummaryFields",
+                "Edited by hand only. SIW report on several computers: fields of the summary, Page/Group/Property separated by ; (Group * : any group; several matches are joined). Example: BIOS/BIOS Properties/BIOS Version;Video/Monitor/Model. Empty: the default fields."),
             new KeyValuePair<String, String>("UpdatesStaleDays",
                 "Edited by hand only. Offline/stale filter: last logon (Active Directory) older than this many days. 0: never stale. Default: 30."),
             new KeyValuePair<String, String>("UpdatesWindowBounds",
                 "Kept by LiteDeploy: main window, then its grid (bounds, maximized, splitter, columns, status filters). Empty or 0: default."),
             new KeyValuePair<String, String>("UpdatesHiddenColumns",
-                "Columns menu of the main window: columns hidden (stateColumn, userColumn, osColumn, lastLogonColumn, statusColumn, updatesColumn, resultColumn, lastScanColumn, changedColumn, pausedColumn, nightOnlyColumn, manufacturerColumn, modelColumn, serialColumn, yearColumn, cpuColumn, coresColumn, ramColumn, diskColumn, diskFreeColumn), separated by commas. Empty: every column. Default: the hardware columns."),
+                "Columns menu of the main window: columns hidden (stateColumn, userColumn, osColumn, ipColumn, lastLogonColumn, statusColumn, updatesColumn, resultColumn, lastScanColumn, changedColumn, pausedColumn, nightOnlyColumn, manufacturerColumn, modelColumn, serialColumn, yearColumn, cpuColumn, coresColumn, ramColumn, diskColumn, diskFreeColumn), separated by commas. Empty: every column. Default: the hardware columns."),
         };
 
         /// <summary>The settings as written to settings.xml: serialized, with FileComments before their elements.</summary>

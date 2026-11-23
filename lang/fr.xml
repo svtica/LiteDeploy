@@ -984,4 +984,30 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="RemoteRunForm.Cancelled">Annulé : {0} ordinateur(s) sur {1} terminé(s) ({2}).</translation>
   <translation key="RemoteRunForm.Finished">Terminé : {0} ordinateur(s) ({1}).</translation>
   <translation key="RemoteRunForm.NotRun">Non exécuté (annulé).</translation>
+  <translation key="ComputerGrid.ipColumn.Text">Adresse IP</translation>
+  <translation key="ComputerGrid.siwItem.Text">Rapport SIW...</translation>
+  <translation key="ComputerGrid.siwItem.ToolTipText">Exécuter SIW (System Information for Windows, dossier d'App > Options) en SYSTEM sur ces ordinateurs : un rapport chacun, et un sommaire s'il y en a plusieurs</translation>
+  <translation key="OptionsForm.siwGroup.Text">Rapport SIW</translation>
+  <translation key="OptionsForm.siwFolderLabel.Text">Dossier qui contient SIW (System Information for Windows, facultatif) :</translation>
+  <translation key="OptionsForm.siwFolderButton.Text">Choisir</translation>
+  <translation key="OptionsForm.siwHtmlCheckBox.Text">Aussi le rapport HTML de SIW (SIW s'exécute deux fois) ; décoché : rapport XML affiché par LiteDeploy</translation>
+  <translation key="OptionsForm.BadSiwFolder">Le dossier de SIW doit être un chemin complet (partage réseau ou lecteur local).</translation>
+  <translation key="SiwReports.NoFolder">Aucun dossier SIW : choisissez le dossier qui contient SIW dans App > Options.</translation>
+  <translation key="SiwReports.BadPublisher">Le réglage SiwPublisher n'est pas un nom valide : {0}</translation>
+  <translation key="SiwReports.NoExecutable">Le dossier SIW {0} ne contient aucun de ces fichiers : {1}.</translation>
+  <translation key="SiwReports.BadSignature">{0} est refusé : signature {1}, signataire {2}, attendu O={3}.</translation>
+  <translation key="SiwReports.NoExecutableFor">{0} ({1}) n'est pas dans le dossier SIW.</translation>
+  <translation key="SiwReports.NoReport">Le worker n'a produit aucun rapport XML.</translation>
+  <translation key="SiwReport.Date">Date du rapport</translation>
+  <translation key="SiwReport.Failure">Non lu</translation>
+  <translation key="SiwReport.HtmlTitle">Rapport SIW - {0}</translation>
+  <translation key="ComputerActions.ConfirmSiw">Exécuter SIW en SYSTEM sur {0} ordinateur(s) et obtenir un rapport de chacun ?&#10;&#10;{1}</translation>
+  <translation key="ComputerActions.RunningSiw">Rapport SIW de {0} ordinateur(s)...</translation>
+  <translation key="ComputerActions.SiwTitle">Rapport SIW - {0}</translation>
+  <translation key="ComputerActions.SiwTitleMany">Rapports SIW - {0} ordinateur(s)</translation>
+  <translation key="ComputerActions.SiwSummary">Rapports : {0} ordinateur(s), échecs : {1}. Dossier : {2}</translation>
+  <translation key="ComputerActions.SiwDone">{0} : rapport en {1} s - {2}</translation>
+  <translation key="ComputerActions.SiwFailed">{0} : aucun rapport : {1}</translation>
+  <translation key="ComputerActions.SiwSummaryTitle">Enregistrer le sommaire des rapports SIW</translation>
+  <translation key="ComputerActions.SiwSummarySaved">Sommaire de {0} ordinateur(s) enregistré : {1}</translation>
 </translations>

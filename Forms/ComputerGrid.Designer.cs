@@ -64,6 +64,7 @@ namespace LiteDeploy
             this.profileButton = new System.Windows.Forms.ToolStripButton();
             this.inventoryItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exportInventoryItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.siwItem = new System.Windows.Forms.ToolStripMenuItem();
             this.refreshStateButton = new System.Windows.Forms.ToolStripButton();
             this.columnsButton = new System.Windows.Forms.ToolStripDropDownButton();
             this.stateColumn = new System.Windows.Forms.ColumnHeader();
@@ -110,6 +111,7 @@ namespace LiteDeploy
             this.detailsBox = new System.Windows.Forms.TextBox();
             this.computerColumn = new System.Windows.Forms.ColumnHeader();
             this.osColumn = new System.Windows.Forms.ColumnHeader();
+            this.ipColumn = new System.Windows.Forms.ColumnHeader();
             this.lastLogonColumn = new System.Windows.Forms.ColumnHeader();
             this.packageColumn = new System.Windows.Forms.ColumnHeader();
             this.updatesColumn = new System.Windows.Forms.ColumnHeader();
@@ -536,6 +538,9 @@ namespace LiteDeploy
             this.osColumn.Name = "osColumn";
             this.osColumn.Text = "OS";
             this.osColumn.Width = 170;
+            this.ipColumn.Name = "ipColumn";
+            this.ipColumn.Text = "IP address";
+            this.ipColumn.Width = 110;
             this.lastLogonColumn.Name = "lastLogonColumn";
             this.lastLogonColumn.Text = "Last logon (AD)";
             this.lastLogonColumn.Width = 100;
@@ -600,6 +605,7 @@ namespace LiteDeploy
             this.exportSeparator,
             this.inventoryItem,
             this.exportInventoryItem,
+            this.siwItem,
             this.royalTsItem,
             this.removeSeparator,
             this.removeItem,
@@ -654,6 +660,10 @@ namespace LiteDeploy
             this.exportInventoryItem.Text = "Export the inventory...";
             this.exportInventoryItem.ToolTipText = "Inventory of the checked computers, else of every computer shown: Excel workbook (.xlsx) or CSV";
             this.exportInventoryItem.Click += new System.EventHandler(this.exportInventoryItem_Click);
+            this.siwItem.Name = "siwItem";
+            this.siwItem.Text = "SIW report...";
+            this.siwItem.ToolTipText = "Run SIW (System Information for Windows, folder of App > Options) as SYSTEM on these computers: one report each, and a summary for several";
+            this.siwItem.Click += new System.EventHandler(this.siwItem_Click);
             this.wakeItem.Name = "wakeItem";
             this.wakeItem.Text = "Wake up (Wake-on-LAN)";
             this.wakeItem.Click += new System.EventHandler(this.wakeItem_Click);
@@ -786,6 +796,7 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripMenuItem royalTsItem;
         private System.Windows.Forms.ToolStripMenuItem inventoryItem;
         private System.Windows.Forms.ToolStripMenuItem exportInventoryItem;
+        private System.Windows.Forms.ToolStripMenuItem siwItem;
         private System.Windows.Forms.ToolStripButton checkButton;
         private System.Windows.Forms.ToolStripButton selectOutdatedButton;
         private System.Windows.Forms.ToolStripButton selectAllButton;
@@ -844,6 +855,7 @@ namespace LiteDeploy
         private System.Windows.Forms.TextBox detailsBox;
         private System.Windows.Forms.ColumnHeader computerColumn;
         private System.Windows.Forms.ColumnHeader osColumn;
+        private System.Windows.Forms.ColumnHeader ipColumn;
         private System.Windows.Forms.ColumnHeader lastLogonColumn;
         private System.Windows.Forms.ColumnHeader packageColumn;
         private System.Windows.Forms.ColumnHeader updatesColumn;

@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **SIW report...** (actions of the grid): a detailed report of the computers made by SIW (System
+  Information for Windows), a third-party tool that LiteDeploy does not ship; each administrator
+  sets the folder that holds it in *App > Options > SIW report* (read and signature check at
+  *Save*). LiteDeploy copies the SIW executable of the computer's architecture and its license
+  through `ADMIN$`; the new worker command `siw` runs it as SYSTEM only when it is validly signed
+  by the expected publisher (`O=` of the signer, `SiwPublisher`), with a fixed command line (sections
+  as numbers; the *Licenses* section and the account and Active Directory sections always removed)
+  and a time limit; the executable and the license are deleted at the end and the folder is removed,
+  also after an error. Reports in `%LOCALAPPDATA%\LiteDeploy\siw\<computer>\`: XML (default) with a
+  plain HTML view, or also the HTML report of SIW (option). One computer: the report opens. Several:
+  progress window with *Cancel*, then a summary of chosen fields (`SiwSummaryFields`) as an Excel
+  workbook or CSV. Servers follow the rule of the updates. Settings outside *App > Options*:
+  `SiwPublisher`, `SiwSoftware`, `SiwHardware`, `SiwNetwork`, `SiwTimeoutSeconds`, `SiwSummaryFields`.
+- Column **IP address** in the grid (shown by default, *Columns* hides it): the IPv4 addresses read
+  by the worker; sorts by address. IPv4 addresses sort by value in every column.
+
 ### Changed
 
 - Quick commands, computer cards and messages to the users no longer leave LiteDeploy looking

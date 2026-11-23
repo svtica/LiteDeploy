@@ -27,8 +27,9 @@
 //          TeamViewer ID, remote desktop, command prompt, quick commands,
 //          message to the logged-on users, Wake-on-LAN, logs, ping,
 //          management console, admin share, deploy a file or command (PsExec,
-//          DeployForm, run by the main window), export to Royal TS
-//          (ComputerActions). A computer known under several spellings
+//          DeployForm, run by the main window), export to Royal TS, SIW
+//          report (ComputerActions). Optional columns (Columns menu): IP
+//          address and the hardware inventory. A computer known under several spellings
 //          (ComputerName) is one row. Splitter, columns and filters are kept
 //          in the user settings; the grid always opens on one row per computer.
 // -----------------------------------------------------------------------------
@@ -305,7 +306,7 @@ namespace LiteDeploy
         {
             get
             {
-                return new[] { computerColumn, stateColumn, userColumn, osColumn, lastLogonColumn, statusColumn, updatesColumn, resultColumn,
+                return new[] { computerColumn, stateColumn, userColumn, osColumn, ipColumn, lastLogonColumn, statusColumn, updatesColumn, resultColumn,
                     lastScanColumn, changedColumn, pausedColumn, nightOnlyColumn,
                     manufacturerColumn, modelColumn, serialColumn, yearColumn, cpuColumn, coresColumn, ramColumn, diskColumn, diskFreeColumn };
             }
@@ -426,6 +427,7 @@ namespace LiteDeploy
                     { stateColumn, OnlineText(row.Online) },
                     { userColumn, row.Users ?? "" },
                     { osColumn, row.Os ?? "" },
+                    { ipColumn, IpText(c?.Ips) },
                     { lastLogonColumn, row.LastLogon.HasValue ? row.LastLogon.Value.ToString("yyyy-MM-dd") : "" },
                     { statusColumn, step.Length > 0 ? step : SummaryText(summary) },
                     { updatesColumn, UpdatesText(c, summary) },
@@ -460,6 +462,16 @@ namespace LiteDeploy
             if (step.Length > 0) item.ForeColor = Theme.Accent;
             item.Checked = !ByPackage && checkedComputers.Contains(computer);
             return item;
+        }
+
+        /// <summary>
+        /// IP address column: the IPv4 addresses last read by the worker (check, inventory, card), separated by
+        /// ", " (the worker separates them with spaces); "" when none is known. Unit-tested.
+        /// </summary>
+        internal static String IpText(String ips)
+        {
+            if (String.IsNullOrWhiteSpace(ips)) return "";
+            return String.Join(", ", ips.Split(new[] { ' ', ',', ';' }, StringSplitOptions.RemoveEmptyEntries).Distinct());
         }
 
         // Tooltip of a row: why it is paused, outside business hours only, where it comes from
@@ -1404,7 +1416,7 @@ namespace LiteDeploy
                     targetsItem, targetsSeparator, installItem, installSeparator, pauseItem, resumeItem, nightOnlyItem, nightOnlyClearItem,
                     menuSeparator, cardItem, teamViewerItem, remoteDesktopItem, commandPromptItem, quickCommandsItem, messageItem,
                     processesItem, litePMItem, logsItem, wakeItem, pingItem, managementConsoleItem, adminShareItem, copyNameItem,
-                    deploySeparator, deployItem, exportSeparator, inventoryItem, exportInventoryItem, royalTsItem, removeSeparator, removeItem, unhideItem
+                    deploySeparator, deployItem, exportSeparator, inventoryItem, exportInventoryItem, siwItem, royalTsItem, removeSeparator, removeItem, unhideItem
                 };
             }
         }
@@ -1437,6 +1449,7 @@ namespace LiteDeploy
             actions.FillQuickCommands(quickCommandsItem, ActionTargets);
             royalTsItem.Enabled = exportInventoryItem.Enabled = ExportTargets().Count > 0;
             inventoryItem.Enabled = idle && targets.Count > 0 && !readingInventory;
+            siwItem.Enabled = targets.Count > 0;
             processesItem.Enabled = litePMItem.Enabled = managementConsoleItem.Enabled = adminShareItem.Enabled = targets.Count == 1;
             pingItem.Enabled = copyNameItem.Enabled = targets.Count > 0;
             deployItem.Enabled = targets.Count > 0 && deployEnabled;
@@ -1600,6 +1613,11 @@ namespace LiteDeploy
                     MessageBox.Show(this, ex.Message, Caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
+        }
+
+        void siwItem_Click(object sender, EventArgs e)
+        {
+            actions.RunSiwReports(ActionTargets());
         }
 
         void royalTsItem_Click(object sender, EventArgs e)

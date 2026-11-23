@@ -55,6 +55,11 @@ namespace LiteDeploy
             this.methodLabel = new System.Windows.Forms.Label();
             this.methodCombo = new System.Windows.Forms.ComboBox();
             this.includeServersCheckBox = new System.Windows.Forms.CheckBox();
+            this.siwGroup = new System.Windows.Forms.GroupBox();
+            this.siwFolderLabel = new System.Windows.Forms.Label();
+            this.siwFolderBox = new System.Windows.Forms.TextBox();
+            this.siwFolderButton = new System.Windows.Forms.Button();
+            this.siwHtmlCheckBox = new System.Windows.Forms.CheckBox();
             this.languageLabel = new System.Windows.Forms.Label();
             this.languageCombo = new System.Windows.Forms.ComboBox();
             this.button3 = new System.Windows.Forms.Button();
@@ -172,7 +177,7 @@ namespace LiteDeploy
             // 
             // ApplyButton
             // 
-            this.ApplyButton.Location = new System.Drawing.Point(237, 618);
+            this.ApplyButton.Location = new System.Drawing.Point(237, 730);
             this.ApplyButton.Name = "ApplyButton";
             this.ApplyButton.Size = new System.Drawing.Size(93, 23);
             this.ApplyButton.TabIndex = 6;
@@ -183,7 +188,7 @@ namespace LiteDeploy
             // cancelButton
             // 
             this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cancelButton.Location = new System.Drawing.Point(336, 618);
+            this.cancelButton.Location = new System.Drawing.Point(336, 730);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(93, 23);
             this.cancelButton.TabIndex = 7;
@@ -299,17 +304,52 @@ namespace LiteDeploy
             this.includeServersCheckBox.Text = "Include servers (updates and installs)";
             this.includeServersCheckBox.UseVisualStyleBackColor = true;
             //
+            // siwGroup
+            //
+            this.siwGroup.Controls.Add(this.siwFolderLabel);
+            this.siwGroup.Controls.Add(this.siwFolderBox);
+            this.siwGroup.Controls.Add(this.siwFolderButton);
+            this.siwGroup.Controls.Add(this.siwHtmlCheckBox);
+            this.siwGroup.Location = new System.Drawing.Point(12, 612);
+            this.siwGroup.Name = "siwGroup";
+            this.siwGroup.Size = new System.Drawing.Size(417, 106);
+            this.siwGroup.TabIndex = 4;
+            this.siwGroup.TabStop = false;
+            this.siwGroup.Text = "SIW report";
+            this.siwFolderLabel.AutoSize = true;
+            this.siwFolderLabel.Location = new System.Drawing.Point(17, 24);
+            this.siwFolderLabel.Name = "siwFolderLabel";
+            this.siwFolderLabel.Text = "Folder that holds SIW (System Information for Windows, optional):";
+            this.siwFolderBox.Location = new System.Drawing.Point(20, 40);
+            this.siwFolderBox.Name = "siwFolderBox";
+            this.siwFolderBox.Size = new System.Drawing.Size(298, 20);
+            this.siwFolderBox.TabIndex = 20;
+            this.siwFolderButton.Location = new System.Drawing.Point(324, 38);
+            this.siwFolderButton.Name = "siwFolderButton";
+            this.siwFolderButton.Size = new System.Drawing.Size(75, 23);
+            this.siwFolderButton.TabIndex = 21;
+            this.siwFolderButton.Text = "Select";
+            this.siwFolderButton.UseVisualStyleBackColor = true;
+            this.siwFolderButton.Click += new System.EventHandler(this.siwFolderButton_Click);
+            this.siwHtmlCheckBox.Location = new System.Drawing.Point(20, 68);
+            this.siwHtmlCheckBox.Name = "siwHtmlCheckBox";
+            this.siwHtmlCheckBox.Size = new System.Drawing.Size(379, 30);
+            this.siwHtmlCheckBox.TabIndex = 22;
+            this.siwHtmlCheckBox.Text = "Also the HTML report of SIW (SIW runs twice); off: XML report shown by LiteDeploy";
+            this.siwHtmlCheckBox.UseVisualStyleBackColor = true;
+            //
             // OptionsForm
             // 
             this.AcceptButton = this.ApplyButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.cancelButton;
-            this.ClientSize = new System.Drawing.Size(445, 653);
+            this.ClientSize = new System.Drawing.Size(445, 765);
             this.Controls.Add(this.cancelButton);
             this.Controls.Add(this.ApplyButton);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.updatesGroup);
+            this.Controls.Add(this.siwGroup);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
@@ -356,5 +396,10 @@ namespace LiteDeploy
         private System.Windows.Forms.Label methodLabel;
         private System.Windows.Forms.ComboBox methodCombo;
         private System.Windows.Forms.CheckBox includeServersCheckBox;
+        private System.Windows.Forms.GroupBox siwGroup;
+        private System.Windows.Forms.Label siwFolderLabel;
+        private System.Windows.Forms.TextBox siwFolderBox;
+        private System.Windows.Forms.Button siwFolderButton;
+        private System.Windows.Forms.CheckBox siwHtmlCheckBox;
     }
 }
