@@ -45,6 +45,7 @@ namespace LiteDeploy
         public const string StepClosing = "closing";
         public const string StepUpgrading = "upgrading";
         public const string StepInstalling = "installing";
+        public const string StepUninstalling = "uninstalling";
 
         // Package states
         public const string StatusUpToDate = "uptodate";
@@ -55,6 +56,7 @@ namespace LiteDeploy
         // Upgrade outcomes
         public const string ResultUpgraded = "upgraded";
         public const string ResultInstalled = "installed";   // explicit Install action (type upgrade)
+        public const string ResultUninstalled = "uninstalled";   // explicit Uninstall action (type upgrade)
         public const string ResultFailed = "failed";
         public const string ResultSkipped = "skipped";
 

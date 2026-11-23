@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Uninstall mode** (check box of the filter bar of the grid): the only way to remove software.
+  Never saved; while it is on, an orange banner (with *Leave the uninstall mode*), the window title
+  and the status bar show it, and *Update checked* and *Install or update* are disabled; it turns
+  itself off after each uninstall run, after 15 minutes without one and when the window closes.
+  Action **Uninstall**: one software of the profile, on the computers where the last check found
+  it installed; confirmation naming it and the computers, the number of computers typed above 5.
+  New worker command `uninstall` (same server guard as the updates, never run by a schedule, a
+  fixed list of protected packages refused): winget packages through `winget uninstall --scope
+  machine --silent`; modules through `-Action Uninstall` when their header declares
+  `# Uninstall: yes`. `CachedInstaller` declares it for MSI products (`msiexec /x {ProductCode}`).
+
 ## [1.0.24] - 2026-11-23
 
 ### Added

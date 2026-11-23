@@ -129,6 +129,7 @@ namespace LiteDeploy
             messageItem.Click += (s, e) => actions.SendMessage(ActionTargets(), "");
             // In the right-click menu of the designer, after the quick commands (then moved with the other actions)
             rowMenu.Items.Insert(rowMenu.Items.IndexOf(quickCommandsItem) + 1, messageItem);
+            InitializeUninstallMode();
             RestoreSettings();
             LoadPackages();
 
@@ -753,6 +754,7 @@ namespace LiteDeploy
             {
                 case WorkerProtocol.ResultUpgraded: return Localization.F("ComputerGrid.Upgraded", "Updated {0}", when);
                 case WorkerProtocol.ResultInstalled: return Localization.F("ComputerGrid.Installed", "Installed {0}", when);
+                case WorkerProtocol.ResultUninstalled: return Localization.F("ComputerGrid.Uninstalled", "Uninstalled {0}", when);
                 case WorkerProtocol.ResultFailed: return Localization.F("ComputerGrid.Failed", "Failed {0}: {1}", when, s.LastMessage);
                 default: return s.LastMessage ?? "";
             }
@@ -784,7 +786,7 @@ namespace LiteDeploy
             bool anyTarget = (ByPackage ? checkedKeys.Count > 0 : checkedComputers.Count > 0) || updatesList.SelectedItems.Count > 0;
             checkButton.Enabled = idle && packages.Count > 0 && (visible.Count > 0 || checkedComputers.Count > 0);
             selectOutdatedButton.Enabled = selectAllButton.Enabled = selectNoneButton.Enabled = idle;
-            updateButton.Enabled = idle && packages.Count > 0 && anyTarget;
+            updateButton.Enabled = idle && packages.Count > 0 && anyTarget && !UninstallMode;
             editPackagesButton.Enabled = profileButton.Enabled = idle;
             byPackageButton.Enabled = idle;
             stopButton.Enabled = !idle;
@@ -1201,6 +1203,7 @@ namespace LiteDeploy
             }
 
             stopping = false;
+            runningCommand = command;
             pending = jobs.Count;
             UpdateButtons();
             progressBar.Maximum = jobs.Count;
@@ -1291,6 +1294,7 @@ namespace LiteDeploy
                 case WorkerProtocol.StepClosing: return Localization.T("ComputerGrid.StepClosing", "Closing the application...");
                 case WorkerProtocol.StepUpgrading: return Localization.T("ComputerGrid.StepUpgrading", "Updating...");
                 case WorkerProtocol.StepInstalling: return Localization.T("ComputerGrid.StepInstalling", "Installing...");
+                case WorkerProtocol.StepUninstalling: return Localization.T("ComputerGrid.StepUninstalling", "Uninstalling...");
                 default: return step;
             }
         }
@@ -1345,7 +1349,7 @@ namespace LiteDeploy
                 {
                     progressBar.Value = Math.Min(progressBar.Maximum, progressBar.Maximum - left);
                     RefreshList();
-                    if (left == 0) SetIdleStatus();
+                    if (left == 0) { SetIdleStatus(); RunFinished(); }
                     else UpdateProgressText();
                 }));
             }
@@ -1413,7 +1417,7 @@ namespace LiteDeploy
             {
                 return new ToolStripItem[]
                 {
-                    targetsItem, targetsSeparator, installItem, installSeparator, pauseItem, resumeItem, nightOnlyItem, nightOnlyClearItem,
+                    targetsItem, targetsSeparator, uninstallItem, installItem, installSeparator, pauseItem, resumeItem, nightOnlyItem, nightOnlyClearItem,
                     menuSeparator, cardItem, teamViewerItem, remoteDesktopItem, commandPromptItem, quickCommandsItem, messageItem,
                     processesItem, litePMItem, logsItem, wakeItem, pingItem, managementConsoleItem, adminShareItem, copyNameItem,
                     deploySeparator, deployItem, exportSeparator, inventoryItem, exportInventoryItem, siwItem, royalTsItem, removeSeparator, removeItem, unhideItem
@@ -1440,6 +1444,9 @@ namespace LiteDeploy
                     ? Localization.F("ComputerGrid.TargetsChecked", "{0} checked computer(s)", targets.Count)
                     : Localization.F("ComputerGrid.TargetsSelected", "{0} selected computer(s)", targets.Count);
             BuildInstallMenu(targets);
+            BuildUninstallMenu(targets);
+            // Uninstall mode: no update nor install from the menu (one kind of change at a time)
+            if (UninstallMode) installItem.Enabled = false;
             pauseItem.Enabled = idle && targets.Any(c => !IsPaused(c));
             resumeItem.Enabled = idle && targets.Any(IsPaused);
             nightOnlyItem.Enabled = idle && targets.Any(c => !IsNightOnly(c));

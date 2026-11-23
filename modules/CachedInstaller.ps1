@@ -2,6 +2,7 @@
 # Label: Installer from the shared cache
 # Processes:
 # Install: yes
+# Uninstall: yes
 # Instances: yes
 # Parameter: Product default= Name of the product, shown in the messages (the instance name when empty)
 # Parameter: File Path of the installer under the shared cache, e.g. CachedInstaller/ExampleVendor/app-2.4.1.msi
@@ -47,11 +48,19 @@
     (CloseProcesses), right before its installer runs; only plain process
     names are accepted and system processes are refused.
 
+    Uninstall (uninstall mode of LiteDeploy, installed products only): MSI
+    products only. The Uninstall entry found (by ProductCode or DetectName)
+    must be an MSI product code ({GUID}); the processes of CloseProcesses are
+    closed, then msiexec /x {GUID} /qn /norestart runs (log in the work
+    folder, deleted on success) and the entry must be gone. Exit codes 3010
+    and 1641: removed, restart needed. An EXE product is refused: its own
+    uninstaller needs arguments of its own, validated by hand.
+
     WingetId is read by LiteDeploy only (Tools > Web versions..., on the
     administrator's computer): this script ignores it.
 
 .PARAMETER Action
-    Check, Update or Install.
+    Check, Update, Install or Uninstall.
 
 .EXAMPLE
     powershell.exe -NoProfile -File CachedInstaller.ps1 -Action Check
@@ -60,7 +69,7 @@
     LITEDEPLOY_INSTANCE and the LITEDEPLOY_PARAM_ variables set).
 #>
 param(
-    [ValidateSet('Check', 'Update', 'Install')]
+    [ValidateSet('Check', 'Update', 'Install', 'Uninstall')]
     [string] $Action = 'Check'
 )
 $ErrorActionPreference = 'Stop'
@@ -282,6 +291,37 @@ try {
     }
     if (-not $productCode -and ($detectName -replace '[\*\?\[\]\s]', '').Length -lt 3) {
         throw 'Parameter ProductCode or DetectName missing (DetectName needs at least 3 characters besides wildcards)'
+    }
+
+    if ($Action -eq 'Uninstall') {
+        # MSI products only: msiexec /x with the product code of the Uninstall entry (the cache is not needed)
+        $entry = Get-Installed $productCode $detectName
+        if (-not $entry) {
+            Write-LiteDeployResult 'notinstalled' $null $null "$product not installed"
+            exit 0
+        }
+        $guid = $entry.KeyName
+        if ($guid -notmatch '^\{[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\}$') {
+            throw "Uninstall of $product refused: its Uninstall entry is not an MSI product code; only MSI products are removed by this module"
+        }
+        Close-Processes (Get-ProcessesToClose (Get-Param 'CloseProcesses'))
+        New-Item -ItemType Directory -Force -Path $work | Out-Null
+        $uninstallLog = Join-Path $work "$instance-uninstall.log"
+        $exitCode = Invoke-Installer (Join-Path $env:windir 'System32\msiexec.exe') "/x $guid /qn /norestart /l*v `"$uninstallLog`""
+        $restartNeeded = ($exitCode -eq 3010 -or $exitCode -eq 1641)
+        if ($exitCode -ne 0 -and -not $restartNeeded) {
+            Write-LiteDeployResult 'error' $entry.DisplayVersion $null "Uninstall of $product failed, exit code $exitCode (log: $uninstallLog)"
+            exit 1
+        }
+        $still = Get-Installed $productCode $detectName
+        if ($still) {
+            Write-LiteDeployResult 'error' $still.DisplayVersion $null "Uninstall of $product finished (exit code $exitCode) but the product is still installed"
+            exit 1
+        }
+        Remove-Item -LiteralPath $uninstallLog -Force -ErrorAction SilentlyContinue
+        Write-LiteDeployResult 'notinstalled' $null $null "Uninstalled $product $($entry.DisplayVersion)"
+        if ($restartNeeded) { exit 3010 }
+        exit 0
     }
 
     $source = Resolve-CacheFile $file
