@@ -348,6 +348,15 @@ namespace LiteDeploy
             return RunSimple(computer, UserMessage.WorkerArguments(text, seconds, title), 2);
         }
 
+        /// <summary>
+        /// SIW report ("LiteDeploy.Worker.exe siw ...", SiwPolicy.WorkerArguments), as SYSTEM; SIW must already be
+        /// in %windir%\LiteDeploy\work\SIW (SiwReports). <paramref name="timeoutMinutes"/>: SIW on the computer.
+        /// </summary>
+        public static UpdateRunResult Siw(String computer, String workerArguments, int timeoutMinutes)
+        {
+            return RunSimple(computer, workerArguments, timeoutMinutes);
+        }
+
         static UpdateRunResult RunSimple(String computer, String workerCommand)
         {
             return RunSimple(computer, workerCommand, 2);

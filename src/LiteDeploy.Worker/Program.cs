@@ -35,6 +35,11 @@
 //            LiteDeploy.Worker.exe message --text <base64 UTF-8> [--seconds N]
 //                                  [--title <base64 UTF-8>] (a message box in
 //                                  every active user session: SessionMessenger)
+//            LiteDeploy.Worker.exe siw --format xml|html --software N
+//                                  --hardware N --network N --publisher "O name"
+//                                  --timeout <seconds> [--allow-servers
+//                                  [--allow-domain-controllers]] (SIW report:
+//                                  SiwRunner, SiwPolicy)
 //          --output <file> (any command): the messages are also written to
 //          that file, flushed line by line. Used by the WinRM method, where the
 //          worker runs in a scheduled task without a console to read.
@@ -113,6 +118,17 @@ namespace LiteDeploy.Worker
                     return ExitUsage;
                 }
                 return RunQuick(quick);
+            }
+            if (args != null && args.Length >= 1 && args[0].Equals(SiwPolicy.Command, StringComparison.OrdinalIgnoreCase))
+            {
+                SiwRequest siw;
+                string siwError = SiwPolicy.ParseArguments(args, out siw);
+                if (siwError != null)
+                {
+                    Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeError, "message", siwError));
+                    return ExitUsage;
+                }
+                return SiwRunner.Run(siw, Emit);
             }
             if (args != null && args.Length >= 1 && args[0].Equals(UserMessage.WorkerCommand, StringComparison.OrdinalIgnoreCase))
             {

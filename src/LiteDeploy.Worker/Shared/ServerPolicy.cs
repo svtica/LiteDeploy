@@ -8,9 +8,10 @@
 //          (--allow-servers, "Include servers" in App > Options), and never on
 //          a domain controller without a second explicit option
 //          (--allow-domain-controllers). Win32_OperatingSystem.ProductType:
-//          1 workstation, 2 domain controller, 3 server. "scan", "info" and
-//          "processes" are not concerned (report only). Pure logic, compiled
-//          into both programs (and the tests).
+//          1 workstation, 2 domain controller, 3 server. "siw" (SIW report,
+//          SiwPolicy) follows the same rule. "scan", "info" and "processes"
+//          are not concerned (report only). Pure logic, compiled into both
+//          programs (and the tests).
 // -----------------------------------------------------------------------------
 using System;
 
@@ -47,11 +48,15 @@ namespace LiteDeploy
         public const string TypeDomainController = "domaincontroller";
         public const string TypeServer = "server";
 
-        /// <summary>The commands that change a computer: "upgrade" and "install".</summary>
+        /// <summary>
+        /// The commands under the guard: "upgrade" and "install" (they change the computer) and "siw" (a
+        /// third-party tool that reads the hardware at a low level, run as SYSTEM).
+        /// </summary>
         public static bool AppliesTo(string command)
         {
             return string.Equals(command, "upgrade", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(command, InstallPolicy.Command, StringComparison.OrdinalIgnoreCase);
+                || string.Equals(command, InstallPolicy.Command, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(command, SiwPolicy.Command, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>

@@ -28,6 +28,9 @@ each computer in the process reports.
 - Columns **User** (users with a desktop at the last check, update or computer card) and **Last
   scan** (end of the last check or update that reached the computer); the search box finds the
   user too. **Columns** (right of the filters) hides or shows each column; kept in the settings.
+- Column **IP address**: the IPv4 addresses read by the worker at the last check, update, inventory
+  or computer card (several separated by `,`); it sorts by address (`192.0.2.9` before
+  `192.0.2.10`). Shown by default; hide it with *Columns*.
 - **Hardware inventory**: the worker reads the manufacturer, the model, the serial number, the BIOS
   date (about the year of manufacture), the processor (name, processors, cores, threads), the
   installed memory and the size and free space of the system disk, through WMI, with every check
@@ -67,7 +70,7 @@ each computer in the process reports.
   selected rows: the software update actions, the remote tools (remote desktop, computer card,
   TeamViewer ID, command prompt, quick commands, send a message, Wake-on-LAN, get the logs),
   ping, management console and administrative share (one computer), copy the names, deploy a file
-  or command, and *Export to Royal TS...* (see *Remote tools*).
+  or command, *SIW report...* and *Export to Royal TS...* (see *Remote tools*).
 
 ### Standalone deployments (PsExec)
 Hidden by default: *App > Options > Show the standalone deployments*. PsExec is needed only for
@@ -187,6 +190,33 @@ Actions of the grid (checked computers, else the selected ones):
   window at once (not modal; 4 computers at a time): progress bar, computers done and under way,
   elapsed time, each result as soon as it is known, and **Cancel** (no new computer is started;
   the ones under way finish). At the end it shows every result in the order of the computers.
+- **SIW report...**: a detailed hardware and software report made by
+  [SIW](https://www.gtopala.com/) (System Information for Windows, Topala Software Solutions),
+  a third-party tool that LiteDeploy never ships: each administrator gets SIW under its own
+  license and sets the folder that holds it in *App > Options > SIW report* (a network share or a
+  local folder; *Save* warns when this computer cannot read it or when an executable is not
+  validly signed by the expected publisher). For each computer, LiteDeploy copies the SIW
+  executable of its architecture (`siw64.exe`, `siw-arm64.exe` or `siw32.exe`, never the
+  launcher `siw.exe`, which returns before the report is written) and `siw.lic` through `ADMIN$`
+  to `%windir%\LiteDeploy\work\SIW`, then the worker (`siw` command, as SYSTEM) runs it only when
+  its Authenticode signature is valid and its signer has `O=` the expected publisher (not a
+  thumbprint: SIW is signed with short-lived certificates), with a fixed command line
+  (`/log:xml="..." /silent /s: /h: /n:`, sections as numbers, never free text; the *Licenses*
+  section, which holds product keys, and the account and Active Directory sections are always
+  removed) and a time limit. SIW always exits with 0: a report counts only when its file exists
+  and can be read. The SIW executable and its license are deleted by the worker at the end, and
+  LiteDeploy removes the folder of the computer, also after an error. Reports go to
+  `%LOCALAPPDATA%\LiteDeploy\siw\<computer>\<yyyyMMdd-HHmmss>.xml`, with a plain HTML view next
+  to it (`.html`); with *Also the HTML report of SIW* (off by default), SIW runs a second time
+  and its own report is kept too (`-siw.html`). One computer: the report opens at the end.
+  Several: a question first, the progress window (4 at a time, *Cancel*), then a **summary** of
+  chosen fields (manufacturer, model, serial number, TPM, Secure Boot, BIOS, processor, memory,
+  disks with their power-on hours and status, Windows version, monitors; `SiwSummaryFields`) saved
+  as an Excel workbook or CSV, one row per computer and a column for the computers without a
+  report. Servers follow the rule of the updates (*Include servers*, `AllowDomainControllers`).
+  The reports hold serial numbers and network details of your computers: they are site data,
+  keep them out of any repository or public issue. About 10 s per computer with the default
+  sections; the copy is about 40 MB.
 - **Export to Royal TS...**: Remote Desktop connections of the checked computers (else every
   computer shown), the operating system as description and the OU as folder path: a CSV file
   (`Name,ComputerName,Description,Path`, UTF-8 with BOM) for *Data > Import > Comma Separated
@@ -304,6 +334,10 @@ LiteDeploy writes a comment before each of them in the file; close LiteDeploy be
 | `SchedulerEngine` | *Tools > Scheduled Updates* | `internal` (while LiteDeploy is open) or `windows` (Windows scheduled tasks) | `internal` |
 | `WebCheckTime` | *Tools > Web Versions* | daily check of the web versions at this time (`HH:mm`); empty: none | empty |
 | `WebAutoDownload` | *Tools > Web Versions* | the daily check downloads the new versions to the cache (else report only) | `false` |
+| `SiwPublisher` | by hand only | SIW report: `O=` of the signer of the SIW executables; any other signer is refused (here and by the worker) | `Topala Software Solutions` |
+| `SiwSoftware`, `SiwHardware`, `SiwNetwork` | by hand only | SIW report: sections, the `/s:`, `/h:` and `/n:` numbers of the SIW command line (sum of the values of its documentation); *Licenses* and the account and Active Directory sections are always removed | `5`, `136079`, `1` |
+| `SiwTimeoutSeconds` | by hand only | SIW report: time limit of one SIW run on the computer (30 to 1800 s) | `300` |
+| `SiwSummaryFields` | by hand only | SIW report on several computers: fields of the summary, `Page/Group/Property` separated by `;` (`*` as group: any group; several matches are joined with ` \| `) | empty (default fields) |
 | `UpdatesHiddenColumns` | *Columns* menu of the main window | columns hidden (column names separated by `,`) | the hardware columns |
 | `WebVersionsWindowSize`, `UpdatesOnlineOnly`, `UpdatesProfile`, `UpdatesWindowBounds`, `UpdatesWindowMaximized`, `UpdatesSplitter`, `UpdatesColumns`, `UpdatesPackageColumns`, `UpdatesStatusFilter` | kept by LiteDeploy | size and position of the windows, columns and status filters of the grid | empty |
 

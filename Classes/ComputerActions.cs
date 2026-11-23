@@ -11,8 +11,8 @@
 //          (UserMessage, worker "message"; also "Ask the users to restart"
 //          in the quick commands), Wake-on-LAN, logs, pause and "outside
 //          business hours only" flags (updates.xml), export to Royal TS
-//          (RoyalTsExport). Cards, quick commands and messages run in a
-//          progress window (RemoteRunForm). Targets: the checked computers,
+//          (RoyalTsExport), SIW report (SiwReports). Cards, quick commands,
+//          messages and SIW reports run in a progress window (RemoteRunForm). Targets: the checked computers,
 //          else the selected one(s) (Targets, unit-tested).
 // -----------------------------------------------------------------------------
 using System;
@@ -483,6 +483,114 @@ namespace LiteDeploy
             else
                 sb.Append(Localization.F("ComputerGrid.CardFailed", "Not read: {0}", error != null ? error["message"] : failure ?? "?"));
             return sb.ToString();
+        }
+
+        // ---- SIW report -------------------------------------------------------------------
+
+        /// <summary>
+        /// SIW report of the computers (SiwReports, a few at a time, progress window with Cancel). One computer:
+        /// its report opens at the end. Several: a question first, then one report per computer and a summary of
+        /// the chosen fields (SiwSummaryFields) saved as an Excel workbook or CSV.
+        /// </summary>
+        public void RunSiwReports(List<String> targets)
+        {
+            if (targets.Count == 0) return;
+            UserSettings settings = UserSettings.Current;
+            SiwRequest request = SiwReports.RequestFrom(settings);
+            String folder = (settings.SiwFolder ?? "").Trim();
+            Owner.Cursor = Cursors.WaitCursor;
+            String problem;
+            try { problem = SiwReports.CheckFolder(folder, request.Publisher); }
+            finally { Owner.Cursor = Cursors.Default; }
+            if (problem != null)
+            {
+                MessageBox.Show(Owner, problem, Owner.Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (targets.Count > 1)
+            {
+                String names = String.Join(", ", targets.Take(10)) + (targets.Count > 10 ? ", ..." : "");
+                if (MessageBox.Show(Owner, Localization.F("ComputerActions.ConfirmSiw",
+                        "Run SIW as SYSTEM on {0} computer(s) and get a report from each?\n\n{1}", targets.Count, names),
+                        Owner.Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+                    return;
+            }
+            if (RemoteRunner.Prerequisite() != null)
+            {
+                MessageBox.Show(Owner, Localization.T("ComputerGrid.MissingTools", "PsExec or LiteDeploy.Worker.exe is missing next to LiteDeploy.exe."),
+                    Owner.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            host.SetStatus(Localization.F("ComputerActions.RunningSiw", "SIW report of {0} computer(s)...", targets.Count));
+            SiwRunResult[] results = new SiwRunResult[targets.Count];
+            String title = targets.Count == 1
+                ? Localization.F("ComputerActions.SiwTitle", "SIW report - {0}", targets[0])
+                : Localization.F("ComputerActions.SiwTitleMany", "SIW reports - {0} computer(s)", targets.Count);
+            RunWithProgress(title, targets, c =>
+            {
+                SiwRunResult r = SiwReports.Run(c, folder, request);
+                results[targets.IndexOf(c)] = r;
+                return FormatSiwResult(r);
+            }, lines =>
+            {
+                String summary = Localization.F("ComputerActions.SiwSummary", "Reports: {0} computer(s), failed: {1}. Folder: {2}",
+                    results.Count(r => r != null && r.Ok), results.Count(r => r == null || !r.Ok), SiwReports.Root);
+                return summary + "\n\n" + String.Join("\n", lines);
+            }, () =>
+            {
+                host.SetStatus(null);
+                List<SiwRunResult> done = results.Where(r => r != null && r.Ok).ToList();
+                if (done.Count == 0) return;
+                if (targets.Count == 1) OpenFile(done[0].HtmlPath ?? done[0].ViewPath);
+                else SaveSiwSummary(targets, results);
+            });
+        }
+
+        /// <summary>The line shown for one computer: the report and its time, or why there is none.</summary>
+        public static String FormatSiwResult(SiwRunResult r)
+        {
+            if (r.Ok) return Localization.F("ComputerActions.SiwDone", "{0}: report in {1} s - {2}", r.Computer, r.Seconds, r.XmlPath);
+            return Localization.F("ComputerActions.SiwFailed", "{0}: no report: {1}", r.Computer, String.IsNullOrEmpty(r.Failure) ? "?" : r.Failure);
+        }
+
+        void SaveSiwSummary(List<String> targets, SiwRunResult[] results)
+        {
+            List<KeyValuePair<String, SiwReport>> reports = new List<KeyValuePair<String, SiwReport>>();
+            Dictionary<String, String> failures = new Dictionary<String, String>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < targets.Count; i++)
+            {
+                SiwRunResult r = results[i];
+                reports.Add(new KeyValuePair<String, SiwReport>(targets[i], r != null && r.Ok ? r.Report : null));
+                if (r == null || !r.Ok)
+                    failures[targets[i]] = r == null ? Localization.T("RemoteRunForm.NotRun", "Not run (cancelled).") : r.Failure ?? "?";
+            }
+            InventoryTable table = SiwReport.Summary(SiwReport.ParseFields(UserSettings.Current.SiwSummaryFields), reports, failures);
+            using (SaveFileDialog dialog = new SaveFileDialog())
+            {
+                dialog.Title = Localization.T("ComputerActions.SiwSummaryTitle", "Save the summary of the SIW reports");
+                dialog.Filter = Localization.T("ComputerGrid.ExportInventoryFilter", "Excel workbook (*.xlsx)|*.xlsx|CSV file, separator ; (*.csv)|*.csv");
+                dialog.FileName = "LiteDeploy-SIW-" + DateTime.Now.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+                dialog.InitialDirectory = SiwReports.Root;
+                dialog.OverwritePrompt = true;
+                if (dialog.ShowDialog(Owner) != DialogResult.OK) return;
+                try
+                {
+                    if (dialog.FilterIndex == 2 || dialog.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)) table.SaveCsv(dialog.FileName);
+                    else table.SaveXlsx(dialog.FileName, "SIW");
+                    host.SetStatus(Localization.F("ComputerActions.SiwSummarySaved", "Summary of {0} computer(s) saved: {1}", table.Rows.Count, dialog.FileName));
+                    OpenFile(dialog.FileName);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(Owner, ex.Message, dialog.Title, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        static void OpenFile(String path)
+        {
+            if (String.IsNullOrEmpty(path)) return;
+            try { using (Process.Start(new ProcessStartInfo(path) { UseShellExecute = true })) { } } catch (Exception) { }
         }
 
         // ---- Wake-on-LAN, logs --------------------------------------------------------------

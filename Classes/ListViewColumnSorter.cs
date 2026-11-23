@@ -6,6 +6,7 @@
 // Purpose: IComparer used to sort the columns of a ListView.
 // -----------------------------------------------------------------------------
 using System.Collections;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace LiteDeploy
@@ -80,16 +81,38 @@ namespace LiteDeploy
         }
 
         /// <summary>
-        /// Two cell texts: numbers (RAM, cores, disk: "8" before "16") by value, anything else without regard to
-        /// case. Unit-tested.
+        /// Two cell texts: numbers (RAM, cores, disk: "8" before "16") by value, IPv4 addresses (the first of the
+        /// cell: "192.0.2.9" before "192.0.2.10") by their four numbers, anything else without regard to case.
+        /// Unit-tested.
         /// </summary>
         public static int CompareTexts(string a, string b)
         {
+            long ipA, ipB;
+            if (TryIPv4(a, out ipA) && TryIPv4(b, out ipB)) return ipA.CompareTo(ipB);
             double x, y;
             if (double.TryParse(a, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out x)
                 && double.TryParse(b, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out y))
                 return x.CompareTo(y);
             return CaseInsensitiveComparer.Default.Compare(a, b);
+        }
+
+        /// <summary>The first address of a cell ("a.b.c.d" or "a.b.c.d, ...") as a number; false when it is not one.</summary>
+        static bool TryIPv4(string text, out long value)
+        {
+            value = 0;
+            if (string.IsNullOrEmpty(text)) return false;
+            string first = text.Split(new[] { ',', ' ', ';' }, System.StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+            if (first == null) return false;
+            string[] parts = first.Split('.');
+            if (parts.Length != 4) return false;
+            foreach (string p in parts)
+            {
+                int n;
+                if (p.Length == 0 || p.Length > 3 || !int.TryParse(p, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out n) || n > 255)
+                    return false;
+                value = value * 256 + n;
+            }
+            return true;
         }
 
         /// <summary>

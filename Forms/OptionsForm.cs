@@ -8,6 +8,8 @@
 //          The shared folders of the software updates are typed (a hint shows
 //          the expected form), the folder dialog starts at the typed value, and
 //          Save warns (Save anyway) when one cannot be read from this computer.
+//          SIW report: the folder that holds SIW (checked the same way, then
+//          its executables and their signature) and the HTML option.
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -42,8 +44,11 @@ namespace LiteDeploy
             hoursEndBox.Text = current.BusinessHoursEnd;
             unsignedModulesCheckBox.Checked = current.AllowUnsignedModules;
             includeServersCheckBox.Checked = current.IncludeServers;
+            siwFolderBox.Text = current.SiwFolder ?? "";
+            siwHtmlCheckBox.Checked = current.SiwHtml;
             SetCue(cacheBox, FolderCheck.ShareHint);
             SetCue(sharedModulesBox, FolderCheck.ShareHint);
+            SetCue(siwFolderBox, FolderCheck.ShareHint);
 
             // Account of the software updates: the current user or a stored credential
             accountCombo.Items.Add(Localization.T("OptionsForm.CurrentUser", "Current user"));
@@ -81,6 +86,11 @@ namespace LiteDeploy
         private void cacheButton_Click(object sender, EventArgs e)
         {
             BrowseShared(cacheBox);
+        }
+
+        private void siwFolderButton_Click(object sender, EventArgs e)
+        {
+            BrowseShared(siwFolderBox);
         }
 
         // The box is the main input (a network share is usually typed or pasted); the dialog starts at its
@@ -157,6 +167,12 @@ namespace LiteDeploy
                 MessageBox.Show(this, Localization.T("OptionsForm.BadSharedModules", "The shared modules folder must be a full path (network share or local drive)."), Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+            String siwFolder = siwFolderBox.Text.Trim();
+            if (siwFolder.Length > 0 && !IsFolderPath(siwFolder))
+            {
+                MessageBox.Show(this, Localization.T("OptionsForm.BadSiwFolder", "The SIW folder must be a full path (network share or local drive)."), Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
             if (!TimeSpan.TryParse(hoursStartBox.Text.Trim(), out start) || !TimeSpan.TryParse(hoursEndBox.Text.Trim(), out end) || end <= start)
             {
                 MessageBox.Show(this, Localization.T("OptionsForm.BadHours", "Business hours: start and end as HH:mm, the end after the start."), Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -164,6 +180,17 @@ namespace LiteDeploy
             }
             // Exists and readable from this computer: a warning only (a share can be down for a moment)
             List<String> problems = FolderProblems(cache, sharedModules);
+            List<String> siwProblems = FolderProblems(siwFolder);
+            problems.AddRange(siwProblems);
+            // The SIW folder, once readable: its executables and their signature (the publisher of settings.xml)
+            if (siwFolder.Length > 0 && siwProblems.Count == 0)
+            {
+                Cursor = Cursors.WaitCursor;
+                String siwProblem;
+                try { siwProblem = SiwReports.CheckFolder(siwFolder, UserSettings.Current.SiwPublisher); }
+                finally { Cursor = Cursors.Default; }
+                if (siwProblem != null) problems.Add(siwProblem);
+            }
             if (problems.Count > 0)
             {
                 String question = Localization.F("OptionsForm.FoldersUnreachable",
@@ -174,6 +201,8 @@ namespace LiteDeploy
             }
             settings.UpdateCacheShare = cache;
             settings.SharedModulesFolder = sharedModules;
+            settings.SiwFolder = siwFolder;
+            settings.SiwHtml = siwHtmlCheckBox.Checked;
             settings.BusinessHoursStart = start.ToString(@"hh\:mm");
             settings.BusinessHoursEnd = end.ToString(@"hh\:mm");
             settings.AllowUnsignedModules = unsignedModulesCheckBox.Checked;
