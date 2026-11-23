@@ -505,10 +505,12 @@ namespace LiteDeploy.Tests
                 // Check and Update at least ('Install' is optional, for modules that declare "# Install: yes")
                 foreach (string required in new[] { ".SYNOPSIS", ".DESCRIPTION", ".PARAMETER Action", "[ValidateSet('Check', 'Update'", "$ErrorActionPreference = 'Stop'" })
                     StringAssert.Contains(text, required, path);
-                // Install in the ValidateSet exactly when the header declares "# Install: yes"
-                StringAssert.Contains(text, InstallPolicy.DeclaresInstall(header)
-                    ? "[ValidateSet('Check', 'Update', 'Install')]"
-                    : "[ValidateSet('Check', 'Update')]", path);
+                // Install (and Uninstall) in the ValidateSet exactly when the header declares "# Install: yes"
+                // ("# Uninstall: yes")
+                String validateSet = "[ValidateSet('Check', 'Update'"
+                    + (InstallPolicy.DeclaresInstall(header) ? ", 'Install'" : "")
+                    + (UninstallPolicy.DeclaresUninstall(header) ? ", 'Uninstall'" : "") + ")]";
+                StringAssert.Contains(text, validateSet, path);
                 Assert.AreEqual(resultFunction, ResultFunction(lines), path + ": Write-LiteDeployResult must be the one of the template");
             }
         }
@@ -555,8 +557,10 @@ namespace LiteDeploy.Tests
             CollectionAssert.AreEqual(new[] { "File", "Publisher" }, m.Parameters.Where(p => p.Required).Select(p => p.Name).ToArray());
             Assert.IsFalse(m.Parameters.Any(p => p.Secret));
             string text = File.ReadAllText(Path.Combine(RepoRoot(), "modules", "CachedInstaller.ps1"));
-            StringAssert.Contains(text, "[ValidateSet('Check', 'Update', 'Install')]");
+            StringAssert.Contains(text, "[ValidateSet('Check', 'Update', 'Install', 'Uninstall')]");
             StringAssert.Contains(text, "# Install: yes");
+            StringAssert.Contains(text, "# Uninstall: yes");
+            Assert.IsTrue(m.Uninstall, "MSI products can be removed in the uninstall mode");
         }
 
         [TestMethod]
