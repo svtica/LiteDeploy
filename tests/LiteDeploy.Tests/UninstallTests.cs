@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using LiteDeploy.Worker;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace LiteDeploy.Tests
