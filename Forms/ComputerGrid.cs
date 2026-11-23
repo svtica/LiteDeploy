@@ -1636,6 +1636,9 @@ namespace LiteDeploy
 
         void IComputerActionHost.SetStatus(String text)
         {
+            // A check or an update under way owns the status line and the progress bar at the bottom: an action
+            // on computers (quick command, card, message) has its own progress window and leaves them alone
+            if (pending > 0) return;
             if (text == null) SetIdleStatus();
             else statusLabel.Text = text;
         }
