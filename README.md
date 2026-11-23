@@ -156,6 +156,16 @@ them (and for the PsExec method of the software updates); it is asked for when t
   clear), computer card (Active Directory data, logged-on users, pending restart, TeamViewer
   ID...; in a window that can be copied; also on double-click), the remote tools below,
   Wake-on-LAN, get the logs. Each row shows the step in progress.
+- **Update when available...** (actions of the grid): after one confirmation, the target
+  computers are queued with the active profile (kept in `updates.xml`). Each ping of the grid
+  (every 5 minutes, and at once after queuing) also pings the queued computers, even when the
+  filters hide them, and starts the update of the ones that answer, with no other question
+  (never while a check or an update runs: then at the next ping). A queued computer waits while
+  it is paused, during business hours when it is "outside business hours only", and when it is a
+  known server that *Include servers* leaves out. It leaves the queue once a queued run reached
+  it, when it is removed from the list, after `QueueMaxDays` days without an answer (7 by
+  default), or with *Remove from the queue*. The Status column and the tooltip show it. Works
+  while LiteDeploy is open (the scheduled updates do not use the queue).
 
 ### Remote tools
 Actions of the grid (checked computers, else the selected ones):
@@ -330,6 +340,7 @@ LiteDeploy writes a comment before each of them in the file; close LiteDeploy be
 |---|---|---|---|
 | `AllowDomainControllers` | by hand only | `true`: with *Include servers*, the software updates and installs also reach the domain controllers | `false` |
 | `ExtraLogFolders` | by hand only | *Get the logs*: extra folders, `label\|folder under %windir%\|newest files` separated by `;` (see *Tools*) | empty |
+| `QueueMaxDays` | by hand only | *Update when available*: a queued computer that has not answered after this many days leaves the queue; `0`: never | `7` |
 | `UpdatesStaleDays` | by hand only | *Offline/stale* filter: last logon older than this many days; `0`: never stale | `30` |
 | `SchedulerEngine` | *Tools > Scheduled Updates* | `internal` (while LiteDeploy is open) or `windows` (Windows scheduled tasks) | `internal` |
 | `WebCheckTime` | *Tools > Web Versions* | daily check of the web versions at this time (`HH:mm`); empty: none | empty |

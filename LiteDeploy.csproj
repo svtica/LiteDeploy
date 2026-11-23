@@ -214,6 +214,7 @@
     <Compile Include="Classes\SoftwareProfiles.cs" />
     <Compile Include="Classes\SoftwareCatalogFile.cs" />
     <Compile Include="Classes\InventoryTable.cs" />
+    <Compile Include="Classes\UpdateQueue.cs" />
     <Compile Include="Classes\SiwReport.cs" />
     <Compile Include="Classes\SiwReports.cs" />
     <Compile Include="Classes\RemoteRunProgress.cs" />
@@ -241,6 +242,9 @@
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="Forms\ComputerGrid.Designer.cs">
+      <DependentUpon>ComputerGrid.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\ComputerGrid.Queue.cs">
       <DependentUpon>ComputerGrid.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\DeployForm.cs">

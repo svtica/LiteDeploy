@@ -64,6 +64,10 @@ namespace LiteDeploy
         [XmlAttribute] public String TeamViewerId;
         /// <summary>Users with a desktop on the computer at the last check, update or card (DOMAIN\user, comma-separated); null: unknown or nobody.</summary>
         [XmlAttribute] public String Users;
+        /// <summary>Update when available (UpdateQueue): since when the computer waits; null: not queued.</summary>
+        public DateTime? QueuedSince;
+        /// <summary>Profile of the queued update (empty: the whole catalog).</summary>
+        public String QueuedProfile;
         // ---- Hardware inventory (worker "info" and start line of a check or an update; strings as read) ----
         /// <summary>When the inventory was last read; null: never.</summary>
         public DateTime? InventoryDate;
@@ -175,6 +179,8 @@ namespace LiteDeploy
                 OsType = FirstValue(newest, s => s.OsType),
                 TeamViewerId = FirstValue(newest, s => s.TeamViewerId),
                 Users = FirstValue(newest, s => s.Users),
+                QueuedSince = newest.Max(s => s.QueuedSince),
+                QueuedProfile = newest.Where(s => s.QueuedSince.HasValue).OrderByDescending(s => s.QueuedSince).Select(s => s.QueuedProfile).FirstOrDefault(),
                 InventoryDate = newest.Max(s => s.InventoryDate),
                 Manufacturer = FirstValue(newest, s => s.Manufacturer),
                 Model = FirstValue(newest, s => s.Model),
