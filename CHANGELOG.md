@@ -27,6 +27,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   fixed list of protected packages refused): winget packages through `winget uninstall --scope
   machine --silent`; modules through `-Action Uninstall` when their header declares
   `# Uninstall: yes`. `CachedInstaller` declares it for MSI products (`msiexec /x {ProductCode}`).
+- **Update when available...** (actions of the grid): queues the target computers with the active
+  profile, after one confirmation; each ping of the grid (every 5 minutes, and at once after
+  queuing) pings them too and updates the ones that answer. Paused computers, "outside business
+  hours only" ones during business hours and servers that are not included keep waiting; a
+  computer leaves the queue once reached, when removed from the list, after `QueueMaxDays` days
+  (7 by default) or with *Remove from the queue*. Shown in the Status column and the tooltip.
+  Kept in `updates.xml`; works while LiteDeploy is open. Brings back the "deploy when available"
+  queue of the former update tool.
 
 ## [1.0.24] - 2026-11-23
 

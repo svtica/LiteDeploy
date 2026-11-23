@@ -1038,4 +1038,9 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="ComputerGrid.UninstallCancelled">Ce n'est pas le nombre d'ordinateurs : rien n'a été désinstallé.</translation>
   <translation key="ComputerGrid.Uninstalled">Désinstallé {0}</translation>
   <translation key="ComputerGrid.StepUninstalling">Désinstallation...</translation>
+  <translation key="ComputerGrid.QueueItem">Mettre à jour dès que disponible...</translation>
+  <translation key="ComputerGrid.QueueTip">Mettre à jour ces ordinateurs avec le profil actif dès que chacun répond au ping (vérifié aux 5 minutes tant que LiteDeploy est ouvert)</translation>
+  <translation key="ComputerGrid.UnqueueItem">Retirer de la file</translation>
+  <translation key="ComputerGrid.ConfirmQueue">Mettre à jour {0} ordinateur(s) avec le profil {1} dès que chacun répond ?&#10;&#10;Ceux qui sont en ligne commencent dans quelques secondes, les autres à leur retour (LiteDeploy doit rester ouvert ; la file est conservée {2} jour(s)). Les applications mises à jour sont fermées sans avertissement : {3}</translation>
+  <translation key="ComputerGrid.QueuedStatus">En attente : mise à jour dès que disponible (depuis {0})</translation>
 </translations>
