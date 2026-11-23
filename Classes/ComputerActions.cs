@@ -4,16 +4,16 @@
 // Author:  LiteDeploy contributors
 // Date:    2026-11-18
 // Purpose: Actions on computers of the grid of the main window
-//          (IComputerActionHost, ComputerGrid): computer
-//          card, TeamViewer ID, remote desktop (one window per computer),
-//          command prompt on the computer (RemoteConsole), quick commands
-//          (QuickCommands, run as SYSTEM by the worker, output in a text
-//          window), a message to the logged-on users (UserMessage, worker
-//          "message"; also "Ask the users to restart" in the quick
-//          commands), Wake-on-LAN, logs, pause and "outside business hours
-//          only" flags (updates.xml), export to Royal TS (RoyalTsExport).
-//          Targets: the checked computers, else the selected one(s)
-//          (Targets, unit-tested).
+//          (IComputerActionHost, ComputerGrid): computer card, TeamViewer
+//          ID, remote desktop (one window per computer), command prompt on
+//          the computer (RemoteConsole), quick commands (QuickCommands, run
+//          as SYSTEM by the worker), a message to the logged-on users
+//          (UserMessage, worker "message"; also "Ask the users to restart"
+//          in the quick commands), Wake-on-LAN, logs, pause and "outside
+//          business hours only" flags (updates.xml), export to Royal TS
+//          (RoyalTsExport). Cards, quick commands and messages run in a
+//          progress window (RemoteRunForm). Targets: the checked computers,
+//          else the selected one(s) (Targets, unit-tested).
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -117,26 +117,45 @@ namespace LiteDeploy
             return count > MaxWindowsWithoutQuestion;
         }
 
-        // Runs on worker threads, then once on the UI thread with the results (in the order of the targets)
-        void ForEachInBackground(List<String> targets, Func<String, String> work, Action<String[]> done)
+        /// <summary>
+        /// Runs <paramref name="work"/> for each computer on worker threads (<see cref="Parallelism"/> at a time),
+        /// in a progress window shown at once (RemoteRunForm: bar, elapsed time, each result as soon as it is
+        /// known, Cancel), the main window staying usable. At the end, on the UI thread, <paramref name="finalText"/>
+        /// makes the text of the window from the results in the order of the targets (a computer left out by
+        /// Cancel has a line saying so), then <paramref name="after"/> runs (may be null).
+        /// </summary>
+        void RunWithProgress(String title, List<String> targets, Func<String, String> work, Func<String[], String> finalText, Action after)
         {
-            Owner.Cursor = Cursors.WaitCursor;
+            RemoteRunForm form = new RemoteRunForm(title, targets.Count);
+            form.Show(Owner);
+            String[] results = new String[targets.Count];
+            int next = -1;
+            Action<Action> onForm = a =>
+            {
+                try
+                {
+                    if (!form.IsDisposed && form.IsHandleCreated) form.BeginInvoke(new MethodInvoker(() => { if (!form.IsDisposed) a(); }));
+                }
+                catch (InvalidOperationException) { }   // window closed meanwhile
+            };
             new Thread(() =>
             {
-                String[] results = new String[targets.Count];
-                int next = -1;
                 List<Thread> readers = new List<Thread>();
                 for (int t = 0; t < Math.Min(Parallelism, targets.Count); t++)
                 {
                     Thread reader = new Thread(() =>
                     {
                         int i;
-                        while ((i = Interlocked.Increment(ref next)) < targets.Count)
+                        while (!form.CancelRequested && (i = Interlocked.Increment(ref next)) < targets.Count)
                         {
-                            try { results[i] = work(targets[i]); }
-                            catch (Exception ex) { results[i] = "== " + targets[i] + " ==\n" + ex.Message; }
+                            onForm(form.Started);
+                            String text;
+                            try { text = work(targets[i]); }
+                            catch (Exception ex) { text = "== " + targets[i] + " ==\n" + ex.Message; }
+                            results[i] = text;
+                            onForm(() => form.Completed(text));
                         }
-                    }) { IsBackground = true };
+                    }) { IsBackground = true, Name = "Computer action" };
                     readers.Add(reader);
                     reader.Start();
                 }
@@ -146,11 +165,12 @@ namespace LiteDeploy
                 {
                     Owner.BeginInvoke(new MethodInvoker(() =>
                     {
-                        Owner.Cursor = Cursors.Default;
-                        done(results);
+                        String text = finalText(RemoteRunProgress.Complete(targets, results));
+                        if (!form.IsDisposed) form.Finish(text);
+                        if (after != null) after();
                     }));
                 }
-                catch (InvalidOperationException) { }   // window closed meanwhile
+                catch (InvalidOperationException) { }   // main window closed meanwhile
             }) { IsBackground = true }.Start();
         }
 
@@ -164,13 +184,12 @@ namespace LiteDeploy
             host.SetStatus(targets.Count == 1
                 ? Localization.F("ComputerGrid.ReadingCard", "Reading the computer card of {0}...", targets[0])
                 : Localization.F("ComputerGrid.ReadingCards", "Reading the computer cards of {0} computer(s)...", targets.Count));
-            ForEachInBackground(targets, c => ReadCard(c, directory[c]), cards =>
+            String title = targets.Count == 1
+                ? Localization.F("ComputerGrid.CardTitle", "Computer card - {0}", targets[0])
+                : Localization.F("ComputerGrid.CardsTitle", "Computer cards - {0} computer(s)", targets.Count);
+            RunWithProgress(title, targets, c => ReadCard(c, directory[c]), cards => String.Join("\n\n", cards), () =>
             {
                 host.SetStatus(null);
-                String title = targets.Count == 1
-                    ? Localization.F("ComputerGrid.CardTitle", "Computer card - {0}", targets[0])
-                    : Localization.F("ComputerGrid.CardsTitle", "Computer cards - {0} computer(s)", targets.Count);
-                TextViewForm.ShowText(Owner, title, String.Join("\n\n", cards));
                 host.StoreChanged();
             });
         }
@@ -389,7 +408,7 @@ namespace LiteDeploy
             String title = Localization.T("ComputerActions.MessageTitle", "Message from your administrator");
             host.SetStatus(Localization.F("ComputerActions.SendingMessage", "Sending the message to {0} computer(s)...", targets.Count));
             MessageResult[] results = new MessageResult[targets.Count];
-            ForEachInBackground(targets, c =>
+            RunWithProgress(Localization.T("UserMessageForm.Text", "Send a message"), targets, c =>
             {
                 UpdateRunResult r = UpdateRunner.Message(c, message, seconds, title);
                 MessageResult m = MessageResult.From(r.Messages, r.Failure);
@@ -397,13 +416,12 @@ namespace LiteDeploy
                 return FormatMessageResult(c, m);
             }, lines =>
             {
-                host.SetStatus(null);
                 String summary = Localization.F("ComputerActions.MessageSummary", "Sent: {0} computer(s), no user logged on: {1}, failed: {2}.",
                     results.Count(m => m != null && m.Kind == MessageResultKind.Sent),
                     results.Count(m => m != null && m.Kind == MessageResultKind.NoUser),
                     results.Count(m => m == null || m.Kind == MessageResultKind.Failed));
-                TextViewForm.ShowText(Owner, Localization.T("UserMessageForm.Text", "Send a message"), summary + "\n\n" + String.Join("\n", lines));
-            });
+                return summary + "\n\n" + String.Join("\n", lines);
+            }, () => host.SetStatus(null));
         }
 
         /// <summary>The line shown for one computer: sent to N session(s) (and the users), no user logged on, or failed.</summary>
@@ -439,11 +457,8 @@ namespace LiteDeploy
                 return;
             }
             host.SetStatus(Localization.F("ComputerActions.RunningQuick", "Running \"{0}\" on {1} computer(s)...", QuickCommandText(command), targets.Count));
-            ForEachInBackground(targets, c => QuickOutput(c, command), outputs =>
-            {
-                host.SetStatus(null);
-                TextViewForm.ShowText(Owner, QuickCommandText(command), String.Join("\n\n", outputs));
-            });
+            RunWithProgress(QuickCommandText(command), targets, c => QuickOutput(c, command), outputs => String.Join("\n\n", outputs),
+                () => host.SetStatus(null));
         }
 
         // Runs on a reader thread: what the command wrote, and its exit code

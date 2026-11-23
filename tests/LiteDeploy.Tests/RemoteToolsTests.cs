@@ -362,5 +362,32 @@ namespace LiteDeploy.Tests
             Assert.IsFalse(ComputerActions.NeedsWindowConfirmation(ComputerActions.MaxWindowsWithoutQuestion));
             Assert.IsTrue(ComputerActions.NeedsWindowConfirmation(ComputerActions.MaxWindowsWithoutQuestion + 1));
         }
+
+        // ---- Progress window ----------------------------------------------------------------
+
+        [TestMethod]
+        public void RemoteRun_ElapsedAndStatus()
+        {
+            Localization.Initialize(Localization.English);
+            Assert.AreEqual("0:05", RemoteRunProgress.Elapsed(TimeSpan.FromSeconds(5)));
+            Assert.AreEqual("2:03", RemoteRunProgress.Elapsed(TimeSpan.FromSeconds(123)));
+            Assert.AreEqual("1:00:01", RemoteRunProgress.Elapsed(TimeSpan.FromSeconds(3601)));
+            Assert.AreEqual("0:00", RemoteRunProgress.Elapsed(TimeSpan.FromSeconds(-3)));
+            Assert.AreEqual("3 of 10 computer(s) done, 4 under way (0:42)...", RemoteRunProgress.StatusText(3, 4, 10, TimeSpan.FromSeconds(42), false, false));
+            StringAssert.StartsWith(RemoteRunProgress.StatusText(3, 2, 10, TimeSpan.Zero, true, false), "Cancelling: waiting for 2 ");
+            Assert.AreEqual("Cancelled: 3 of 10 computer(s) done (0:42).", RemoteRunProgress.StatusText(3, 0, 10, TimeSpan.FromSeconds(42), true, true));
+            Assert.AreEqual("Done: 10 computer(s) (0:42).", RemoteRunProgress.StatusText(10, 0, 10, TimeSpan.FromSeconds(42), false, true));
+        }
+
+        [TestMethod]
+        public void RemoteRun_CancelledComputersAreNamed()
+        {
+            Localization.Initialize(Localization.English);
+            String[] all = RemoteRunProgress.Complete(new[] { "PC01", "PC02", "PC03" }, new[] { "== PC01 ==\nDone.", null, null });
+            Assert.AreEqual(3, all.Length);
+            Assert.AreEqual("== PC01 ==\nDone.", all[0]);
+            Assert.AreEqual("== PC02 ==\nNot run (cancelled).", all[1]);
+            StringAssert.StartsWith(all[2], "== PC03 ==");
+        }
     }
 }

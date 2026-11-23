@@ -978,4 +978,10 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="ComputerGrid.NoSoftwareInProfile">Aucun logiciel dans le profil</translation>
   <translation key="ComputerGrid.NothingToInstallOrUpdate">Rien à mettre à jour ni à installer : selon la dernière vérification de ces ordinateurs, les logiciels du profil sont à jour (ou pas encore vérifiés : Vérifier d'abord).</translation>
   <translation key="ComputerGrid.ConfirmUpdateOne">Mettre à jour {0} sur {1} ordinateur(s) ? L'application est fermée sans avertissement avant la mise à jour : {2}</translation>
+  <translation key="RemoteRunForm.Cancel">Annuler</translation>
+  <translation key="RemoteRunForm.Running">{0} ordinateur(s) sur {1} terminé(s), {2} en cours ({3})...</translation>
+  <translation key="RemoteRunForm.Cancelling">Annulation : attente de {0} ordinateur(s) en cours ({1})...</translation>
+  <translation key="RemoteRunForm.Cancelled">Annulé : {0} ordinateur(s) sur {1} terminé(s) ({2}).</translation>
+  <translation key="RemoteRunForm.Finished">Terminé : {0} ordinateur(s) ({1}).</translation>
+  <translation key="RemoteRunForm.NotRun">Non exécuté (annulé).</translation>
 </translations>

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Quick commands, computer cards and messages to the users no longer leave LiteDeploy looking
+  frozen: a progress window opens at once, with a progress bar, the computers done and under way,
+  the elapsed time and the result of each computer as soon as it is known. **Cancel** starts no
+  new computer (the ones under way finish; the others are named as not run). The main window
+  stays usable meanwhile; at the end the window shows every result, with *Copy* and *Close*.
+
 ## [1.0.23] - 2026-11-20
 
 ### Changed
