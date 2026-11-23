@@ -28,7 +28,7 @@
 //          message to the logged-on users, Wake-on-LAN, logs, ping,
 //          management console, admin share, deploy a file or command (PsExec,
 //          DeployForm, run by the main window), export to Royal TS, SIW
-//          report (ComputerActions). Optional columns (Columns menu): IP
+//          report, other reports (portable tools) (ComputerActions). Optional columns (Columns menu): IP
 //          address and the hardware inventory. A computer known under several spellings
 //          (ComputerName) is one row. Splitter, columns and filters are kept
 //          in the user settings; the grid always opens on one row per computer.
@@ -1416,7 +1416,7 @@ namespace LiteDeploy
                     targetsItem, targetsSeparator, installItem, installSeparator, pauseItem, resumeItem, nightOnlyItem, nightOnlyClearItem,
                     menuSeparator, cardItem, teamViewerItem, remoteDesktopItem, commandPromptItem, quickCommandsItem, messageItem,
                     processesItem, litePMItem, logsItem, wakeItem, pingItem, managementConsoleItem, adminShareItem, copyNameItem,
-                    deploySeparator, deployItem, exportSeparator, inventoryItem, exportInventoryItem, siwItem, royalTsItem, removeSeparator, removeItem, unhideItem
+                    deploySeparator, deployItem, exportSeparator, inventoryItem, exportInventoryItem, siwItem, toolReportsItem, royalTsItem, removeSeparator, removeItem, unhideItem
                 };
             }
         }
@@ -1449,7 +1449,8 @@ namespace LiteDeploy
             actions.FillQuickCommands(quickCommandsItem, ActionTargets);
             royalTsItem.Enabled = exportInventoryItem.Enabled = ExportTargets().Count > 0;
             inventoryItem.Enabled = idle && targets.Count > 0 && !readingInventory;
-            siwItem.Enabled = targets.Count > 0;
+            siwItem.Enabled = toolReportsItem.Enabled = targets.Count > 0;
+            actions.FillToolReports(toolReportsItem, ActionTargets);
             processesItem.Enabled = litePMItem.Enabled = managementConsoleItem.Enabled = adminShareItem.Enabled = targets.Count == 1;
             pingItem.Enabled = copyNameItem.Enabled = targets.Count > 0;
             deployItem.Enabled = targets.Count > 0 && deployEnabled;

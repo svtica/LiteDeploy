@@ -199,8 +199,8 @@ namespace LiteDeploy
             }
         }
 
-        // The folder of the run on the computer: removed whatever happened (best effort, never throws)
-        static void RemoveRemote(String admin, String remote, StoredCredential credential)
+        /// <summary>The folder of the run on the computer: removed whatever happened (best effort, never throws). Also used by PortableToolReports.</summary>
+        internal static void RemoveRemote(String admin, String remote, StoredCredential credential)
         {
             try
             {

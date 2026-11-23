@@ -65,6 +65,7 @@ namespace LiteDeploy
             this.inventoryItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exportInventoryItem = new System.Windows.Forms.ToolStripMenuItem();
             this.siwItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolReportsItem = new System.Windows.Forms.ToolStripMenuItem();
             this.refreshStateButton = new System.Windows.Forms.ToolStripButton();
             this.columnsButton = new System.Windows.Forms.ToolStripDropDownButton();
             this.stateColumn = new System.Windows.Forms.ColumnHeader();
@@ -606,6 +607,7 @@ namespace LiteDeploy
             this.inventoryItem,
             this.exportInventoryItem,
             this.siwItem,
+            this.toolReportsItem,
             this.royalTsItem,
             this.removeSeparator,
             this.removeItem,
@@ -664,6 +666,9 @@ namespace LiteDeploy
             this.siwItem.Text = "SIW report...";
             this.siwItem.ToolTipText = "Run SIW (System Information for Windows, folder of App > Options) as SYSTEM on these computers: one report each, and a summary for several";
             this.siwItem.Click += new System.EventHandler(this.siwItem_Click);
+            this.toolReportsItem.Name = "toolReportsItem";
+            this.toolReportsItem.Text = "Other reports";
+            this.toolReportsItem.ToolTipText = "Reports of the portable tools of App > Options, run as SYSTEM on these computers";
             this.wakeItem.Name = "wakeItem";
             this.wakeItem.Text = "Wake up (Wake-on-LAN)";
             this.wakeItem.Click += new System.EventHandler(this.wakeItem_Click);
@@ -797,6 +802,7 @@ namespace LiteDeploy
         private System.Windows.Forms.ToolStripMenuItem inventoryItem;
         private System.Windows.Forms.ToolStripMenuItem exportInventoryItem;
         private System.Windows.Forms.ToolStripMenuItem siwItem;
+        private System.Windows.Forms.ToolStripMenuItem toolReportsItem;
         private System.Windows.Forms.ToolStripButton checkButton;
         private System.Windows.Forms.ToolStripButton selectOutdatedButton;
         private System.Windows.Forms.ToolStripButton selectAllButton;

@@ -79,6 +79,10 @@ namespace LiteDeploy
         public ulong SiwNetwork = SiwPolicy.DefaultNetwork;
         /// <summary>Time limit of one SIW run on the computer, in seconds (30 to 1800).</summary>
         public int SiwTimeoutSeconds = SiwPolicy.DefaultTimeoutSeconds;
+        /// <summary>Folder of the portable report tools (PortableToolPolicy: UninstallView, WinUpdatesView...); empty: not available.</summary>
+        public String ToolsFolder = "";
+        /// <summary>Time limit of one run of a portable report tool on the computer, in seconds (10 to 1800).</summary>
+        public int ToolTimeoutSeconds = PortableToolPolicy.DefaultTimeoutSeconds;
         /// <summary>Fields of the summary of several reports, "Page/Group/Property" separated by ';' (SiwReport); empty: the default fields.</summary>
         public String SiwSummaryFields = "";
 
@@ -183,6 +187,8 @@ namespace LiteDeploy
                 "Edited by hand only. SIW report: network sections, the /n: number. The account and Active Directory sections are always removed. Default: 1 (Network Information)."),
             new KeyValuePair<String, String>("SiwTimeoutSeconds",
                 "Edited by hand only. SIW report: time limit of one SIW run on the computer, in seconds (30 to 1800). Default: 300."),
+            new KeyValuePair<String, String>("ToolTimeoutSeconds",
+                "Edited by hand only. Portable report tools (UninstallView, WinUpdatesView): time limit of one run on the computer, in seconds (10 to 1800). Default: 120."),
             new KeyValuePair<String, String>("SiwSummaryFields",
                 "Edited by hand only. SIW report on several computers: fields of the summary, Page/Group/Property separated by ; (Group * : any group; several matches are joined). Example: BIOS/BIOS Properties/BIOS Version;Video/Monitor/Model. Empty: the default fields."),
             new KeyValuePair<String, String>("UpdatesStaleDays",

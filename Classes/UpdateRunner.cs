@@ -357,6 +357,15 @@ namespace LiteDeploy
             return RunSimple(computer, workerArguments, timeoutMinutes);
         }
 
+        /// <summary>
+        /// Portable report tool ("LiteDeploy.Worker.exe tool &lt;id&gt; ...", PortableToolPolicy.WorkerArguments), as
+        /// SYSTEM; the tool must already be in %windir%\LiteDeploy\work\Tools\&lt;id&gt; (PortableToolReports).
+        /// </summary>
+        public static UpdateRunResult RunPortableTool(String computer, String workerArguments, int timeoutMinutes)
+        {
+            return RunSimple(computer, workerArguments, timeoutMinutes);
+        }
+
         static UpdateRunResult RunSimple(String computer, String workerCommand)
         {
             return RunSimple(computer, workerCommand, 2);

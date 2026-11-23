@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Other reports** (actions of the grid): reports of portable third-party tools from a fixed
+  table, with the steps of the SIW report (not shipped; folder in *App > Options*; signature of the
+  publisher of the table checked at *Save* and by the worker; fixed command line; time limit;
+  everything but the report deleted; folder of the computer removed, also after an error). New
+  worker command `tool <id>`. First tools: **UninstallView** (installed programs, with the MSI
+  product codes) and **WinUpdatesView** (history of Windows Update). One computer: an HTML view of
+  the report opens. Several: one table of every row with the computer, as an Excel workbook or CSV.
+  Setting outside *App > Options*: `ToolTimeoutSeconds`.
+
 ## [1.0.24] - 2026-11-23
 
 ### Added

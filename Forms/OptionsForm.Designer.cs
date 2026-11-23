@@ -60,6 +60,9 @@ namespace LiteDeploy
             this.siwFolderBox = new System.Windows.Forms.TextBox();
             this.siwFolderButton = new System.Windows.Forms.Button();
             this.siwHtmlCheckBox = new System.Windows.Forms.CheckBox();
+            this.toolsFolderLabel = new System.Windows.Forms.Label();
+            this.toolsFolderBox = new System.Windows.Forms.TextBox();
+            this.toolsFolderButton = new System.Windows.Forms.Button();
             this.languageLabel = new System.Windows.Forms.Label();
             this.languageCombo = new System.Windows.Forms.ComboBox();
             this.button3 = new System.Windows.Forms.Button();
@@ -177,7 +180,7 @@ namespace LiteDeploy
             // 
             // ApplyButton
             // 
-            this.ApplyButton.Location = new System.Drawing.Point(237, 730);
+            this.ApplyButton.Location = new System.Drawing.Point(237, 780);
             this.ApplyButton.Name = "ApplyButton";
             this.ApplyButton.Size = new System.Drawing.Size(93, 23);
             this.ApplyButton.TabIndex = 6;
@@ -188,7 +191,7 @@ namespace LiteDeploy
             // cancelButton
             // 
             this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cancelButton.Location = new System.Drawing.Point(336, 730);
+            this.cancelButton.Location = new System.Drawing.Point(336, 780);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(93, 23);
             this.cancelButton.TabIndex = 7;
@@ -310,12 +313,15 @@ namespace LiteDeploy
             this.siwGroup.Controls.Add(this.siwFolderBox);
             this.siwGroup.Controls.Add(this.siwFolderButton);
             this.siwGroup.Controls.Add(this.siwHtmlCheckBox);
+            this.siwGroup.Controls.Add(this.toolsFolderLabel);
+            this.siwGroup.Controls.Add(this.toolsFolderBox);
+            this.siwGroup.Controls.Add(this.toolsFolderButton);
             this.siwGroup.Location = new System.Drawing.Point(12, 612);
             this.siwGroup.Name = "siwGroup";
-            this.siwGroup.Size = new System.Drawing.Size(417, 106);
+            this.siwGroup.Size = new System.Drawing.Size(417, 156);
             this.siwGroup.TabIndex = 4;
             this.siwGroup.TabStop = false;
-            this.siwGroup.Text = "SIW report";
+            this.siwGroup.Text = "Third-party report tools (not shipped)";
             this.siwFolderLabel.AutoSize = true;
             this.siwFolderLabel.Location = new System.Drawing.Point(17, 24);
             this.siwFolderLabel.Name = "siwFolderLabel";
@@ -337,6 +343,21 @@ namespace LiteDeploy
             this.siwHtmlCheckBox.TabIndex = 22;
             this.siwHtmlCheckBox.Text = "Also the HTML report of SIW (SIW runs twice); off: XML report shown by LiteDeploy";
             this.siwHtmlCheckBox.UseVisualStyleBackColor = true;
+            this.toolsFolderLabel.AutoSize = true;
+            this.toolsFolderLabel.Location = new System.Drawing.Point(17, 104);
+            this.toolsFolderLabel.Name = "toolsFolderLabel";
+            this.toolsFolderLabel.Text = "Folder of the portable tools (UninstallView, WinUpdatesView, optional):";
+            this.toolsFolderBox.Location = new System.Drawing.Point(20, 120);
+            this.toolsFolderBox.Name = "toolsFolderBox";
+            this.toolsFolderBox.Size = new System.Drawing.Size(298, 20);
+            this.toolsFolderBox.TabIndex = 23;
+            this.toolsFolderButton.Location = new System.Drawing.Point(324, 118);
+            this.toolsFolderButton.Name = "toolsFolderButton";
+            this.toolsFolderButton.Size = new System.Drawing.Size(75, 23);
+            this.toolsFolderButton.TabIndex = 24;
+            this.toolsFolderButton.Text = "Select";
+            this.toolsFolderButton.UseVisualStyleBackColor = true;
+            this.toolsFolderButton.Click += new System.EventHandler(this.toolsFolderButton_Click);
             //
             // OptionsForm
             // 
@@ -344,7 +365,7 @@ namespace LiteDeploy
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.cancelButton;
-            this.ClientSize = new System.Drawing.Size(445, 765);
+            this.ClientSize = new System.Drawing.Size(445, 815);
             this.Controls.Add(this.cancelButton);
             this.Controls.Add(this.ApplyButton);
             this.Controls.Add(this.groupBox2);
@@ -401,5 +422,8 @@ namespace LiteDeploy
         private System.Windows.Forms.TextBox siwFolderBox;
         private System.Windows.Forms.Button siwFolderButton;
         private System.Windows.Forms.CheckBox siwHtmlCheckBox;
+        private System.Windows.Forms.Label toolsFolderLabel;
+        private System.Windows.Forms.TextBox toolsFolderBox;
+        private System.Windows.Forms.Button toolsFolderButton;
     }
 }

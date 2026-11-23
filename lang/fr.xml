@@ -987,7 +987,7 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="ComputerGrid.ipColumn.Text">Adresse IP</translation>
   <translation key="ComputerGrid.siwItem.Text">Rapport SIW...</translation>
   <translation key="ComputerGrid.siwItem.ToolTipText">Exécuter SIW (System Information for Windows, dossier d'App > Options) en SYSTEM sur ces ordinateurs : un rapport chacun, et un sommaire s'il y en a plusieurs</translation>
-  <translation key="OptionsForm.siwGroup.Text">Rapport SIW</translation>
+  <translation key="OptionsForm.siwGroup.Text">Outils de rapport tiers (non fournis)</translation>
   <translation key="OptionsForm.siwFolderLabel.Text">Dossier qui contient SIW (System Information for Windows, facultatif) :</translation>
   <translation key="OptionsForm.siwFolderButton.Text">Choisir</translation>
   <translation key="OptionsForm.siwHtmlCheckBox.Text">Aussi le rapport HTML de SIW (SIW s'exécute deux fois) ; décoché : rapport XML affiché par LiteDeploy</translation>
@@ -1010,4 +1010,19 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="ComputerActions.SiwFailed">{0} : aucun rapport : {1}</translation>
   <translation key="ComputerActions.SiwSummaryTitle">Enregistrer le sommaire des rapports SIW</translation>
   <translation key="ComputerActions.SiwSummarySaved">Sommaire de {0} ordinateur(s) enregistré : {1}</translation>
+  <translation key="ComputerGrid.toolReportsItem.Text">Autres rapports</translation>
+  <translation key="ComputerGrid.toolReportsItem.ToolTipText">Rapports des outils portables d'App > Options, exécutés en SYSTEM sur ces ordinateurs</translation>
+  <translation key="OptionsForm.toolsFolderLabel.Text">Dossier des outils portables (UninstallView, WinUpdatesView, facultatif) :</translation>
+  <translation key="OptionsForm.toolsFolderButton.Text">Choisir</translation>
+  <translation key="OptionsForm.BadToolsFolder">Le dossier des outils portables doit être un chemin complet (partage réseau ou lecteur local).</translation>
+  <translation key="PortableToolReports.NoFolder">Aucun dossier d'outils portables : choisissez-le dans App > Options.</translation>
+  <translation key="PortableToolReports.NotFound">{0} n'est ni dans {1} ni dans son sous-dossier {2}.</translation>
+  <translation key="PortableToolReports.UninstallView">Programmes installés (UninstallView)...</translation>
+  <translation key="PortableToolReports.WinUpdatesView">Historique de Windows Update (WinUpdatesView)...</translation>
+  <translation key="ComputerActions.ConfirmTool">Exécuter {0} en SYSTEM sur {1} ordinateur(s) et obtenir un rapport de chacun ?&#10;&#10;{2}</translation>
+  <translation key="ComputerActions.RunningTool">{0} sur {1} ordinateur(s)...</translation>
+  <translation key="ComputerActions.ToolTitle">{0} - {1} ordinateur(s)</translation>
+  <translation key="ComputerActions.ToolDone">{0} : {1} ligne(s) en {2} s - {3}</translation>
+  <translation key="ComputerActions.SaveTableTitle">Enregistrer le tableau des rapports {0}</translation>
+  <translation key="ComputerActions.TableSaved">{0} ligne(s) enregistrée(s) : {1}</translation>
 </translations>

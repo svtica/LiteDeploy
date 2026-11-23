@@ -216,6 +216,8 @@
     <Compile Include="Classes\InventoryTable.cs" />
     <Compile Include="Classes\SiwReport.cs" />
     <Compile Include="Classes\SiwReports.cs" />
+    <Compile Include="Classes\CsvReport.cs" />
+    <Compile Include="Classes\PortableToolReports.cs" />
     <Compile Include="Classes\RemoteRunProgress.cs" />
     <Compile Include="Forms\RemoteRunForm.cs">
       <SubType>Form</SubType>
@@ -258,6 +260,7 @@
     <Compile Include="src\LiteDeploy.Worker\Shared\QuickCommands.cs" Link="Classes\Shared\QuickCommands.cs" />
     <Compile Include="src\LiteDeploy.Worker\Shared\UserMessage.cs" Link="Classes\Shared\UserMessage.cs" />
     <Compile Include="src\LiteDeploy.Worker\Shared\SiwPolicy.cs" Link="Classes\Shared\SiwPolicy.cs" />
+    <Compile Include="src\LiteDeploy.Worker\Shared\PortableToolPolicy.cs" Link="Classes\Shared\PortableToolPolicy.cs" />
     <!-- winget search in the package list editor -->
     <Compile Include="src\LiteDeploy.Worker\WingetClient.cs" Link="Classes\Shared\WingetClient.cs" />
     <Compile Include="src\LiteDeploy.Worker\WingetListParser.cs" Link="Classes\Shared\WingetListParser.cs" />

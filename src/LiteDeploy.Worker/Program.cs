@@ -40,6 +40,10 @@
 //                                  --timeout <seconds> [--allow-servers
 //                                  [--allow-domain-controllers]] (SIW report:
 //                                  SiwRunner, SiwPolicy)
+//            LiteDeploy.Worker.exe tool <id> --timeout <seconds>
+//                                  [--allow-servers [--allow-domain-controllers]]
+//                                  (portable report tool of the fixed table:
+//                                  PortableToolRunner, PortableToolPolicy)
 //          --output <file> (any command): the messages are also written to
 //          that file, flushed line by line. Used by the WinRM method, where the
 //          worker runs in a scheduled task without a console to read.
@@ -129,6 +133,17 @@ namespace LiteDeploy.Worker
                     return ExitUsage;
                 }
                 return SiwRunner.Run(siw, Emit);
+            }
+            if (args != null && args.Length >= 1 && args[0].Equals(PortableToolPolicy.Command, StringComparison.OrdinalIgnoreCase))
+            {
+                PortableToolRequest tool;
+                string toolError = PortableToolPolicy.ParseArguments(args, out tool);
+                if (toolError != null)
+                {
+                    Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeError, "message", toolError));
+                    return ExitUsage;
+                }
+                return PortableToolRunner.Run(tool, Emit);
             }
             if (args != null && args.Length >= 1 && args[0].Equals(UserMessage.WorkerCommand, StringComparison.OrdinalIgnoreCase))
             {
