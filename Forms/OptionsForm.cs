@@ -9,7 +9,9 @@
 //          the expected form), the folder dialog starts at the typed value, and
 //          Save warns (Save anyway) when one cannot be read from this computer.
 //          SIW report: the folder that holds SIW (checked the same way, then
-//          its executables and their signature) and the HTML option.
+//          its executables and their signature) and the HTML option; the
+//          folder of the portable report tools (same check, then the
+//          signature of each tool of the table it holds).
 // -----------------------------------------------------------------------------
 using System;
 using System.Collections.Generic;
@@ -46,6 +48,8 @@ namespace LiteDeploy
             includeServersCheckBox.Checked = current.IncludeServers;
             siwFolderBox.Text = current.SiwFolder ?? "";
             siwHtmlCheckBox.Checked = current.SiwHtml;
+            toolsFolderBox.Text = current.ToolsFolder ?? "";
+            SetCue(toolsFolderBox, FolderCheck.ShareHint);
             SetCue(cacheBox, FolderCheck.ShareHint);
             SetCue(sharedModulesBox, FolderCheck.ShareHint);
             SetCue(siwFolderBox, FolderCheck.ShareHint);
@@ -91,6 +95,11 @@ namespace LiteDeploy
         private void siwFolderButton_Click(object sender, EventArgs e)
         {
             BrowseShared(siwFolderBox);
+        }
+
+        private void toolsFolderButton_Click(object sender, EventArgs e)
+        {
+            BrowseShared(toolsFolderBox);
         }
 
         // The box is the main input (a network share is usually typed or pasted); the dialog starts at its
@@ -173,6 +182,12 @@ namespace LiteDeploy
                 MessageBox.Show(this, Localization.T("OptionsForm.BadSiwFolder", "The SIW folder must be a full path (network share or local drive)."), Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+            String toolsFolder = toolsFolderBox.Text.Trim();
+            if (toolsFolder.Length > 0 && !IsFolderPath(toolsFolder))
+            {
+                MessageBox.Show(this, Localization.T("OptionsForm.BadToolsFolder", "The folder of the portable tools must be a full path (network share or local drive)."), Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
             if (!TimeSpan.TryParse(hoursStartBox.Text.Trim(), out start) || !TimeSpan.TryParse(hoursEndBox.Text.Trim(), out end) || end <= start)
             {
                 MessageBox.Show(this, Localization.T("OptionsForm.BadHours", "Business hours: start and end as HH:mm, the end after the start."), Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -191,6 +206,23 @@ namespace LiteDeploy
                 finally { Cursor = Cursors.Default; }
                 if (siwProblem != null) problems.Add(siwProblem);
             }
+            // The folder of the portable tools, once readable: the signature of each tool it holds (a missing tool is fine)
+            List<String> toolsProblems = FolderProblems(toolsFolder);
+            problems.AddRange(toolsProblems);
+            if (toolsFolder.Length > 0 && toolsProblems.Count == 0)
+            {
+                Cursor = Cursors.WaitCursor;
+                try
+                {
+                    foreach (PortableTool tool in PortableToolPolicy.All)
+                        if (PortableToolReports.Locate(toolsFolder, tool, System.IO.File.Exists) != null)
+                        {
+                            String toolProblem = PortableToolReports.Check(toolsFolder, tool);
+                            if (toolProblem != null) problems.Add(toolProblem);
+                        }
+                }
+                finally { Cursor = Cursors.Default; }
+            }
             if (problems.Count > 0)
             {
                 String question = Localization.F("OptionsForm.FoldersUnreachable",
@@ -203,6 +235,7 @@ namespace LiteDeploy
             settings.SharedModulesFolder = sharedModules;
             settings.SiwFolder = siwFolder;
             settings.SiwHtml = siwHtmlCheckBox.Checked;
+            settings.ToolsFolder = toolsFolder;
             settings.BusinessHoursStart = start.ToString(@"hh\:mm");
             settings.BusinessHoursEnd = end.ToString(@"hh\:mm");
             settings.AllowUnsignedModules = unsignedModulesCheckBox.Checked;

@@ -217,6 +217,24 @@ Actions of the grid (checked computers, else the selected ones):
   The reports hold serial numbers and network details of your computers: they are site data,
   keep them out of any repository or public issue. About 10 s per computer with the default
   sections; the copy is about 40 MB.
+- **Other reports** (portable report tools): the same steps as the SIW report for a fixed table
+  of small third-party tools (`PortableToolPolicy`), never shipped either: each administrator sets
+  the folder that holds them in *App > Options* (the tool is looked for in that folder, then in a
+  sub-folder named after it; *Save* checks the folder and the signature of each tool it holds).
+  The worker command `tool <id>` runs the tool as SYSTEM only when it is validly signed by the
+  publisher of the table, with the fixed command line of the table (no free text) and a time limit
+  (`ToolTimeoutSeconds`); everything but the report is deleted at the end and LiteDeploy removes
+  the folder of the computer. Reports in `%LOCALAPPDATA%\LiteDeploy\tools\<id>\<computer>\`
+  (CSV, with a plain HTML view). One computer: the view opens. Several: one table of every row
+  with the computer in the first column, saved as an Excel workbook or CSV. Servers follow the
+  rule of the updates. Tools of the table:
+
+  | Tool | Publisher | Report |
+  |---|---|---|
+  | UninstallView (NirSoft) | `O=Nir Sofer` | installed programs, with their version, publisher, uninstall string and MSI product code (useful to write a `CachedInstaller` instance) |
+  | WinUpdatesView (NirSoft) | `O=Nir Sofer` | history of Windows Update: KB, date, operation, result |
+
+  Adding a tool means adding an entry to the table (and its menu text), not typing a command line.
 - **Export to Royal TS...**: Remote Desktop connections of the checked computers (else every
   computer shown), the operating system as description and the OU as folder path: a CSV file
   (`Name,ComputerName,Description,Path`, UTF-8 with BOM) for *Data > Import > Comma Separated
@@ -337,6 +355,7 @@ LiteDeploy writes a comment before each of them in the file; close LiteDeploy be
 | `SiwPublisher` | by hand only | SIW report: `O=` of the signer of the SIW executables; any other signer is refused (here and by the worker) | `Topala Software Solutions` |
 | `SiwSoftware`, `SiwHardware`, `SiwNetwork` | by hand only | SIW report: sections, the `/s:`, `/h:` and `/n:` numbers of the SIW command line (sum of the values of its documentation); *Licenses* and the account and Active Directory sections are always removed | `5`, `136079`, `1` |
 | `SiwTimeoutSeconds` | by hand only | SIW report: time limit of one SIW run on the computer (30 to 1800 s) | `300` |
+| `ToolTimeoutSeconds` | by hand only | Other reports: time limit of one run of a portable tool on the computer (10 to 1800 s) | `120` |
 | `SiwSummaryFields` | by hand only | SIW report on several computers: fields of the summary, `Page/Group/Property` separated by `;` (`*` as group: any group; several matches are joined with ` \| `) | empty (default fields) |
 | `UpdatesHiddenColumns` | *Columns* menu of the main window | columns hidden (column names separated by `,`) | the hardware columns |
 | `WebVersionsWindowSize`, `UpdatesOnlineOnly`, `UpdatesProfile`, `UpdatesWindowBounds`, `UpdatesWindowMaximized`, `UpdatesSplitter`, `UpdatesColumns`, `UpdatesPackageColumns`, `UpdatesStatusFilter` | kept by LiteDeploy | size and position of the windows, columns and status filters of the grid | empty |

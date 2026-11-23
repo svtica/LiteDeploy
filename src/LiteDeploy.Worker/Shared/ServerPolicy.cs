@@ -9,7 +9,8 @@
 //          a domain controller without a second explicit option
 //          (--allow-domain-controllers). Win32_OperatingSystem.ProductType:
 //          1 workstation, 2 domain controller, 3 server. "siw" (SIW report,
-//          SiwPolicy) follows the same rule. "scan", "info" and "processes"
+//          SiwPolicy) and "tool" (portable report tools, PortableToolPolicy:
+//          third-party code run as SYSTEM) follow the same rule. "scan", "info" and "processes"
 //          are not concerned (report only). Pure logic, compiled into both
 //          programs (and the tests).
 // -----------------------------------------------------------------------------
@@ -56,7 +57,8 @@ namespace LiteDeploy
         {
             return string.Equals(command, "upgrade", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(command, InstallPolicy.Command, StringComparison.OrdinalIgnoreCase)
-                || string.Equals(command, SiwPolicy.Command, StringComparison.OrdinalIgnoreCase);
+                || string.Equals(command, SiwPolicy.Command, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(command, PortableToolPolicy.Command, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>

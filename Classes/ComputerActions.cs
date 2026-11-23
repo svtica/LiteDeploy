@@ -11,8 +11,9 @@
 //          (UserMessage, worker "message"; also "Ask the users to restart"
 //          in the quick commands), Wake-on-LAN, logs, pause and "outside
 //          business hours only" flags (updates.xml), export to Royal TS
-//          (RoyalTsExport), SIW report (SiwReports). Cards, quick commands,
-//          messages and SIW reports run in a progress window (RemoteRunForm). Targets: the checked computers,
+//          (RoyalTsExport), SIW report (SiwReports), reports of the portable
+//          tools (PortableToolReports). Cards, quick commands, messages and
+//          reports run in a progress window (RemoteRunForm). Targets: the checked computers,
 //          else the selected one(s) (Targets, unit-tested).
 // -----------------------------------------------------------------------------
 using System;
@@ -578,6 +579,120 @@ namespace LiteDeploy
                     if (dialog.FilterIndex == 2 || dialog.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)) table.SaveCsv(dialog.FileName);
                     else table.SaveXlsx(dialog.FileName, "SIW");
                     host.SetStatus(Localization.F("ComputerActions.SiwSummarySaved", "Summary of {0} computer(s) saved: {1}", table.Rows.Count, dialog.FileName));
+                    OpenFile(dialog.FileName);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(Owner, ex.Message, dialog.Title, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        // ---- Portable report tools ------------------------------------------------------------
+
+        /// <summary>Fills a "Reports" item (once) with one entry per tool of the fixed table; <paramref name="targets"/> is asked at click time.</summary>
+        public void FillToolReports(ToolStripMenuItem parent, Func<List<String>> targets)
+        {
+            if (parent.DropDownItems.Count > 0) return;
+            foreach (PortableTool tool in PortableToolPolicy.All)
+            {
+                PortableTool t = tool;
+                ToolStripMenuItem item = new ToolStripMenuItem(PortableToolReports.Text(t)) { ToolTipText = t.Executable + " " + t.ArgumentsTemplate };
+                item.Click += (s, e) => RunToolReports(t, targets());
+                parent.DropDownItems.Add(item);
+            }
+            Theme.Apply(parent.DropDown);
+        }
+
+        /// <summary>
+        /// Report of a portable tool on the computers (PortableToolReports, a few at a time, progress window with
+        /// Cancel). One computer: its report opens at the end. Several: a question first, then one table of
+        /// every row with the computer in the first column, saved as an Excel workbook or CSV.
+        /// </summary>
+        public void RunToolReports(PortableTool tool, List<String> targets)
+        {
+            if (targets.Count == 0) return;
+            UserSettings settings = UserSettings.Current;
+            PortableToolRequest request = PortableToolReports.RequestFrom(settings, tool);
+            String folder = (settings.ToolsFolder ?? "").Trim();
+            Owner.Cursor = Cursors.WaitCursor;
+            String problem;
+            try { problem = PortableToolReports.Check(folder, tool); }
+            finally { Owner.Cursor = Cursors.Default; }
+            if (problem != null)
+            {
+                MessageBox.Show(Owner, problem, Owner.Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (targets.Count > 1)
+            {
+                String names = String.Join(", ", targets.Take(10)) + (targets.Count > 10 ? ", ..." : "");
+                if (MessageBox.Show(Owner, Localization.F("ComputerActions.ConfirmTool",
+                        "Run {0} as SYSTEM on {1} computer(s) and get a report from each?\n\n{2}", tool.Product, targets.Count, names),
+                        Owner.Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+                    return;
+            }
+            if (RemoteRunner.Prerequisite() != null)
+            {
+                MessageBox.Show(Owner, Localization.T("ComputerGrid.MissingTools", "PsExec or LiteDeploy.Worker.exe is missing next to LiteDeploy.exe."),
+                    Owner.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            host.SetStatus(Localization.F("ComputerActions.RunningTool", "{0} on {1} computer(s)...", tool.Product, targets.Count));
+            ToolRunResult[] results = new ToolRunResult[targets.Count];
+            String title = Localization.F("ComputerActions.ToolTitle", "{0} - {1} computer(s)", tool.Product, targets.Count);
+            RunWithProgress(title, targets, c =>
+            {
+                ToolRunResult r = PortableToolReports.Run(c, folder, request);
+                results[targets.IndexOf(c)] = r;
+                return r.Ok
+                    ? Localization.F("ComputerActions.ToolDone", "{0}: {1} row(s) in {2} s - {3}", r.Computer, r.Report.Rows.Count, r.Seconds, r.ReportPath)
+                    : Localization.F("ComputerActions.SiwFailed", "{0}: no report: {1}", r.Computer, String.IsNullOrEmpty(r.Failure) ? "?" : r.Failure);
+            }, lines =>
+            {
+                String summary = Localization.F("ComputerActions.SiwSummary", "Reports: {0} computer(s), failed: {1}. Folder: {2}",
+                    results.Count(r => r != null && r.Ok), results.Count(r => r == null || !r.Ok), PortableToolReports.Root(tool));
+                return summary + "\n\n" + String.Join("\n", lines);
+            }, () =>
+            {
+                host.SetStatus(null);
+                List<ToolRunResult> done = results.Where(r => r != null && r.Ok).ToList();
+                if (done.Count == 0) return;
+                if (targets.Count == 1) OpenFile(done[0].ViewPath);
+                else SaveToolTable(tool, targets, results);
+            });
+        }
+
+        void SaveToolTable(PortableTool tool, List<String> targets, ToolRunResult[] results)
+        {
+            List<KeyValuePair<String, CsvReport>> reports = new List<KeyValuePair<String, CsvReport>>();
+            Dictionary<String, String> failures = new Dictionary<String, String>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < targets.Count; i++)
+            {
+                ToolRunResult r = results[i];
+                reports.Add(new KeyValuePair<String, CsvReport>(targets[i], r != null && r.Ok ? r.Report : null));
+                if (r == null || !r.Ok)
+                    failures[targets[i]] = r == null ? Localization.T("RemoteRunForm.NotRun", "Not run (cancelled).") : r.Failure ?? "?";
+            }
+            SaveTable(CsvReport.Combine(reports, failures), tool.Product, "LiteDeploy-" + tool.Product + "-", PortableToolReports.Root(tool));
+        }
+
+        // Save dialog (Excel workbook or CSV, like Export the inventory), then the file opens
+        void SaveTable(InventoryTable table, String sheet, String filePrefix, String folder)
+        {
+            using (SaveFileDialog dialog = new SaveFileDialog())
+            {
+                dialog.Title = Localization.F("ComputerActions.SaveTableTitle", "Save the table of the {0} reports", sheet);
+                dialog.Filter = Localization.T("ComputerGrid.ExportInventoryFilter", "Excel workbook (*.xlsx)|*.xlsx|CSV file, separator ; (*.csv)|*.csv");
+                dialog.FileName = filePrefix + DateTime.Now.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+                if (System.IO.Directory.Exists(folder)) dialog.InitialDirectory = folder;
+                dialog.OverwritePrompt = true;
+                if (dialog.ShowDialog(Owner) != DialogResult.OK) return;
+                try
+                {
+                    if (dialog.FilterIndex == 2 || dialog.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)) table.SaveCsv(dialog.FileName);
+                    else table.SaveXlsx(dialog.FileName, sheet);
+                    host.SetStatus(Localization.F("ComputerActions.TableSaved", "{0} row(s) saved: {1}", table.Rows.Count, dialog.FileName));
                     OpenFile(dialog.FileName);
                 }
                 catch (Exception ex)
