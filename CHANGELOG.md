@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.27] - 2026-11-23
+
 ### Added
 
 - **Uninstall another program...** (uninstall mode): programs outside the catalog, like
