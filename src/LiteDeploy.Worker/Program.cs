@@ -45,6 +45,11 @@
 //                                  --timeout <seconds> [--allow-servers
 //                                  [--allow-domain-controllers]] (SIW report:
 //                                  SiwRunner, SiwPolicy)
+//            LiteDeploy.Worker.exe programs  (programs of the Uninstall keys
+//                                  of HKLM and how each can be removed)
+//            LiteDeploy.Worker.exe uninstall-program --view 64|32 --key K
+//                                  --name <base64 UTF-8> [--allow-servers ...]
+//                                  (one of them: ProgramRunner, ProgramPolicy)
 //            LiteDeploy.Worker.exe tool <id> --timeout <seconds>
 //                                  [--allow-servers [--allow-domain-controllers]]
 //                                  (portable report tool of the fixed table:
@@ -127,6 +132,20 @@ namespace LiteDeploy.Worker
                     return ExitUsage;
                 }
                 return RunQuick(quick);
+            }
+            if (args != null && args.Length == 1 && args[0] == ProgramPolicy.ListCommand)
+                return ProgramRunner.List(Emit);
+            if (args != null && args.Length >= 1 && args[0] == ProgramPolicy.UninstallCommand)
+            {
+                string view, key, name;
+                bool programServers, programDcs;
+                string programError = ProgramPolicy.ParseUninstall(args, out view, out key, out name, out programServers, out programDcs);
+                if (programError != null)
+                {
+                    Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeError, "message", programError));
+                    return ExitUsage;
+                }
+                return ProgramRunner.Uninstall(view, key, name, programServers, programDcs, Emit);
             }
             if (args != null && args.Length >= 1 && args[0].Equals(SiwPolicy.Command, StringComparison.OrdinalIgnoreCase))
             {

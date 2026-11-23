@@ -588,6 +588,102 @@ namespace LiteDeploy
             }
         }
 
+        // ---- Uninstall another program (uninstall mode) ---------------------------------------------
+
+        /// <summary>
+        /// Uninstall mode: reads the programs of the target computers (worker "programs"), lets the administrator choose
+        /// one (ProgramPickerForm), asks for a confirmation naming it and the computers (the number typed above
+        /// UninstallPolicy.TypedConfirmationAbove), then removes it where it is installed (worker "uninstall-program",
+        /// a few computers at a time). <paramref name="finished"/> runs at the end of an uninstall (UI thread).
+        /// </summary>
+        public void UninstallOtherProgram(List<String> targets, Action finished)
+        {
+            if (targets.Count == 0) return;
+            if (RemoteRunner.Prerequisite() != null)
+            {
+                MessageBox.Show(Owner, Localization.T("ComputerGrid.MissingTools", "PsExec or LiteDeploy.Worker.exe is missing next to LiteDeploy.exe."),
+                    Owner.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            Dictionary<String, IList<WorkerMessage>> lists = new Dictionary<String, IList<WorkerMessage>>(StringComparer.OrdinalIgnoreCase);
+            host.SetStatus(Localization.F("ComputerActions.ReadingPrograms", "Reading the programs of {0} computer(s)...", targets.Count));
+            RunWithProgress(Localization.F("ComputerActions.ReadingProgramsTitle", "Installed programs - {0} computer(s)", targets.Count), targets, c =>
+            {
+                UpdateRunResult r = UpdateRunner.Programs(c);
+                int count = r.Messages.Count(m => m.Type == ProgramPolicy.TypeProgram);
+                if (r.Messages.Any(m => m.Type == WorkerProtocol.TypeDone))
+                {
+                    lock (lists) lists[c] = r.Messages;
+                    return Localization.F("ComputerActions.ProgramsRead", "{0}: {1} program(s)", c, count);
+                }
+                WorkerMessage error = r.Messages.FirstOrDefault(m => m.Type == WorkerProtocol.TypeError);
+                return Localization.F("ComputerGrid.CardFailed", "Not read: {0}", c + ": " + (error != null ? error["message"] : r.Failure ?? "?"));
+            }, lines => String.Join("\n", lines), () =>
+            {
+                host.SetStatus(null);
+                List<ProgramRow> rows;
+                lock (lists) rows = ProgramInventory.Merge(lists.Select(e => new KeyValuePair<String, IList<WorkerMessage>>(e.Key, e.Value)));
+                if (rows.Count == 0) return;
+                ProgramRow chosen = ProgramPickerForm.Choose(Owner, rows, lists.Count);
+                if (chosen == null || !chosen.Removable) return;
+                ConfirmAndUninstall(chosen, finished);
+            });
+        }
+
+        void ConfirmAndUninstall(ProgramRow program, Action finished)
+        {
+            List<String> computers = program.Computers.OrderBy(c => c, StringComparer.OrdinalIgnoreCase).ToList();
+            String names = String.Join(", ", computers.Take(10)) + (computers.Count > 10 ? ", ..." : "");
+            String label = program.Name + (program.Versions.Count > 0 ? " " + String.Join(", ", program.Versions) : "");
+            if (MessageBox.Show(Owner, Localization.F("ComputerActions.ConfirmUninstallProgram",
+                    "UNINSTALL {0} from {1} computer(s)?\n\nRemoval: {2}. Applications in use can be closed by the uninstaller without warning: {3}",
+                    label, computers.Count, ProgramInventory.KindText(program), names),
+                    Owner.Text, MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+                return;
+            if (computers.Count > UninstallPolicy.TypedConfirmationAbove)
+            {
+                String typed = Prompt.Show(Owner, Owner.Text,
+                    Localization.F("ComputerGrid.ConfirmUninstallCount", "To confirm, type the number of computers {0} will be removed from:", program.Name), "");
+                if (!UninstallPolicy.IsTypedConfirmation(typed, computers.Count))
+                {
+                    if (typed != null)
+                        MessageBox.Show(Owner, Localization.T("ComputerGrid.UninstallCancelled", "Not the number of computers: nothing was uninstalled."), Owner.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+            }
+            UserSettings s = UserSettings.Current;
+            String args = ProgramPolicy.UninstallArguments(program.View, program.Key, program.Name, s.IncludeServers, s.IncludeServers && s.AllowDomainControllers);
+            AppConsole.WriteLine("Uninstall mode: " + program.Name + " (" + program.View + "-bit view, " + program.Key + ") on " + computers.Count + " computer(s): " + String.Join(", ", computers));
+            int removed = 0, failed = 0;
+            host.SetStatus(Localization.F("ComputerActions.UninstallingProgram", "Uninstalling {0} from {1} computer(s)...", program.Name, computers.Count));
+            RunWithProgress(Localization.F("ComputerActions.UninstallProgramTitle", "Uninstall {0} - {1} computer(s)", program.Name, computers.Count), computers, c =>
+            {
+                UpdateRunResult r = UpdateRunner.UninstallProgram(c, args);
+                WorkerMessage line = r.Messages.FirstOrDefault(m => m.Type == ProgramPolicy.TypeResult);
+                String text;
+                if (line != null && line["result"] == "ok")
+                {
+                    Interlocked.Increment(ref removed);
+                    text = Localization.F("ComputerActions.ProgramRemoved", "{0}: {1}", c, line["message"]);
+                }
+                else
+                {
+                    Interlocked.Increment(ref failed);
+                    WorkerMessage error = r.Messages.FirstOrDefault(m => m.Type == WorkerProtocol.TypeError);
+                    text = Localization.F("ComputerActions.ProgramNotRemoved", "{0}: FAILED: {1}", c,
+                        line != null ? line["message"] : error != null ? error["message"] : r.Failure ?? "?");
+                }
+                AppConsole.WriteLine("Uninstall mode: " + text);
+                return text;
+            }, lines => Localization.F("ComputerActions.UninstallProgramSummary", "{0}: removed from {1} computer(s), failed on {2}.", program.Name, removed, failed)
+                        + "\n\n" + String.Join("\n", lines),
+            () =>
+            {
+                host.SetStatus(null);
+                if (finished != null) finished();
+            });
+        }
+
         // ---- Portable report tools ------------------------------------------------------------
 
         /// <summary>Fills a "Reports" item (once) with one entry per tool of the fixed table; <paramref name="targets"/> is asked at click time.</summary>

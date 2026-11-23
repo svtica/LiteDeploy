@@ -58,6 +58,7 @@ namespace LiteDeploy
             return string.Equals(command, "upgrade", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(command, InstallPolicy.Command, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(command, UninstallPolicy.Command, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(command, ProgramPolicy.UninstallCommand, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(command, SiwPolicy.Command, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(command, PortableToolPolicy.Command, StringComparison.OrdinalIgnoreCase);
         }

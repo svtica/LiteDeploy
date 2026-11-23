@@ -36,6 +36,7 @@
     <Compile Include="..\..\src\LiteDeploy.Worker\SessionMessenger.cs" Link="Worker\SessionMessenger.cs" />
     <Compile Include="..\..\src\LiteDeploy.Worker\SiwRunner.cs" Link="Worker\SiwRunner.cs" />
     <Compile Include="..\..\src\LiteDeploy.Worker\PortableToolRunner.cs" Link="Worker\PortableToolRunner.cs" />
+    <Compile Include="..\..\src\LiteDeploy.Worker\ProgramRunner.cs" Link="Worker\ProgramRunner.cs" />
     <Reference Include="System.Management" />
     <!-- ProtectedData: the password of the remote PowerShell console (RemoteToolsTests) -->
     <Reference Include="System.Security" />
