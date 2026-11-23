@@ -8,7 +8,8 @@
 //          one confirmation; each ping of the grid (every 5 minutes, and at
 //          once after queuing) pings the queued computers too, then updates the
 //          ones that answer (no other question: the queue was confirmed),
-//          unless a check or update already runs (then at the next ping).
+//          unless a check or update already runs or the uninstall mode is on
+//          (then at the next ping).
 //          "Remove from the queue" takes them out. The Status column and the
 //          tooltip show a queued computer; the status line counts them. Works
 //          while LiteDeploy is open (internal engine).
@@ -44,7 +45,7 @@ namespace LiteDeploy
 
         void PrepareQueueItems(List<String> targets, bool idle)
         {
-            queueItem.Enabled = idle && targets.Count > 0 && packages.Count > 0;
+            queueItem.Enabled = idle && targets.Count > 0 && packages.Count > 0 && !UninstallMode;
             bool anyQueued;
             lock (storeLock) anyQueued = targets.Any(c => UpdateQueue.IsQueued(store.Find(c)));
             unqueueItem.Visible = anyQueued;
@@ -97,7 +98,8 @@ namespace LiteDeploy
         /// <summary>After a ping (UI thread): drops the expired entries, then updates the queued computers that answer.</summary>
         void RunQueue()
         {
-            if (IsDisposed || pending > 0) return;
+            // Never while a run is in progress, nor in the uninstall mode (one kind of change at a time)
+            if (IsDisposed || pending > 0 || UninstallMode) return;
             DateTime now = DateTime.Now;
             UserSettings s = UserSettings.Current;
             List<ComputerUpdateState> due;
