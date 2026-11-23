@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.26] - 2026-11-23
+
 ### Fixed
 
 - The actions created by LiteDeploy itself (*Uninstall*, *Update when available...*, *Remove from
