@@ -170,6 +170,18 @@ them (and for the PsExec method of the software updates); it is asked for when t
   `msiexec /x {ProductCode} /qn /norestart`). Never a protected package (LiteSuite, security
   agents, Windows and runtime components), never on a server that is not included, never from a
   schedule. See [docs/modules.md](docs/modules.md#uninstall-action).
+  **Uninstall another program...** (same mode) does it for programs outside the catalog, like
+  UninstallView: the worker (`programs`, read only) lists the programs of the Uninstall keys of
+  HKLM (64 and 32-bit views) of the target computers; a window shows them merged (search,
+  versions, publisher, number of computers, how each can be removed); one is chosen, then the
+  same confirmation. The worker (`uninstall-program`) reads the entry again on each computer
+  (same name required) and removes it: MSI with `msiexec /x {ProductCode} /qn /norestart`; EXE
+  only with the quiet uninstall command of the vendor (`QuietUninstallString`) and only when its
+  executable is under Program Files or the Windows folder; then the entry must be gone (3010 and
+  1641: restart needed). Never offered: per-user programs (their command can be changed by the
+  user), system components, updates, entries marked "no remove" by their vendor and protected
+  products (LiteSuite, security agents, Windows and runtime components). Other EXE programs:
+  add them to the catalog with arguments validated by hand.
 - **Update when available...** (actions of the grid): after one confirmation, the target
   computers are queued with the active profile (kept in `updates.xml`). Each ping of the grid
   (every 5 minutes, and at once after queuing) also pings the queued computers, even when the

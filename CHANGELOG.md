@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Uninstall another program...** (uninstall mode): programs outside the catalog, like
+  UninstallView. New worker commands `programs` (read only: the programs of the Uninstall keys of
+  HKLM with how each can be removed) and `uninstall-program` (one entry, read again on the
+  computer, same name required; same server guard as the updates). A window merges the lists of
+  the target computers (search, versions, publisher, number of computers); one program is chosen,
+  with the same confirmation as the catalog. MSI: `msiexec /x {ProductCode} /qn /norestart`; EXE:
+  only the quiet uninstall command of the vendor, executable under Program Files or Windows. Never
+  offered: per-user programs, system components, updates, "no remove" entries, protected products.
+
 ## [1.0.26] - 2026-11-23
 
 ### Fixed

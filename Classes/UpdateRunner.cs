@@ -395,6 +395,18 @@ namespace LiteDeploy
             return RunSimple(computer, workerArguments, timeoutMinutes);
         }
 
+        /// <summary>The programs of the Uninstall keys of HKLM of the computer ("LiteDeploy.Worker.exe programs", read only).</summary>
+        public static UpdateRunResult Programs(String computer)
+        {
+            return RunSimple(computer, ProgramPolicy.ListCommand, 2);
+        }
+
+        /// <summary>One program removed ("LiteDeploy.Worker.exe uninstall-program ...", ProgramPolicy.UninstallArguments), as SYSTEM.</summary>
+        public static UpdateRunResult UninstallProgram(String computer, String workerArguments)
+        {
+            return RunSimple(computer, workerArguments, ProgramPolicy.TimeoutMinutes + 2);
+        }
+
         static UpdateRunResult RunSimple(String computer, String workerCommand)
         {
             return RunSimple(computer, workerCommand, 2);

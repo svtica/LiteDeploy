@@ -1425,7 +1425,7 @@ namespace LiteDeploy
             {
                 return new ToolStripItem[]
                 {
-                    targetsItem, targetsSeparator, uninstallItem, installItem, queueItem, unqueueItem, installSeparator, pauseItem, resumeItem, nightOnlyItem, nightOnlyClearItem,
+                    targetsItem, targetsSeparator, uninstallItem, uninstallOtherItem, installItem, queueItem, unqueueItem, installSeparator, pauseItem, resumeItem, nightOnlyItem, nightOnlyClearItem,
                     menuSeparator, cardItem, teamViewerItem, remoteDesktopItem, commandPromptItem, quickCommandsItem, messageItem,
                     processesItem, litePMItem, logsItem, wakeItem, pingItem, managementConsoleItem, adminShareItem, copyNameItem,
                     deploySeparator, deployItem, exportSeparator, inventoryItem, exportInventoryItem, siwItem, toolReportsItem, royalTsItem, removeSeparator, removeItem, unhideItem
@@ -1458,6 +1458,7 @@ namespace LiteDeploy
             BuildUninstallMenu(targets);
             // Uninstall mode: Uninstall takes the place of Install or update (one kind of change at a time)
             installItem.Visible = !UninstallMode;
+            uninstallOtherItem.Enabled = idle && targets.Count > 0;
             PrepareQueueItems(targets, idle);
             pauseItem.Enabled = idle && targets.Any(c => !IsPaused(c));
             resumeItem.Enabled = idle && targets.Any(IsPaused);

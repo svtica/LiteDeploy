@@ -15,7 +15,9 @@
 //          the computers where the last check says it is installed (never a
 //          protected package, a module only with "# Uninstall: yes":
 //          UninstallPolicy), a confirmation naming the package and the
-//          computers, the number of computers typed above 5. The worker
+//          computers, the number of computers typed above 5. "Uninstall
+//          another program..." does the same for programs outside the
+//          catalog (ComputerActions.UninstallOtherProgram). The worker
 //          "uninstall" command does the work (never run by a schedule).
 // -----------------------------------------------------------------------------
 using System;
@@ -31,6 +33,8 @@ namespace LiteDeploy
         CheckBox uninstallModeCheck;
         Panel uninstallBanner;
         ToolStripMenuItem uninstallItem;
+        /// <summary>Uninstall another program... (programs outside the catalog: ComputerActions.UninstallOtherProgram).</summary>
+        ToolStripMenuItem uninstallOtherItem;
         readonly Timer uninstallIdleTimer = new Timer { Interval = UninstallPolicy.ModeIdleMinutes * 60 * 1000 };
         String titleBeforeUninstallMode;
         Color statusBackBeforeUninstallMode;
@@ -89,6 +93,25 @@ namespace LiteDeploy
                 Visible = false
             };
             uninstallItem.Font = new Font(uninstallItem.Font, FontStyle.Bold);
+            uninstallOtherItem = new ToolStripMenuItem
+            {
+                Name = "uninstallOtherItem",
+                Text = Localization.T("ComputerGrid.UninstallOtherItem", "Uninstall another program..."),
+                ToolTipText = Localization.T("ComputerGrid.UninstallOtherTip", "Programs installed on these computers, also outside the catalog: MSI and quiet EXE uninstalls only"),
+                Visible = false
+            };
+            uninstallOtherItem.Click += (s, e) =>
+            {
+                if (!UninstallMode || pending > 0) return;
+                uninstallIdleTimer.Stop();
+                uninstallIdleTimer.Start();
+                List<String> targets = ActionTargets().Where(c => !IsPaused(c)).ToList();
+                actions.UninstallOtherProgram(targets, () =>
+                {
+                    if (UninstallMode) uninstallModeCheck.Checked = false;
+                    RefreshList();
+                });
+            };
             uninstallIdleTimer.Tick += (s, e) => { uninstallIdleTimer.Stop(); if (pending == 0) uninstallModeCheck.Checked = false; };
             Disposed += (s, e) => uninstallIdleTimer.Dispose();
         }
@@ -99,6 +122,7 @@ namespace LiteDeploy
             uninstallBanner.Visible = on;
             // Uninstall takes the place of Install or update in the actions
             uninstallItem.Visible = on;
+            uninstallOtherItem.Visible = on;
             installItem.Visible = !on;
             Form form = FindForm();
             if (on)
