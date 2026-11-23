@@ -183,6 +183,10 @@ Actions of the grid (checked computers, else the selected ones):
   every active session with a logged-on user through `WTSSendMessage` (present on every edition of
   Windows, unlike `msg.exe`), without waiting. Result per computer: sent to N session(s), no user
   logged on, or failed.
+- **Progress**: the computer card, the quick commands and *Send a message...* open a progress
+  window at once (not modal; 4 computers at a time): progress bar, computers done and under way,
+  elapsed time, each result as soon as it is known, and **Cancel** (no new computer is started;
+  the ones under way finish). At the end it shows every result in the order of the computers.
 - **Export to Royal TS...**: Remote Desktop connections of the checked computers (else every
   computer shown), the operating system as description and the OU as folder path: a CSV file
   (`Name,ComputerName,Description,Path`, UTF-8 with BOM) for *Data > Import > Comma Separated
