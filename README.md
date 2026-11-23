@@ -159,7 +159,8 @@ them (and for the PsExec method of the software updates); it is asked for when t
 - **Uninstall mode** (check box of the filter bar): removing software is possible only while it
   is on. It is never saved (off at each opening); while it is on, an orange banner above the grid
   (with *Leave the uninstall mode*), the window title (`[UNINSTALL]`) and the status bar show it,
-  and *Update checked* and *Install or update* are disabled. It turns itself off after each
+  *Update checked* is disabled and *Uninstall* takes the place of *Install or update* in the
+  actions (right-click and *Actions* menu). It turns itself off after each
   uninstall run, after 15 minutes without one and when the window closes. Its action *Uninstall*
   lists the software of the active profile that the last check found installed on the target
   computers; one software at a time, a confirmation naming it and the computers, and above 5

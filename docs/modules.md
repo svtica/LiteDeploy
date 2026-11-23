@@ -486,7 +486,7 @@ a module without `# Install: yes` line never receives `-Action Install`):
 Removing software is possible only in the **uninstall mode** of the main window (check box
 *Uninstall mode* of the filter bar: never saved, banner and title in orange while it is on, off
 again after each uninstall run, after 15 minutes without one and when the window closes; *Update
-checked* and *Install or update* are disabled meanwhile):
+checked* is disabled meanwhile and *Uninstall* takes the place of *Install or update* in the actions):
 
 - Right-click, *Uninstall* and pick **one** package: the menu lists the software of the active
   profile installed (last check `uptodate` or `outdated`) on at least one target computer (paused
