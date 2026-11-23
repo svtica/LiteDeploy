@@ -156,6 +156,19 @@ them (and for the PsExec method of the software updates); it is asked for when t
   clear), computer card (Active Directory data, logged-on users, pending restart, TeamViewer
   ID...; in a window that can be copied; also on double-click), the remote tools below,
   Wake-on-LAN, get the logs. Each row shows the step in progress.
+- **Uninstall mode** (check box of the filter bar): removing software is possible only while it
+  is on. It is never saved (off at each opening); while it is on, an orange banner above the grid
+  (with *Leave the uninstall mode*), the window title (`[UNINSTALL]`) and the status bar show it,
+  and *Update checked* and *Install or update* are disabled. It turns itself off after each
+  uninstall run, after 15 minutes without one and when the window closes. Its action *Uninstall*
+  lists the software of the active profile that the last check found installed on the target
+  computers; one software at a time, a confirmation naming it and the computers, and above 5
+  computers the number of computers typed. The worker (`uninstall`) checks again, closes the
+  processes of the package and removes it: winget packages with `winget uninstall --scope machine
+  --silent`, modules only when they declare `# Uninstall: yes` (`CachedInstaller`: MSI products,
+  `msiexec /x {ProductCode} /qn /norestart`). Never a protected package (LiteSuite, security
+  agents, Windows and runtime components), never on a server that is not included, never from a
+  schedule. See [docs/modules.md](docs/modules.md#uninstall-action).
 
 ### Remote tools
 Actions of the grid (checked computers, else the selected ones):

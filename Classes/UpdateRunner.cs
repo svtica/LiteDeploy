@@ -143,6 +143,35 @@ namespace LiteDeploy
         }
 
         /// <summary>
+        /// Uninstall mode: for each package of the list (in its order), the computers among
+        /// <paramref name="computers"/> where it may be uninstalled: not paused, last check "uptodate" or
+        /// "outdated", not protected, and for a module a header that declares "# Uninstall: yes"
+        /// (<paramref name="uninstallableModules"/>: names of those modules). Packages with no such
+        /// computer are left out. Pure logic, unit-tested.
+        /// </summary>
+        public static List<KeyValuePair<UpdatePackage, List<String>>> UninstallCandidates(IEnumerable<String> computers, IEnumerable<UpdatePackage> packages,
+            Func<String, ComputerUpdateState> find, ICollection<String> uninstallableModules)
+        {
+            List<KeyValuePair<UpdatePackage, List<String>>> result = new List<KeyValuePair<UpdatePackage, List<String>>>();
+            List<String> list = computers.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            foreach (UpdatePackage p in packages)
+            {
+                bool declares = p.IsModule && uninstallableModules != null
+                                && uninstallableModules.Any(n => String.Equals(n, p.ModuleName, StringComparison.OrdinalIgnoreCase));
+                List<String> targets = new List<String>();
+                foreach (String computer in list)
+                {
+                    ComputerUpdateState c = find(computer);
+                    if (c == null || c.Paused) continue;
+                    PackageUpdateState s = c.Find(p.Id);
+                    if (s != null && UninstallPolicy.CanOffer(p, s.Status, declares)) targets.Add(computer);
+                }
+                if (targets.Count > 0) result.Add(new KeyValuePair<UpdatePackage, List<String>>(p, targets));
+            }
+            return result;
+        }
+
+        /// <summary>
         /// For each package (the active profile), what can be done on the target computers after their last check:
         /// update where it is outdated, install where it is not installed (InstallCandidates rules), and how many
         /// are up to date, not checked yet or in another state. Paused computers are left out. Pure logic, unit-tested.

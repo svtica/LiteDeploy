@@ -473,13 +473,39 @@ a module without `# Install: yes` line never receives `-Action Install`):
 | | |
 |---|---|
 | Header | `# LiteDeploy-Module` (required), `# Label:`, `# Processes:`, `# Install: yes` (optional, see *Install action*), `# Parameter:` lines; all in the first 20 lines |
-| Action | `-Action Check` or `-Action Update`; `-Action Install` only when the header declares `# Install: yes` (add `'Install'` to the `ValidateSet` of `-Action`) |
+| Action | `-Action Check` or `-Action Update`; `-Action Install` only when the header declares `# Install: yes` (add `'Install'` to the `ValidateSet` of `-Action`); `-Action Uninstall` only when it declares `# Uninstall: yes` (see *Uninstall action*) |
 | Parameters | Environment variables `LITEDEPLOY_PARAM_<Name>`, one per parameter of the header (see *Module parameters*); an empty value sets no variable |
 | Cache | `LITEDEPLOY_CACHE`: the shared installer cache, when one is set |
 | Instance | `LITEDEPLOY_INSTANCE`: the instance name, for `module:<Name>/<Instance>` (modules with `# Instances: yes`, see *Module instances*) |
 | Result | one line `LDW1<TAB>type=module<TAB>status=...` (function `Write-LiteDeployResult` of the template); `status`: `uptodate`, `outdated`, `notinstalled` or `error`; optional `installed`, `available`, `message` (URI-escaped) |
 | Exit code | `0`; `3010` after an update or an install that needs a restart; anything else is a failure |
 | Time limit | 15 minutes per action |
+
+### Uninstall action
+
+Removing software is possible only in the **uninstall mode** of the main window (check box
+*Uninstall mode* of the filter bar: never saved, banner and title in orange while it is on, off
+again after each uninstall run, after 15 minutes without one and when the window closes; *Update
+checked* and *Install or update* are disabled meanwhile):
+
+- Right-click, *Uninstall* and pick **one** package: the menu lists the software of the active
+  profile installed (last check `uptodate` or `outdated`) on at least one target computer (paused
+  computers excluded), for a module only when its header has the line `# Uninstall: yes`, and
+  never a protected package (`UninstallPolicy.ProtectedParts`: LiteSuite, security agents,
+  Windows and runtime components). The confirmation names the package and the computers; above
+  5 computers the number of computers must be typed.
+- Never part of *Update checked* nor of the schedules (a schedule runs `scan` or `upgrade` only).
+  Same server guard as the updates.
+- The worker (`LiteDeploy.Worker.exe uninstall --package ...`) checks first, refuses a protected
+  package again, does nothing where the package is not installed, then checks again.
+- winget package: its processes are closed, then `winget uninstall --id <Id> -e --source winget
+  --scope machine --silent --accept-source-agreements --disable-interactivity` (0: uninstalled; any
+  other code: failed).
+- Module: `-Action Uninstall`, only when the signed header declares `# Uninstall: yes` (add
+  `'Uninstall'` to the `ValidateSet` of `-Action`); same signature check, parameters, result line,
+  exit codes and time limit as `-Action Update`. Report `notinstalled` once removed.
+  `CachedInstaller` declares it for MSI products only (`msiexec /x {ProductCode} /qn /norestart`);
+  an EXE product is refused.
 
 ### Install action
 

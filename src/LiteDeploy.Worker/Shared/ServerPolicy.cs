@@ -50,13 +50,14 @@ namespace LiteDeploy
         public const string TypeServer = "server";
 
         /// <summary>
-        /// The commands under the guard: "upgrade" and "install" (they change the computer) and "siw" (a
-        /// third-party tool that reads the hardware at a low level, run as SYSTEM).
+        /// The commands under the guard: "upgrade", "install" and "uninstall" (they change the computer) and
+        /// "siw" (a third-party tool that reads the hardware at a low level, run as SYSTEM).
         /// </summary>
         public static bool AppliesTo(string command)
         {
             return string.Equals(command, "upgrade", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(command, InstallPolicy.Command, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(command, UninstallPolicy.Command, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(command, SiwPolicy.Command, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(command, PortableToolPolicy.Command, StringComparison.OrdinalIgnoreCase);
         }

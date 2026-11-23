@@ -8,6 +8,11 @@
 //            LiteDeploy.Worker.exe scan    --package "Id|proc1,proc2|Label" ...
 //            LiteDeploy.Worker.exe upgrade --package "Id|proc1,proc2|Label" ...
 //            LiteDeploy.Worker.exe install --package "Id|proc1,proc2|Label" ...
+//            LiteDeploy.Worker.exe uninstall --package "Id|proc1,proc2|Label" ...
+//                                  (uninstall mode of LiteDeploy: removes a package
+//                                  the check says is installed, never a protected
+//                                  one, a module only with "# Uninstall: yes":
+//                                  UninstallPolicy; never run by a schedule)
 //                                  [--timeout <minutes per winget call or module>]
 //                                  [--allow-unsigned-modules] [--cache \\server\share]
 //                                  [--allow-servers [--allow-domain-controllers]]
@@ -243,6 +248,11 @@ namespace LiteDeploy.Worker
                     InstallPackage(winget, package, state, ref failed, ref installed);
                     continue;
                 }
+                if (command == UninstallPolicy.Command)
+                {
+                    UninstallPackage(winget, package, state, ref failed, ref installed);
+                    continue;
+                }
                 if (state.Status == WorkerProtocol.StatusError) { failed++; continue; }
                 if (command != "upgrade") continue;
 
@@ -277,9 +287,82 @@ namespace LiteDeploy.Worker
 
             if (command == InstallPolicy.Command)
                 Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeDone, "installed", installed.ToString(), "failed", failed.ToString(), "os", os, "ostype", osType));
+            else if (command == UninstallPolicy.Command)
+                Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeDone, "uninstalled", installed.ToString(), "failed", failed.ToString(), "os", os, "ostype", osType));
             else
                 Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeDone, "upgraded", upgraded.ToString(), "failed", failed.ToString(), "os", os, "ostype", osType));
             return Math.Min(failed, 99);
+        }
+
+        // Uninstall run, winget package: removes it only when its check says it is installed and it is not
+        // protected, after closing its processes, then a fresh state
+        static void UninstallPackage(WingetClient winget, UpdatePackage package, PackageState state, ref int failed, ref int uninstalled)
+        {
+            switch (UninstallPolicy.Decide(package, true, state.Status))
+            {
+                case UninstallDecision.CheckFailed:
+                    failed++;
+                    return;
+                case UninstallDecision.Protected:
+                    failed++;
+                    Emit(UpgradeMessage(package, WorkerProtocol.ResultFailed, null, UninstallPolicy.ProtectedMessage(package.Id)));
+                    return;
+                case UninstallDecision.NotInstalled:
+                    Emit(UpgradeMessage(package, WorkerProtocol.ResultSkipped, null, "Not installed"));
+                    return;
+            }
+
+            Progress(package, WorkerProtocol.StepClosing);
+            string closeError = CloseProcesses(package);
+            if (closeError != null)
+            {
+                failed++;
+                Emit(UpgradeMessage(package, WorkerProtocol.ResultFailed, null, closeError));
+                return;
+            }
+            Progress(package, WorkerProtocol.StepUninstalling);
+            WingetResult result = winget.Uninstall(package.Id);
+            string outcome = WingetClient.Outcome(result.ExitCode, WorkerProtocol.ResultUninstalled);
+            if (outcome == WorkerProtocol.ResultSkipped) outcome = WorkerProtocol.ResultFailed;
+            bool ok = outcome == WorkerProtocol.ResultUninstalled;
+            if (ok) uninstalled++; else failed++;
+            Emit(UpgradeMessage(package, outcome, result.Hex,
+                WingetClient.Describe(result.ExitCode) + (ok ? "" : LastLines(result.Output))));
+
+            // State after the uninstall (expected: notinstalled)
+            Emit(Check(winget, package).ToMessage());
+        }
+
+        // Uninstall run, module: "-Action Uninstall" only when installed, not protected and declared by the header
+        static void UninstallModule(UpdatePackage module, ModuleResult check, bool allowUnsigned, TimeSpan timeout,
+            Dictionary<string, string> parameters, ref int failed, ref int uninstalled)
+        {
+            switch (UninstallPolicy.Decide(module, ModuleRunner.DeclaresUninstall(module), check.Status))
+            {
+                case UninstallDecision.CheckFailed:
+                    failed++;
+                    return;
+                case UninstallDecision.Protected:
+                    failed++;
+                    Emit(UpgradeMessage(module, WorkerProtocol.ResultFailed, null, UninstallPolicy.ProtectedMessage(module.Id)));
+                    return;
+                case UninstallDecision.NotSupported:
+                    failed++;
+                    Emit(UpgradeMessage(module, WorkerProtocol.ResultFailed, null, UninstallPolicy.NotSupportedMessage(module.ModuleName)));
+                    return;
+                case UninstallDecision.NotInstalled:
+                    Emit(UpgradeMessage(module, WorkerProtocol.ResultSkipped, null, "Not installed"));
+                    return;
+            }
+
+            Progress(module, WorkerProtocol.StepUninstalling);
+            ModuleResult uninstall = ModuleRunner.Run(module, UninstallPolicy.ModuleAction, allowUnsigned, timeout, parameters);
+            bool ok = uninstall.Status != WorkerProtocol.StatusError;
+            if (ok) uninstalled++; else failed++;
+            Emit(UpgradeMessage(module, ok ? WorkerProtocol.ResultUninstalled : WorkerProtocol.ResultFailed,
+                uninstall.ExitCode.ToString(), uninstall.Message ?? (ok ? "OK" : "Failed")));
+
+            Emit(ModuleMessage(module, ModuleRunner.Run(module, "Check", allowUnsigned, timeout, parameters)));
         }
 
         // Install run, winget package: installs it only when its check says "notinstalled", then a fresh state.
@@ -321,6 +404,11 @@ namespace LiteDeploy.Worker
             if (command == InstallPolicy.Command)
             {
                 InstallModule(module, check, allowUnsigned, timeout, parameters, ref failed, ref installed);
+                return;
+            }
+            if (command == UninstallPolicy.Command)
+            {
+                UninstallModule(module, check, allowUnsigned, timeout, parameters, ref failed, ref installed);
                 return;
             }
             if (check.Status == WorkerProtocol.StatusError) { failed++; return; }
@@ -629,7 +717,7 @@ namespace LiteDeploy.Worker
             if (args == null || args.Length == 0) return "No command";
 
             command = args[0].ToLowerInvariant();
-            if (command != "scan" && command != "upgrade" && command != InstallPolicy.Command) return "Unknown command: " + args[0];
+            if (command != "scan" && command != "upgrade" && command != InstallPolicy.Command && command != UninstallPolicy.Command) return "Unknown command: " + args[0];
 
             for (int i = 1; i < args.Length; i++)
             {
