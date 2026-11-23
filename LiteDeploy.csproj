@@ -245,6 +245,9 @@
     <Compile Include="Forms\ComputerGrid.Designer.cs">
       <DependentUpon>ComputerGrid.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\ComputerGrid.Uninstall.cs">
+      <DependentUpon>ComputerGrid.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\DeployForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -256,6 +259,7 @@
     <Compile Include="src\LiteDeploy.Worker\Shared\UpdatePackage.cs" Link="Classes\Shared\UpdatePackage.cs" />
     <Compile Include="src\LiteDeploy.Worker\Shared\ModuleParameters.cs" Link="Classes\Shared\ModuleParameters.cs" />
     <Compile Include="src\LiteDeploy.Worker\Shared\InstallPolicy.cs" Link="Classes\Shared\InstallPolicy.cs" />
+    <Compile Include="src\LiteDeploy.Worker\Shared\UninstallPolicy.cs" Link="Classes\Shared\UninstallPolicy.cs" />
     <Compile Include="src\LiteDeploy.Worker\Shared\ServerPolicy.cs" Link="Classes\Shared\ServerPolicy.cs" />
     <Compile Include="src\LiteDeploy.Worker\Shared\QuickCommands.cs" Link="Classes\Shared\QuickCommands.cs" />
     <Compile Include="src\LiteDeploy.Worker\Shared\UserMessage.cs" Link="Classes\Shared\UserMessage.cs" />

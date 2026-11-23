@@ -16,7 +16,8 @@
 //          process only, as LITEDEPLOY_PARAM_<Name>; secret values are masked in
 //          the messages.
 //          Install: "-Action Install" runs only for a module whose signed header
-//          declares "# Install: yes" (InstallPolicy).
+//          declares "# Install: yes" (InstallPolicy); "-Action Uninstall" only
+//          for one that declares "# Uninstall: yes" (UninstallPolicy).
 //          Instances ("module:Name/Instance", modules with "# Instances: yes"):
 //          the same script, with the parameter file Name@Instance.params.
 // -----------------------------------------------------------------------------
@@ -149,7 +150,18 @@ namespace LiteDeploy.Worker
         /// <summary>The actions of the module contract: Check, Update, Install (only when the header declares "# Install: yes").</summary>
         public static bool IsValidAction(string action)
         {
-            return action == "Check" || action == "Update" || action == InstallPolicy.ModuleAction;
+            return action == "Check" || action == "Update" || action == InstallPolicy.ModuleAction || action == UninstallPolicy.ModuleAction;
+        }
+
+        /// <summary>Whether the module script on the computer declares "# Uninstall: yes" (first 20 lines); false when missing or unreadable.</summary>
+        public static bool DeclaresUninstall(UpdatePackage module)
+        {
+            try
+            {
+                string script = ScriptPath(module);
+                return File.Exists(script) && UninstallPolicy.DeclaresUninstall(File.ReadLines(script).Take(20).ToList());
+            }
+            catch (Exception) { return false; }
         }
 
         /// <summary>
@@ -194,6 +206,9 @@ namespace LiteDeploy.Worker
             // Install: only a module whose (signed) header declares it
             if (action == InstallPolicy.ModuleAction && !InstallPolicy.DeclaresInstall(header))
                 return Error(InstallPolicy.NotSupportedMessage(module.ModuleName));
+            // Uninstall: only a module whose (signed) header declares it
+            if (action == UninstallPolicy.ModuleAction && !UninstallPolicy.DeclaresUninstall(header))
+                return Error(UninstallPolicy.NotSupportedMessage(module.ModuleName));
 
             // Parameters declared in the header of the (signed) script; values from LiteDeploy or the defaults
             // An instance ("module:Name/Instance") only for a module that declares it

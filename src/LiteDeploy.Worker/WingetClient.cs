@@ -103,6 +103,23 @@ namespace LiteDeploy.Worker
             return Run(InstallArguments(id));
         }
 
+        /// <summary>Explicit Uninstall action: removes the package installed for the whole computer (UninstallArguments).</summary>
+        public WingetResult Uninstall(string id)
+        {
+            return Run(UninstallArguments(id));
+        }
+
+        /// <summary>
+        /// Arguments of "winget uninstall" for one package installed for the whole computer (same Id rule as
+        /// InstallArguments). Pure logic, unit-tested.
+        /// </summary>
+        public static string UninstallArguments(string id)
+        {
+            if (!UpdatePackage.IsValidId(id) || id.StartsWith(UpdatePackage.ModulePrefix, StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException("Invalid winget package Id.", "id");
+            return "uninstall --id " + id + " -e --source winget --scope machine --silent --accept-source-agreements --disable-interactivity";
+        }
+
         /// <summary>
         /// Arguments of "winget install" for one package, for every user of the computer. The Id
         /// must be a valid package Id (UpdatePackage.IsValidId: no space, no quote). Pure logic,

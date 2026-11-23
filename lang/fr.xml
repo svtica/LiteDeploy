@@ -1025,4 +1025,17 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="ComputerActions.ToolDone">{0} : {1} ligne(s) en {2} s - {3}</translation>
   <translation key="ComputerActions.SaveTableTitle">Enregistrer le tableau des rapports {0}</translation>
   <translation key="ComputerActions.TableSaved">{0} ligne(s) enregistrée(s) : {1}</translation>
+  <translation key="ComputerGrid.UninstallModeCheck">Mode désinstallation</translation>
+  <translation key="ComputerGrid.UninstallModeTip">Affiche l'action Désinstaller ; se désactive après chaque désinstallation et après 15 minutes sans désinstallation</translation>
+  <translation key="ComputerGrid.UninstallBanner">Mode désinstallation : les actions peuvent retirer des logiciels des ordinateurs.</translation>
+  <translation key="ComputerGrid.UninstallLeave">Quitter le mode désinstallation</translation>
+  <translation key="ComputerGrid.UninstallItem">Désinstaller</translation>
+  <translation key="ComputerGrid.UninstallTitle">[DÉSINSTALLATION]</translation>
+  <translation key="ComputerGrid.UninstallPackageItem">{0} : désinstaller ({1} ordinateur(s))</translation>
+  <translation key="ComputerGrid.NothingToUninstall">Rien à désinstaller : aucun logiciel du profil n'est installé sur ces ordinateurs à leur dernière vérification (ou il est protégé, ou son module ne déclare pas l'action Uninstall).</translation>
+  <translation key="ComputerGrid.ConfirmUninstall">DÉSINSTALLER {0} de {1} ordinateur(s) ?&#10;&#10;L'application est fermée sans avertissement, puis retirée là où la vérification indique toujours qu'elle est installée : {2}</translation>
+  <translation key="ComputerGrid.ConfirmUninstallCount">Pour confirmer, tapez le nombre d'ordinateurs d'où {0} sera retiré :</translation>
+  <translation key="ComputerGrid.UninstallCancelled">Ce n'est pas le nombre d'ordinateurs : rien n'a été désinstallé.</translation>
+  <translation key="ComputerGrid.Uninstalled">Désinstallé {0}</translation>
+  <translation key="ComputerGrid.StepUninstalling">Désinstallation...</translation>
 </translations>

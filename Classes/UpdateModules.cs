@@ -37,6 +37,8 @@ namespace LiteDeploy
         public List<ModuleParameter> Parameters = new List<ModuleParameter>();
         /// <summary>The header declares "# Install: yes": the module accepts "-Action Install".</summary>
         public bool Install;
+        /// <summary>The header declares "# Uninstall: yes": the module accepts "-Action Uninstall" (uninstall mode).</summary>
+        public bool Uninstall;
         /// <summary>The header says "# Instances: yes": one package row per instance ("module:Name/Instance").</summary>
         public bool Instances;
 
@@ -186,6 +188,7 @@ namespace LiteDeploy
             }
             m.Parameters = ModuleParameters.ParseHeader(lines);
             m.Install = InstallPolicy.DeclaresInstall(lines);
+            m.Uninstall = UninstallPolicy.DeclaresUninstall(lines);
             m.Instances = ModuleParameters.DeclaresInstances(lines);
             return m;
         }
