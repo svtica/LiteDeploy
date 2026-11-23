@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.24] - 2026-11-23
+
 ### Added
 
 - **SIW report...** (actions of the grid): a detailed report of the computers made by SIW (System
