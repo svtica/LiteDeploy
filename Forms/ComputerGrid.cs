@@ -62,6 +62,8 @@ namespace LiteDeploy
         {
             public String Computer;
             public List<UpdatePackage> Packages;
+            /// <summary>Started by the queue (update when available): the computer leaves the queue once reached.</summary>
+            public bool FromQueue;
         }
 
         readonly UpdateStateStore store;
@@ -130,6 +132,7 @@ namespace LiteDeploy
             // In the right-click menu of the designer, after the quick commands (then moved with the other actions)
             rowMenu.Items.Insert(rowMenu.Items.IndexOf(quickCommandsItem) + 1, messageItem);
             InitializeUninstallMode();
+            InitializeQueue();
             RestoreSettings();
             LoadPackages();
 
@@ -430,7 +433,7 @@ namespace LiteDeploy
                     { osColumn, row.Os ?? "" },
                     { ipColumn, IpText(c?.Ips) },
                     { lastLogonColumn, row.LastLogon.HasValue ? row.LastLogon.Value.ToString("yyyy-MM-dd") : "" },
-                    { statusColumn, step.Length > 0 ? step : SummaryText(summary) },
+                    { statusColumn, step.Length > 0 ? step : QueueText(c) ?? SummaryText(summary) },
                     { updatesColumn, UpdatesText(c, summary) },
                     { resultColumn, ComputerResult(c, summary) },
                     { lastScanColumn, Format(row.LastScan) },
@@ -483,6 +486,9 @@ namespace LiteDeploy
                 tip = Localization.F("ComputerGrid.OuTip", "OU: {0}", AdComputer.ShortOu(row.Ou)) + (tip.Length > 0 ? "\n" + tip : "");
             if (!String.IsNullOrEmpty(row.TeamViewerId))
                 tip += (tip.Length > 0 ? "\n" : "") + TeamViewerText(row.TeamViewerId);
+            String queued;
+            lock (storeLock) queued = QueueText(store.Find(row.Name));
+            if (queued != null) tip += (tip.Length > 0 ? "\n" : "") + queued;
             return tip;
         }
 
@@ -1241,6 +1247,8 @@ namespace LiteDeploy
                     lock (storeLock)
                     {
                         store.Apply(job.Computer, result.Messages, result.Failure, DateTime.Now);
+                        // Update when available: done once the run reached the computer (else it waits for the next ping)
+                        if (job.FromQueue && result.Messages.Count > 0) UpdateQueue.Clear(store.Find(job.Computer));
                         try { store.SaveIfChanged(UpdateStateStore.DefaultPath); }
                         catch (Exception ex) { AppConsole.WriteLine("Software updates: could not save " + UpdateStateStore.DefaultPath + ": " + ex.Message); }
                     }
@@ -1417,7 +1425,7 @@ namespace LiteDeploy
             {
                 return new ToolStripItem[]
                 {
-                    targetsItem, targetsSeparator, uninstallItem, installItem, installSeparator, pauseItem, resumeItem, nightOnlyItem, nightOnlyClearItem,
+                    targetsItem, targetsSeparator, uninstallItem, installItem, queueItem, unqueueItem, installSeparator, pauseItem, resumeItem, nightOnlyItem, nightOnlyClearItem,
                     menuSeparator, cardItem, teamViewerItem, remoteDesktopItem, commandPromptItem, quickCommandsItem, messageItem,
                     processesItem, litePMItem, logsItem, wakeItem, pingItem, managementConsoleItem, adminShareItem, copyNameItem,
                     deploySeparator, deployItem, exportSeparator, inventoryItem, exportInventoryItem, siwItem, toolReportsItem, royalTsItem, removeSeparator, removeItem, unhideItem
@@ -1447,6 +1455,7 @@ namespace LiteDeploy
             BuildUninstallMenu(targets);
             // Uninstall mode: no update nor install from the menu (one kind of change at a time)
             if (UninstallMode) installItem.Enabled = false;
+            PrepareQueueItems(targets, idle);
             pauseItem.Enabled = idle && targets.Any(c => !IsPaused(c));
             resumeItem.Enabled = idle && targets.Any(IsPaused);
             nightOnlyItem.Enabled = idle && targets.Any(c => !IsNightOnly(c));
@@ -1817,6 +1826,9 @@ namespace LiteDeploy
             ComputerFilterState filter = CurrentFilter();
             filter.OnlineOnly = false;
             List<String> names = ComputerFilter.Apply(rows, filter, DateTime.Now).Select(r => r.Name).ToList();
+            // Update when available: the queued computers are pinged even when the filters hide them
+            foreach (String queued in QueuedNames())
+                if (!names.Contains(queued, ComputerName.Comparer)) names.Add(queued);
             if (names.Count == 0) return;
             bool started = online.PingAll(names, (c, up) => RefreshLater(), () =>
             {
@@ -1826,6 +1838,7 @@ namespace LiteDeploy
                         BeginInvoke(new MethodInvoker(() =>
                         {
                             refreshStateButton.Enabled = true;
+                            RunQueue();
                             if (pending == 0)
                                 statusLabel.Text = Localization.F("ComputerGrid.PingDone", "Ping: {0} of {1} computer(s) answer.",
                                     names.Count(n => online.Get(n) == true), names.Count);

@@ -90,6 +90,8 @@ namespace LiteDeploy
 
         /// <summary>Computers whose last logon (Active Directory) is older than this many days are "offline/stale"; 0: never.</summary>
         public int UpdatesStaleDays = 30;
+        /// <summary>Update when available: a computer that has not answered after this many days leaves the queue; 0: never.</summary>
+        public int QueueMaxDays = UpdateQueue.DefaultMaxDays;
         /// <summary>Normal bounds "x,y,width,height"; empty: the default size, centered.</summary>
         public String UpdatesWindowBounds = "";
         public bool UpdatesWindowMaximized = false;
@@ -193,6 +195,8 @@ namespace LiteDeploy
                 "Edited by hand only. SIW report on several computers: fields of the summary, Page/Group/Property separated by ; (Group * : any group; several matches are joined). Example: BIOS/BIOS Properties/BIOS Version;Video/Monitor/Model. Empty: the default fields."),
             new KeyValuePair<String, String>("UpdatesStaleDays",
                 "Edited by hand only. Offline/stale filter: last logon (Active Directory) older than this many days. 0: never stale. Default: 30."),
+            new KeyValuePair<String, String>("QueueMaxDays",
+                "Edited by hand only. Update when available: a queued computer that has not answered after this many days leaves the queue. 0: never. Default: 7."),
             new KeyValuePair<String, String>("UpdatesWindowBounds",
                 "Kept by LiteDeploy: main window, then its grid (bounds, maximized, splitter, columns, status filters). Empty or 0: default."),
             new KeyValuePair<String, String>("UpdatesHiddenColumns",
