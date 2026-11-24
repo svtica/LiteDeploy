@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Modules `OnePassword` and `CachedInstaller`: the update of a product whose new MSI keeps the
+  product code of the installed one (a minor upgrade, as 1Password ships them) failed with 1603:
+  `msiexec /i` alone only reconfigures the installed product and looks for its original package.
+  `REINSTALL=ALL REINSTALLMODE=vomus` is now added in that case.
+
 ## [1.0.30] - 2026-11-24
 
 ### Changed
