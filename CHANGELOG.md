@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.28] - 2026-11-24
+
 ### Changed
 
 - Lighter tool bars of the main window: *Select all*, *Select none* and *Select outdated* in one
