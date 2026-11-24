@@ -456,6 +456,12 @@ product (new file, new version) is then imported again by every administrator fr
 
 ## Writing a module
 
+Modules run with `$ErrorActionPreference = 'Stop'` in Windows PowerShell 5.1: there, every line a
+program writes to standard error with `2>&1` becomes a terminating error (`java -version`, for
+example, writes its version there). Run programs whose standard error you read with a local
+`$ErrorActionPreference = 'Continue'` (see `Invoke-Native` in `modules/OracleJava.ps1`); a test
+checks the shipped modules.
+
 Start from [modules/Template-Module.ps1](modules/Template-Module.ps1) (it declares
 `# Install: yes` and shows an Install branch: remove both if your module cannot install).
 

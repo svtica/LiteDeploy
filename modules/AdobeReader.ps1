@@ -132,7 +132,10 @@ function Get-InstalledAdobe {
 function Get-LatestBuild($Flavor) {
     $winget = Get-Winget
     if (-not $winget) { throw 'winget.exe not found' }
+    # Standard error is not an error here (Windows PowerShell 5.1 would stop on it with Stop)
+    $ErrorActionPreference = 'Continue'
     $out = & $winget show --id Adobe.Acrobat.Reader.64-bit -e --source winget --versions --accept-source-agreements --disable-interactivity 2>&1 | Out-String
+    $ErrorActionPreference = 'Stop'
     $versions = [regex]::Matches($out, '(?m)^\s*(\d+\.\d+\.\d+)\s*$') | ForEach-Object { $_.Groups[1].Value } |
         Sort-Object { [version]$_ } -Descending | Select-Object -First 5
     foreach ($v in $versions) {
