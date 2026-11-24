@@ -868,6 +868,10 @@ namespace LiteDeploy
                 case Keys.Shift | Keys.F5:
                     StartPing(true);
                     return true;
+                case Keys.Control | Keys.F5:
+                    // The checked computers, else the selected rows (never every computer shown)
+                    if (checkButton.Enabled) CheckComputers(ActionTargets());
+                    return true;
                 case Keys.Control | Keys.U:
                     if (updateButton.Enabled) updateButton_Click(this, EventArgs.Empty);
                     return true;
@@ -1018,12 +1022,18 @@ namespace LiteDeploy
 
         void checkButton_Click(object sender, EventArgs e)
         {
-            if (pending > 0) return;
-            if (!OfferCredential()) return;
-            LoadPackages();
             // The checked computers, or every computer shown when none is checked
             List<String> targets = CheckedComputers();
             if (targets.Count == 0) targets = visible.Select(r => r.Name).ToList();
+            CheckComputers(targets);
+        }
+
+        /// <summary>Check of these computers (paused ones left out): the toolbar, F5, and "Check" of the actions (Ctrl+F5).</summary>
+        void CheckComputers(List<String> targets)
+        {
+            if (pending > 0 || targets.Count == 0) return;
+            if (!OfferCredential()) return;
+            LoadPackages();
             Start("scan", targets.Where(c => !IsPaused(c)).Select(c => new Job { Computer = c, Packages = packages.ToList() }).ToList());
         }
 
@@ -1429,7 +1439,7 @@ namespace LiteDeploy
             {
                 return new ToolStripItem[]
                 {
-                    targetsItem, targetsSeparator, uninstallItem, uninstallOtherItem, installItem, queueItem, unqueueItem, installSeparator, pauseItem, resumeItem, nightOnlyItem, nightOnlyClearItem,
+                    targetsItem, targetsSeparator, checkTargetsItem, uninstallItem, uninstallOtherItem, installItem, queueItem, unqueueItem, installSeparator, pauseItem, resumeItem, nightOnlyItem, nightOnlyClearItem,
                     menuSeparator, cardItem, teamViewerItem, remoteDesktopItem, commandPromptItem, quickCommandsItem, messageItem,
                     processesItem, litePMItem, logsItem, wakeItem, pingItem, managementConsoleItem, adminShareItem, copyNameItem,
                     deploySeparator, deployItem, exportSeparator, inventoryItem, exportInventoryItem, siwItem, toolReportsItem, royalTsItem, removeSeparator, removeItem, unhideItem
@@ -1458,6 +1468,8 @@ namespace LiteDeploy
                 : byCheck
                     ? Localization.F("ComputerGrid.TargetsChecked", "{0} checked computer(s)", targets.Count)
                     : Localization.F("ComputerGrid.TargetsSelected", "{0} selected computer(s)", targets.Count);
+            checkTargetsItem.Enabled = idle && targets.Count > 0 && packages.Count > 0;
+            checkTargetsItem.Text = Localization.F("ComputerGrid.CheckTargetsItem", "Check these {0} computer(s)", targets.Count);
             BuildInstallMenu(targets);
             BuildUninstallMenu(targets);
             // Uninstall mode: Uninstall takes the place of Install or update (one kind of change at a time)

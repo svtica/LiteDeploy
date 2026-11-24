@@ -29,5 +29,13 @@ namespace LiteDeploy.Tests
             Assert.AreEqual("Update checked", ComputerGrid.UpdateButtonText(0));
             Assert.AreEqual("Update checked (3)", ComputerGrid.UpdateButtonText(3));
         }
+
+        [TestMethod]
+        public void CheckButtonText_NumberOfCheckedComputers()
+        {
+            Localization.Initialize(Localization.English);
+            Assert.AreEqual("Check", ComputerGrid.CheckButtonText(0), "none checked: every computer shown");
+            Assert.AreEqual("Check (2)", ComputerGrid.CheckButtonText(2));
+        }
     }
 }

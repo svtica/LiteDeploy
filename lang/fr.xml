@@ -1075,4 +1075,6 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="ComputerGrid.ClearFiltersTip">Décocher les filtres d'état et vider la recherche (En ligne seulement et Inclure les serveurs sont conservés)</translation>
   <translation key="ComputerGrid.ActiveFilters">Filtres actifs : {0}</translation>
   <translation key="ComputerGrid.UpdateCheckedCount">{0} ({1})</translation>
+  <translation key="ComputerGrid.CheckTargetsItem">Vérifier ces {0} ordinateur(s)</translation>
+  <translation key="ComputerGrid.CheckTargetsTip">Vérifier maintenant seulement ces ordinateurs (les cochés, sinon les lignes sélectionnées), sans vérifier tous les ordinateurs affichés</translation>
 </translations>

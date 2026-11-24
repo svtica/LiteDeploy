@@ -19,7 +19,7 @@ each computer in the process reports.
   check boxes (see *Software updates* below for the columns and the filters). Menus: *App*
   (options, exit), *Tools* (add computers, deploy, ping, process reports, scheduled updates, web
   versions, credentials, tools, LitePM, console) and *Help*. The console of LiteDeploy is under
-  the grid (splitter). Shortcuts: F5 check, Ctrl+U update, Ctrl+F search, Ctrl+A check all the
+  the grid (splitter). Shortcuts: F5 check (the checked computers, else every computer shown), Ctrl+F5 check the checked computers, else the selected rows (also *Check these N computer(s)* at the top of the actions), Ctrl+U update, Ctrl+F search, Ctrl+A check all the
   rows shown, Esc stop.
 - **State** (green dot: answers the ping, red: does not, grey: not pinged yet): the computers the
   other filters show are pinged when LiteDeploy opens, then every 5 minutes and with *Refresh

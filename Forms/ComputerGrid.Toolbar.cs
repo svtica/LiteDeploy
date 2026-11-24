@@ -24,9 +24,20 @@ namespace LiteDeploy
         ToolStripDropDownButton moreButton;
         ToolStripLabel activeFiltersLabel;
         ToolStripButton clearFiltersButton;
+        /// <summary>Check of the targets of the actions (checked computers, else the selected rows): right-click and Actions, Ctrl+F5.</summary>
+        ToolStripMenuItem checkTargetsItem;
 
         void InitializeToolbarTweaks()
         {
+            checkTargetsItem = new ToolStripMenuItem
+            {
+                Name = "checkTargetsItem",
+                ShortcutKeyDisplayString = "Ctrl+F5",
+                ToolTipText = Localization.T("ComputerGrid.CheckTargetsTip", "Check only these computers now (the checked ones, else the selected rows), without checking every computer shown")
+            };
+            checkTargetsItem.Font = new System.Drawing.Font(checkTargetsItem.Font, System.Drawing.FontStyle.Bold);
+            checkTargetsItem.Click += (s, e) => CheckComputers(ActionTargets());
+
             // Selection: the three buttons of the designer in one drop-down
             selectionButton = new ToolStripDropDownButton
             {
@@ -117,11 +128,19 @@ namespace LiteDeploy
             return checkedRows > 0 ? Localization.F("ComputerGrid.UpdateCheckedCount", "{0} ({1})", text, checkedRows) : text;
         }
 
+        /// <summary>The text of Check: with the number of checked computers when there are some (else every computer shown is checked).</summary>
+        internal static String CheckButtonText(int checkedComputers)
+        {
+            String text = Localization.T("ComputerGrid.checkButton.Text", "Check");
+            return checkedComputers > 0 ? Localization.F("ComputerGrid.UpdateCheckedCount", "{0} ({1})", text, checkedComputers) : text;
+        }
+
         /// <summary>Called with the counts: Update checked (number), the active filters, Stop (only while working).</summary>
         void RefreshToolbarTweaks()
         {
             if (activeFiltersLabel == null) return;
             updateButton.Text = UpdateButtonText(ByPackage ? checkedKeys.Count : checkedComputers.Count);
+            checkButton.Text = CheckButtonText(checkedComputers.Count);
             int filters = ActiveFilterCount(chips.Keys.Select(c => c.Checked), searchBox.Text);
             activeFiltersLabel.Text = Localization.F("ComputerGrid.ActiveFilters", "Active filters: {0}", filters);
             activeFiltersLabel.Visible = clearFiltersButton.Visible = filters > 0;
