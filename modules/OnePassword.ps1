@@ -11,7 +11,9 @@
     (AgileBits.1Password). Update: downloads the official MSI from
     downloads.1password.com (or the shared cache, LITEDEPLOY_CACHE\1Password),
     refuses it unless it is signed by AgileBits,
-    installs it with MANAGED_INSTALL=1 MANAGED_UPDATE=1. When another version
+    installs it with MANAGED_INSTALL=1 MANAGED_UPDATE=1 (and REINSTALL=ALL
+    REINSTALLMODE=vomus when the new MSI keeps the product code of the installed
+    one: a minor upgrade, which msiexec /i alone fails with 1603). When another version
     blocks the install (1638), the old one is removed first. The MSI action
     AI_UnpinFromStartScreen can hang on the Start menu host: the host is
     restarted when that happens (Windows relaunches it). The processes of the
@@ -108,6 +110,24 @@ function Test-VendorSignature([string] $Path, [string] $SignerPattern) {
     return ($sig.Status -eq 'Valid' -and $sig.SignerCertificate.Subject -match $SignerPattern)
 }
 
+# A property of the Property table of an MSI, read without installing it
+function Get-MsiProperty([string] $Path, [string] $Property) {
+    $installer = New-Object -ComObject WindowsInstaller.Installer
+    $db = $null; $view = $null; $record = $null
+    try {
+        $db = $installer.GetType().InvokeMember('OpenDatabase', 'InvokeMethod', $null, $installer, @($Path, 0))
+        $view = $db.GetType().InvokeMember('OpenView', 'InvokeMethod', $null, $db, @("SELECT ``Value`` FROM ``Property`` WHERE ``Property`` = '$Property'"))
+        $null = $view.GetType().InvokeMember('Execute', 'InvokeMethod', $null, $view, $null)
+        $record = $view.GetType().InvokeMember('Fetch', 'InvokeMethod', $null, $view, $null)
+        if ($record) { return [string]$record.GetType().InvokeMember('StringData', 'GetProperty', $null, $record, @(1)) }
+        return $null
+    }
+    finally {
+        if ($view) { try { $null = $view.GetType().InvokeMember('Close', 'InvokeMethod', $null, $view, $null) } catch { } }
+        foreach ($o in @($record, $view, $db, $installer)) { if ($o) { $null = [Runtime.InteropServices.Marshal]::ReleaseComObject($o) } }
+    }
+}
+
 function Invoke-Msi([string] $Arguments, [string] $MsiLog) {
     $proc = Start-Process msiexec.exe -ArgumentList $Arguments -PassThru
     $null = $proc.Handle
@@ -141,7 +161,12 @@ try {
     $msi = Get-Installer $url "1PasswordSetup-$latest.msi" '1Password' 'O=AgileBits'
     $log = Join-Path (Split-Path $msi) '1password.log'
 
-    $arguments = "/i `"$msi`" MANAGED_INSTALL=1 MANAGED_UPDATE=1 /qn /norestart /l*v `"$log`""
+    # 1Password ships its updates as minor upgrades: the new MSI keeps the product code of the installed
+    # one. msiexec /i alone then only "reconfigures" the installed product and fails (1603, the source
+    # 1PasswordSetup-latest.msi is not found); REINSTALL=ALL REINSTALLMODE=vomus applies the new package
+    $msiCode = Get-MsiProperty $msi 'ProductCode'
+    $minor = if ($msiCode -and (Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$msiCode")) { ' REINSTALL=ALL REINSTALLMODE=vomus' } else { '' }
+    $arguments = "/i `"$msi`" MANAGED_INSTALL=1 MANAGED_UPDATE=1$minor /qn /norestart /l*v `"$log`""
     $code = Invoke-Msi $arguments $log
     if ($code -eq 1638) {
         # Another version is installed and the MSI does not upgrade it in place: remove it first

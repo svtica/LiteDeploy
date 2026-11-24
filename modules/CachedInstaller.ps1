@@ -40,7 +40,9 @@
     a vendor that renamed itself: any one of them is accepted; the refusal
     names the organisation that signed), closes the processes of
     CloseProcesses, runs it (msiexec /i for an msi, the exe itself otherwise)
-    with the Arguments, reads its exit code (0 success; 3010 and 1641 success,
+    with the Arguments (for an msi that keeps the product code of the
+    installed product, a minor upgrade, also REINSTALL=ALL
+    REINSTALLMODE=vomus), reads its exit code (0 success; 3010 and 1641 success,
     restart needed) and checks again. The computers only read the cache.
 
     The Processes line of the header is the same for every instance: it is
@@ -363,7 +365,11 @@ try {
     Close-Processes $closing
     if ($type -eq 'msi') {
         $log = Join-Path $work "$instance.log"
-        $code = Invoke-Installer (Join-Path $env:windir 'System32\msiexec.exe') "/i `"$local`" $arguments /l*v `"$log`""
+        # Minor upgrade (the new MSI keeps the product code of the installed one): msiexec /i alone only
+        # "reconfigures" the installed product and fails (1603); REINSTALL=ALL REINSTALLMODE=vomus applies it
+        $msiCode = Get-MsiProperty $local 'ProductCode'
+        $minor = if ($msiCode -and (Get-Installed $msiCode '')) { ' REINSTALL=ALL REINSTALLMODE=vomus' } else { '' }
+        $code = Invoke-Installer (Join-Path $env:windir 'System32\msiexec.exe') "/i `"$local`" $arguments$minor /l*v `"$log`""
     } else {
         $log = $null
         $code = Invoke-Installer $local $arguments
