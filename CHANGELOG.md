@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.31] - 2026-11-24
+
 ### Added
 
 - **Check these N computer(s)** at the top of the actions (right-click and *Actions* menu, Ctrl+F5):
