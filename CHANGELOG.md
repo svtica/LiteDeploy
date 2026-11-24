@@ -13,9 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (Check, Update, Install, schedules, *Update when available*). Target: the latest MSI release
   (`ReleaseTag` of the PowerShell `metadata.json`, the 7.6 LTS line) or the `Version` parameter;
   MSI from the shared cache (`<cache>\PowerShell`) or the GitHub release (`Download`), refused
-  unless signed by Microsoft Corporation with the expected `ProductVersion`; the `pwsh.exe` of the
-  installed folder are closed first (`ClosePwsh`, or the install waits); MSI options from a fixed
-  list (`MsiProperties`). The winget package `Microsoft.PowerShell` is not enough: from 7.7 it is
+  unless signed by Microsoft Corporation with the expected `ProductName` and `ProductVersion`; the
+  architecture of the installed MSI is kept (x86 stays x86); a zip copy of PowerShell 7 in the MSI
+  folder is reported and never overwritten; the `pwsh.exe` of the installed folder are closed
+  first (`ClosePwsh`, or the install waits); MSI options from a fixed list (`MsiProperties`). The winget package `Microsoft.PowerShell` is not enough: from 7.7 it is
   MSIX only and winget cannot keep an MSI installation on its line. The check message gives the
   version of Windows PowerShell 5.1, read only; it is never updated.
 - Module `PSGalleryModule` (instances, `# Install: yes`): a module of the PowerShell Gallery
@@ -23,8 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `%ProgramFiles%\PowerShell\Modules`), latest stable version or `Version`. Without PowerShellGet:
   the `.nupkg` comes from the shared cache (`<cache>\PSGallery\<Name>`) or the Gallery (SHA512 of
   the Gallery checked), and is refused unless every code file, or its catalog, is validly signed by
-  the `Publisher` of the instance, its `ModuleVersion` is the target and its `RequiredModules` are
-  installed. New versions go side by side; nothing is closed.
+  the `Publisher` of the instance (`O=` of the certificate, or `CN=` when it has no `O=`), its
+  `ModuleVersion` is the target and its `RequiredModules` are installed. The check looks in both
+  modules folders, so a module is never installed twice. New versions go side by side; nothing is
+  closed.
 
 ## [1.0.31] - 2026-11-24
 

@@ -361,11 +361,15 @@ Check, Update, Install, the schedules and *Update when available* like any modul
 - **Check**: the Uninstall entry `PowerShell 7-<arch>` (64 and 32-bit views; the architecture of
   the computer first; the preview `PowerShell 7-preview-...` is ignored) against the target. No
   entry: `notinstalled` (the message names an MSIX PowerShell 7 when one is installed, which the
-  module leaves alone). The message always gives the version of **Windows PowerShell 5.1**: read
+  module leaves alone), or `error` when `%ProgramFiles%\PowerShell\7\pwsh.exe` exists without one
+  (a zip copy: never overwritten by the MSI, remove it first). The MSI keeps the architecture of
+  the installed entry (an x86 PowerShell 7 on an x64 computer is updated in x86), else the one of
+  Windows. The message always gives the version of **Windows PowerShell 5.1**: read
   only (see below).
 - **Update** (outdated) and **Install** (`notinstalled`; refused when an MSIX PowerShell 7 is
   installed): the MSI is copied to `%windir%\LiteDeploy\work\PowerShell7`, refused unless its
-  signature is `Valid` with `O=Microsoft Corporation` and its `ProductVersion` is the target;
+  signature is `Valid` with `O=Microsoft Corporation`, its `ProductName` is `PowerShell 7-<arch>`
+  and its `ProductVersion` is the target;
   `pwsh.exe` closed (`ClosePwsh`), `msiexec /i <msi> /qn /norestart <MsiProperties> /l*v <log>`
   (13 minutes at most; log kept on failure). 0: success; 3010 or 1641: success, restart needed
   (3010). It checks again: the target version must be installed. A newer 7.x MSI replaces the
@@ -398,14 +402,17 @@ other module the IT team chooses), one **instance** per module
 | Parameter | Value |
 |---|---|
 | `Name` | Name of the module in the Gallery; empty: the instance name |
-| `Publisher` | **Required.** Organisation (`O=`) of the Authenticode signer of the module files, exactly as in the certificate (several separated by `;`, any one is accepted). Read it from a copy saved on the administrator's computer (see below), never from the Gallery page |
+| `Publisher` | **Required.** Signer of the module files, exactly as in the certificate: its organisation (`O=`), or its name (`CN=`) when the certificate has no `O=` (a publisher who signs as a person); several separated by `;`, any one is accepted. Read it from a copy saved on the administrator's computer (see below), never from the Gallery page |
 | `Version` | Version to install, e.g. `2.2.1.5`; empty: the latest stable listed version. Previews are never installed |
 | `Download` | `yes` (default): the computers query the Gallery and download from it when the cache has no copy (a downloaded copy goes to the cache when they can write there). `no`: the cache only; with `Version` empty the target is the highest `<name>.<version>.nupkg` of `<cache>\PSGallery\<Name>` |
 | `ModulesFolder` | `WindowsPowerShell` (default): `%ProgramFiles%\WindowsPowerShell\Modules`, read by Windows PowerShell 5.1 and by PowerShell 7. `PowerShell`: `%ProgramFiles%\PowerShell\Modules`, PowerShell 7 only (a module that needs PowerShell 7) |
 
-- **Check**: the `<Version>` folders of `<ModulesFolder>\<Name>` that hold `<Name>.psd1` (highest
-  wins; a module installed without version folder, or for one user only, is not seen); none:
-  `notinstalled`; older than the target: `outdated`.
+- **Check**: the `<Version>` folders of `<Name>` that hold `<Name>.psd1`, in **both** modules
+  folders of the machine (`%ProgramFiles%\WindowsPowerShell\Modules` and
+  `%ProgramFiles%\PowerShell\Modules`, whatever `ModulesFolder` says: a module already installed in
+  the other one is not installed twice); highest wins (a module installed without version folder,
+  or for one user only, is not seen); none: `notinstalled`; older than the target: `outdated`.
+  `ModulesFolder` only chooses where a new version goes.
 - **Update** (outdated) and **Install** (`notinstalled`): the `.nupkg` of the cache, else of the
   Gallery (HTTPS, Gallery addresses only); its SHA512 must be the `PackageHash` the Gallery gives
   (when the Gallery was queried, also for a copy of the cache). It is extracted to
@@ -433,7 +440,8 @@ Get-ChildItem C:\Temp\psg -Recurse -Include *.psd1, *.psm1, *.ps1, *.dll, *.cat 
     Get-AuthenticodeSignature | Select-Object Status, @{ n = 'Signer'; e = { $_.SignerCertificate.Subject } }, Path
 ```
 
-Every line must be `Valid` with the same organisation (`O=`): that is the `Publisher`. If a file is
+Every line must be `Valid` with the same organisation (`O=`): that is the `Publisher` (a
+certificate without `O=`: its `CN=`). If a file is
 `NotSigned`, the module cannot be managed by `PSGalleryModule` (by design). Catalog of instances,
 like `CachedInstaller` (fictitious values):
 

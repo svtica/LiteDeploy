@@ -4,7 +4,7 @@
 # Install: yes
 # Instances: yes
 # Parameter: Name default= Name of the module in the PowerShell Gallery, e.g. PSWindowsUpdate (empty: the instance name)
-# Parameter: Publisher Organisation (O=) of the Authenticode signer of the module files, e.g. Example Author Ltd (several: separated by ;)
+# Parameter: Publisher Signer of the module files: organisation (O=) of the certificate, or its name (CN=) when it has no O=, e.g. Example Author Ltd (several: separated by ;)
 # Parameter: Version default= Version to install, e.g. 2.2.1.5 (empty: the latest stable version; previews are never installed)
 # Parameter: Download default=yes yes: query and download from the PowerShell Gallery when the shared cache has no copy; no: the shared cache only (<cache>\PSGallery\<Name>)
 # Parameter: ModulesFolder default=WindowsPowerShell WindowsPowerShell: %ProgramFiles%\WindowsPowerShell\Modules (PowerShell 5.1 and 7); PowerShell: %ProgramFiles%\PowerShell\Modules (PowerShell 7 only)
@@ -19,9 +19,11 @@
     PowerShellGet or the NuGet provider (old in Windows PowerShell 5.1 and
     interactive on first use): it reads the Gallery API and the .nupkg itself.
 
-    Check: the installed versions are the <Version> folders of
-    <ModulesFolder>\<Name> that hold <Name>.psd1 (highest wins); none:
-    notinstalled. The target version is the Version parameter, else the
+    Check: the installed versions are the <Version> folders of <Name> that
+    hold <Name>.psd1 in both modules folders of the machine
+    (%ProgramFiles%\WindowsPowerShell\Modules and %ProgramFiles%\PowerShell\Modules,
+    whatever ModulesFolder says: a module already installed in the other one
+    is not installed twice); highest wins; none: notinstalled. The target version is the Version parameter, else the
     latest stable version of the Gallery (FindPackagesById, IsPrerelease
     false, listed), else (Download=no) the highest <name>.<version>.nupkg of
     <cache>\PSGallery\<Name>. Older: outdated; else uptodate.
@@ -37,7 +39,8 @@
       - <Name>.psd1 is at its root with ModuleVersion = the target version and
         no Prerelease tag;
       - every code file (.ps1, .psm1, .psd1, .ps1xml, .cdxml, .dll, .exe) has a
-        Valid Authenticode signature whose signer subject has O=<Publisher>,
+        Valid Authenticode signature whose signer subject has O=<Publisher>
+        (or CN=<Publisher> when the subject has no O=),
         or the module has a catalog <Name>.cat with such a signature and
         Test-FileCatalog says Valid: an unsigned module, a changed file or
         another publisher is always refused;
@@ -124,6 +127,19 @@ function Get-InstalledVersions([string] $Root, [string] $Name) {
         $v = ConvertTo-ModuleVersion $d.Name
         if ($v -and (Test-Path -LiteralPath (Join-Path $d.FullName "$Name.psd1") -PathType Leaf)) {
             $found += [pscustomobject]@{ Text = $d.Name; Version = $v }
+        }
+    }
+    return @($found | Sort-Object Version -Descending)
+}
+
+# Installed versions of a module in both modules folders of the machine (Windows PowerShell and
+# PowerShell 7), highest first, with their Root: a module already installed in the other folder is not
+# installed again
+function Get-MachineVersions([string] $ProgramFiles, [string] $Name) {
+    $found = @()
+    foreach ($root in @((Join-Path $ProgramFiles 'WindowsPowerShell\Modules'), (Join-Path $ProgramFiles 'PowerShell\Modules'))) {
+        foreach ($v in Get-InstalledVersions $root $Name) {
+            $found += [pscustomobject]@{ Text = $v.Text; Version = $v.Version; Root = $root }
         }
     }
     return @($found | Sort-Object Version -Descending)
@@ -261,11 +277,14 @@ function Get-PublisherNames([string] $Publisher) {
     return @(([string]$Publisher -split ';') | ForEach-Object { $_.Trim().Trim('"').Trim() } | Where-Object { $_ } | Select-Object -Unique)
 }
 
-# O=<one of the organisations of Publisher> in a certificate subject (quoted when it has a comma)
+# The signer of a certificate subject is one of the names of Publisher: its organisation (O=), or its
+# name (CN=) when the subject has no O= (a publisher signing as a person); quoted when it has a comma
 function Test-SubjectOrganisation([string] $Subject, [string] $Publisher) {
+    $hasOrganisation = [string]$Subject -match '(^|,\s*)O='
     foreach ($name in @(Get-PublisherNames $Publisher)) {
         $escaped = [regex]::Escape($name)
         if ($Subject -match "(^|,\s*)O=(`"?)$escaped\2\s*(,|$)") { return $true }
+        if (-not $hasOrganisation -and $Subject -match "(^|,\s*)CN=(`"?)$escaped\2\s*(,|$)") { return $true }
     }
     return $false
 }
@@ -350,13 +369,13 @@ try {
     }
     $targetVersion = ConvertTo-ModuleVersion $target
 
-    $versions = @(Get-InstalledVersions $root $name)
+    $versions = @(Get-MachineVersions $env:ProgramFiles $name)
     $installed = if ($versions.Count -gt 0) { $versions[0] } else { $null }
     $installedText = if ($installed) { $installed.Text } else { $null }
     $outdated = $installed -and ($installed.Version -lt $targetVersion)
 
     if ($Action -eq 'Check' -or ($installed -and -not $outdated) -or ($Action -eq 'Update' -and -not $installed)) {
-        if (-not $installed) { Write-LiteDeployResult 'notinstalled' $null $target "$name not installed in $root" }
+        if (-not $installed) { Write-LiteDeployResult 'notinstalled' $null $target "$name not installed for the machine" }
         elseif ($outdated) { Write-LiteDeployResult 'outdated' $installedText $target }
         else { Write-LiteDeployResult 'uptodate' $installedText }
         exit 0
@@ -420,7 +439,7 @@ try {
     Copy-Item -LiteralPath $staging -Destination $partial -Recurse -Force
     Move-Item -LiteralPath $partial -Destination $dest
 
-    $now = @(Get-InstalledVersions $root $name)
+    $now = @(Get-MachineVersions $env:ProgramFiles $name)
     if ($now.Count -eq 0 -or $now[0].Version -lt $targetVersion) {
         Write-LiteDeployResult 'error' $installedText $target "$name $target copied to $dest but not found as installed"
         exit 1
