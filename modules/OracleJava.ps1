@@ -48,6 +48,20 @@ function Get-InstalledJava {
         Sort-Object { [version]$_.DisplayVersion } -Descending | Select-Object -First 1
 }
 
+# Runs a program and returns its output, standard error included, as text. With
+# $ErrorActionPreference = 'Stop', Windows PowerShell 5.1 turns each line a program
+# writes to standard error (2>&1) into a terminating error: "java -version" writes
+# its version there, which made a successful upgrade end in the catch block.
+function Invoke-Native([string] $FilePath, [string[]] $Arguments) {
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $lines = & $FilePath @Arguments 2>&1 | ForEach-Object { "$_" }
+        return ($lines -join "`n")
+    }
+    finally { $ErrorActionPreference = $previous }
+}
+
 function Get-SystemJavaProcesses {
     @(Get-CimInstance Win32_Process -Filter "Name='java.exe' OR Name='javaw.exe'" -ErrorAction SilentlyContinue |
         Where-Object { $_.ExecutablePath -match $systemJava })
@@ -60,7 +74,7 @@ try {
     if (-not $winget) { Write-LiteDeployResult 'error' $installed.DisplayVersion $null 'winget.exe not found'; exit 1 }
 
     # A row in the list means an upgrade is available (an up-to-date package gives no row)
-    $list = & $winget list --id $id -e --source winget --upgrade-available --accept-source-agreements --disable-interactivity 2>&1 | Out-String
+    $list = Invoke-Native $winget @('list', '--id', $id, '-e', '--source', 'winget', '--upgrade-available', '--accept-source-agreements', '--disable-interactivity')
     $outdated = $list -match [regex]::Escape($id)
     $available = $null
     if ($outdated) {
@@ -88,13 +102,13 @@ try {
         $stopped = $true
     }
 
-    $out = & $winget upgrade --id $id -e --source winget --silent --accept-package-agreements --accept-source-agreements --disable-interactivity 2>&1 | Out-String
+    $out = Invoke-Native $winget @('upgrade', '--id', $id, '-e', '--source', 'winget', '--silent', '--accept-package-agreements', '--accept-source-agreements', '--disable-interactivity')
     $code = $LASTEXITCODE
 
     # The system Java must still answer (applications start "java" through java8path or the PATH)
     $shim = "${env:ProgramFiles(x86)}\Common Files\Oracle\Java\java8path\java.exe"
     if (-not (Test-Path $shim)) { $shim = "$env:ProgramFiles\Common Files\Oracle\Java\java8path\java.exe" }
-    $javaVersion = if (Test-Path $shim) { (& $shim -version 2>&1 | Select-Object -First 1 | Out-String).Trim() } else { '' }
+    $javaVersion = if (Test-Path $shim) { ((Invoke-Native $shim @('-version')) -split "`n" | Select-Object -First 1).Trim() } else { '' }
 
     $now = Get-InstalledJava
     if ($code -ne 0) {

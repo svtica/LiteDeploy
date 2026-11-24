@@ -50,7 +50,10 @@ function Get-Installed {
 function Get-LatestVersion {
     $winget = Get-Winget
     if (-not $winget) { return $null }
+    # Standard error is not an error here (Windows PowerShell 5.1 would stop on it with Stop)
+    $ErrorActionPreference = 'Continue'
     $out = & $winget show --id AgileBits.1Password -e --source winget --accept-source-agreements --disable-interactivity 2>&1 | Out-String
+    $ErrorActionPreference = 'Stop'
     $m = [regex]::Match($out, '(?m)^\s*Version\s*:\s*([\d\.]+)')
     if ($m.Success) { return $m.Groups[1].Value }
     return $null

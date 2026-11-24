@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Module `OracleJava`: an upgrade that succeeded was reported as failed, with the message
+  `java version "1.8.0_..."` (exit code 1): the check of the system Java after the upgrade reads
+  `java -version`, which writes to standard error, and Windows PowerShell 5.1 stopped the script
+  on it. Programs are now run with standard error read as text. Same guard for the `winget show`
+  calls of `AdobeReader` and `OnePassword`; a test checks every shipped module.
+
 ## [1.0.28] - 2026-11-24
 
 ### Changed
