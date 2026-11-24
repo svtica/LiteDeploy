@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Module `OracleJava`: what the upgrade stopped starts again by itself. Before stopping the system
+  Java, the module notes each process (program, arguments, user and session, service); after the
+  upgrade (also when it failed), a service is started again, and a program of a desktop session is
+  started in that session, as its user, with the same arguments (one-time scheduled task with an
+  interactive principal: no password, nothing elevated; the new Java through java8path when the old
+  folder is gone; working folder: the folder of the `-jar` file). The message names what was
+  relaunched; a restart is asked (3010) only when something could not be started again.
+
 ## [1.0.29] - 2026-11-24
 
 ### Fixed
