@@ -28,7 +28,8 @@ namespace LiteDeploy.Tests
             while (dir != null && !File.Exists(Path.Combine(dir, "LiteDeploy.sln"))) dir = Path.GetDirectoryName(dir);
             Assert.IsNotNull(dir, "repository root not found");
             string module = Path.Combine(dir, "modules", "OracleJava.ps1");
-            string script = ". '" + module.Replace("'", "''") + "'\n" + commands;
+            // No progress records on standard error ("Preparing modules for first use" on a fresh runner)
+            string script = "$ProgressPreference = 'SilentlyContinue'\n. '" + module.Replace("'", "''") + "'\n" + commands;
             ProcessStartInfo psi = new ProcessStartInfo(exe, "-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand " + Convert.ToBase64String(Encoding.Unicode.GetBytes(script)))
             {
                 UseShellExecute = false,
@@ -41,7 +42,10 @@ namespace LiteDeploy.Tests
                 string output = p.StandardOutput.ReadToEnd();
                 string errors = p.StandardError.ReadToEnd();
                 p.WaitForExit();
-                Assert.AreEqual("", errors.Trim(), "PowerShell errors");
+                // A real error is on standard error as text; CLIXML progress records are not errors
+                string text = errors.Trim();
+                if (text.Length > 0 && !text.StartsWith("#< CLIXML", StringComparison.Ordinal))
+                    Assert.Fail("PowerShell errors: " + text);
                 return output.Replace("\r\n", "\n").Trim();
             }
         }
