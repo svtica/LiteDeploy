@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Lighter tool bars of the main window: *Select all*, *Select none* and *Select outdated* in one
+  *Selection* drop-down; *Show packages*, *Software catalog...*, *Schedule...* and *Deploy...* in a
+  *More* drop-down; *Stop* shown only while a check or an update runs; *Update checked* gives the
+  number of checked rows; the filter bar shows the number of active filters with *Clear*.
+  Shortcuts unchanged.
+
 ## [1.0.27] - 2026-11-23
 
 ### Added
