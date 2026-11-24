@@ -253,6 +253,9 @@
     <Compile Include="Forms\ComputerGrid.Uninstall.cs">
       <DependentUpon>ComputerGrid.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\ComputerGrid.Toolbar.cs">
+      <DependentUpon>ComputerGrid.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\ComputerGrid.Queue.cs">
       <DependentUpon>ComputerGrid.cs</DependentUpon>
     </Compile>

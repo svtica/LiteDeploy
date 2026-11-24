@@ -133,6 +133,7 @@ namespace LiteDeploy
             rowMenu.Items.Insert(rowMenu.Items.IndexOf(quickCommandsItem) + 1, messageItem);
             InitializeUninstallMode();
             InitializeQueue();
+            InitializeToolbarTweaks();
             RestoreSettings();
             LoadPackages();
 
@@ -178,7 +179,8 @@ namespace LiteDeploy
         internal void ApplyDeploymentsVisibility()
         {
             bool show = UserSettings.Current.ShowStandaloneDeployments;
-            deployButton.Visible = deployItem.Visible = deploySeparator.Visible = show;
+            // The tool bar button stays hidden: Deploy is in the More drop-down (ComputerGrid.Toolbar.cs)
+            deployItem.Visible = deploySeparator.Visible = show;
         }
 
         /// <summary>While a deployment runs, no other one starts.</summary>
@@ -783,6 +785,7 @@ namespace LiteDeploy
             int total = rows.Count(r => !r.Disabled);
             int checkedCount = ByPackage ? checkedKeys.Count : checkedComputers.Count;
             countsLabel.Text = Localization.F("ComputerGrid.Counts", "{0} shown / {1} total / {2} checked", visible.Count, total, checkedCount);
+            RefreshToolbarTweaks();
             OnTargetsChanged();
         }
 
@@ -796,6 +799,7 @@ namespace LiteDeploy
             editPackagesButton.Enabled = profileButton.Enabled = idle;
             byPackageButton.Enabled = idle;
             stopButton.Enabled = !idle;
+            RefreshToolbarTweaks();
         }
 
         // ---- Filters ------------------------------------------------------------------

@@ -1067,4 +1067,12 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="ComputerActions.ProgramRemoved">{0} : {1}</translation>
   <translation key="ComputerActions.ProgramNotRemoved">{0} : ÉCHEC : {1}</translation>
   <translation key="ComputerActions.UninstallProgramSummary">{0} : retiré de {1} ordinateur(s), échec sur {2}.</translation>
+  <translation key="ComputerGrid.SelectionButton">Sélection</translation>
+  <translation key="ComputerGrid.SelectionTip">Cocher les lignes affichées : toutes (Ctrl+A), aucune, ou celles qui ont une mise à jour</translation>
+  <translation key="ComputerGrid.MoreButton">Plus</translation>
+  <translation key="ComputerGrid.MoreTip">Afficher les paquets, catalogue de logiciels, planifications, déploiement autonome</translation>
+  <translation key="ComputerGrid.ClearFilters">Effacer</translation>
+  <translation key="ComputerGrid.ClearFiltersTip">Décocher les filtres d'état et vider la recherche (En ligne seulement et Inclure les serveurs sont conservés)</translation>
+  <translation key="ComputerGrid.ActiveFilters">Filtres actifs : {0}</translation>
+  <translation key="ComputerGrid.UpdateCheckedCount">{0} ({1})</translation>
 </translations>

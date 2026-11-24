@@ -75,7 +75,7 @@ each computer in the process reports.
 ### Standalone deployments (PsExec)
 Hidden by default: *App > Options > Show the standalone deployments*. PsExec is needed only for
 them (and for the PsExec method of the software updates); it is asked for when they are used.
-- *Deploy a file or command...* (*Tools* menu, *Deploy...* in the tool bar, or the actions of the
+- *Deploy a file or command...* (*Tools* menu, *More > Deploy...* in the tool bar, or the actions of the
   grid) opens the deployment window, non-modal: it deploys to the checked computers of the grid,
   else the selected rows (named at the top of the window, followed live), and keeps its fields
   from one deployment to the next.
@@ -105,8 +105,14 @@ them (and for the PsExec method of the software updates); it is asked for when t
   logon older than 30 days by default, `UpdatesStaleDays` in `settings.xml`), and **Include
   servers** (servers are hidden by default; an operating system containing "Server" is a server).
   Disabled computer accounts are never shown. The status bar shows *shown / total / checked*.
-- Checks are kept when the filters change. *Select all* (Ctrl+A) checks the rows shown, *Select
-  none* unchecks everything, *Select outdated* checks exactly the rows shown that have updates.
+  When status filters or a search are active, the filter bar says how many (*Active filters: 2*)
+  with *Clear* (Online only and Include servers are kept).
+- Checks are kept when the filters change. The *Selection* drop-down of the tool bar: *Select
+  all* (Ctrl+A) checks the rows shown, *Select none* unchecks everything, *Select outdated* checks
+  exactly the rows shown that have updates. *Update checked* gives the number of checked rows;
+  *Stop* shows only while a check or an update runs. The *More* drop-down holds *Show packages*,
+  *Software catalog...*, *Schedule...* and *Deploy...* (the last ones are also in the *Tools*
+  menu).
   *Check* (F5) reads the checked computers (every computer shown when none is checked); *Update
   checked* (Ctrl+U) updates them; Esc stops (with a confirmation). Packages that are not
   installed are neither updates nor errors: they are installed only on explicit request
@@ -125,7 +131,7 @@ them (and for the PsExec method of the software updates); it is asked for when t
     `%windir%\LiteDeploy\work`, then deletes the task and the file (leftovers of a stopped run
     are deleted at the next run). Needs WinRM on the computers.
   - **PsExec** (`-s -c -f`): the worker is copied and started by PsExec.
-- **Software catalog...** (tool bar, *Tools* menu): every software kept up to date, winget packages
+- **Software catalog...** (*More* in the tool bar, *Tools* menu): every software kept up to date, winget packages
   and update modules (`%LOCALAPPDATA%\LiteDeploy\packages.txt`); search winget, add a module,
   *Parameters...*, *Import instances...* (catalog of module instances), *Web versions...*. State
   kept in `%LOCALAPPDATA%\LiteDeploy\updates.xml`.
