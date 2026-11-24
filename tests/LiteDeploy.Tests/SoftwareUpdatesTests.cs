@@ -480,7 +480,7 @@ namespace LiteDeploy.Tests
         public void ShippedModules_AreAsciiModules()
         {
             string[] files = Directory.GetFiles(Path.Combine(RepoRoot(), "modules"), "*.ps1");
-            CollectionAssert.IsSubsetOf(new[] { "AdobeReader.ps1", "CachedInstaller.ps1", "MsixProvision.ps1", "OnePassword.ps1", "OracleJava.ps1", "PrinterDrivers.ps1", "TeamsBootstrapper.ps1" },
+            CollectionAssert.IsSubsetOf(new[] { "AdobeReader.ps1", "CachedInstaller.ps1", "MsixProvision.ps1", "OnePassword.ps1", "OracleJava.ps1", "PowerShell7.ps1", "PrinterDrivers.ps1", "PSGalleryModule.ps1", "TeamsBootstrapper.ps1" },
                 files.Select(Path.GetFileName).ToArray());
             foreach (string path in files)
             {

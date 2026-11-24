@@ -73,14 +73,16 @@ Most of them come from an earlier in-house update script:
 | `MsixProvision` | Any MSIX package (and its dependency packages) provisioned for all users from the shared cache (`<cache>\<Folder>`) | Check: provisioned version (`Get-AppxProvisionedPackage -Online`, `DisplayName` = `PackageName`) against the version in the manifest of the package of the cache; `notinstalled` when not provisioned; `error` without a cache, a folder or a package of that name. Update (and Install): copies the package, its dependencies and its license to `%windir%\LiteDeploy\work\MsixProvision\<PackageName>`, refuses each package unless validly signed by the `Publisher` of its manifest (and by one of the organisations of the `Publisher` parameter, separated by `;`, when set), enables the optional features of `Features`, `Add-AppxProvisionedPackage -Online -Regions all`. No process closed. See *MsixProvision* below |
 | `OnePassword` | 1Password installed per machine | Latest version from winget; official MSI from `downloads.1password.com`, signed by AgileBits; `MANAGED_INSTALL=1 MANAGED_UPDATE=1`; old version removed first on 1638; Start menu host restarted if the MSI hangs on `AI_UnpinFromStartScreen` |
 | `OracleJava` | Oracle Java 8 (winget `Oracle.JavaRuntimeEnvironment`) | Stops only the system Java (bundled Java runtimes are left alone), upgrades with winget, checks that `java8path` still answers, asks for a restart (3010) when it stopped Java |
+| `PowerShell7` | PowerShell 7 installed for the machine from the MSI of Microsoft (Uninstall entry `PowerShell 7-x64`, `-x86` or `-arm64`) | Check: installed MSI against the latest MSI release of Microsoft (`ReleaseTag` of the `tools/metadata.json` of the PowerShell repository: the 7.6 LTS line) or the `Version` parameter; the message also gives the version of Windows PowerShell 5.1, read only. Update/Install: MSI from `<cache>\PowerShell` or GitHub, signed by Microsoft Corporation, `msiexec /i /qn /norestart`, after closing the `pwsh.exe` of the installed folder (`ClosePwsh`). See *PowerShell 7* below |
+| `PSGalleryModule` | Any PowerShell module of the PowerShell Gallery installed for the machine, one instance per module (see *PSGalleryModule*) | Check: highest `<Version>` folder of `%ProgramFiles%\WindowsPowerShell\Modules\<Name>` against the latest stable version of the Gallery (or `Version`); Update/Install: `.nupkg` from `<cache>\PSGallery\<Name>` or the Gallery (SHA512 of the Gallery checked), refused unless every code file (or its catalog) is validly signed by the `Publisher` of the instance, copied side by side. No PowerShellGet, no process closed |
 | `PrinterDrivers` | Printer drivers listed in the shared cache (`<cache>\PrinterDrivers\drivers.csv`) | Check: every listed driver installed (`Get-PrinterDriver`), else `outdated` with the number missing; `error` without a cache or a readable list. Update: copies the package of each missing driver to `%windir%\LiteDeploy\work\PrinterDrivers`, refuses it unless its catalog (`.cat`) has a valid Authenticode signature, `pnputil /add-driver`, `Add-PrinterDriver`. No process closed, no printer created |
 | `TeamsBootstrapper` | New Microsoft Teams provisioned for all users (`MSTeams` package) | Check: provisioned version against the offline package of the cache (`<cache>\Teams\MSTeams-x64.msix`) when there is one; `notinstalled` when Teams is not provisioned. Update: `teamsbootstrapper.exe` from the cache or from Microsoft's documented link, signed by Microsoft Corporation, run with `-p` (or `-p -o <msix>` with the offline package, also signed by Microsoft); its JSON output must say `success`. Closes `ms-teams` |
 
-`CachedInstaller`, `MsixProvision`, `PrinterDrivers` and `TeamsBootstrapper` are generic: their content comes from the
-shared installer cache (see below), nothing in the module is specific to an organisation. Like every
+`CachedInstaller`, `MsixProvision`, `PrinterDrivers`, `PSGalleryModule` and `TeamsBootstrapper` are generic: their content comes from the
+shared installer cache or from their parameters (see below), nothing in the module is specific to an organisation. Like every
 module, they only act on computers where the check says `outdated`: `TeamsBootstrapper` updates the
-computers where Teams is already provisioned and reports `notinstalled` elsewhere. `CachedInstaller` and `MsixProvision`
-declare `# Install: yes`: they also accept `-Action Install`, which installs the product on a
+computers where Teams is already provisioned and reports `notinstalled` elsewhere. `CachedInstaller`, `MsixProvision`,
+`PowerShell7` and `PSGalleryModule` declare `# Install: yes`: they also accept `-Action Install`, which installs the product on a
 computer where the check says `notinstalled` (`-Action Update` leaves such a computer alone).
 `PrinterDrivers` and `TeamsBootstrapper` do not declare it, so the *Install* action does not offer them.
 
@@ -156,6 +158,10 @@ the computers should fill the cache themselves.
   Teams\                        TeamsBootstrapper (filled by an administrator, read only for the computers)
     teamsbootstrapper.exe       optional: downloaded from Microsoft when absent
     MSTeams-x64.msix            optional offline package (also MSTeams-x86.msix, MSTeams-arm64.msix)
+  PowerShell\                   PowerShell7 (filled by an administrator, or by the computers when writable)
+    PowerShell-7.6.10-win-x64.msi
+  PSGallery\                    PSGalleryModule (filled by an administrator, or by the computers when writable)
+    PSWindowsUpdate\pswindowsupdate.2.2.1.5.nupkg
   CachedInstaller\              CachedInstaller (filled by an administrator, read only for the computers)
     ExampleVendor\ContosoExampleApp-2.4.1.msi
     ExampleVendor\ExampleTool-3.2-setup.exe
@@ -324,6 +330,126 @@ files and arguments that the administrators import.
   catalog: set them in *Parameters...*. Products with an invalid instance name, a duplicate
   instance, or values that are not strings are skipped and reported.
 - `WingetId` is a parameter like the others: a catalog can give it (see *Web versions*).
+
+## PowerShell 7
+
+### Why a module and not the winget package
+
+A catalog line `Microsoft.PowerShell` (winget) looks enough, and it was until 7.6: the package had
+an MSI for the machine (`Scope: machine`), winget detects it through its product code and the
+*Processes to close* column can close `pwsh`. It is not enough any more:
+
+- From **7.7**, Microsoft publishes PowerShell 7 as **MSIX and zip only**; the **7.6 LTS** line is
+  the last one with an MSI (the official `install-powershell.ps1 -UseMSI` installs the latest 7.6.x
+  and refuses 7.7). The winget package `Microsoft.PowerShell` now offers 7.7 as MSIX only.
+- winget only offers the **newest** version of a package: an MSI 7.6.x installation is shown as
+  outdated (7.7 available) but `winget upgrade` has no installer of the same technology to apply,
+  and never brings the 7.6.x security fixes. An MSIX installed by winget as SYSTEM is installed
+  for SYSTEM, not for the users.
+
+So the `PowerShell7` module keeps the MSI installation on the latest MSI release (7.6.x), with
+Check, Update, Install, the schedules and *Update when available* like any module. Do not keep a
+`Microsoft.PowerShell` line in the catalog next to it (the two would disagree).
+
+| Parameter | Default | |
+|---|---|---|
+| `Version` | *(empty)* | Version to install, e.g. `7.6.10`; empty: the latest MSI release of Microsoft (`ReleaseTag` of `https://raw.githubusercontent.com/PowerShell/PowerShell/master/tools/metadata.json`, the file `install-powershell.ps1` reads). A preview or 7.7+ is refused (no MSI) |
+| `Download` | `yes` | `yes`: the computers read the metadata and download `PowerShell-<version>-win-<arch>.msi` from the GitHub release of Microsoft when the cache has no copy (and put it in the cache when they can write there). `no`: the shared cache only; with `Version` empty the target is then the newest `PowerShell-<version>-win-<arch>.msi` of `<cache>\PowerShell` |
+| `ClosePwsh` | `yes` | `yes`: before the install, the `pwsh.exe` started from the installed PowerShell 7 folder are closed (forcefully: unsaved work and running scripts are stopped). `no`: while one runs, the install fails with a clear message and is tried again at the next run |
+| `MsiProperties` | *(empty)* | Options of the PowerShell MSI, e.g. `ADD_PATH=1 USE_MU=0 ENABLE_MU=0`: only `ADD_PATH`, `ADD_EXPLORER_CONTEXT_MENU_OPENPOWERSHELL`, `ADD_FILE_CONTEXT_MENU_RUNPOWERSHELL`, `ENABLE_PSREMOTING`, `REGISTER_MANIFEST`, `USE_MU`, `ENABLE_MU`, `DISABLE_TELEMETRY`, with `0` or `1` |
+
+- **Check**: the Uninstall entry `PowerShell 7-<arch>` (64 and 32-bit views; the architecture of
+  the computer first; the preview `PowerShell 7-preview-...` is ignored) against the target. No
+  entry: `notinstalled` (the message names an MSIX PowerShell 7 when one is installed, which the
+  module leaves alone). The message always gives the version of **Windows PowerShell 5.1**: read
+  only (see below).
+- **Update** (outdated) and **Install** (`notinstalled`; refused when an MSIX PowerShell 7 is
+  installed): the MSI is copied to `%windir%\LiteDeploy\work\PowerShell7`, refused unless its
+  signature is `Valid` with `O=Microsoft Corporation` and its `ProductVersion` is the target;
+  `pwsh.exe` closed (`ClosePwsh`), `msiexec /i <msi> /qn /norestart <MsiProperties> /l*v <log>`
+  (13 minutes at most; log kept on failure). 0: success; 3010 or 1641: success, restart needed
+  (3010). It checks again: the target version must be installed. A newer 7.x MSI replaces the
+  installed one (7.4 LTS -> 7.6 LTS); it never goes down.
+- The module runs in Windows PowerShell 5.1 (the worker starts `powershell.exe`), never in
+  `pwsh`: closing `pwsh` does not stop it.
+- Without the module: the PowerShell MSI can also be updated by Microsoft Update (MSI options
+  `USE_MU=1 ENABLE_MU=1`, the default of an interactive install) where Windows Update or WSUS
+  approves it. Both can coexist; the module is what LiteDeploy reports and schedules.
+- After 7.6 (end of support of the LTS), PowerShell 7 is MSIX only: provision it for all users
+  with `MsixProvision` (`PackageName` `Microsoft.PowerShell`, the `.msixbundle` of the release in the
+  cache). An MSIX `pwsh` is not on the `PATH` of SYSTEM: scripts that run `pwsh` as SYSTEM
+  (scheduled tasks) need the MSI or the zip.
+
+### Windows PowerShell 5.1
+
+Windows PowerShell 5.1 (`powershell.exe`) is a component of Windows: Windows Update services it
+with the cumulative updates of the operating system. LiteDeploy never updates it and has no
+catalog line for it; the `PowerShell7` module only reports its version in its message (*Check*),
+read only.
+
+## PSGalleryModule
+
+A PowerShell module of the PowerShell Gallery installed for the machine (`PSWindowsUpdate`, or any
+other module the IT team chooses), one **instance** per module
+(`module:PSGalleryModule/PSWindowsUpdate`). It does not use PowerShellGet or the NuGet provider
+(old in Windows PowerShell 5.1, and interactive the first time): it reads the Gallery API
+(`https://www.powershellgallery.com/api/v2/FindPackagesById()`) and the `.nupkg` itself.
+
+| Parameter | Value |
+|---|---|
+| `Name` | Name of the module in the Gallery; empty: the instance name |
+| `Publisher` | **Required.** Organisation (`O=`) of the Authenticode signer of the module files, exactly as in the certificate (several separated by `;`, any one is accepted). Read it from a copy saved on the administrator's computer (see below), never from the Gallery page |
+| `Version` | Version to install, e.g. `2.2.1.5`; empty: the latest stable listed version. Previews are never installed |
+| `Download` | `yes` (default): the computers query the Gallery and download from it when the cache has no copy (a downloaded copy goes to the cache when they can write there). `no`: the cache only; with `Version` empty the target is the highest `<name>.<version>.nupkg` of `<cache>\PSGallery\<Name>` |
+| `ModulesFolder` | `WindowsPowerShell` (default): `%ProgramFiles%\WindowsPowerShell\Modules`, read by Windows PowerShell 5.1 and by PowerShell 7. `PowerShell`: `%ProgramFiles%\PowerShell\Modules`, PowerShell 7 only (a module that needs PowerShell 7) |
+
+- **Check**: the `<Version>` folders of `<ModulesFolder>\<Name>` that hold `<Name>.psd1` (highest
+  wins; a module installed without version folder, or for one user only, is not seen); none:
+  `notinstalled`; older than the target: `outdated`.
+- **Update** (outdated) and **Install** (`notinstalled`): the `.nupkg` of the cache, else of the
+  Gallery (HTTPS, Gallery addresses only); its SHA512 must be the `PackageHash` the Gallery gives
+  (when the Gallery was queried, also for a copy of the cache). It is extracted to
+  `%windir%\LiteDeploy\work\PSGalleryModule\<instance>` (the files of the package format are left
+  out; an entry that leaves the folder is refused) and **refused** unless:
+  - `<Name>.psd1` is at its root, with `ModuleVersion` = the target and no `Prerelease` tag;
+  - the module has a catalog `<Name>.cat` validly signed by the `Publisher` and `Test-FileCatalog`
+    says `Valid`, or else **every** code file (`.ps1`, `.psm1`, `.psd1`, `.ps1xml`, `.cdxml`,
+    `.dll`, `.exe`) has a `Valid` Authenticode signature of the `Publisher`. An unsigned module, one
+    changed file or another publisher is refused (a module that ships a library signed by another
+    vendor needs that vendor in `Publisher` too);
+  - every module of its `RequiredModules` is already installed for the machine (dependencies are
+    not installed: add an instance for each, and install it first).
+
+  The files go to `<ModulesFolder>\<Name>\<ModuleVersion>` through a `.partial` folder. Older
+  versions stay side by side: PowerShell loads the highest, a session already running keeps the
+  version it loaded, nothing is closed. The module checks again.
+- No *Uninstall* (old versions are not removed either: remove them by hand when needed).
+
+Find the `Publisher` on the administrator's computer, before adding the instance:
+
+```powershell
+Save-Module -Name PSWindowsUpdate -Path C:\Temp\psg -Repository PSGallery
+Get-ChildItem C:\Temp\psg -Recurse -Include *.psd1, *.psm1, *.ps1, *.dll, *.cat |
+    Get-AuthenticodeSignature | Select-Object Status, @{ n = 'Signer'; e = { $_.SignerCertificate.Subject } }, Path
+```
+
+Every line must be `Valid` with the same organisation (`O=`): that is the `Publisher`. If a file is
+`NotSigned`, the module cannot be managed by `PSGalleryModule` (by design). Catalog of instances,
+like `CachedInstaller` (fictitious values):
+
+```json
+{
+  "module": "PSGalleryModule",
+  "products": [
+    { "Instance": "ExampleModule", "Name": "ExampleModule", "Publisher": "Example Author Ltd" }
+  ]
+}
+```
+
+Network: with `Download` = `yes`, the computers need HTTPS access to `www.powershellgallery.com`
+and the download host it redirects to (`*.powershellgallery.com`); without it, use `Download` =
+`no` and put the `.nupkg` in the cache (`Save-Package` or the *Manual download* of the Gallery
+page; file name `<name>.<version>.nupkg`).
 
 ## Web versions
 
