@@ -8,6 +8,9 @@
 #  - Processes (names without .exe, comma-separated): closed without warning
 #    before the package is upgraded.
 #  - Label: name shown in LiteDeploy (default: the Id).
+#
+# PowerShell 7: use the module PowerShell7 (Add module), not the winget package
+# Microsoft.PowerShell, which installs the per-user MSIX package of PowerShell.
 7zip.7zip | 7zFM, 7zG | 7-Zip
 Notepad++.Notepad++ | notepad++ | Notepad++
 VideoLAN.VLC | vlc | VLC

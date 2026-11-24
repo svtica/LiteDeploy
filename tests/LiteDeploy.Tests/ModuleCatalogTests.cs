@@ -99,6 +99,22 @@ namespace LiteDeploy.Tests
         }
 
         [TestMethod]
+        public void Parse_PSGalleryModuleCatalog_OneInstancePerPowerShellModule()
+        {
+            // Example of docs/modules.md (PSGalleryModule): fictitious modules and publishers
+            ModuleCatalog c = ModuleCatalog.Parse(@"{ ""module"": ""PSGalleryModule"", ""products"": [
+                { ""Instance"": ""ExampleModule"", ""Publisher"": ""Contoso Ltd"" },
+                { ""Instance"": ""ExampleTools"", ""Name"": ""Example.Tools"", ""Publisher"": ""Fabrikam Inc."", ""Version"": ""3.2.0"" }
+            ] }");
+            Assert.AreEqual(0, c.Errors.Count, String.Join(" | ", c.Errors));
+            Assert.AreEqual("PSGalleryModule", c.Module);
+            CollectionAssert.AreEqual(new[] { "ExampleModule", "ExampleTools" }, c.Entries.Select(e => e.Instance).ToArray());
+            Assert.AreEqual("Contoso Ltd", c.Entries[0].Values["Publisher"]);
+            Assert.AreEqual("Example.Tools", c.Entries[1].Values["Name"]);
+            Assert.AreEqual("3.2.0", c.Entries[1].Values["Version"]);
+        }
+
+        [TestMethod]
         public void Parse_InvalidJsonOrShape_IsEmptyWithAnError()
         {
             foreach (string json in new[] { "", "not json", "[1, 2]", @"{ ""products"": ""x"" }", @"{ ""module"": ""bad/name"", ""products"": [] }", null })

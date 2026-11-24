@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Module `PowerShell7`: keeps PowerShell 7 installed and up to date for the whole computer from
+  Microsoft's MSI package (*Check*, *Update checked*, *Install or update*, schedules). Target: the
+  `Version` parameter, else the newest `PowerShell-<version>-win-<arch>.msi` of
+  `<cache>\PowerShell`, else the latest LTS release. The MSI is refused unless signed by Microsoft
+  Corporation with the expected product name and version; `MsiProperties` passes MSI properties
+  (`NAME=value` only); exit code 3010 when a restart is needed; the worker closes `pwsh` before an
+  update. The message also gives the version of Windows PowerShell 5.1 (read only, never updated)
+  and the per-user MSIX packages of PowerShell. The winget package `Microsoft.PowerShell` is not
+  used: winget installs its per-user MSIX package, and PowerShell 7.7 and later have no MSI.
+- Module `PSGalleryModule` (one instance per PowerShell module): keeps a module of the PowerShell
+  Gallery installed for all users, from the Gallery (SHA512 checked) or `<cache>\PSGallery`, and
+  refuses it unless its files (or its catalog, checked with `Test-FileCatalog`) are validly signed
+  by the `Publisher` of the instance; its `RequiredModules` must be installed first. Installed side
+  by side under `%ProgramFiles%`, without PowerShellGet; the modules of Windows are never touched.
+
 ## [1.0.31] - 2026-11-24
 
 ### Added

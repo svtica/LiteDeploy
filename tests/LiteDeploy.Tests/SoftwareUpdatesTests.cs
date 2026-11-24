@@ -480,7 +480,7 @@ namespace LiteDeploy.Tests
         public void ShippedModules_AreAsciiModules()
         {
             string[] files = Directory.GetFiles(Path.Combine(RepoRoot(), "modules"), "*.ps1");
-            CollectionAssert.IsSubsetOf(new[] { "AdobeReader.ps1", "CachedInstaller.ps1", "MsixProvision.ps1", "OnePassword.ps1", "OracleJava.ps1", "PrinterDrivers.ps1", "TeamsBootstrapper.ps1" },
+            CollectionAssert.IsSubsetOf(new[] { "AdobeReader.ps1", "CachedInstaller.ps1", "MsixProvision.ps1", "OnePassword.ps1", "OracleJava.ps1", "PowerShell7.ps1", "PrinterDrivers.ps1", "PSGalleryModule.ps1", "TeamsBootstrapper.ps1" },
                 files.Select(Path.GetFileName).ToArray());
             foreach (string path in files)
             {
@@ -561,6 +561,50 @@ namespace LiteDeploy.Tests
             StringAssert.Contains(text, "# Install: yes");
             StringAssert.Contains(text, "# Uninstall: yes");
             Assert.IsTrue(m.Uninstall, "MSI products can be removed in the uninstall mode");
+        }
+
+        [TestMethod]
+        public void ShippedModules_PowerShell7_Header()
+        {
+            string path = Path.Combine(RepoRoot(), "modules", "PowerShell7.ps1");
+            UpdateModule m = UpdateModules.Read(path);
+            Assert.IsNotNull(m);
+            Assert.AreEqual("PowerShell 7 (MSI, all users)", m.Label);
+            CollectionAssert.AreEqual(new[] { "pwsh" }, m.Processes, "the worker closes pwsh before Update");
+            Assert.IsTrue(m.Install, "PowerShell 7 can be installed where it is missing");
+            Assert.IsFalse(m.Uninstall, "never removed by LiteDeploy");
+            Assert.IsFalse(m.Instances, "one product");
+            CollectionAssert.AreEqual(new[] { "Version", "MsiProperties" }, m.Parameters.Select(p => p.Name).ToArray());
+            Assert.IsTrue(m.Parameters.All(p => !p.Required && !p.Secret && p.Default == ""), "optional, empty by default");
+            string text = File.ReadAllText(path);
+            StringAssert.Contains(text, "[ValidateSet('Check', 'Update', 'Install')]");
+            StringAssert.Contains(text, @"Join-Path $env:windir 'LiteDeploy\work\PowerShell7'", "work folder under %windir%");
+            StringAssert.Contains(text, "Get-AuthenticodeSignature", "the MSI signature is checked");
+            Assert.IsFalse(text.Contains("Invoke-Expression"), "no Invoke-Expression");
+            Assert.IsFalse(text.Contains("winget.exe") || text.Contains("Get-Winget"), "no winget: it installs the per-user MSIX of PowerShell");
+        }
+
+        [TestMethod]
+        public void ShippedModules_PSGalleryModule_Header()
+        {
+            string path = Path.Combine(RepoRoot(), "modules", "PSGalleryModule.ps1");
+            UpdateModule m = UpdateModules.Read(path);
+            Assert.IsNotNull(m);
+            Assert.IsTrue(m.Instances, "one row per PowerShell module");
+            Assert.IsTrue(m.Install);
+            Assert.IsFalse(m.Uninstall, "never removed by LiteDeploy");
+            Assert.AreEqual(0, m.Processes.Length, "nothing to close");
+            CollectionAssert.AreEqual(new[] { "Name", "Publisher", "Version" }, m.Parameters.Select(p => p.Name).ToArray());
+            CollectionAssert.AreEqual(new[] { "Publisher" }, m.Parameters.Where(p => p.Required).Select(p => p.Name).ToArray(),
+                "the expected signer is required: an unsigned module or another publisher is refused");
+            Assert.IsFalse(m.Parameters.Any(p => p.Secret));
+            string text = File.ReadAllText(path);
+            StringAssert.Contains(text, "[ValidateSet('Check', 'Update', 'Install')]");
+            StringAssert.Contains(text, @"Join-Path $env:windir ""LiteDeploy\work\PSGalleryModule\$instance""", "work folder under %windir%");
+            StringAssert.Contains(text, "Test-FileCatalog");
+            Assert.IsFalse(text.Contains("Invoke-Expression"), "no Invoke-Expression");
+            Assert.IsFalse(text.Contains("Install-Module"), "no PowerShellGet: no NuGet provider bootstrap as SYSTEM");
+            Assert.IsFalse(text.Contains(@"System32\WindowsPowerShell\v1.0\Modules"), "the modules of Windows are never touched");
         }
 
         [TestMethod]

@@ -298,6 +298,13 @@ Actions of the grid (checked computers, else the selected ones):
   files from the shared installer cache (*App > Options > Software updates*): `CachedInstaller`
   (vendor MSI or EXE installers), `MsixProvision` (MSIX packages), `PrinterDrivers`,
   `TeamsBootstrapper`. A team's own modules can live in a shared modules folder (same options).
+- **PowerShell**: `PowerShell7` keeps PowerShell 7 installed and up to date for the whole computer
+  from Microsoft's MSI (latest LTS release, or the version or MSI the administrator chooses), and
+  reports the version of Windows PowerShell 5.1 (part of Windows: read only, never updated).
+  `PSGalleryModule` keeps a PowerShell module of the PowerShell Gallery installed for all users,
+  one row per module, and refuses any module whose files are not signed by the publisher named
+  in its parameters. Not the winget package `Microsoft.PowerShell`: winget installs its per-user
+  MSIX package (see *PowerShell* in [docs/modules.md](docs/modules.md)).
 - **Import from a catalog**: `CachedInstaller` and `MsixProvision` take one row per product
   (`module:<Name>/<Instance>`). Instead of adding each row by hand, describe the products in a
   JSON file and use *Software catalog... > Import instances...*: it adds the missing rows and sets
