@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.29] - 2026-11-24
+
 ### Fixed
 
 - Module `OracleJava`: an upgrade that succeeded was reported as failed, with the message
