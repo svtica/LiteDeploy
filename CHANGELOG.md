@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Check these N computer(s)** at the top of the actions (right-click and *Actions* menu, Ctrl+F5):
+  checks only the checked computers, else the selected rows, without checking every computer shown.
+  *Check* of the tool bar gives the number of checked computers (*Check (3)*); with none checked it
+  still checks every computer shown (F5).
+
 ### Fixed
 
 - Modules `OnePassword` and `CachedInstaller`: the update of a product whose new MSI keeps the
