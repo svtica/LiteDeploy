@@ -27,16 +27,21 @@
     for its MSI, the latest 7.6.x), else (Download=no) the newest
     PowerShell-<version>-win-<arch>.msi of <cache>\PowerShell. No MSI entry:
     notinstalled (the message names an MSIX PowerShell 7 when one is
-    installed: this module leaves it alone). The message always gives the
-    version of Windows PowerShell 5.1, read only: it is part of Windows and
-    updated by Windows Update, never by LiteDeploy.
+    installed: this module leaves it alone), or error when pwsh.exe is in
+    %ProgramFiles%\PowerShell\7 without one (a zip copy, never overwritten).
+    The architecture of the MSI is the one of the installed entry (an x86
+    PowerShell 7 on an x64 computer stays x86), else the one of Windows.
+    The message always gives the version of Windows PowerShell 5.1, read
+    only: it is part of Windows and updated by Windows Update, never by
+    LiteDeploy.
 
     Update (outdated only) and Install (notinstalled; refused next to an MSIX
     PowerShell 7): takes PowerShell-<version>-win-<arch>.msi from
     <cache>\PowerShell, else (Download=yes) from the GitHub release of
     Microsoft over HTTPS, copies it to %windir%\LiteDeploy\work\PowerShell7
     (never C:\Windows\Temp), refuses it unless its Authenticode signature is
-    Valid with O=Microsoft Corporation and its ProductVersion is the target,
+    Valid with O=Microsoft Corporation, its ProductName is
+    "PowerShell 7-<arch>" and its ProductVersion is the target,
     puts a downloaded copy in the cache for the other computers (best effort,
     one writer at a time), closes the pwsh.exe processes started from the
     installed PowerShell 7 folder (ClosePwsh=yes; with no, the install waits
@@ -178,6 +183,18 @@ function Select-PwshEntry($Entries, [string] $Arch) {
     return ($pool | Sort-Object { ConvertTo-Version $_.DisplayVersion } -Descending | Select-Object -First 1)
 }
 
+# Architecture of an MSI entry ("PowerShell 7-x86" -> x86): an update keeps the architecture installed
+function Get-EntryArchitecture($Entry) {
+    $m = [regex]::Match([string]$Entry.DisplayName, '^PowerShell 7-(x64|x86|arm64)$')
+    if ($m.Success) { return $m.Groups[1].Value }
+    return $null
+}
+
+# A copy of PowerShell 7 without MSI entry (zip extracted to the MSI folder): the MSI would overwrite it
+function Test-UnmanagedCopy([string] $ProgramFiles) {
+    return (Test-Path -LiteralPath (Join-Path $ProgramFiles 'PowerShell\7\pwsh.exe') -PathType Leaf)
+}
+
 # Version of an MSIX PowerShell 7 (any user), '' when there is none
 function Get-MsixPwshVersion {
     try {
@@ -238,11 +255,14 @@ function Test-MicrosoftSubject([string] $Subject) {
     return ([string]$Subject -match "(^|,\s*)O=(`"?)$([regex]::Escape($signer))\2\s*(,|$)")
 }
 
-# '' when the MSI has a valid signature of Microsoft and is the expected version, else why it is refused
-function Get-MsiRefusal([string] $Path, [string] $Version) {
+# '' when the MSI has a valid signature of Microsoft and is the PowerShell 7 MSI of the expected version and
+# architecture, else why it is refused
+function Get-MsiRefusal([string] $Path, [string] $Version, [string] $Arch) {
     $sig = Get-AuthenticodeSignature -LiteralPath $Path
     if ($sig.Status -ne 'Valid' -or -not $sig.SignerCertificate) { return "no valid signature ($($sig.Status))" }
     if (-not (Test-MicrosoftSubject $sig.SignerCertificate.Subject)) { return "not signed by $signer ($($sig.SignerCertificate.Subject))" }
+    $productName = Get-MsiProperty $Path 'ProductName'
+    if ($productName -ne "PowerShell 7-$Arch") { return "ProductName $productName instead of PowerShell 7-$Arch" }
     $msiVersion = Get-MsiProperty $Path 'ProductVersion'
     if ((ConvertTo-Version $msiVersion) -ne (ConvertTo-Version $Version)) { return "ProductVersion $msiVersion instead of $Version" }
     return ''
@@ -258,7 +278,7 @@ function Get-Installer([string] $Version, [string] $Arch, [string] $CacheDir, [b
     $refusal = ''
     if ($cached -and (Test-Path -LiteralPath $cached -PathType Leaf)) {
         Copy-Item -LiteralPath $cached -Destination $local -Force
-        $refusal = Get-MsiRefusal $local $Version
+        $refusal = Get-MsiRefusal $local $Version $Arch
         if (-not $refusal) { return $local }
         Remove-Item -LiteralPath $local -Force -ErrorAction SilentlyContinue
         if (-not $Download) { throw "Installer of the cache refused ($name): $refusal" }
@@ -267,7 +287,7 @@ function Get-Installer([string] $Version, [string] $Arch, [string] $CacheDir, [b
 
     [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
     Invoke-WebRequest -Uri "$releaseUrl/v$Version/$name" -OutFile $local -UseBasicParsing -TimeoutSec 600
-    $refusal = Get-MsiRefusal $local $Version
+    $refusal = Get-MsiRefusal $local $Version $Arch
     if ($refusal) {
         Remove-Item -LiteralPath $local -Force -ErrorAction SilentlyContinue
         throw "Downloaded installer refused ($name): $refusal"
@@ -325,6 +345,13 @@ try {
     $msiOptions = Get-MsiPropertyArguments (Get-Param 'MsiProperties')
     $cacheDir = if ($env:LITEDEPLOY_CACHE) { Join-Path $env:LITEDEPLOY_CACHE 'PowerShell' } else { $null }
 
+    $installed = Select-PwshEntry (Get-UninstallEntries) $arch
+    if ($installed) { $arch = Get-EntryArchitecture $installed }
+    elseif (Test-UnmanagedCopy $env:ProgramFiles) {
+        # A zip copy in the folder of the MSI: not managed, never overwritten
+        throw "pwsh.exe found in $(Join-Path $env:ProgramFiles 'PowerShell\7') without an MSI install (zip copy?): not managed by this module; remove it first. $note"
+    }
+
     $target = Get-Param 'Version'
     if ($target) { $target = Get-ReleaseVersion $target }
     elseif ($download) { $target = Get-WebVersion }
@@ -337,7 +364,6 @@ try {
         throw "No MSI is published for PowerShell $target (7.7 and later: MSIX or zip only); set Version to a 7.6.x release"
     }
 
-    $installed = Select-PwshEntry (Get-UninstallEntries) $arch
     $installedVersion = if ($installed) { $installed.DisplayVersion } else { $null }
     $outdated = $installed -and ((ConvertTo-Version $installedVersion) -lt (ConvertTo-Version $target))
     $msix = if (-not $installed) { Get-MsixPwshVersion } else { '' }

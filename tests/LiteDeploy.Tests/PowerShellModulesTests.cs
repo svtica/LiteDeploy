@@ -165,6 +165,33 @@ $c = $null -eq (Select-PwshEntry @($entries[0], $entries[3]) 'x64')
         }
 
         [TestMethod]
+        public void PowerShell7_EntryArchitecture_KeptForTheUpdate()
+        {
+            string commands = @"$a = Get-EntryArchitecture ([pscustomobject]@{ DisplayName = 'PowerShell 7-x86' })
+$b = Get-EntryArchitecture ([pscustomobject]@{ DisplayName = 'PowerShell 7-arm64' })
+$c = $null -eq (Get-EntryArchitecture ([pscustomobject]@{ DisplayName = 'PowerShell 7-preview-x64' }))
+# An x86 PowerShell 7 alone on an x64 computer: the x86 entry is chosen, and its architecture kept
+$only = @([pscustomobject]@{ KeyName = 'a'; DisplayName = 'PowerShell 7-x86'; DisplayVersion = '7.4.6.0'; InstallLocation = '' })
+$d = Get-EntryArchitecture (Select-PwshEntry $only 'x64')
+""$a|$b|$c|$d""";
+            Assert.AreEqual("x86|arm64|True|x86", Run("PowerShell7", commands));
+        }
+
+        [TestMethod]
+        public void PowerShell7_UnmanagedCopy_PwshWithoutMsi()
+        {
+            string commands = @"$pf = Join-Path ([IO.Path]::GetTempPath()) ('ld-test-' + [guid]::NewGuid().ToString('N'))
+try {
+    New-Item -ItemType Directory -Force -Path (Join-Path $pf 'PowerShell\7') | Out-Null
+    $before = Test-UnmanagedCopy $pf
+    Set-Content -LiteralPath (Join-Path $pf 'PowerShell\7\pwsh.exe') -Value 'x' -Encoding ASCII
+    $after = Test-UnmanagedCopy $pf
+    ""$before|$after""
+} finally { Remove-Item -LiteralPath $pf -Recurse -Force -ErrorAction SilentlyContinue }";
+            Assert.AreEqual("False|True", Run("PowerShell7", commands));
+        }
+
+        [TestMethod]
         public void PowerShell7_MicrosoftSubject()
         {
             string commands = @"$a = Test-MicrosoftSubject 'CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US'
@@ -283,8 +310,29 @@ $b = Test-SubjectOrganisation $s 'Other Vendor Inc.; Example Author Ltd'
 $c = Test-SubjectOrganisation $s 'Example Author'
 $d = Test-SubjectOrganisation 'CN=Example Author' 'Example Author'
 $e = @(Get-PublisherNames ' Example Author Ltd ; ; Other Vendor Inc. ').Count
-""$a|$b|$c|$d|$e""";
-            Assert.AreEqual("True|True|False|False|2", Run("PSGalleryModule", commands));
+$f = Test-SubjectOrganisation 'CN=Example Author, L=Example, C=CA' 'Other Vendor Inc.; Example Author'
+$g = Test-SubjectOrganisation 'CN=Example Author Two, C=CA' 'Example Author'
+""$a|$b|$c|$d|$e|$f|$g""";
+            // CN= counts only when the subject has no O= (a publisher signing as a person): $c stays refused
+            Assert.AreEqual("True|True|False|True|2|True|False", Run("PSGalleryModule", commands));
+        }
+
+        [TestMethod]
+        public void PSGallery_MachineVersions_BothModulesFolders()
+        {
+            string commands = @"$pf = Join-Path ([IO.Path]::GetTempPath()) ('ld-test-' + [guid]::NewGuid().ToString('N'))
+try {
+    foreach ($p in 'WindowsPowerShell\Modules\ExampleModule\1.2.0', 'PowerShell\Modules\ExampleModule\1.10.0', 'PowerShell\Modules\ExampleModule\2.0.0') {
+        $dir = Join-Path $pf $p
+        New-Item -ItemType Directory -Force -Path $dir | Out-Null
+        if ($p -notlike '*2.0.0') { Set-Content -LiteralPath (Join-Path $dir 'ExampleModule.psd1') -Value '@{}' -Encoding ASCII }
+    }
+    $all = @(Get-MachineVersions $pf 'ExampleModule')
+    $none = @(Get-MachineVersions $pf 'OtherModule').Count
+    ""$($all.Count)|$($all[0].Text)|$(Split-Path -Leaf (Split-Path -Parent $all[0].Root))|$($all[1].Text)|$none""
+} finally { Remove-Item -LiteralPath $pf -Recurse -Force -ErrorAction SilentlyContinue }";
+            // 2.0.0 has no manifest: not a version; the highest one is the one of the PowerShell 7 folder
+            Assert.AreEqual("2|1.10.0|PowerShell|1.2.0|0", Run("PSGalleryModule", commands));
         }
 
         [TestMethod]
