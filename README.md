@@ -297,7 +297,14 @@ Actions of the grid (checked computers, else the selected ones):
   SYSTEM by the worker ([docs/modules.md](docs/modules.md)). Shipped generic modules take their
   files from the shared installer cache (*App > Options > Software updates*): `CachedInstaller`
   (vendor MSI or EXE installers), `MsixProvision` (MSIX packages), `PrinterDrivers`,
-  `TeamsBootstrapper`. A team's own modules can live in a shared modules folder (same options).
+  `TeamsBootstrapper`, `PSGalleryModule` (PowerShell Gallery modules for the machine, one
+  instance per module, refused unless signed by the expected publisher). A team's own modules can
+  live in a shared modules folder (same options).
+- **PowerShell**: PowerShell 7 is kept up to date by the `PowerShell7` module (MSI for the
+  machine, latest 7.6 LTS release, signed by Microsoft; `pwsh` closed before the install), not by
+  the winget package `Microsoft.PowerShell`, which offers 7.7+ as MSIX only. Windows PowerShell 5.1
+  is part of Windows: LiteDeploy only shows its version (message of the `PowerShell7` check) and
+  never updates it. See *PowerShell 7* and *PSGalleryModule* in [docs/modules.md](docs/modules.md).
 - **Import from a catalog**: `CachedInstaller` and `MsixProvision` take one row per product
   (`module:<Name>/<Instance>`). Instead of adding each row by hand, describe the products in a
   JSON file and use *Software catalog... > Import instances...*: it adds the missing rows and sets
