@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.36] - 2026-11-25
+
 ### Fixed
 
 - *Software catalog...*: the buttons under the list (*Remove*, *Parameters...*, *Import instances...*,
