@@ -128,6 +128,30 @@ function Get-MsiProperty([string] $Path, [string] $Property) {
     }
 }
 
+# Original file name of the package of an installed MSI product (Windows Installer keeps it); $null when unknown.
+# A minor upgrade (same product code) must run from a package of that name: under another name, Windows
+# Installer looks for the original one in the source folder and fails with 1603 (error 1316).
+function Get-RegisteredPackageName([string] $ProductCode) {
+    $installer = $null
+    try {
+        $installer = New-Object -ComObject WindowsInstaller.Installer
+        $name = [string]$installer.GetType().InvokeMember('ProductInfo', 'GetProperty', $null, $installer, @($ProductCode, 'PackageName'))
+        if ($name -match '^[^\\/:*?"<>|]{1,200}\.msi$') { return $name }
+    } catch { }
+    finally { if ($installer) { $null = [Runtime.InteropServices.Marshal]::ReleaseComObject($installer) } }
+    return $null
+}
+
+# The MSI renamed to the registered package name of the installed product, in the same folder; returns its path
+function Rename-ToRegisteredPackage([string] $Path, [string] $ProductCode) {
+    $name = Get-RegisteredPackageName $ProductCode
+    if (-not $name -or $name -eq (Split-Path -Leaf $Path)) { return $Path }
+    $target = Join-Path (Split-Path -Parent $Path) $name
+    Remove-Item -LiteralPath $target -Force -ErrorAction SilentlyContinue
+    Move-Item -LiteralPath $Path -Destination $target -Force
+    return $target
+}
+
 function Invoke-Msi([string] $Arguments, [string] $MsiLog) {
     $proc = Start-Process msiexec.exe -ArgumentList $Arguments -PassThru
     $null = $proc.Handle
@@ -166,6 +190,8 @@ try {
     # 1PasswordSetup-latest.msi is not found); REINSTALL=ALL REINSTALLMODE=vomus applies the new package
     $msiCode = Get-MsiProperty $msi 'ProductCode'
     $minor = if ($msiCode -and (Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$msiCode")) { ' REINSTALL=ALL REINSTALLMODE=vomus' } else { '' }
+    # ... and from a package named like the installed one (1PasswordSetup-latest.msi), else 1603 (1316)
+    if ($minor) { $msi = Rename-ToRegisteredPackage $msi $msiCode }
     $arguments = "/i `"$msi`" MANAGED_INSTALL=1 MANAGED_UPDATE=1$minor /qn /norestart /l*v `"$log`""
     $code = Invoke-Msi $arguments $log
     if ($code -eq 1638) {

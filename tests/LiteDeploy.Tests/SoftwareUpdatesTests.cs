@@ -546,6 +546,22 @@ namespace LiteDeploy.Tests
         }
 
         [TestMethod]
+        public void ShippedModules_MinorUpgradeRunsFromTheRegisteredPackageName()
+        {
+            // REINSTALL=ALL with a package of another name fails with 1603 (1316): every module that runs a minor
+            // upgrade renames the package to the name Windows Installer keeps for the installed product first
+            foreach (string path in Directory.GetFiles(Path.Combine(RepoRoot(), "modules"), "*.ps1"))
+            {
+                string text = File.ReadAllText(path);
+                if (!text.Contains("REINSTALL=ALL")) continue;
+                StringAssert.Contains(text, "function Get-RegisteredPackageName", path);
+                StringAssert.Contains(text, "'ProductInfo', 'GetProperty'", path);
+                StringAssert.Contains(text, "if ($minor) {", path);
+                StringAssert.Contains(text, "Rename-ToRegisteredPackage", path);
+            }
+        }
+
+        [TestMethod]
         public void ShippedModules_TeamViewer_Header()
         {
             string path = Path.Combine(RepoRoot(), "modules", "TeamViewer.ps1");

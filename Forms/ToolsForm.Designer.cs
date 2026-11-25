@@ -72,7 +72,7 @@ namespace LiteDeploy
             this.installButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.installButton.Location = new System.Drawing.Point(12, 205);
             this.installButton.Name = "installButton";
-            this.installButton.Size = new System.Drawing.Size(140, 25);
+            this.installButton.Size = new System.Drawing.Size(200, 25);
             this.installButton.TabIndex = 1;
             this.installButton.Text = "Download / Update";
             this.installButton.Click += new System.EventHandler(this.installButton_Click);
@@ -80,7 +80,7 @@ namespace LiteDeploy
             // openButton
             //
             this.openButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.openButton.Location = new System.Drawing.Point(158, 205);
+            this.openButton.Location = new System.Drawing.Point(218, 205);
             this.openButton.Name = "openButton";
             this.openButton.Size = new System.Drawing.Size(100, 25);
             this.openButton.TabIndex = 2;
