@@ -598,6 +598,11 @@ namespace LiteDeploy.Worker
             {
                 Emit(WorkerProtocol.Format("type", QuickCommands.TypeOutput, "text", "> " + step.FileName + " " + step.Arguments));
                 code = RunQuickStep(step);
+                if (code != 0 && step.IsSuccess(code))
+                {
+                    Emit(WorkerProtocol.Format("type", QuickCommands.TypeOutput, "text", "Exit code " + code + ": accepted"));
+                    code = 0;
+                }
                 if (code != 0 && !step.IgnoreFailure) break;
             }
             Emit(WorkerProtocol.Format("type", QuickCommands.TypeResult, "id", quick.Id, "code", code.ToString(), "computer", Environment.MachineName));

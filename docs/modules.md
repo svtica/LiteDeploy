@@ -76,14 +76,16 @@ Most of them come from an earlier in-house update script:
 | `PowerShell7` | PowerShell 7 installed for the machine from the MSI of Microsoft (Uninstall entry `PowerShell 7-x64`, `-x86` or `-arm64`) | Check: installed MSI against the latest MSI release of Microsoft (`ReleaseTag` of the `tools/metadata.json` of the PowerShell repository: the 7.6 LTS line) or the `Version` parameter; the message also gives the version of Windows PowerShell 5.1, read only. Update/Install: MSI from `<cache>\PowerShell` or GitHub, signed by Microsoft Corporation, `msiexec /i /qn /norestart`, after closing the `pwsh.exe` of the installed folder (`ClosePwsh`). See *PowerShell 7* below |
 | `PSGalleryModule` | Any PowerShell module of the PowerShell Gallery installed for the machine, one instance per module (see *PSGalleryModule*) | Check: highest `<Version>` folder of `%ProgramFiles%\WindowsPowerShell\Modules\<Name>` against the latest stable version of the Gallery (or `Version`); Update/Install: `.nupkg` from `<cache>\PSGallery\<Name>` or the Gallery (SHA512 of the Gallery checked), refused unless every code file (or its catalog) is validly signed by the `Publisher` of the instance, copied side by side. No PowerShellGet, no process closed |
 | `PrinterDrivers` | Printer drivers listed in the shared cache (`<cache>\PrinterDrivers\drivers.csv`) | Check: every listed driver installed (`Get-PrinterDriver`), else `outdated` with the number missing; `error` without a cache or a readable list. Update: copies the package of each missing driver to `%windir%\LiteDeploy\work\PrinterDrivers`, refuses it unless its catalog (`.cat`) has a valid Authenticode signature, `pnputil /add-driver`, `Add-PrinterDriver`. No process closed, no printer created |
+| `TeamViewer` | TeamViewer Host or full client installed for the machine from its MSI in the shared cache, one instance per edition (see *TeamViewer*) | Check: Uninstall entry `TeamViewer Host` (or `TeamViewer`, or `DetectName`) against the `ProductVersion` of the MSI of the cache (or `Version`); Update/Install: MSI signed by TeamViewer Germany GmbH, `msiexec /i /qn /norestart` with the optional `CUSTOMCONFIGID`, `SETTINGSFILE` (`.tvopt` of the cache) and a fixed list of MSI options; on Install, account assignment with a secret assignment ID; startup type of the service set afterwards (`ServiceStartup`). Closes `TeamViewer` and `TeamViewer_Desktop` before an update |
 | `TeamsBootstrapper` | New Microsoft Teams provisioned for all users (`MSTeams` package) | Check: provisioned version against the offline package of the cache (`<cache>\Teams\MSTeams-x64.msix`) when there is one; `notinstalled` when Teams is not provisioned. Update: `teamsbootstrapper.exe` from the cache or from Microsoft's documented link, signed by Microsoft Corporation, run with `-p` (or `-p -o <msix>` with the offline package, also signed by Microsoft); its JSON output must say `success`. Closes `ms-teams` |
 
-`CachedInstaller`, `MsixProvision`, `PrinterDrivers`, `PSGalleryModule` and `TeamsBootstrapper` are generic: their content comes from the
+`CachedInstaller`, `MsixProvision`, `PrinterDrivers`, `PSGalleryModule`, `TeamsBootstrapper` and `TeamViewer` are generic: their content comes from the
 shared installer cache or from their parameters (see below), nothing in the module is specific to an organisation. Like every
 module, they only act on computers where the check says `outdated`: `TeamsBootstrapper` updates the
 computers where Teams is already provisioned and reports `notinstalled` elsewhere. `CachedInstaller`, `MsixProvision`,
 `PowerShell7` and `PSGalleryModule` declare `# Install: yes`: they also accept `-Action Install`, which installs the product on a
-computer where the check says `notinstalled` (`-Action Update` leaves such a computer alone).
+computer where the check says `notinstalled` (`-Action Update` leaves such a computer alone); so
+does `TeamViewer`.
 `PrinterDrivers` and `TeamsBootstrapper` do not declare it, so the *Install* action does not offer them.
 
 ### MsixProvision
@@ -160,6 +162,9 @@ the computers should fill the cache themselves.
     MSTeams-x64.msix            optional offline package (also MSTeams-x86.msix, MSTeams-arm64.msix)
   PowerShell\                   PowerShell7 (filled by an administrator, or by the computers when writable)
     PowerShell-7.6.10-win-x64.msi
+  TeamViewer\                   TeamViewer (filled by an administrator, read only for the computers)
+    TeamViewer_Host-15.83.7.msi
+    Settings\example.tvopt      optional settings file (SettingsFile): keep it out of reach of the users
   PSGallery\                    PSGalleryModule (filled by an administrator, or by the computers when writable)
     PSWindowsUpdate\pswindowsupdate.2.2.1.5.nupkg
   CachedInstaller\              CachedInstaller (filled by an administrator, read only for the computers)
@@ -195,7 +200,7 @@ its latest version. Without an offline package, the check has no version to comp
 (Teams updates itself) and reports `uptodate` with the provisioned version; put a newer
 `MSTeams-<arch>.msix` in the cache to roll out a version.
 
-Permissions for these folders (`PrinterDrivers`, `Teams`, `CachedInstaller`): the computer
+Permissions for these folders (`PrinterDrivers`, `Teams`, `CachedInstaller`, `TeamViewer`): the computer
 accounts (*Domain Computers*) need **read** only; write access stays with the administrators who
 fill them.
 
@@ -330,6 +335,70 @@ files and arguments that the administrators import.
   catalog: set them in *Parameters...*. Products with an invalid instance name, a duplicate
   instance, or values that are not strings are skipped and reported.
 - `WingetId` is a parameter like the others: a catalog can give it (see *Web versions*).
+
+## TeamViewer
+
+`TeamViewer` installs and updates TeamViewer for the machine from the MSI of TeamViewer kept in the
+cache, with the deployment options of the site. It declares `# Instances: yes`: one instance per
+edition, e.g. `module:TeamViewer/TeamViewerHost` for the users' computers and
+`module:TeamViewer/TeamViewerFull` for the IT team. Only the MSI is accepted: the EXE setup
+programs carry no version and none of the deployment options.
+
+| Parameter | Value |
+|---|---|
+| `File` | **Required.** Path of the MSI under the cache, e.g. `TeamViewer/TeamViewer_Host-15.83.7.msi` |
+| `Edition` | `Host` (default) or `Full` |
+| `DetectName` | `DisplayName` of the Uninstall entry, wildcards allowed; empty: `TeamViewer Host` for Host, `TeamViewer` for Full. Check it on a test computer after a first install |
+| `Version` | Version expected once installed; empty: the `ProductVersion` of the MSI |
+| `Publisher` | Organisation (`O=`) of the signer of the MSI; default `TeamViewer Germany GmbH`. Several separated by `;` |
+| `CustomConfigId` | ID of the custom module of the TeamViewer Management Console: given to the MSI (`CUSTOMCONFIGID`), then applied with `TeamViewer.exe customize` after every install and update (see below) |
+| `SettingsFile` | Path of a `.tvopt` file under the cache (*Export settings for deployment* in TeamViewer), copied to the computer and given as `SETTINGSFILE` |
+| `MsiOptions` | Extra MSI properties, from a fixed list only: `ENABLEOUTLOOKPLUGIN=true/false`, `INSTALLSECURITYKEYREDIRECTION=0/1`, `ADDLOCAL=ALL`, `REMOVE=f.DesktopShortcut` |
+| `AssignmentId` | **Secret.** Assignment ID of the Management Console (name of a credential of *Tools > Credentials*). Used on *Install* only |
+| `ServiceStartup` | `keep` (default), `auto`, `manual` or `disabled`: startup type of the `TeamViewer` service after an install or an update |
+
+- **Check**: the Uninstall entries (64 and 32-bit views) matching `DetectName`; none:
+  `notinstalled` (the message names the other edition when it is installed); older than the
+  expected version: `outdated`; else `uptodate`.
+- **Update** (outdated computers) and **Install** (`notinstalled` computers only): the MSI is
+  copied to `%windir%\LiteDeploy\work\TeamViewer` and refused unless validly signed by
+  `Publisher`; then `msiexec /i <msi> /qn /norestart` with `CUSTOMCONFIGID`, `SETTINGSFILE` and
+  `MsiOptions` when set (a minor upgrade also gets `REINSTALL=ALL REINSTALLMODE=vomus`). Exit code 0,
+  3010 or 1641, then the product must be found with the expected version; otherwise `error`, with
+  the MSI log kept. *Install* refuses a computer where the other edition is installed. *Update*
+  refuses a product installed by the EXE setup (an Uninstall entry that is not an MSI product code,
+  often a 32-bit installation in `Program Files (x86)`; the check says so): uninstall it, then
+  *Install*.
+- **Custom module** (`CustomConfigId`): after every install and update the service is started if
+  needed and `TeamViewer.exe customize --remove --id <id>` runs: it removes the customization in
+  place, if any, and applies this one. It works whether or not the license applied the MSI property,
+  and an update applies the module (look, policy, account and group of the module) again. Exit
+  codes 500-506 are reported with their meaning (502: the configuration could not be downloaded).
+  `TeamViewer.exe` is taken from the installation folder of the Uninstall entry, else
+  `Program Files`, else `Program Files (x86)`.
+- **Assignment** (*Install* with `AssignmentId`): the service is started if needed, then
+  `TeamViewer.exe assignment --id <id> --retries=3 --timeout=120`. A failed assignment leaves the
+  product installed and reports `error` with the code and its meaning (403: not online, 408: denied
+  by policy...); assign that device from the Management Console or run the command by hand. An
+  update never assigns again.
+- **Service**: the MSI sets the `TeamViewer` service to automatic. `keep` restores, after an
+  update, the startup type found before it (an install keeps the one of the MSI); `auto` sets it to
+  automatic and starts it; `manual` sets it to manual; `disabled` stops and disables it. The quick
+  command *Start the TeamViewer service* of the grid starts it again on demand.
+
+Security:
+
+- The assignment ID is a secret parameter: never in a catalog (an import never sets it), never in
+  the messages (masked `***`). It is on the command line of `TeamViewer.exe` while the assignment
+  runs, visible to the local administrators of the computer.
+- A `.tvopt` exported with the password options holds password data, and so does a `.reg` export
+  of the TeamViewer key: TeamViewer 14 and earlier encrypted these values with a key shared by every
+  installation (CVE-2019-18988). Export without passwords where possible, and give the folder of the
+  settings file read access for the computer accounts and the IT administrators only, not the users.
+- The configuration of a custom module can hold the token that adds the devices to the account of
+  the module, and anyone who knows the ID can download it: treat the ID as internal to the site.
+- `CustomConfigId` and the other values of a site stay in the parameters of the administrators
+  (`module-settings.xml`, or the team's catalog), never in this script.
 
 ## PowerShell 7
 

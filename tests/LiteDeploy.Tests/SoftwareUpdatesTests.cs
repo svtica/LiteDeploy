@@ -480,7 +480,7 @@ namespace LiteDeploy.Tests
         public void ShippedModules_AreAsciiModules()
         {
             string[] files = Directory.GetFiles(Path.Combine(RepoRoot(), "modules"), "*.ps1");
-            CollectionAssert.IsSubsetOf(new[] { "AdobeReader.ps1", "CachedInstaller.ps1", "MsixProvision.ps1", "OnePassword.ps1", "OracleJava.ps1", "PowerShell7.ps1", "PrinterDrivers.ps1", "PSGalleryModule.ps1", "TeamsBootstrapper.ps1" },
+            CollectionAssert.IsSubsetOf(new[] { "AdobeReader.ps1", "CachedInstaller.ps1", "MsixProvision.ps1", "OnePassword.ps1", "OracleJava.ps1", "PowerShell7.ps1", "PrinterDrivers.ps1", "PSGalleryModule.ps1", "TeamsBootstrapper.ps1", "TeamViewer.ps1" },
                 files.Select(Path.GetFileName).ToArray());
             foreach (string path in files)
             {
@@ -543,6 +543,30 @@ namespace LiteDeploy.Tests
             string text = File.ReadAllText(path);
             Assert.IsFalse(text.Contains("Invoke-Expression"), "no Invoke-Expression");
             StringAssert.Contains(text, @"Join-Path $env:windir ""LiteDeploy\work\MsixProvision\$packageName""", "work folder under %windir%");
+        }
+
+        [TestMethod]
+        public void ShippedModules_TeamViewer_Header()
+        {
+            string path = Path.Combine(RepoRoot(), "modules", "TeamViewer.ps1");
+            UpdateModule m = UpdateModules.Read(path);
+            Assert.IsNotNull(m);
+            Assert.IsTrue(m.Instances, "one row per edition (Host, Full)");
+            CollectionAssert.AreEqual(new[] { "TeamViewer", "TeamViewer_Desktop" }, m.Processes);
+            CollectionAssert.AreEqual(new[] { "File", "Edition", "DetectName", "Version", "Publisher", "CustomConfigId", "SettingsFile", "MsiOptions", "AssignmentId", "ServiceStartup" },
+                m.Parameters.Select(p => p.Name).ToArray());
+            CollectionAssert.AreEqual(new[] { "File" }, m.Parameters.Where(p => p.Required).Select(p => p.Name).ToArray());
+            // The assignment ID is the only secret: never in a catalog, never in the output
+            CollectionAssert.AreEqual(new[] { "AssignmentId" }, m.Parameters.Where(p => p.Secret).Select(p => p.Name).ToArray());
+            Assert.AreEqual("TeamViewer Germany GmbH", m.Parameters.First(p => p.Name == "Publisher").Default);
+            Assert.AreEqual("keep", m.Parameters.First(p => p.Name == "ServiceStartup").Default);
+            string[] header = File.ReadLines(path).Take(20).Select(l => l.Trim()).ToArray();
+            CollectionAssert.Contains(header, "# Install: yes");
+            string text = File.ReadAllText(path);
+            Assert.IsFalse(text.Contains("Invoke-Expression"), "no Invoke-Expression");
+            Assert.IsFalse(text.Contains("Write-Host"), "no output besides the result line");
+            StringAssert.Contains(text, @"Join-Path $env:windir 'LiteDeploy\work\TeamViewer'", "work folder under %windir%");
+            StringAssert.Contains(text, "Get-SignatureRefusal $local $publisher", "the MSI is checked before it runs");
         }
 
         [TestMethod]
