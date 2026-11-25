@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.34] - 2026-11-25
+
 ### Added
 
 - *App > Options > Software updates > Computers processed at the same time* (1 to 32, 4 by
