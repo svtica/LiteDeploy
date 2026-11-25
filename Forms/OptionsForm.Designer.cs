@@ -52,6 +52,10 @@ namespace LiteDeploy
             this.parallelLabel = new System.Windows.Forms.Label();
             this.parallelBox = new System.Windows.Forms.NumericUpDown();
             ((System.ComponentModel.ISupportInitialize)(this.parallelBox)).BeginInit();
+            this.warnLabel = new System.Windows.Forms.Label();
+            this.warnBox = new System.Windows.Forms.NumericUpDown();
+            ((System.ComponentModel.ISupportInitialize)(this.warnBox)).BeginInit();
+            this.postponeCheckBox = new System.Windows.Forms.CheckBox();
             this.unsignedModulesCheckBox = new System.Windows.Forms.CheckBox();
             this.accountLabel = new System.Windows.Forms.Label();
             this.accountCombo = new System.Windows.Forms.ComboBox();
@@ -183,7 +187,7 @@ namespace LiteDeploy
             // 
             // ApplyButton
             // 
-            this.ApplyButton.Location = new System.Drawing.Point(237, 810);
+            this.ApplyButton.Location = new System.Drawing.Point(237, 860);
             this.ApplyButton.Name = "ApplyButton";
             this.ApplyButton.Size = new System.Drawing.Size(93, 23);
             this.ApplyButton.TabIndex = 6;
@@ -194,7 +198,7 @@ namespace LiteDeploy
             // cancelButton
             // 
             this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cancelButton.Location = new System.Drawing.Point(336, 810);
+            this.cancelButton.Location = new System.Drawing.Point(336, 860);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(93, 23);
             this.cancelButton.TabIndex = 7;
@@ -227,6 +231,9 @@ namespace LiteDeploy
             this.updatesGroup.Controls.Add(this.hoursEndBox);
             this.updatesGroup.Controls.Add(this.parallelLabel);
             this.updatesGroup.Controls.Add(this.parallelBox);
+            this.updatesGroup.Controls.Add(this.warnLabel);
+            this.updatesGroup.Controls.Add(this.warnBox);
+            this.updatesGroup.Controls.Add(this.postponeCheckBox);
             this.updatesGroup.Controls.Add(this.unsignedModulesCheckBox);
             this.updatesGroup.Controls.Add(this.accountLabel);
             this.updatesGroup.Controls.Add(this.accountCombo);
@@ -235,7 +242,7 @@ namespace LiteDeploy
             this.updatesGroup.Controls.Add(this.includeServersCheckBox);
             this.updatesGroup.Location = new System.Drawing.Point(12, 265);
             this.updatesGroup.Name = "updatesGroup";
-            this.updatesGroup.Size = new System.Drawing.Size(417, 371);
+            this.updatesGroup.Size = new System.Drawing.Size(417, 421);
             this.updatesGroup.TabIndex = 3;
             this.updatesGroup.TabStop = false;
             this.updatesGroup.Text = "Software updates";
@@ -292,6 +299,24 @@ namespace LiteDeploy
             this.parallelBox.Name = "parallelBox";
             this.parallelBox.Size = new System.Drawing.Size(60, 20);
             this.parallelBox.TabIndex = 20;
+            this.warnLabel.AutoSize = true;
+            this.warnLabel.Location = new System.Drawing.Point(17, 369);
+            this.warnLabel.Name = "warnLabel";
+            this.warnLabel.Text = "Warn before closing the applications (seconds, 0: no):";
+            this.warnBox.Location = new System.Drawing.Point(339, 366);
+            this.warnBox.Minimum = new decimal(new int[] { 0, 0, 0, 0 });
+            this.warnBox.Maximum = new decimal(new int[] { 900, 0, 0, 0 });
+            this.warnBox.Increment = new decimal(new int[] { 30, 0, 0, 0 });
+            this.warnBox.Value = new decimal(new int[] { 120, 0, 0, 0 });
+            this.warnBox.Name = "warnBox";
+            this.warnBox.Size = new System.Drawing.Size(60, 20);
+            this.warnBox.TabIndex = 21;
+            this.postponeCheckBox.Location = new System.Drawing.Point(20, 392);
+            this.postponeCheckBox.Name = "postponeCheckBox";
+            this.postponeCheckBox.Size = new System.Drawing.Size(379, 24);
+            this.postponeCheckBox.TabIndex = 22;
+            this.postponeCheckBox.Text = "The users can postpone the update (Cancel in the warning)";
+            this.postponeCheckBox.UseVisualStyleBackColor = true;
             this.unsignedModulesCheckBox.Location = new System.Drawing.Point(20, 166);
             this.unsignedModulesCheckBox.Name = "unsignedModulesCheckBox";
             this.unsignedModulesCheckBox.Size = new System.Drawing.Size(379, 40);
@@ -332,7 +357,7 @@ namespace LiteDeploy
             this.siwGroup.Controls.Add(this.toolsFolderLabel);
             this.siwGroup.Controls.Add(this.toolsFolderBox);
             this.siwGroup.Controls.Add(this.toolsFolderButton);
-            this.siwGroup.Location = new System.Drawing.Point(12, 642);
+            this.siwGroup.Location = new System.Drawing.Point(12, 692);
             this.siwGroup.Name = "siwGroup";
             this.siwGroup.Size = new System.Drawing.Size(417, 156);
             this.siwGroup.TabIndex = 4;
@@ -381,7 +406,7 @@ namespace LiteDeploy
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.cancelButton;
-            this.ClientSize = new System.Drawing.Size(445, 845);
+            this.ClientSize = new System.Drawing.Size(445, 895);
             this.Controls.Add(this.cancelButton);
             this.Controls.Add(this.ApplyButton);
             this.Controls.Add(this.groupBox2);
@@ -396,6 +421,7 @@ namespace LiteDeploy
             this.Text = "Lite Deploy - Options";
             this.Load += new System.EventHandler(this.OptionsForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.parallelBox)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.warnBox)).EndInit();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.ResumeLayout(false);
@@ -430,6 +456,9 @@ namespace LiteDeploy
         private System.Windows.Forms.TextBox hoursEndBox;
         private System.Windows.Forms.Label parallelLabel;
         private System.Windows.Forms.NumericUpDown parallelBox;
+        private System.Windows.Forms.Label warnLabel;
+        private System.Windows.Forms.NumericUpDown warnBox;
+        private System.Windows.Forms.CheckBox postponeCheckBox;
         private System.Windows.Forms.CheckBox unsignedModulesCheckBox;
         private System.Windows.Forms.Label accountLabel;
         private System.Windows.Forms.ComboBox accountCombo;

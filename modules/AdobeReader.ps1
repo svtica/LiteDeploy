@@ -1,6 +1,6 @@
 # LiteDeploy-Module
 # Label: Adobe Acrobat Reader / Acrobat
-# Processes: Acrobat, AcroRd32, AcroCEF, RdrCEF
+# Processes: Acrobat, AcroRd32, AcroCEF, RdrCEF, WINWORD, EXCEL, POWERPNT, OUTLOOK, MSACCESS, ONENOTE, MSPUB, VISIO, WINPROJ
 <#
 .SYNOPSIS
     LiteDeploy update module: Adobe Acrobat Reader and Acrobat (MSI installs)
@@ -12,9 +12,11 @@
     latest build comes from the versions winget knows; the patch of the right
     flavor is downloaded from ardownload2.adobe.com (or taken from the shared
     cache, LITEDEPLOY_CACHE\Adobe), refused unless it is signed
-    by Adobe, and applied with msiexec /p. Outlook loads Adobe add-ins and can
-    block the patch: it is not closed by this module (no warning to the user
-    yet), the failure then says so. See docs/modules.md for the contract.
+    by Adobe, and applied with msiexec /p. The Office applications load the
+    Adobe add-ins (PDFMaker) and can block the patch: the header lists them
+    with Acrobat, so the worker closes them before the update, after the
+    warning of App > Options (the users can save their work, or postpone).
+    See docs/modules.md for the contract.
 
 .PARAMETER Action
     Check or Update.
@@ -174,7 +176,7 @@ try {
         Remove-Item $msp -Force -ErrorAction SilentlyContinue
         if ($p.ExitCode -eq 3010) { $restart = $true }
         elseif ($p.ExitCode -ne 0) {
-            $hint = if (Get-Process OUTLOOK -ErrorAction SilentlyContinue) { ' (Outlook is open and loads Adobe add-ins: retry when it is closed)' } else { '' }
+            $hint = if (Get-Process OUTLOOK, WINWORD, EXCEL, POWERPNT -ErrorAction SilentlyContinue) { ' (an Office application is open and loads the Adobe add-ins: retry when it is closed)' } else { '' }
             Write-LiteDeployResult 'error' $versions $null "msiexec $($p.ExitCode) for $($t.Item.Flavor.Name)$hint (log: $log)"
             exit 1
         }

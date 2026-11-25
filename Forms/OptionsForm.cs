@@ -95,6 +95,8 @@ namespace LiteDeploy
             unsignedModulesCheckBox.Checked = current.AllowUnsignedModules;
             includeServersCheckBox.Checked = current.IncludeServers;
             parallelBox.Value = UserSettings.ClampParallelism(current.UpdatesParallelism);
+            warnBox.Value = CloseWarning.ClampSeconds(current.CloseWarningSeconds);
+            postponeCheckBox.Checked = current.CloseWarningPostpone;
             siwFolderBox.Text = current.SiwFolder ?? "";
             siwHtmlCheckBox.Checked = current.SiwHtml;
             toolsFolderBox.Text = current.ToolsFolder ?? "";
@@ -290,6 +292,8 @@ namespace LiteDeploy
             settings.AllowUnsignedModules = unsignedModulesCheckBox.Checked;
             settings.IncludeServers = includeServersCheckBox.Checked;
             settings.UpdatesParallelism = UserSettings.ClampParallelism((int)parallelBox.Value);
+            settings.CloseWarningSeconds = CloseWarning.ClampSeconds((int)warnBox.Value);
+            settings.CloseWarningPostpone = postponeCheckBox.Checked;
             settings.UpdateCredential = accountCombo.SelectedIndex > 0 ? (String)accountCombo.SelectedItem : "";
             settings.RemoteMethod = RemoteRunner.Methods[Math.Max(0, methodCombo.SelectedIndex)];
             settings.Theme = Themes[Math.Max(0, themeCombo.SelectedIndex)];

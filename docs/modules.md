@@ -34,6 +34,22 @@ package) unless *Include servers* is checked in *App > Options* (`--allow-server
 controller also needs `AllowDomainControllers` in `settings.xml` (`--allow-domain-controllers`).
 `Check` runs everywhere. See *Software updates* in the README.
 
+## Warning before closing
+
+Before an update, the worker closes the processes of the package (the *Processes to close* column
+of the catalog, filled from the `# Processes:` line of a module). With *App > Options > Software
+updates > Warn before closing the applications* (120 seconds by default; 0: no warning), when one
+of them runs in a user session, the users of those sessions first get a message: what is updated,
+the applications that will be closed (readable names: Word, Excel, Adobe Acrobat...), *OK* to close
+them now, and, when *The users can postpone the update* is checked, *Cancel* to postpone. Without
+an answer they are closed at the end of the delay. A postponed package is reported as skipped
+(*Postponed by the user*, with the user names) and stays outdated: run the update again later.
+The message is French on a French Windows, English otherwise. Processes of session 0 (services)
+and of disconnected sessions are closed without a message. *Install* closes nothing.
+
+The processes of a row added to the catalog before a module changed its `# Processes:` line keep
+the old list: edit the *Processes to close* column, or remove the row and add the module again.
+
 ## Where modules are found
 
 | Folder | Content |
@@ -69,7 +85,7 @@ Most of them come from an earlier in-house update script:
 | Module | Product | How |
 |---|---|---|
 | `CachedInstaller` | Any vendor MSI or EXE installer kept in the shared cache, one instance per product (see *CachedInstaller*) | Check: installed version (Uninstall entries, 64 and 32-bit, by `ProductCode` or `DetectName`) against the version of the installer; Update/Install: copy to `%windir%\LiteDeploy\work\CachedInstaller`, valid signature of the expected publisher required, silent install, exit code 0, 3010 or 1641, check again. Closes only the processes of its `CloseProcesses` parameter |
-| `AdobeReader` | Adobe Acrobat Reader and Acrobat (MSI installs, 32 and 64-bit, MUI) | Product recognized by its MSI product code; latest build among the versions winget knows; MSP patch from `ardownload2.adobe.com`, signed by Adobe, applied with `msiexec /p`. Outlook (Adobe add-ins) is not closed: when it blocks the patch, the message says so |
+| `AdobeReader` | Adobe Acrobat Reader and Acrobat (MSI installs, 32 and 64-bit, MUI) | Product recognized by its MSI product code; latest build among the versions winget knows; MSP patch from `ardownload2.adobe.com`, signed by Adobe, applied with `msiexec /p`. The Office applications (Word, Excel, PowerPoint, Outlook, Access, OneNote, Publisher, Visio, Project) load the Adobe add-ins: they are closed with Acrobat before the update, after the warning to the users (see *Warning before closing*) |
 | `MsixProvision` | Any MSIX package (and its dependency packages) provisioned for all users from the shared cache (`<cache>\<Folder>`) | Check: provisioned version (`Get-AppxProvisionedPackage -Online`, `DisplayName` = `PackageName`) against the version in the manifest of the package of the cache; `notinstalled` when not provisioned; `error` without a cache, a folder or a package of that name. Update (and Install): copies the package, its dependencies and its license to `%windir%\LiteDeploy\work\MsixProvision\<PackageName>`, refuses each package unless validly signed by the `Publisher` of its manifest (and by one of the organisations of the `Publisher` parameter, separated by `;`, when set), enables the optional features of `Features`, `Add-AppxProvisionedPackage -Online -Regions all`. No process closed. See *MsixProvision* below |
 | `OnePassword` | 1Password installed per machine | Latest version from winget; official MSI from `downloads.1password.com`, signed by AgileBits; `MANAGED_INSTALL=1 MANAGED_UPDATE=1`; old version removed first on 1638; Start menu host restarted if the MSI hangs on `AI_UnpinFromStartScreen` |
 | `OracleJava` | Oracle Java 8 (winget `Oracle.JavaRuntimeEnvironment`) | Stops only the system Java (bundled Java runtimes are left alone), upgrades with winget, checks that `java8path` still answers, asks for a restart (3010) when it stopped Java |

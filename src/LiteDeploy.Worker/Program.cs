@@ -16,6 +16,7 @@
 //                                  [--timeout <minutes per winget call or module>]
 //                                  [--allow-unsigned-modules] [--cache \\server\share]
 //                                  [--allow-servers [--allow-domain-controllers]]
+//                                  [--warn-close <seconds> [--allow-postpone]]
 //          Server guard (ServerPolicy): upgrade and install do nothing on a
 //          server unless --allow-servers is given, nor on a domain controller
 //          unless --allow-domain-controllers is given too (error line, done
@@ -283,6 +284,12 @@ namespace LiteDeploy.Worker
                 }
 
                 Progress(package, WorkerProtocol.StepClosing);
+                string postponed = WarnBeforeClosing(package);
+                if (postponed != null)
+                {
+                    Emit(UpgradeMessage(package, WorkerProtocol.ResultSkipped, null, postponed));
+                    continue;
+                }
                 string closeError = CloseProcesses(package);
                 if (closeError != null)
                 {
@@ -441,6 +448,12 @@ namespace LiteDeploy.Worker
             }
 
             Progress(module, WorkerProtocol.StepClosing);
+            string postponed = WarnBeforeClosing(module);
+            if (postponed != null)
+            {
+                Emit(UpgradeMessage(module, WorkerProtocol.ResultSkipped, null, postponed));
+                return;
+            }
             string closeError = CloseProcesses(module);
             if (closeError != null)
             {
@@ -535,6 +548,49 @@ namespace LiteDeploy.Worker
                 state.Available = row.Available;
             }
             return state;
+        }
+
+        /// <summary>--warn-close: seconds of warning before the processes of a package are closed (0: none).</summary>
+        static int closeWarningSeconds;
+        /// <summary>--allow-postpone: the users may postpone (Cancel).</summary>
+        static bool allowPostpone;
+
+        /// <summary>The warning options of the last ParseArguments (tests).</summary>
+        internal static int CloseWarningSeconds { get { return closeWarningSeconds; } }
+        internal static bool AllowPostpone { get { return allowPostpone; } }
+
+        /// <summary>
+        /// Before CloseProcesses: when a process of the package runs in a user session and --warn-close is set, the
+        /// users of those sessions get a message (CloseWarning) and the worker waits for OK, Cancel or the end of the
+        /// delay. Returns the result message when a user postponed (nothing is closed), else null.
+        /// </summary>
+        static string WarnBeforeClosing(UpdatePackage package)
+        {
+            if (closeWarningSeconds <= 0 || package.Processes.Length == 0) return null;
+            List<int> sessions = new List<int>();
+            List<string> running = new List<string>();
+            foreach (string name in package.Processes)
+            {
+                foreach (Process p in Process.GetProcessesByName(name))
+                {
+                    using (p)
+                    {
+                        int session;
+                        try { session = p.SessionId; } catch (Exception) { continue; }
+                        if (session == 0) continue;   // services: nobody to warn
+                        if (!sessions.Contains(session)) sessions.Add(session);
+                        if (!running.Contains(name, StringComparer.OrdinalIgnoreCase)) running.Add(name);
+                    }
+                }
+            }
+            if (sessions.Count == 0) return null;
+            bool french = System.Globalization.CultureInfo.InstalledUICulture.TwoLetterISOLanguageName == "fr";
+            string product = string.IsNullOrWhiteSpace(package.Label) ? package.Id : package.Label;
+            List<string> users = SessionMessenger.AskBeforeClosing(sessions, CloseWarning.Title(french),
+                CloseWarning.Text(product, CloseWarning.ReadableNames(running), closeWarningSeconds, allowPostpone, french),
+                closeWarningSeconds, allowPostpone);
+            if (users.Count == 0) return null;
+            return CloseWarning.PostponedMessage + " (" + string.Join(", ", users.Distinct()) + ")";
         }
 
         // Force-closes the package's processes (SYSTEM cannot ask them to close); null when none is left running
@@ -734,6 +790,8 @@ namespace LiteDeploy.Worker
             cache = null;
             allowServers = false;
             allowDomainControllers = false;
+            closeWarningSeconds = 0;
+            allowPostpone = false;
             command = null;
             packages = new List<UpdatePackage>();
             timeoutMinutes = 15;
@@ -768,6 +826,16 @@ namespace LiteDeploy.Worker
                 else if (a == ServerPolicy.AllowDomainControllersOption)
                 {
                     allowDomainControllers = true;
+                }
+                else if (a == CloseWarning.WarnOption && i + 1 < args.Length)
+                {
+                    int s;
+                    if (!int.TryParse(args[++i], out s) || s < 0 || s > CloseWarning.MaxSeconds) return "Invalid warning delay: " + args[i];
+                    closeWarningSeconds = s;
+                }
+                else if (a == CloseWarning.PostponeOption)
+                {
+                    allowPostpone = true;
                 }
                 else if (a == "--timeout" && i + 1 < args.Length)
                 {

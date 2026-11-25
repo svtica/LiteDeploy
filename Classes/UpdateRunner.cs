@@ -98,6 +98,16 @@ namespace LiteDeploy
         public static String BuildWorkerArguments(String command, IEnumerable<UpdatePackage> packages, bool allowUnsignedModules, String cacheShare,
             bool includeServers, bool allowDomainControllers)
         {
+            return BuildWorkerArguments(command, packages, allowUnsignedModules, cacheShare, includeServers, allowDomainControllers, 0, false);
+        }
+
+        /// <summary>
+        /// Upgrade with <paramref name="warnSeconds"/> &gt; 0: the users are warned that long before their applications are
+        /// closed (--warn-close), and may postpone with <paramref name="allowPostpone"/> (--allow-postpone). See CloseWarning.
+        /// </summary>
+        public static String BuildWorkerArguments(String command, IEnumerable<UpdatePackage> packages, bool allowUnsignedModules, String cacheShare,
+            bool includeServers, bool allowDomainControllers, int warnSeconds, bool allowPostpone)
+        {
             StringBuilder sb = new StringBuilder(command);
             foreach (UpdatePackage p in packages)
                 sb.Append(" --package ").Append(PsExecCommandLine.QuoteArgument(p.ToArgument(), true));
@@ -109,6 +119,12 @@ namespace LiteDeploy
             {
                 sb.Append(' ').Append(ServerPolicy.AllowServersOption);
                 if (allowDomainControllers) sb.Append(' ').Append(ServerPolicy.AllowDomainControllersOption);
+            }
+            int warn = CloseWarning.ClampSeconds(warnSeconds);
+            if (command == "upgrade" && warn > 0)
+            {
+                sb.Append(' ').Append(CloseWarning.WarnOption).Append(' ').Append(warn);
+                if (allowPostpone) sb.Append(' ').Append(CloseWarning.PostponeOption);
             }
             return sb.ToString();
         }
@@ -264,7 +280,8 @@ namespace LiteDeploy
                 ConnectionTimeout = 20,
                 Executable = WorkerPath,
                 Arguments = BuildWorkerArguments(command, packages, UserSettings.Current.AllowUnsignedModules, UserSettings.Current.UpdateCacheShare,
-                    UserSettings.Current.IncludeServers, UserSettings.Current.AllowDomainControllers)
+                    UserSettings.Current.IncludeServers, UserSettings.Current.AllowDomainControllers,
+                    UserSettings.Current.CloseWarningSeconds, UserSettings.Current.CloseWarningPostpone)
             };
         }
 

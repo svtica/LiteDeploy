@@ -296,6 +296,12 @@ Actions of the grid (checked computers, else the selected ones):
   Computers processed at the same time* sets 1 to 32 (`UpdatesParallelism` in `settings.xml`).
   More computers at once shortens a run but loads the network, the shared cache and the
   administrator's computer more (one worker start and one copy per computer).
+- **Warning before closing**: before an update closes the applications of a package (Acrobat and
+  the Office applications for `AdobeReader`, 1Password...), the users of the sessions that run them
+  get a message and can save their work: *OK* closes them now, *Cancel* postpones the update (when
+  allowed), no answer closes them at the end of the delay. *App > Options > Software updates*:
+  *Warn before closing the applications* (120 seconds; 0: no warning) and *The users can postpone the
+  update*. See *Warning before closing* in [docs/modules.md](docs/modules.md).
 - **Servers are left alone by default**: the worker reads the operating system type
   (`Win32_OperatingSystem.ProductType`) and refuses to update or install anything on a server
   unless *App > Options > Software updates > Include servers (updates and installs)* is checked

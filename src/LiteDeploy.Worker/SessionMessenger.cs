@@ -42,6 +42,9 @@ namespace LiteDeploy.Worker
         const int WtsUserName = 5;
         const int WtsDomainName = 7;
         const int MbOk = 0x0, MbIconInformation = 0x40, MbSetForeground = 0x10000, MbTopMost = 0x40000;
+        const int MbOkCancel = 0x1, MbIconWarning = 0x30;
+        /// <summary>Answers of WTSSendMessage with wait: Cancel (the user postpones).</summary>
+        const int IdCancel = 2;
         /// <summary>Between the domain and the user name.</summary>
         const char Backslash = (char)0x5C;
 
@@ -115,6 +118,43 @@ namespace LiteDeploy.Worker
             if (!WTSQuerySessionInformation(IntPtr.Zero, sessionId, infoClass, out buffer, out bytes)) return null;
             try { return Marshal.PtrToStringUni(buffer); }
             finally { WTSFreeMemory(buffer); }
+        }
+
+        /// <summary>
+        /// Before an update closes applications: the message in each active session among <paramref name="sessionIds"/>
+        /// (the sessions that run one of them), all at once, waiting for every answer or the end of the delay.
+        /// Returns the users who chose Cancel (postpone, only when <paramref name="allowPostpone"/>); empty: go on
+        /// (OK, no answer, nobody to warn, or the message could not be shown).
+        /// </summary>
+        public static List<string> AskBeforeClosing(IEnumerable<int> sessionIds, string title, string text, int seconds, bool allowPostpone)
+        {
+            List<string> postponedBy = new List<string>();
+            List<SessionEntry> targets;
+            try
+            {
+                HashSet<int> wanted = new HashSet<int>(sessionIds ?? Enumerable.Empty<int>());
+                targets = Targets(Sessions()).Where(s => wanted.Contains(s.Id)).ToList();
+            }
+            catch (Exception) { return postponedBy; }
+            string body = text.Replace("\n", "\r\n");
+            int style = (allowPostpone ? MbOkCancel : MbOk) | MbIconWarning | MbSetForeground | MbTopMost;
+            List<System.Threading.Thread> threads = new List<System.Threading.Thread>();
+            foreach (SessionEntry s in targets)
+            {
+                SessionEntry session = s;
+                System.Threading.Thread t = new System.Threading.Thread(() =>
+                {
+                    int response;
+                    if (WTSSendMessage(IntPtr.Zero, session.Id, title, title.Length * 2, body, body.Length * 2, style, seconds, out response, true)
+                        && allowPostpone && response == IdCancel)
+                        lock (postponedBy) postponedBy.Add(session.User);
+                }) { IsBackground = true, Name = "Close warning" };
+                t.Start();
+                threads.Add(t);
+            }
+            // The message closes itself at the end of the delay; a little more for the answer to come back
+            foreach (System.Threading.Thread t in threads) t.Join(TimeSpan.FromSeconds(seconds + 30));
+            lock (postponedBy) return postponedBy.ToList();
         }
 
         /// <summary>Sends the message to every target session, without waiting for the users.</summary>
