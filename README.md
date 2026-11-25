@@ -136,7 +136,9 @@ them (and for the PsExec method of the software updates); it is asked for when t
   - **PsExec** (`-s -c -f`): the worker is copied and started by PsExec.
 - **Software catalog...** (*More* in the tool bar, *Tools* menu): every software kept up to date, winget packages
   and update modules (`%LOCALAPPDATA%\LiteDeploy\packages.txt`); search winget, add a module,
-  *Parameters...*, *Import instances...* (catalog of module instances), *Web versions...*. State
+  *Parameters...* (lists of values and of the files of the shared cache when the module declares
+  them), *Remove* (or Delete: the selected software, after a confirmation), *Import instances...*
+  (catalog of module instances), *Web versions...*. State
   kept in `%LOCALAPPDATA%\LiteDeploy\updates.xml`.
 - **Profiles**: named selections of the catalog (for example *Base*: the software of every
   computer; *Java*: the computers that have it), one check box column per profile in the catalog

@@ -5,7 +5,9 @@
 // Date:    2026-11-12
 // Purpose: Software catalog (packages.txt) and its profiles (profiles.xml):
 //          search the winget catalog (winget of this computer), add a result,
-//          set the processes to close and the label, remove a package; add an
+//          set the processes to close and the label, remove packages (Remove or
+//          the Delete key: the selected rows, else the rows of the selected
+//          cells, after a confirmation that names them); add an
 //          update module (docs/modules.md) and set its parameters
 //          (Parameters...); for a module with instances, add one row per
 //          instance and import the instances of a module catalog (Import
@@ -474,6 +476,54 @@ namespace LiteDeploy
             if (result.Invalid.Count > 0)
                 message += "\n\n" + Localization.F("PackageListForm.ImportInvalid", "Left out (invalid): {0}", String.Join(", ", result.Invalid));
             MessageBox.Show(this, message, Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        // ---- Remove --------------------------------------------------------------------
+
+        /// <summary>The rows to remove: the selected rows, else the rows of the selected cells (never the new row), in their order.</summary>
+        List<DataGridViewRow> RowsToRemove()
+        {
+            IEnumerable<DataGridViewRow> rows = packagesGrid.SelectedRows.Count > 0
+                ? packagesGrid.SelectedRows.Cast<DataGridViewRow>()
+                : packagesGrid.SelectedCells.Cast<DataGridViewCell>().Select(c => c.OwningRow);
+            return rows.Where(r => r != null && !r.IsNewRow).Distinct().OrderBy(r => r.Index).ToList();
+        }
+
+        void removeButton_Click(object sender, EventArgs e)
+        {
+            RemoveSelected();
+        }
+
+        // Delete (not while a cell is being edited): same as Remove
+        void packagesGrid_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode != Keys.Delete || packagesGrid.IsCurrentCellInEditMode) return;
+            e.Handled = true;
+            RemoveSelected();
+        }
+
+        void RemoveSelected()
+        {
+            List<DataGridViewRow> rows = RowsToRemove();
+            if (rows.Count == 0)
+            {
+                MessageBox.Show(this, Localization.T("PackageListForm.SelectToRemove", "Select the software to remove (a cell or a row of each, Ctrl or Shift for several)."),
+                    Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            List<String> names = rows.Select(r =>
+            {
+                String id = Convert.ToString(r.Cells[0].Value);
+                String label = Convert.ToString(r.Cells[2].Value);
+                return String.IsNullOrWhiteSpace(label) || label == id ? id : label + " (" + id + ")";
+            }).ToList();
+            String list = String.Join("\n", names.Take(15)) + (names.Count > 15 ? "\n..." : "");
+            if (MessageBox.Show(this, Localization.F("PackageListForm.ConfirmRemove",
+                    "Remove {0} software from the catalog (and from its profiles)?\n\n{1}\n\nThe parameters of a module are kept. Nothing is uninstalled; OK saves the catalog.", rows.Count, list),
+                    Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+                return;
+            foreach (DataGridViewRow r in rows) packagesGrid.Rows.Remove(r);
+            parametersButton.Enabled = CurrentModule() != null;
         }
 
         // ---- Save -------------------------------------------------------------------

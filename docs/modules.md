@@ -767,13 +767,20 @@ first 20 lines of the script:
 # Parameter: Environment default=Production Name of the environment the product connects to
 # Parameter: InstallerFile default="example 1.2.msi" File name of the installer in the shared cache
 # Parameter: EnrollmentToken secret Enrollment token (password of a stored credential)
+# Parameter: Channel default=stable values=stable|beta Update channel
+# Parameter: SettingsFile default= files=ExampleVendor/*.cfg Settings file in the shared cache
 ```
+
+An empty box shows the default of its parameter in grey. The flags come right after the name, in any
+order; an earlier LiteDeploy reads `values=` and `files=` as the start of the description.
 
 | Part | Rule |
 |---|---|
 | Name | `^[A-Za-z][A-Za-z0-9_]{0,31}$`; the module reads `$env:LITEDEPLOY_PARAM_<Name>` |
 | `secret` | Optional, right after the name: the value is the password of a stored credential |
 | `default=<value>` | Optional, right after the name: value used when none is set (`default="a b"` for spaces, `default=` for an empty value). Without default, the parameter is **required** |
+| `values=a\|b\|c` | Optional, right after the name: *Parameters...* offers these values in a list (an optional parameter starts with *(default: x)*, which saves no value). The module still checks the value it receives |
+| `files=Folder/*.msi\|Folder/*.exe` | Optional, right after the name: *Parameters...* offers the files of the shared cache that match (the folder and its subfolders, `OLD` folders left out), as paths relative to the cache; the box can still be typed in |
 | Description | The rest of the line, shown in LiteDeploy |
 
 The administrator sets the values in *Software catalog...* (tool bar of the main window): select a

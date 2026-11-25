@@ -27,13 +27,17 @@ namespace LiteDeploy
         /// <summary>Value used when none is set; null: none (the parameter is required).</summary>
         public string Default;
         public string Description = "";
+        /// <summary>values=a|b|c: the values offered in a list by LiteDeploy (empty: free text). The module still checks its value.</summary>
+        public string[] Values = new string[0];
+        /// <summary>files=Folder/*.msi|Folder/*.exe: files of the shared cache offered by LiteDeploy (null: none). Path relative to the cache.</summary>
+        public string Files;
 
         public bool Required { get { return Default == null; } }
     }
 
     internal static class ModuleParameters
     {
-        /// <summary>Header key: "# Parameter: Name [secret] [default=value] description".</summary>
+        /// <summary>Header key: "# Parameter: Name [secret] [default=value] [values=a|b] [files=Folder/*.ext] description".</summary>
         public const string HeaderKey = "Parameter";
         /// <summary>Environment variable of a parameter for the module process: LITEDEPLOY_PARAM_Name.</summary>
         public const string EnvironmentPrefix = "LITEDEPLOY_PARAM_";
@@ -79,8 +83,10 @@ namespace LiteDeploy
 
         /// <summary>
         /// Parses one header line; null when it is not a "# Parameter:" line or its name is invalid.
-        /// Flags come right after the name: "secret", "default=value" or default="value with spaces";
-        /// the rest of the line is the description.
+        /// Flags come right after the name, in any order: "secret", "default=value" or default="value with spaces",
+        /// "values=a|b|c" (the values LiteDeploy offers in a list) and "files=Folder/*.msi" (files of the shared
+        /// cache LiteDeploy offers); the rest of the line is the description. An earlier LiteDeploy reads an
+        /// unknown flag as the start of the description.
         /// </summary>
         public static ModuleParameter ParseHeaderLine(string line)
         {
@@ -120,6 +126,18 @@ namespace LiteDeploy
                         rest = rest.Substring(value.Length);
                     }
                     rest = rest.TrimStart();
+                }
+                else if (token.StartsWith("values=", StringComparison.OrdinalIgnoreCase))
+                {
+                    p.Values = token.Substring("values=".Length).Split('|').Select(v => v.Trim()).Where(v => v.Length > 0)
+                        .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+                    rest = rest.Substring(token.Length).TrimStart();
+                }
+                else if (token.StartsWith("files=", StringComparison.OrdinalIgnoreCase))
+                {
+                    string files = token.Substring("files=".Length).Trim();
+                    p.Files = files.Length > 0 ? files : null;
+                    rest = rest.Substring(token.Length).TrimStart();
                 }
                 else break;
             }

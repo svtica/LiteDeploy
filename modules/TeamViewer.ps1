@@ -3,16 +3,16 @@
 # Processes: TeamViewer, TeamViewer_Desktop
 # Install: yes
 # Instances: yes
-# Parameter: File Path of the TeamViewer MSI under the shared cache, e.g. TeamViewer/TeamViewer_Host-15.83.7.msi
-# Parameter: Edition default=Host Host or Full: the TeamViewer product of the MSI
+# Parameter: File files=TeamViewer/*.msi Path of the TeamViewer MSI under the shared cache, e.g. TeamViewer/TeamViewer_Host-15.83.7.msi
+# Parameter: Edition default=Host values=Host|Full Host or Full: the TeamViewer product of the MSI
 # Parameter: DetectName default= DisplayName of the Uninstall entry, wildcards allowed (empty: TeamViewer Host for Host, TeamViewer for Full)
 # Parameter: Version default= Version expected once installed (empty: ProductVersion of the MSI)
 # Parameter: Publisher default="TeamViewer Germany GmbH" Organisation (O=) of the signer of the MSI (several: separated by ;)
 # Parameter: CustomConfigId default= ID of the custom module of the Management Console (CUSTOMCONFIGID, then TeamViewer.exe customize)
-# Parameter: SettingsFile default= Path of a .tvopt settings file under the shared cache (SETTINGSFILE)
+# Parameter: SettingsFile default= files=TeamViewer/*.tvopt Path of a .tvopt settings file under the shared cache (SETTINGSFILE)
 # Parameter: MsiOptions default= Extra MSI properties from a fixed list, e.g. ENABLEOUTLOOKPLUGIN=false REMOVE=f.DesktopShortcut
 # Parameter: AssignmentId secret default= Assignment ID of the Management Console (password of a stored credential), used on Install
-# Parameter: ServiceStartup default=keep Startup type of the TeamViewer service after an install or update: keep, auto, manual or disabled
+# Parameter: ServiceStartup default=keep values=keep|auto|manual|disabled Startup type of the TeamViewer service after an install or update: keep, auto, manual or disabled
 <#
 .SYNOPSIS
     LiteDeploy update module: installs and updates TeamViewer (Host or full

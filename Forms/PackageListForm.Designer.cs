@@ -47,6 +47,7 @@ namespace LiteDeploy
             this.exportButton = new System.Windows.Forms.Button();
             this.importCatalogButton = new System.Windows.Forms.Button();
             this.webVersionsButton = new System.Windows.Forms.Button();
+            this.removeButton = new System.Windows.Forms.Button();
             this.okButton = new System.Windows.Forms.Button();
             this.cancelButton = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.packagesGrid)).BeginInit();
@@ -165,6 +166,7 @@ namespace LiteDeploy
             this.labelColumn.HeaderText = "Label";
             this.labelColumn.Name = "labelColumn";
             this.packagesGrid.CurrentCellChanged += new System.EventHandler(this.packagesGrid_CurrentCellChanged);
+            this.packagesGrid.KeyDown += new System.Windows.Forms.KeyEventHandler(this.packagesGrid_KeyDown);
             //
             // profilePanel
             //
@@ -237,6 +239,16 @@ namespace LiteDeploy
             this.webVersionsButton.Text = "Web versions...";
             this.webVersionsButton.Click += new System.EventHandler(this.webVersionsButton_Click);
             //
+            // removeButton
+            //
+            this.removeButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.removeButton.Location = new System.Drawing.Point(410, 428);
+            this.removeButton.Name = "removeButton";
+            this.removeButton.Size = new System.Drawing.Size(100, 23);
+            this.removeButton.TabIndex = 12;
+            this.removeButton.Text = "Remove";
+            this.removeButton.Click += new System.EventHandler(this.removeButton_Click);
+            //
             // okButton
             //
             this.okButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
@@ -278,6 +290,7 @@ namespace LiteDeploy
             this.Controls.Add(this.parametersButton);
             this.Controls.Add(this.importCatalogButton);
             this.Controls.Add(this.webVersionsButton);
+            this.Controls.Add(this.removeButton);
             this.Controls.Add(this.okButton);
             this.Controls.Add(this.cancelButton);
             this.MinimizeBox = false;
@@ -311,6 +324,7 @@ namespace LiteDeploy
         private System.Windows.Forms.Button parametersButton;
         private System.Windows.Forms.Button importCatalogButton;
         private System.Windows.Forms.Button webVersionsButton;
+        private System.Windows.Forms.Button removeButton;
         private System.Windows.Forms.Button okButton;
         private System.Windows.Forms.Button cancelButton;
         private System.Windows.Forms.Button newProfileButton;
