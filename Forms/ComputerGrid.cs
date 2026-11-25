@@ -101,6 +101,7 @@ namespace LiteDeploy
         {
             InitializeComponent();
             Localization.Apply(this);
+            profileButton.MouseEnter += (s, e) => { if (profileTip != null) profileButton.ToolTipText = profileTip; };
             Theme.Apply(this);
             Theme.Apply(actionsButton.DropDown);
             Theme.Apply(rowMenu);
@@ -2114,6 +2115,37 @@ namespace LiteDeploy
             packages = SoftwareProfiles.Load().Filter(catalog, profileName, out profileFound);
             profileButton.Text = Localization.F("ComputerGrid.ProfileButton", "Profile: {0}", ProfileDisplayName);
             profileButton.ForeColor = profileFound ? (Theme.IsDark ? Theme.Text : SystemColors.ControlText) : Theme.ErrorColor;
+            profileTip = ProfileTip(
+                Localization.T("ComputerGrid.profileButton.ToolTipText", "The software that Check, Update checked and Install work on: click to choose another profile"),
+                ProfileDisplayName, profileFound, packages);
+            profileButton.ToolTipText = profileTip;
+        }
+
+        /// <summary>Tooltip of the Profile button (set again when the pointer enters it: a translation pass of the window could replace it).</summary>
+        String profileTip;
+
+        /// <summary>Lines of software listed in the tooltip of the Profile button; the others are counted.</summary>
+        internal const int ProfileTipMaxLines = 40;
+
+        /// <summary>
+        /// Tooltip of the Profile button: what it does, then the software of the active profile (labels, sorted),
+        /// or why there is none. Unit-tested.
+        /// </summary>
+        internal static String ProfileTip(String intro, String profile, bool found, IList<UpdatePackage> software)
+        {
+            StringBuilder tip = new StringBuilder(intro ?? "");
+            tip.AppendLine().AppendLine();
+            if (!found)
+                return tip.Append(Localization.F("ComputerGrid.ProfileTipMissing", "The profile {0} no longer exists: no software.", profile)).ToString();
+            List<String> names = (software ?? new List<UpdatePackage>()).Select(p => p.DisplayName)
+                .OrderBy(n => n, StringComparer.CurrentCultureIgnoreCase).ToList();
+            if (names.Count == 0)
+                return tip.Append(Localization.F("ComputerGrid.ProfileTipEmpty", "{0}: no software.", profile)).ToString();
+            tip.Append(Localization.F("ComputerGrid.ProfileTipCount", "{0}: {1} software", profile, names.Count));
+            foreach (String n in names.Take(ProfileTipMaxLines)) tip.AppendLine().Append("  - ").Append(n);
+            if (names.Count > ProfileTipMaxLines)
+                tip.AppendLine().Append("  ").Append(Localization.F("ComputerGrid.ProfileTipMore", "... and {0} more", names.Count - ProfileTipMaxLines));
+            return tip.ToString();
         }
 
         void SetProfile(String name)

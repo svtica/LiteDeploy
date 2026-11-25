@@ -13,6 +13,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   default, `UpdatesParallelism` in `settings.xml`): the number of computers that *Check*, *Update
   checked*, *Install*, *Uninstall* and the scheduled updates process at once (was fixed at 4). A
   value out of range, edited by hand, is brought back to the nearest bound.
+- The tooltip of the **Profile** button lists the software of the active profile (labels, sorted,
+  40 at most, then the number of the others), or says that the profile no longer exists.
+
+### Fixed
+
+- WinRM method on the administrator's own computer: no WinRM session to itself any more (it
+  failed). The worker is copied to `%windir%\LiteDeploy` of this computer and the scheduled task
+  is registered by the local PowerShell; LiteDeploy must run as administrator for it, otherwise
+  that computer fails at once with a message saying so. Recognized by its name (with or without a
+  domain suffix), `localhost`, `.` or a loopback address.
 
 ## [1.0.33] - 2026-11-25
 
