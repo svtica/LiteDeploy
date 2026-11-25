@@ -40,6 +40,7 @@ namespace LiteDeploy
             this.labelColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.parametersButton = new System.Windows.Forms.Button();
             this.profilePanel = new System.Windows.Forms.FlowLayoutPanel();
+            this.actionPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.newProfileButton = new System.Windows.Forms.Button();
             this.renameProfileButton = new System.Windows.Forms.Button();
             this.deleteProfileButton = new System.Windows.Forms.Button();
@@ -208,43 +209,53 @@ namespace LiteDeploy
             this.exportButton.Click += new System.EventHandler(this.exportButton_Click);
             this.exportButton.Margin = new System.Windows.Forms.Padding(20, 3, 3, 3);
             //
+            // actionPanel: the buttons of the selected row, aligned like the profile buttons above
+            //
+            this.actionPanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.actionPanel.Controls.AddRange(new System.Windows.Forms.Control[] { this.removeButton, this.parametersButton, this.importCatalogButton, this.webVersionsButton });
+            this.actionPanel.Location = new System.Drawing.Point(12, 425);
+            this.actionPanel.Name = "actionPanel";
+            this.actionPanel.Size = new System.Drawing.Size(498, 30);
+            this.actionPanel.WrapContents = false;
+            //
             // parametersButton
             //
-            this.parametersButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.parametersButton.Margin = new System.Windows.Forms.Padding(20, 3, 3, 3);
             this.parametersButton.Enabled = false;
-            this.parametersButton.Location = new System.Drawing.Point(12, 428);
             this.parametersButton.Name = "parametersButton";
-            this.parametersButton.Size = new System.Drawing.Size(110, 23);
+            this.parametersButton.AutoSize = true;
+            this.parametersButton.MinimumSize = new System.Drawing.Size(90, 25);
+            this.parametersButton.UseVisualStyleBackColor = true;
             this.parametersButton.TabIndex = 9;
             this.parametersButton.Text = "Parameters...";
             this.parametersButton.Click += new System.EventHandler(this.parametersButton_Click);
             //
             // importCatalogButton
             //
-            this.importCatalogButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.importCatalogButton.Location = new System.Drawing.Point(128, 428);
             this.importCatalogButton.Name = "importCatalogButton";
-            this.importCatalogButton.Size = new System.Drawing.Size(150, 23);
+            this.importCatalogButton.AutoSize = true;
+            this.importCatalogButton.MinimumSize = new System.Drawing.Size(90, 25);
+            this.importCatalogButton.UseVisualStyleBackColor = true;
             this.importCatalogButton.TabIndex = 10;
             this.importCatalogButton.Text = "Import instances...";
             this.importCatalogButton.Click += new System.EventHandler(this.importCatalogButton_Click);
             //
             // webVersionsButton
             //
-            this.webVersionsButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.webVersionsButton.Location = new System.Drawing.Point(284, 428);
             this.webVersionsButton.Name = "webVersionsButton";
-            this.webVersionsButton.Size = new System.Drawing.Size(120, 23);
+            this.webVersionsButton.AutoSize = true;
+            this.webVersionsButton.MinimumSize = new System.Drawing.Size(90, 25);
+            this.webVersionsButton.UseVisualStyleBackColor = true;
             this.webVersionsButton.TabIndex = 11;
             this.webVersionsButton.Text = "Web versions...";
             this.webVersionsButton.Click += new System.EventHandler(this.webVersionsButton_Click);
             //
             // removeButton
             //
-            this.removeButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.removeButton.Location = new System.Drawing.Point(410, 428);
             this.removeButton.Name = "removeButton";
-            this.removeButton.Size = new System.Drawing.Size(100, 23);
+            this.removeButton.AutoSize = true;
+            this.removeButton.MinimumSize = new System.Drawing.Size(90, 25);
+            this.removeButton.UseVisualStyleBackColor = true;
             this.removeButton.TabIndex = 12;
             this.removeButton.Text = "Remove";
             this.removeButton.Click += new System.EventHandler(this.removeButton_Click);
@@ -254,7 +265,7 @@ namespace LiteDeploy
             this.okButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.okButton.Location = new System.Drawing.Point(516, 428);
             this.okButton.Name = "okButton";
-            this.okButton.Size = new System.Drawing.Size(75, 23);
+            this.okButton.Size = new System.Drawing.Size(75, 25);
             this.okButton.TabIndex = 5;
             this.okButton.Text = "Save";
             this.okButton.Click += new System.EventHandler(this.okButton_Click);
@@ -265,7 +276,7 @@ namespace LiteDeploy
             this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.cancelButton.Location = new System.Drawing.Point(597, 428);
             this.cancelButton.Name = "cancelButton";
-            this.cancelButton.Size = new System.Drawing.Size(75, 23);
+            this.cancelButton.Size = new System.Drawing.Size(75, 25);
             this.cancelButton.TabIndex = 6;
             this.cancelButton.Text = "Cancel";
             //
@@ -287,10 +298,7 @@ namespace LiteDeploy
             this.Controls.Add(this.listLabel);
             this.Controls.Add(this.packagesGrid);
             this.Controls.Add(this.profilePanel);
-            this.Controls.Add(this.parametersButton);
-            this.Controls.Add(this.importCatalogButton);
-            this.Controls.Add(this.webVersionsButton);
-            this.Controls.Add(this.removeButton);
+            this.Controls.Add(this.actionPanel);
             this.Controls.Add(this.okButton);
             this.Controls.Add(this.cancelButton);
             this.MinimizeBox = false;
@@ -333,5 +341,6 @@ namespace LiteDeploy
         private System.Windows.Forms.Button importButton;
         private System.Windows.Forms.Button exportButton;
         private System.Windows.Forms.FlowLayoutPanel profilePanel;
+        private System.Windows.Forms.FlowLayoutPanel actionPanel;
     }
 }

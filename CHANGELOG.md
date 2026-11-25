@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- *Software catalog...*: the buttons under the list (*Remove*, *Parameters...*, *Import instances...*,
+  *Web versions...*) are aligned and spaced like the profile buttons above them (same height, same
+  margins, sized to their text); *Save* and *Cancel* have the same height.
+
 ## [1.0.35] - 2026-11-25
 
 ### Fixed
