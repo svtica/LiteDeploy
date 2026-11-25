@@ -92,6 +92,18 @@ namespace LiteDeploy
         public int UpdatesStaleDays = 30;
         /// <summary>Update when available: a computer that has not answered after this many days leaves the queue; 0: never.</summary>
         public int QueueMaxDays = UpdateQueue.DefaultMaxDays;
+        /// <summary>Software updates (Check, Update checked, Install, Uninstall) and schedules: computers processed at the same time.</summary>
+        public int UpdatesParallelism = DefaultParallelism;
+
+        public const int DefaultParallelism = 4;
+        public const int MinParallelism = 1;
+        public const int MaxParallelism = 32;
+
+        /// <summary>A number of computers at the same time within MinParallelism..MaxParallelism (a value out of range, edited by hand: the nearest bound).</summary>
+        static public int ClampParallelism(int value)
+        {
+            return Math.Max(MinParallelism, Math.Min(MaxParallelism, value));
+        }
         /// <summary>Normal bounds "x,y,width,height"; empty: the default size, centered.</summary>
         public String UpdatesWindowBounds = "";
         public bool UpdatesWindowMaximized = false;

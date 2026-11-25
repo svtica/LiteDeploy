@@ -52,6 +52,19 @@ namespace LiteDeploy.Tests
         }
 
         [TestMethod]
+        public void UpdatesParallelism_DefaultAndBounds()
+        {
+            Assert.AreEqual(4, new UserSettings().UpdatesParallelism, "4 computers at a time, as before the option");
+            Assert.AreEqual(10, UserSettings.ClampParallelism(10));
+            Assert.AreEqual(1, UserSettings.ClampParallelism(0), "0 or less (edited by hand): one at a time");
+            Assert.AreEqual(1, UserSettings.ClampParallelism(-5));
+            Assert.AreEqual(32, UserSettings.ClampParallelism(500), "never more than 32");
+            // An older settings.xml without the element: the default
+            UserSettings old = (UserSettings)new XmlSerializer(typeof(UserSettings)).Deserialize(new StringReader("<LiteDeploySettings><IncludeServers>true</IncludeServers></LiteDeploySettings>"));
+            Assert.AreEqual(4, old.UpdatesParallelism);
+        }
+
+        [TestMethod]
         public void ToXml_LoadsBackWithEveryValue()
         {
             UserSettings s = new UserSettings
@@ -60,7 +73,8 @@ namespace LiteDeploy.Tests
                 ExtraLogFolders = "myscript|Temp\\MyScript|10",
                 UpdatesStaleDays = 45,
                 WebCheckTime = "06:30",
-                IncludeServers = true
+                IncludeServers = true,
+                UpdatesParallelism = 10
             };
             String path = Path.Combine(Path.GetTempPath(), "LiteDeploy-settings-" + Guid.NewGuid().ToString("N") + ".xml");
             try
@@ -79,6 +93,7 @@ namespace LiteDeploy.Tests
                 Assert.AreEqual(45, back.UpdatesStaleDays);
                 Assert.AreEqual("06:30", back.WebCheckTime);
                 Assert.IsTrue(back.IncludeServers);
+                Assert.AreEqual(10, back.UpdatesParallelism);
                 StringAssert.Contains(File.ReadAllText(path), "<!-- AllowDomainControllers: ");
             }
             finally

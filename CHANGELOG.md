@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- *App > Options > Software updates > Computers processed at the same time* (1 to 32, 4 by
+  default, `UpdatesParallelism` in `settings.xml`): the number of computers that *Check*, *Update
+  checked*, *Install*, *Uninstall* and the scheduled updates process at once (was fixed at 4). A
+  value out of range, edited by hand, is brought back to the nearest bound.
+
 ## [1.0.33] - 2026-11-25
 
 ### Added

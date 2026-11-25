@@ -286,6 +286,11 @@ Actions of the grid (checked computers, else the selected ones):
   computer shown), the operating system as description and the OU as folder path: a CSV file
   (`Name,ComputerName,Description,Path`, UTF-8 with BOM) for *Data > Import > Comma Separated
   File*, or a RoyalJSON document (`.rjson`, also usable as the content of a Dynamic Folder).
+- **Computers at the same time**: *Check*, *Update checked*, *Install*, *Uninstall* and the
+  scheduled updates process 4 computers at a time by default; *App > Options > Software updates >
+  Computers processed at the same time* sets 1 to 32 (`UpdatesParallelism` in `settings.xml`).
+  More computers at once shortens a run but loads the network, the shared cache and the
+  administrator's computer more (one worker start and one copy per computer).
 - **Servers are left alone by default**: the worker reads the operating system type
   (`Win32_OperatingSystem.ProductType`) and refuses to update or install anything on a server
   unless *App > Options > Software updates > Include servers (updates and installs)* is checked
