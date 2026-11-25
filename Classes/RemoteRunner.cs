@@ -140,9 +140,11 @@ namespace LiteDeploy
 
         internal static bool IsLocalComputer(String computer, String machineName, String dnsHostName)
         {
-            String c = (computer ?? "").Trim().TrimStart('\\').TrimEnd('.');
+            String c = (computer ?? "").Trim().TrimStart('\\');
+            if (c == ".") return true;
+            c = c.TrimEnd('.');
             if (c.Length == 0) return false;
-            if (c == "." || c.Equals("localhost", StringComparison.OrdinalIgnoreCase)) return true;
+            if (c.Equals("localhost", StringComparison.OrdinalIgnoreCase)) return true;
             IPAddress ip;
             if (IPAddress.TryParse(c, out ip)) return IPAddress.IsLoopback(ip);
             if (!String.IsNullOrEmpty(machineName)
