@@ -44,12 +44,42 @@ namespace LiteDeploy.Tests
         }
 
         [TestMethod]
+        public void Script_LocalComputerHasNoSession()
+        {
+            String remote = RemoteRunner.BuildScript("PC-01", "info", false, 2, false);
+            String local = RemoteRunner.BuildScript("PC-01", "info", false, 2, true);
+            Assert.IsFalse(local.Contains("%LOCAL%") || remote.Contains("%LOCAL%"));
+            StringAssert.Contains(remote, "if (-not $false)", "another computer: a WinRM session");
+            StringAssert.Contains(local, "if (-not $true)", "this computer: no session");
+            StringAssert.Contains(local, "Invoke-Command @on");
+            Assert.IsFalse(local.Contains("Invoke-Command -Session"), "every call goes through @on");
+        }
+
+        [TestMethod]
+        public void IsLocalComputer_NamesOfThisComputer()
+        {
+            Assert.IsTrue(RemoteRunner.IsLocalComputer("PC-01", "PC-01", "pc-01"));
+            Assert.IsTrue(RemoteRunner.IsLocalComputer("pc-01", "PC-01", "pc-01"), "case-insensitive");
+            Assert.IsTrue(RemoteRunner.IsLocalComputer("PC-01.example.com", "PC-01", "pc-01"), "with a domain suffix");
+            Assert.IsTrue(RemoteRunner.IsLocalComputer(new String('\\', 2) + "PC-01", "PC-01", "pc-01"), "leading backslashes");
+            Assert.IsTrue(RemoteRunner.IsLocalComputer("localhost", "PC-01", "pc-01"));
+            Assert.IsTrue(RemoteRunner.IsLocalComputer("127.0.0.1", "PC-01", "pc-01"));
+            Assert.IsTrue(RemoteRunner.IsLocalComputer("::1", "PC-01", "pc-01"));
+            Assert.IsTrue(RemoteRunner.IsLocalComputer(".", "PC-01", "pc-01"));
+            Assert.IsFalse(RemoteRunner.IsLocalComputer("PC-02", "PC-01", "pc-01"));
+            Assert.IsFalse(RemoteRunner.IsLocalComputer("PC-011", "PC-01", "pc-01"), "a longer name is another computer");
+            Assert.IsFalse(RemoteRunner.IsLocalComputer("192.0.2.10", "PC-01", "pc-01"), "not a loopback address");
+            Assert.IsFalse(RemoteRunner.IsLocalComputer("", "PC-01", "pc-01"));
+            Assert.IsFalse(RemoteRunner.IsLocalComputer(null, "PC-01", "pc-01"));
+        }
+
+        [TestMethod]
         public void Script_ParsesInWindowsPowerShell()
         {
             String exe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), @"WindowsPowerShell\v1.0\powershell.exe");
             if (!File.Exists(exe)) Assert.Inconclusive("Windows PowerShell not available");
             String file = Path.Combine(Path.GetTempPath(), "LiteDeploy-remote-" + Guid.NewGuid().ToString("N") + ".ps1");
-            File.WriteAllText(file, RemoteRunner.BuildScript("PC-01", "info", true, 2), Encoding.ASCII);
+            File.WriteAllText(file, RemoteRunner.BuildScript("PC-01", "info", true, 2) + "\n" + RemoteRunner.BuildScript("PC-01", "info", false, 2, true), Encoding.ASCII);
             try
             {
                 String command = "$e = $null; [void][System.Management.Automation.Language.Parser]::ParseFile('" + file + "', [ref]$null, [ref]$e); $e | ForEach-Object { $_.ToString() }; exit @($e).Count";

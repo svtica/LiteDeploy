@@ -15,12 +15,20 @@
 //          - PsExec (-s -c -f): the worker is copied and started by PsExec.
 //          Either way the process returned writes the worker messages on its
 //          standard output and ends with the worker's exit code.
+//          The administrator's own computer (WinRM method): no WinRM session
+//          to itself (loopback, refused or not configured on most
+//          workstations). The worker is copied to %windir%\LiteDeploy and
+//          the same scheduled task is registered by the local PowerShell,
+//          which needs LiteDeploy to run as administrator; otherwise the run
+//          fails at once and says so.
 // -----------------------------------------------------------------------------
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Security.Cryptography;
+using System.Security.Principal;
 using System.Text;
 using LiteSuite;
 
@@ -56,15 +64,19 @@ namespace LiteDeploy
                 return Process.Start(psi);
             }
 
-            CopyWorker(computer, credential);
+            bool local = IsLocalComputer(computer);
+            if (local && !IsElevated())
+                throw new InvalidOperationException(Localization.F("RemoteRunner.LocalNotElevated",
+                    "{0} is this computer: run LiteDeploy as administrator to check or update it (WinRM does not connect to its own computer).", computer.Trim()));
+            if (local) CopyWorkerLocally(); else CopyWorker(computer, credential);
             ProcessStartInfo ps = new ProcessStartInfo(PowerShellPath(),
                 "-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand " +
-                Convert.ToBase64String(Encoding.Unicode.GetBytes(BuildScript(computer, workerArguments, credential != null, timeoutMinutes))));
+                Convert.ToBase64String(Encoding.Unicode.GetBytes(BuildScript(computer, workerArguments, credential != null && !local, timeoutMinutes, local))));
             Redirect(ps, Encoding.UTF8);
             ps.RedirectStandardInput = true;
             Process p = Process.Start(ps);
-            // The credential goes through stdin, never on a command line
-            if (credential != null)
+            // The credential goes through stdin, never on a command line (not used on this computer)
+            if (credential != null && !local)
             {
                 p.StandardInput.WriteLine(credential.UserName);
                 p.StandardInput.WriteLine(credential.Password);
@@ -117,6 +129,60 @@ namespace LiteDeploy
             }
         }
 
+        /// <summary>
+        /// Whether <paramref name="computer"/> names this computer: its NetBIOS name, its name followed by a
+        /// domain suffix, its DNS host name, localhost, "." or a loopback address. Unit-tested.
+        /// </summary>
+        public static bool IsLocalComputer(String computer)
+        {
+            return IsLocalComputer(computer, Environment.MachineName, SafeHostName());
+        }
+
+        internal static bool IsLocalComputer(String computer, String machineName, String dnsHostName)
+        {
+            String c = (computer ?? "").Trim().TrimStart('\\').TrimEnd('.');
+            if (c.Length == 0) return false;
+            if (c == "." || c.Equals("localhost", StringComparison.OrdinalIgnoreCase)) return true;
+            IPAddress ip;
+            if (IPAddress.TryParse(c, out ip)) return IPAddress.IsLoopback(ip);
+            if (!String.IsNullOrEmpty(machineName)
+                && (c.Equals(machineName, StringComparison.OrdinalIgnoreCase) || c.StartsWith(machineName + ".", StringComparison.OrdinalIgnoreCase)))
+                return true;
+            return !String.IsNullOrEmpty(dnsHostName) && c.Equals(dnsHostName.TrimEnd('.'), StringComparison.OrdinalIgnoreCase);
+        }
+
+        static String SafeHostName()
+        {
+            try { return Dns.GetHostName(); } catch (Exception) { return null; }
+        }
+
+        /// <summary>LiteDeploy runs with the administrator token (needed to register the SYSTEM task on this computer).</summary>
+        static bool IsElevated()
+        {
+            try
+            {
+                using (WindowsIdentity id = WindowsIdentity.GetCurrent())
+                    return new WindowsPrincipal(id).IsInRole(WindowsBuiltInRole.Administrator);
+            }
+            catch (Exception) { return false; }
+        }
+
+        /// <summary>Copies the worker to %windir%\LiteDeploy of this computer (no ADMIN$ loopback), unless the same file is already there.</summary>
+        static void CopyWorkerLocally()
+        {
+            String target = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "LiteDeploy", UpdateRunner.WorkerFileName);
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(target));
+                if (File.Exists(target) && SameContent(UpdateRunner.WorkerPath, target)) return;
+                File.Copy(UpdateRunner.WorkerPath, target, true);
+            }
+            catch (Exception ex)
+            {
+                throw new IOException(Localization.F("RemoteRunner.CopyFailed", "Could not copy the worker to {0}: {1}", target, ex.Message), ex);
+            }
+        }
+
         static bool SameContent(String a, String b)
         {
             if (new FileInfo(a).Length != new FileInfo(b).Length) return false;
@@ -135,13 +201,20 @@ namespace LiteDeploy
         /// <summary>The script run by the local PowerShell (Windows PowerShell 5.1).</summary>
         public static String BuildScript(String computer, String workerArguments, bool readCredential, int timeoutMinutes)
         {
+            return BuildScript(computer, workerArguments, readCredential, timeoutMinutes, false);
+        }
+
+        /// <summary>The script; <paramref name="local"/>: this computer, the same steps without a WinRM session.</summary>
+        public static String BuildScript(String computer, String workerArguments, bool readCredential, int timeoutMinutes, bool local)
+        {
             String id = Guid.NewGuid().ToString("N").Substring(0, 12);
             return Script
                 .Replace("%COMPUTER%", Quote(computer.Trim()))
                 .Replace("%ARGS%", Quote(workerArguments))
                 .Replace("%ID%", Quote(id))
                 .Replace("%TIMEOUT%", Math.Max(1, timeoutMinutes).ToString(System.Globalization.CultureInfo.InvariantCulture))
-                .Replace("%CRED%", readCredential ? "$true" : "$false");
+                .Replace("%CRED%", readCredential ? "$true" : "$false")
+                .Replace("%LOCAL%", local ? "$true" : "$false");
         }
 
         // ASCII only. Exit codes: the worker's, or 1001 connection, 1002 start, 1003 timeout.
@@ -157,14 +230,19 @@ if (%CRED%) {
     $cred = New-Object System.Management.Automation.PSCredential($u, (ConvertTo-SecureString $p -AsPlainText -Force))
     $p = $null
 }
-$opt = New-PSSessionOption -OpenTimeout 15000 -OperationTimeout 120000
-try {
-    if ($cred) { $s = New-PSSession -ComputerName $computer -Credential $cred -SessionOption $opt }
-    else { $s = New-PSSession -ComputerName $computer -SessionOption $opt }
-} catch { Fail 1001 ('WinRM: ' + $_.Exception.Message) }
+# This computer: the same steps, run by this PowerShell (no WinRM session to itself)
+$s = $null; $on = @{}
+if (-not %LOCAL%) {
+    $opt = New-PSSessionOption -OpenTimeout 15000 -OperationTimeout 120000
+    try {
+        if ($cred) { $s = New-PSSession -ComputerName $computer -Credential $cred -SessionOption $opt }
+        else { $s = New-PSSession -ComputerName $computer -SessionOption $opt }
+    } catch { Fail 1001 ('WinRM: ' + $_.Exception.Message) }
+    $on = @{ Session = $s }
+}
 try {
     try {
-        Invoke-Command -Session $s -ArgumentList $id, $workerArgs -ScriptBlock {
+        Invoke-Command @on -ArgumentList $id, $workerArgs -ScriptBlock {
             param($id, $a)
             $ErrorActionPreference = 'Stop'
             $dir = Join-Path $env:windir 'LiteDeploy'
@@ -191,7 +269,7 @@ try {
     $offset = 0; $deadline = (Get-Date).AddMinutes($timeout); $started = Get-Date
     while ($true) {
         Start-Sleep -Seconds 2
-        $r = Invoke-Command -Session $s -ArgumentList $id, $offset -ScriptBlock {
+        $r = Invoke-Command @on -ArgumentList $id, $offset -ScriptBlock {
             param($id, $offset)
             $out = Join-Path $env:windir ""LiteDeploy\work\run-$id.out""
             $bytes = New-Object byte[] 0
@@ -223,14 +301,14 @@ try {
         if (((Get-Date) - $started).TotalMinutes -gt 2 -and $offset -eq 0 -and $r.Result -eq 267011) { $code = 1002; [Console]::Error.WriteLine('The scheduled task did not start.'); break }
     }
 } finally {
-    if ($s) {
-        Invoke-Command -Session $s -ArgumentList $id -ErrorAction SilentlyContinue -ScriptBlock {
+    if ($s -or %LOCAL%) {
+        Invoke-Command @on -ArgumentList $id -ErrorAction SilentlyContinue -ScriptBlock {
             param($id)
             Stop-ScheduledTask -TaskName ""Worker-$id"" -TaskPath '\LiteDeploy\' -ErrorAction SilentlyContinue
             Unregister-ScheduledTask -TaskName ""Worker-$id"" -TaskPath '\LiteDeploy\' -Confirm:$false -ErrorAction SilentlyContinue
             Remove-Item -LiteralPath (Join-Path $env:windir ""LiteDeploy\work\run-$id.out"") -Force -ErrorAction SilentlyContinue
         }
-        Remove-PSSession $s -ErrorAction SilentlyContinue
+        if ($s) { Remove-PSSession $s -ErrorAction SilentlyContinue }
     }
 }
 if ($code -eq 1003) { [Console]::Error.WriteLine('Timed out') }

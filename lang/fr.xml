@@ -904,6 +904,11 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="ComputerGrid.ProfileButton">Profil : {0}</translation>
   <translation key="ComputerGrid.ProfileMissing">Le profil {0} n'existe plus : choisissez un autre profil (rien n'est vérifié ni mis à jour d'ici là).</translation>
   <translation key="ComputerGrid.profileButton.Text">Profil : Tous</translation>
+  <translation key="ComputerGrid.ProfileTipMissing">Le profil {0} n'existe plus : aucun logiciel.</translation>
+  <translation key="ComputerGrid.ProfileTipEmpty">{0} : aucun logiciel.</translation>
+  <translation key="ComputerGrid.ProfileTipCount">{0} : {1} logiciel(s)</translation>
+  <translation key="ComputerGrid.ProfileTipMore">... et {0} autre(s)</translation>
+  <translation key="RemoteRunner.LocalNotElevated">{0} est cet ordinateur : lancez LiteDeploy en tant qu'administrateur pour le vérifier ou le mettre à jour (WinRM ne se connecte pas à son propre ordinateur).</translation>
   <translation key="ComputerGrid.profileButton.ToolTipText">Les logiciels visés par Vérifier, Mettre à jour la sélection et Installer : cliquez pour choisir un autre profil</translation>
   <translation key="PackageListForm.ConfirmDeleteProfile">Supprimer le profil {0} ? Les logiciels restent dans le catalogue.</translation>
   <translation key="PackageListForm.ExportTitle">Exporter le catalogue des logiciels</translation>

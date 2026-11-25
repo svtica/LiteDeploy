@@ -129,7 +129,10 @@ them (and for the PsExec method of the software updates); it is asked for when t
     to `%windir%\LiteDeploy` (`ADMIN$`), a PowerShell session registers a one-time scheduled
     task as SYSTEM in `\LiteDeploy\`, relays the messages the worker writes in
     `%windir%\LiteDeploy\work`, then deletes the task and the file (leftovers of a stopped run
-    are deleted at the next run). Needs WinRM on the computers.
+    are deleted at the next run). Needs WinRM on the computers. The administrator's own
+    computer gets no WinRM session to itself: the worker is copied to its `%windir%\LiteDeploy`
+    and the same task is registered by the local PowerShell, which needs LiteDeploy to run as
+    administrator (otherwise that computer fails at once with a message saying so).
   - **PsExec** (`-s -c -f`): the worker is copied and started by PsExec.
 - **Software catalog...** (*More* in the tool bar, *Tools* menu): every software kept up to date, winget packages
   and update modules (`%LOCALAPPDATA%\LiteDeploy\packages.txt`); search winget, add a module,
@@ -138,8 +141,8 @@ them (and for the PsExec method of the software updates); it is asked for when t
 - **Profiles**: named selections of the catalog (for example *Base*: the software of every
   computer; *Java*: the computers that have it), one check box column per profile in the catalog
   (*New profile...*, *Rename profile...*, *Delete profile*; `%LOCALAPPDATA%\LiteDeploy\profiles.xml`).
-  The **Profile** button of the main window (bold, left of *Check*) shows the active profile and
-  opens a dialog to choose another one (no drop-down list that a mouse wheel could change): *Check*,
+  The **Profile** button of the main window (bold, left of *Check*) shows the active profile (its
+  tooltip lists the software of the profile, sorted, 40 at most) and opens a dialog to choose another one (no drop-down list that a mouse wheel could change): *Check*,
   *Update checked*, *Install* and the *To update* filter work on the software of that profile only,
   which makes a check faster and avoids updating or installing the whole catalog by mistake. The
   update confirmation names the profile. *All the catalog* is the former behaviour. A profile that

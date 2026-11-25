@@ -131,5 +131,30 @@ namespace LiteDeploy.Tests
             Assert.AreEqual("", new UpdateSchedule().Profile);
             Assert.AreEqual("", new UserSettings().UpdatesProfile);
         }
+
+        [TestMethod]
+        public void ProfileTip_ListsTheSoftwareSorted()
+        {
+            List<UpdatePackage> software = new List<UpdatePackage>
+            {
+                UpdatePackage.Parse("Mozilla.Firefox|firefox|Firefox"),
+                UpdatePackage.Parse("7zip.7zip||"),
+                UpdatePackage.Parse("module:CachedInstaller/ExampleApp||Example App")
+            };
+            String tip = ComputerGrid.ProfileTip("Intro", "Office", true, software);
+            StringAssert.StartsWith(tip, "Intro");
+            StringAssert.Contains(tip, "Office: 3 software");
+            int a = tip.IndexOf("  - 7zip.7zip"), b = tip.IndexOf("  - Example App"), c = tip.IndexOf("  - Firefox");
+            Assert.IsTrue(a > 0 && a < b && b < c, "labels (else the Id), sorted: " + tip);
+
+            StringAssert.Contains(ComputerGrid.ProfileTip("Intro", "Empty", true, new List<UpdatePackage>()), "Empty: no software.");
+            StringAssert.Contains(ComputerGrid.ProfileTip("Intro", "Gone", false, null), "The profile Gone no longer exists");
+
+            List<UpdatePackage> many = Enumerable.Range(1, ComputerGrid.ProfileTipMaxLines + 5)
+                .Select(i => UpdatePackage.Parse("Vendor.App" + i.ToString("D3") + "||")).ToList();
+            String longTip = ComputerGrid.ProfileTip("Intro", "All", true, many);
+            Assert.AreEqual(ComputerGrid.ProfileTipMaxLines, longTip.Split('\n').Count(l => l.StartsWith("  - ")));
+            StringAssert.Contains(longTip, "... and 5 more");
+        }
     }
 }
