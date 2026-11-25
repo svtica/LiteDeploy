@@ -17,6 +17,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `REINSTALL=ALL REINSTALLMODE=vomus` runs.
 - *Tools > Manage the tools*: the *Download / update* button was too narrow for its French text.
 
+### Added
+
+- *Software catalog...*: **Remove** button and the Delete key remove the selected software (a cell
+  or a row of each; Ctrl or Shift for several), after a confirmation that names them. The
+  parameters of a module are kept; nothing is uninstalled.
+- Module parameters: header flags `values=a|b|c` (*Parameters...* offers the values in a list) and
+  `files=Folder/*.msi|Folder/*.exe` (it offers the matching files of the shared cache); an empty box
+  shows the default in grey. Used by `TeamViewer` (`File`, `Edition`, `SettingsFile`,
+  `ServiceStartup`) and `CachedInstaller` (`File`, `Type`).
+
 ## [1.0.34] - 2026-11-25
 
 ### Added

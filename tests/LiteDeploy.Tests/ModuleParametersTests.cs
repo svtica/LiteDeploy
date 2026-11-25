@@ -387,5 +387,57 @@ namespace LiteDeploy.Tests
             Assert.IsNotNull(dir, "repository root not found");
             return dir;
         }
+
+        [TestMethod]
+        public void ParseHeaderLine_ValuesAndFiles()
+        {
+            ModuleParameter p = ModuleParameters.ParseHeaderLine("# Parameter: Edition default=Host values=Host|Full Host or Full");
+            Assert.AreEqual("Host", p.Default);
+            CollectionAssert.AreEqual(new[] { "Host", "Full" }, p.Values);
+            Assert.IsNull(p.Files);
+            Assert.AreEqual("Host or Full", p.Description);
+
+            ModuleParameter f = ModuleParameters.ParseHeaderLine("# Parameter: File files=Vendor/*.msi|Vendor/*.exe Path of the installer");
+            Assert.IsTrue(f.Required);
+            Assert.AreEqual("Vendor/*.msi|Vendor/*.exe", f.Files);
+            Assert.AreEqual(0, f.Values.Length);
+            Assert.AreEqual("Path of the installer", f.Description);
+
+            ModuleParameter any = ModuleParameters.ParseHeaderLine("# Parameter: Mode values=a|b|A|| default=a secret Text");
+            CollectionAssert.AreEqual(new[] { "a", "b" }, any.Values, "trimmed, without empty or duplicate values");
+            Assert.AreEqual("a", any.Default);
+            Assert.IsTrue(any.Secret);
+
+            ModuleParameter plain = ModuleParameters.ParseHeaderLine("# Parameter: Name default=x Some values=text in the description");
+            Assert.AreEqual(0, plain.Values.Length, "a flag after the description starts is part of it");
+            Assert.AreEqual("Some values=text in the description", plain.Description);
+        }
+
+        [TestMethod]
+        public void CacheFiles_MatchesUnderTheCacheOnly()
+        {
+            String root = Path.Combine(Path.GetTempPath(), "LiteDeploy-cache-" + Guid.NewGuid().ToString("N"));
+            try
+            {
+                Directory.CreateDirectory(Path.Combine(root, "Vendor", "Sub"));
+                Directory.CreateDirectory(Path.Combine(root, "Vendor", "OLD"));
+                Directory.CreateDirectory(Path.Combine(root, "Other"));
+                File.WriteAllText(Path.Combine(root, "Vendor", "b-2.0.msi"), "");
+                File.WriteAllText(Path.Combine(root, "Vendor", "Sub", "a-1.0.msi"), "");
+                File.WriteAllText(Path.Combine(root, "Vendor", "c.exe"), "");
+                File.WriteAllText(Path.Combine(root, "Vendor", "notes.txt"), "");
+                File.WriteAllText(Path.Combine(root, "Vendor", "OLD", "b-1.0.msi"), "");
+                File.WriteAllText(Path.Combine(root, "Other", "x.msi"), "");
+
+                CollectionAssert.AreEqual(new[] { "Vendor/b-2.0.msi", "Vendor/c.exe", "Vendor/Sub/a-1.0.msi" },
+                    ModuleParametersForm.CacheFiles(root, "Vendor/*.msi|Vendor/*.exe", 100), "subfolders included, OLD left out, sorted");
+                Assert.AreEqual(1, ModuleParametersForm.CacheFiles(root, "Vendor/*.msi", 1).Count, "at most max files");
+                Assert.AreEqual(0, ModuleParametersForm.CacheFiles(root, "../*.msi", 100).Count, "never outside the cache");
+                Assert.AreEqual(0, ModuleParametersForm.CacheFiles(root, @"C:/Windows/*.exe", 100).Count);
+                Assert.AreEqual(0, ModuleParametersForm.CacheFiles(root, "Missing/*.msi", 100).Count);
+                Assert.AreEqual(0, ModuleParametersForm.CacheFiles("", "Vendor/*.msi", 100).Count, "no cache: nothing");
+            }
+            finally { Directory.Delete(root, true); }
+        }
     }
 }

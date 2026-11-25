@@ -382,6 +382,12 @@ Oui : ouvrir les options. Non : continuer avec votre compte.</translation>
   <translation key="PackageListForm.NoWinget">winget n'est pas disponible sur cet ordinateur : tapez l'Id du paquet dans la liste.</translation>
   <translation key="PackageListForm.NoResult">Aucun paquet trouvé.</translation>
   <translation key="PackageListForm.InvalidIds">Id de paquet invalide : {0}. Un Id ne contient que des lettres, des chiffres et . - _ +.</translation>
+  <translation key="PackageListForm.removeButton.Text">Retirer</translation>
+  <translation key="PackageListForm.SelectToRemove">Sélectionnez les logiciels à retirer (une cellule ou une ligne de chacun, Ctrl ou Maj pour plusieurs).</translation>
+  <translation key="PackageListForm.ConfirmRemove">Retirer {0} logiciel(s) du catalogue (et de ses profils) ?&#10;&#10;{1}&#10;&#10;Les paramètres d'un module sont conservés. Rien n'est désinstallé ; OK enregistre le catalogue.</translation>
+  <translation key="ModuleParametersForm.DefaultCue">par défaut : {0}</translation>
+  <translation key="ModuleParametersForm.DefaultItem">(par défaut : {0})</translation>
+  <translation key="ModuleParametersForm.NotInList">{0} (hors de la liste)</translation>
   <translation key="ToolsForm.Text">Lite Deploy - Outils</translation>
   <translation key="ToolsForm.toolColumn.Text">Outil</translation>
   <translation key="ToolsForm.versionColumn.Text">Version</translation>
