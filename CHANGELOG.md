@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.33] - 2026-11-25
+
 ### Added
 
 - Module `TeamViewer` (instances, `# Install: yes`): TeamViewer Host or full client installed for
