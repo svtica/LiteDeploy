@@ -269,6 +269,30 @@ function Invoke-Installer([string] $FilePath, [string] $Arguments) {
     return $proc.ExitCode
 }
 
+# Original file name of the package of an installed MSI product (Windows Installer keeps it); $null when unknown.
+# A minor upgrade (same product code) must run from a package of that name: under another name, Windows
+# Installer looks for the original one in the source folder and fails with 1603 (error 1316).
+function Get-RegisteredPackageName([string] $ProductCode) {
+    $installer = $null
+    try {
+        $installer = New-Object -ComObject WindowsInstaller.Installer
+        $name = [string]$installer.GetType().InvokeMember('ProductInfo', 'GetProperty', $null, $installer, @($ProductCode, 'PackageName'))
+        if ($name -match '^[^\\/:*?"<>|]{1,200}\.msi$') { return $name }
+    } catch { }
+    finally { if ($installer) { $null = [Runtime.InteropServices.Marshal]::ReleaseComObject($installer) } }
+    return $null
+}
+
+# The MSI renamed to the registered package name of the installed product, in the same folder; returns its path
+function Rename-ToRegisteredPackage([string] $Path, [string] $ProductCode) {
+    $name = Get-RegisteredPackageName $ProductCode
+    if (-not $name -or $name -eq (Split-Path -Leaf $Path)) { return $Path }
+    $target = Join-Path (Split-Path -Parent $Path) $name
+    Remove-Item -LiteralPath $target -Force -ErrorAction SilentlyContinue
+    Move-Item -LiteralPath $Path -Destination $target -Force
+    return $target
+}
+
 function Test-Outdated($Installed, [string] $Target) {
     $have = ConvertTo-Version $Installed.DisplayVersion
     $want = ConvertTo-Version $Target
@@ -369,6 +393,8 @@ try {
         # "reconfigures" the installed product and fails (1603); REINSTALL=ALL REINSTALLMODE=vomus applies it
         $msiCode = Get-MsiProperty $local 'ProductCode'
         $minor = if ($msiCode -and (Get-Installed $msiCode '')) { ' REINSTALL=ALL REINSTALLMODE=vomus' } else { '' }
+        # ... from a package named like the installed one, else Windows Installer looks for that name (1603)
+        if ($minor) { $local = Rename-ToRegisteredPackage $local $msiCode }
         $code = Invoke-Installer (Join-Path $env:windir 'System32\msiexec.exe') "/i `"$local`" $arguments$minor /l*v `"$log`""
     } else {
         $log = $null

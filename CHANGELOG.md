@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Minor upgrades of an MSI (same product code: `OnePassword`, `CachedInstaller`, `TeamViewer`)
+  failed with 1603 (error 1316) when the new package had another file name than the installed one
+  (`1PasswordSetup-latest.msi` installed, `1PasswordSetup-<version>.msi` downloaded): Windows
+  Installer looked for the original name in the source folder. The package is now renamed, in the
+  work folder, to the name Windows Installer keeps for the installed product before
+  `REINSTALL=ALL REINSTALLMODE=vomus` runs.
+- *Tools > Manage the tools*: the *Download / update* button was too narrow for its French text.
+
 ## [1.0.34] - 2026-11-25
 
 ### Added
