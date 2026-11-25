@@ -166,6 +166,10 @@ namespace LiteDeploy.Tests
             Assert.IsTrue(QuickCommands.Find(QuickCommands.Restart).Confirm);
             Assert.IsTrue(QuickCommands.Find(QuickCommands.RestartSpooler).Confirm);
             Assert.IsFalse(QuickCommands.Find(QuickCommands.FlushDns).Confirm);
+            Assert.IsTrue(QuickCommands.Find(QuickCommands.StartTeamViewer).Confirm, "it opens remote access to the computer");
+            Assert.IsTrue(QuickCommands.Find(QuickCommands.EnableRemoteDesktop).Confirm, "it opens remote access to the computer");
+            Assert.IsTrue(QuickCommands.Find(QuickCommands.DisableRemoteDesktop).Confirm, "it can cut an open session");
+            Assert.IsFalse(QuickCommands.Find(QuickCommands.DisableSleep).Confirm);
         }
 
         [TestMethod]
@@ -180,6 +184,26 @@ namespace LiteDeploy.Tests
             Assert.AreEqual("net.exe stop spooler /y & net.exe start spooler", QuickCommands.Find(QuickCommands.RestartSpooler).CommandText);
             StringAssert.StartsWith(QuickCommands.Find(QuickCommands.Restart).Steps[0].Arguments, "/r /t 300 ");
             Assert.AreEqual("shutdown.exe /a", QuickCommands.Find(QuickCommands.CancelRestart).CommandText);
+            Assert.AreEqual("quick start-teamviewer", QuickCommands.WorkerArguments(QuickCommands.StartTeamViewer));
+            Assert.AreEqual("sc.exe config TeamViewer start= auto & sc.exe start TeamViewer", QuickCommands.Find(QuickCommands.StartTeamViewer).CommandText);
+            Assert.AreEqual(@"reg.exe add ""HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server"" /v fDenyTSConnections /t REG_DWORD /d 0 /f"
+                + " & netsh.exe advfirewall firewall set rule group=\"@FirewallAPI.dll,-28752\" new enable=Yes",
+                QuickCommands.Find(QuickCommands.EnableRemoteDesktop).CommandText);
+            StringAssert.Contains(QuickCommands.Find(QuickCommands.DisableRemoteDesktop).Steps[0].Arguments, "/d 1 /f");
+            Assert.AreEqual("powercfg.exe /change standby-timeout-ac 0 & powercfg.exe /change hibernate-timeout-ac 0 & powercfg.exe /hibernate off",
+                QuickCommands.Find(QuickCommands.DisableSleep).CommandText);
+        }
+
+        [TestMethod]
+        public void QuickCommands_AcceptedExitCodes()
+        {
+            QuickCommand tv = QuickCommands.Find(QuickCommands.StartTeamViewer);
+            // Already running: success; service missing (1060) or disabled (1058): failure
+            Assert.IsTrue(tv.Steps[1].IsSuccess(0));
+            Assert.IsTrue(tv.Steps[1].IsSuccess(1056));
+            Assert.IsFalse(tv.Steps[1].IsSuccess(1058));
+            Assert.IsFalse(tv.Steps[0].IsSuccess(1060), "configuring a missing service stops the command");
+            Assert.IsFalse(QuickCommands.Find(QuickCommands.FlushDns).Steps[0].IsSuccess(1));
         }
 
         [TestMethod]

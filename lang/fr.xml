@@ -781,6 +781,10 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="ComputerActions.QuickGroupPolicyComputer">Actualiser seulement les stratégies de l'ordinateur (gpupdate /target:computer /force)</translation>
   <translation key="ComputerActions.QuickFlushDns">Vider le cache DNS (ipconfig /flushdns)</translation>
   <translation key="ComputerActions.QuickRestartSpooler">Redémarrer le spouleur d'impression</translation>
+  <translation key="ComputerActions.QuickStartTeamViewer">Démarrer le service TeamViewer (démarrage automatique)</translation>
+  <translation key="ComputerActions.QuickEnableRemoteDesktop">Autoriser les connexions Bureau à distance (et ses règles de pare-feu)</translation>
+  <translation key="ComputerActions.QuickDisableRemoteDesktop">Refuser les connexions Bureau à distance</translation>
+  <translation key="ComputerActions.QuickDisableSleep">Désactiver la veille et la mise en veille prolongée (sur secteur)</translation>
   <translation key="ComputerActions.QuickRestart">Redémarrer le poste dans 5 minutes (les utilisateurs sont avertis)</translation>
   <translation key="ComputerActions.QuickCancelRestart">Annuler un redémarrage planifié (shutdown /a)</translation>
   <translation key="ComputerActions.ConfirmQuick">Exécuter « {0} » sur {1} ordinateur(s) ?&#10;&#10;{2}</translation>

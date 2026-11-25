@@ -217,8 +217,13 @@ Actions of the grid (checked computers, else the selected ones):
 - **Quick commands**, fixed (no free text), run as SYSTEM by the worker, output in a window that
   can be copied: refresh the group policies (`gpupdate /force`), the computer policies only
   (`gpupdate /target:computer /force`), flush the DNS cache, restart the print spooler, restart the
-  computer in 5 minutes (users are warned) and cancel a planned restart. Restarting the spooler or
-  the computer, or any command on several computers, asks first. *Ask the users to restart...*, at
+  computer in 5 minutes (users are warned), cancel a planned restart, start the TeamViewer
+  service (startup type set to automatic first; already running: success; not installed: the
+  command fails and says so), allow or deny remote desktop connections (`fDenyTSConnections` and
+  the *Remote Desktop* firewall rules; Network Level Authentication is left as it is) and disable
+  sleep and hibernation on AC power (`powercfg`, active power plan; battery settings unchanged).
+  Restarting the spooler or the computer, starting TeamViewer, changing remote desktop, or any
+  command on several computers, asks first. *Ask the users to restart...*, at
   the end of the list, opens *Send a message...* with the restart request ready.
 - **Send a message...** to the users logged on to the computers (replaces a `msg *` script): up to
   255 characters (with a counter), ready texts (restart request, save your work, close your
@@ -298,7 +303,9 @@ Actions of the grid (checked computers, else the selected ones):
   files from the shared installer cache (*App > Options > Software updates*): `CachedInstaller`
   (vendor MSI or EXE installers), `MsixProvision` (MSIX packages), `PrinterDrivers`,
   `TeamsBootstrapper`, `PSGalleryModule` (PowerShell Gallery modules for the machine, one
-  instance per module, refused unless signed by the expected publisher). A team's own modules can
+  instance per module, refused unless signed by the expected publisher), `TeamViewer` (Host or
+  full client from its MSI, with the custom module, settings file, account assignment and service
+  startup type of the site). A team's own modules can
   live in a shared modules folder (same options).
 - **PowerShell**: PowerShell 7 is kept up to date by the `PowerShell7` module (MSI for the
   machine, latest 7.6 LTS release, signed by Microsoft; `pwsh` closed before the install), not by

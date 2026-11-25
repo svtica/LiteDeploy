@@ -337,6 +337,10 @@ namespace LiteDeploy
                 case QuickCommands.GroupPolicyComputer: return Localization.T("ComputerActions.QuickGroupPolicyComputer", "Refresh the computer policies only (gpupdate /target:computer /force)");
                 case QuickCommands.FlushDns: return Localization.T("ComputerActions.QuickFlushDns", "Flush the DNS cache (ipconfig /flushdns)");
                 case QuickCommands.RestartSpooler: return Localization.T("ComputerActions.QuickRestartSpooler", "Restart the print spooler");
+                case QuickCommands.StartTeamViewer: return Localization.T("ComputerActions.QuickStartTeamViewer", "Start the TeamViewer service (automatic startup)");
+                case QuickCommands.EnableRemoteDesktop: return Localization.T("ComputerActions.QuickEnableRemoteDesktop", "Allow remote desktop connections (and its firewall rules)");
+                case QuickCommands.DisableRemoteDesktop: return Localization.T("ComputerActions.QuickDisableRemoteDesktop", "Deny remote desktop connections");
+                case QuickCommands.DisableSleep: return Localization.T("ComputerActions.QuickDisableSleep", "Disable sleep and hibernation (on AC power)");
                 case QuickCommands.Restart: return Localization.T("ComputerActions.QuickRestart", "Restart the computer in 5 minutes (users are warned)");
                 case QuickCommands.CancelRestart: return Localization.T("ComputerActions.QuickCancelRestart", "Cancel a planned restart (shutdown /a)");
                 default: return c.Label;

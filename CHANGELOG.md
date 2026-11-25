@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Module `TeamViewer` (instances, `# Install: yes`): TeamViewer Host or full client installed for
+  the machine from its MSI in the shared cache (`<cache>\TeamViewer`), refused unless signed by
+  the `Publisher` of the instance (default `TeamViewer Germany GmbH`). Options of the site as
+  parameters, never in the script: `CustomConfigId` (`CUSTOMCONFIGID`), `SettingsFile` (a `.tvopt`
+  of the cache, `SETTINGSFILE`), `MsiOptions` (fixed list), `AssignmentId` (secret, account
+  assignment on *Install*) and `ServiceStartup` (`keep`, `auto`, `manual` or `disabled`, applied
+  after an install or an update). `CustomConfigId` is also applied with `TeamViewer.exe customize
+  --remove --id` after every install and update. *Install* refuses a computer where the other
+  edition is installed; *Update* refuses a product installed by the EXE setup (the check says so).
+  Versions are compared with their missing parts as 0 (`15.83.7` = `15.83.7.0`).
+- Quick command *Start the TeamViewer service (automatic startup)*: `sc config TeamViewer start=
+  auto`, then `sc start TeamViewer`; a service already running is a success (exit code 1056
+  accepted), a missing service stops the command. Asks for a confirmation. Quick command steps can
+  now accept exit codes other than 0.
+- Quick commands *Allow remote desktop connections* (`fDenyTSConnections` 0, then the *Remote
+  Desktop* firewall rule group enabled) and *Deny remote desktop connections* (1, rules disabled);
+  both ask for a confirmation. Network Level Authentication is not changed.
+- Quick command *Disable sleep and hibernation (on AC power)*: `powercfg /change
+  standby-timeout-ac 0`, `/change hibernate-timeout-ac 0`, `/hibernate off`, on the active power
+  plan; the battery settings of laptops are left alone.
+
 ## [1.0.32] - 2026-11-24
 
 ### Added
