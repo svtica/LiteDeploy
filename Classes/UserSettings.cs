@@ -94,6 +94,10 @@ namespace LiteDeploy
         public int QueueMaxDays = UpdateQueue.DefaultMaxDays;
         /// <summary>Software updates (Check, Update checked, Install, Uninstall) and schedules: computers processed at the same time.</summary>
         public int UpdatesParallelism = DefaultParallelism;
+        /// <summary>Update: seconds of warning to the users before their applications are closed (0: no warning, closed at once).</summary>
+        public int CloseWarningSeconds = CloseWarning.DefaultSeconds;
+        /// <summary>The users may postpone the update of a package (Cancel in the warning).</summary>
+        public bool CloseWarningPostpone = true;
 
         public const int DefaultParallelism = 4;
         public const int MinParallelism = 1;

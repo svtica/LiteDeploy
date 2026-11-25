@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Warning before closing**: before an update closes the applications of a package, the users of
+  the sessions that run them get a message (what is updated, the applications, *OK* to close them
+  now) and, when allowed, can postpone with *Cancel*; without an answer they are closed at the end
+  of the delay. *App > Options > Software updates*: *Warn before closing the applications* (seconds,
+  120 by default, 0: no warning) and *The users can postpone the update* (on by default). A postponed
+  package is reported as skipped (*Postponed by the user*). Worker options `--warn-close <seconds>`
+  and `--allow-postpone` (upgrade only).
+
+### Changed
+
+- `AdobeReader`: the Office applications (Word, Excel, PowerPoint, Outlook, Access, OneNote,
+  Publisher, Visio, Project) are closed with Acrobat before the update, after the warning: they load
+  the Adobe add-ins and could block the patch. A catalog row added earlier keeps its list: edit its
+  *Processes to close* column.
+
 ## [1.0.36] - 2026-11-25
 
 ### Fixed

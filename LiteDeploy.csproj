@@ -274,6 +274,7 @@
     <Compile Include="src\LiteDeploy.Worker\Shared\ProgramPolicy.cs" Link="Classes\Shared\ProgramPolicy.cs" />
     <Compile Include="src\LiteDeploy.Worker\Shared\ServerPolicy.cs" Link="Classes\Shared\ServerPolicy.cs" />
     <Compile Include="src\LiteDeploy.Worker\Shared\QuickCommands.cs" Link="Classes\Shared\QuickCommands.cs" />
+    <Compile Include="src\LiteDeploy.Worker\Shared\CloseWarning.cs" Link="Classes\Shared\CloseWarning.cs" />
     <Compile Include="src\LiteDeploy.Worker\Shared\UserMessage.cs" Link="Classes\Shared\UserMessage.cs" />
     <Compile Include="src\LiteDeploy.Worker\Shared\SiwPolicy.cs" Link="Classes\Shared\SiwPolicy.cs" />
     <Compile Include="src\LiteDeploy.Worker\Shared\PortableToolPolicy.cs" Link="Classes\Shared\PortableToolPolicy.cs" />
