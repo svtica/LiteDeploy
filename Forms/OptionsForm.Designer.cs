@@ -49,6 +49,9 @@ namespace LiteDeploy
             this.hoursLabel = new System.Windows.Forms.Label();
             this.hoursStartBox = new System.Windows.Forms.TextBox();
             this.hoursEndBox = new System.Windows.Forms.TextBox();
+            this.parallelLabel = new System.Windows.Forms.Label();
+            this.parallelBox = new System.Windows.Forms.NumericUpDown();
+            ((System.ComponentModel.ISupportInitialize)(this.parallelBox)).BeginInit();
             this.unsignedModulesCheckBox = new System.Windows.Forms.CheckBox();
             this.accountLabel = new System.Windows.Forms.Label();
             this.accountCombo = new System.Windows.Forms.ComboBox();
@@ -180,7 +183,7 @@ namespace LiteDeploy
             // 
             // ApplyButton
             // 
-            this.ApplyButton.Location = new System.Drawing.Point(237, 780);
+            this.ApplyButton.Location = new System.Drawing.Point(237, 810);
             this.ApplyButton.Name = "ApplyButton";
             this.ApplyButton.Size = new System.Drawing.Size(93, 23);
             this.ApplyButton.TabIndex = 6;
@@ -191,7 +194,7 @@ namespace LiteDeploy
             // cancelButton
             // 
             this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cancelButton.Location = new System.Drawing.Point(336, 780);
+            this.cancelButton.Location = new System.Drawing.Point(336, 810);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(93, 23);
             this.cancelButton.TabIndex = 7;
@@ -222,6 +225,8 @@ namespace LiteDeploy
             this.updatesGroup.Controls.Add(this.hoursLabel);
             this.updatesGroup.Controls.Add(this.hoursStartBox);
             this.updatesGroup.Controls.Add(this.hoursEndBox);
+            this.updatesGroup.Controls.Add(this.parallelLabel);
+            this.updatesGroup.Controls.Add(this.parallelBox);
             this.updatesGroup.Controls.Add(this.unsignedModulesCheckBox);
             this.updatesGroup.Controls.Add(this.accountLabel);
             this.updatesGroup.Controls.Add(this.accountCombo);
@@ -230,7 +235,7 @@ namespace LiteDeploy
             this.updatesGroup.Controls.Add(this.includeServersCheckBox);
             this.updatesGroup.Location = new System.Drawing.Point(12, 265);
             this.updatesGroup.Name = "updatesGroup";
-            this.updatesGroup.Size = new System.Drawing.Size(417, 341);
+            this.updatesGroup.Size = new System.Drawing.Size(417, 371);
             this.updatesGroup.TabIndex = 3;
             this.updatesGroup.TabStop = false;
             this.updatesGroup.Text = "Software updates";
@@ -276,6 +281,17 @@ namespace LiteDeploy
             this.hoursEndBox.Name = "hoursEndBox";
             this.hoursEndBox.Size = new System.Drawing.Size(60, 20);
             this.hoursEndBox.TabIndex = 15;
+            this.parallelLabel.AutoSize = true;
+            this.parallelLabel.Location = new System.Drawing.Point(17, 339);
+            this.parallelLabel.Name = "parallelLabel";
+            this.parallelLabel.Text = "Computers processed at the same time (1 to 32):";
+            this.parallelBox.Location = new System.Drawing.Point(339, 336);
+            this.parallelBox.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            this.parallelBox.Maximum = new decimal(new int[] { 32, 0, 0, 0 });
+            this.parallelBox.Value = new decimal(new int[] { 4, 0, 0, 0 });
+            this.parallelBox.Name = "parallelBox";
+            this.parallelBox.Size = new System.Drawing.Size(60, 20);
+            this.parallelBox.TabIndex = 20;
             this.unsignedModulesCheckBox.Location = new System.Drawing.Point(20, 166);
             this.unsignedModulesCheckBox.Name = "unsignedModulesCheckBox";
             this.unsignedModulesCheckBox.Size = new System.Drawing.Size(379, 40);
@@ -316,7 +332,7 @@ namespace LiteDeploy
             this.siwGroup.Controls.Add(this.toolsFolderLabel);
             this.siwGroup.Controls.Add(this.toolsFolderBox);
             this.siwGroup.Controls.Add(this.toolsFolderButton);
-            this.siwGroup.Location = new System.Drawing.Point(12, 612);
+            this.siwGroup.Location = new System.Drawing.Point(12, 642);
             this.siwGroup.Name = "siwGroup";
             this.siwGroup.Size = new System.Drawing.Size(417, 156);
             this.siwGroup.TabIndex = 4;
@@ -365,7 +381,7 @@ namespace LiteDeploy
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.cancelButton;
-            this.ClientSize = new System.Drawing.Size(445, 815);
+            this.ClientSize = new System.Drawing.Size(445, 845);
             this.Controls.Add(this.cancelButton);
             this.Controls.Add(this.ApplyButton);
             this.Controls.Add(this.groupBox2);
@@ -379,6 +395,7 @@ namespace LiteDeploy
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Lite Deploy - Options";
             this.Load += new System.EventHandler(this.OptionsForm_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.parallelBox)).EndInit();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.ResumeLayout(false);
@@ -411,6 +428,8 @@ namespace LiteDeploy
         private System.Windows.Forms.Label hoursLabel;
         private System.Windows.Forms.TextBox hoursStartBox;
         private System.Windows.Forms.TextBox hoursEndBox;
+        private System.Windows.Forms.Label parallelLabel;
+        private System.Windows.Forms.NumericUpDown parallelBox;
         private System.Windows.Forms.CheckBox unsignedModulesCheckBox;
         private System.Windows.Forms.Label accountLabel;
         private System.Windows.Forms.ComboBox accountCombo;

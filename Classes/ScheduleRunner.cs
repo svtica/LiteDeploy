@@ -23,7 +23,8 @@ namespace LiteDeploy
 {
     static public class ScheduleRunner
     {
-        const int Parallelism = 4;
+        /// <summary>Computers processed at the same time (App > Options > Software updates, like the main window).</summary>
+        static int Parallelism { get { return UserSettings.ClampParallelism(UserSettings.Current.UpdatesParallelism); } }
         static readonly Object fileLock = new Object();
 
         static public String LogDir

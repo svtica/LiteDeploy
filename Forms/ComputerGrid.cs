@@ -47,8 +47,8 @@ namespace LiteDeploy
 {
     public partial class ComputerGrid : UserControl, IComputerActionHost
     {
-        /// <summary>Computers processed at the same time.</summary>
-        const int Parallelism = 4;
+        /// <summary>Computers processed at the same time (App > Options > Software updates).</summary>
+        static int Parallelism { get { return UserSettings.ClampParallelism(UserSettings.Current.UpdatesParallelism); } }
 
         /// <summary>One package to work on, on one computer.</summary>
         sealed class RowKey

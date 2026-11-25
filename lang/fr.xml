@@ -459,6 +459,7 @@ Oui : ouvrir les options. Non : continuer avec votre compte.</translation>
   <translation key="OptionsForm.hoursLabel.Text">Heures ouvrables (lundi au vendredi, HH:mm) :</translation>
   <translation key="OptionsForm.unsignedModulesCheckBox.Text">Exécuter les modules non signés (tests seulement : ils tournent en SYSTEM sur les ordinateurs)</translation>
   <translation key="OptionsForm.includeServersCheckBox.Text">Inclure les serveurs (mises à jour et installations)</translation>
+  <translation key="OptionsForm.parallelLabel.Text">Ordinateurs traités en même temps (1 à 32) :</translation>
   <translation key="OptionsForm.BadCache">Le cache doit être un dossier partagé : \\serveur\partage.</translation>
   <translation key="OptionsForm.sharedModulesLabel.Text">Dossier partagé des modules de mise à jour (facultatif) :</translation>
   <translation key="OptionsForm.sharedModulesButton.Text">Choisir</translation>
