@@ -429,7 +429,10 @@ Oui : ouvrir les options. Non : continuer avec votre compte.</translation>
   <translation key="ModuleParametersForm.None">(aucun)</translation>
   <translation key="ModuleParametersForm.MissingCredential">{0} (n'existe plus)</translation>
   <translation key="ModuleParametersForm.InstanceText">Lite Deploy - Paramètres de {0} ({1})</translation>
-  <translation key="PackageListForm.importCatalogButton.Text">Importer des instances...</translation>
+  <translation key="PackageListForm.importCatalogButton.Text">Importer des instances de modules...</translation>
+  <translation key="PackageListForm.ExportTip">Enregistre la liste des logiciels et ses profils dans un fichier, pour un autre administrateur (Importer une liste...).</translation>
+  <translation key="PackageListForm.ImportTip">Ajoute les logiciels et les profils d'un fichier créé avec Exporter la liste... Rien n'est retiré.</translation>
+  <translation key="PackageListForm.ImportInstancesTip">Crée ou met à jour les instances de modules (CachedInstaller, MsixProvision, TeamViewer...) et leurs paramètres à partir d'un catalogue JSON du dossier catalogs de l'équipe.</translation>
   <translation key="PackageListForm.InstanceName">Nom de l'instance de {0} (lettres, chiffres et . - _), par exemple le produit :</translation>
   <translation key="PackageListForm.InvalidInstance">Nom d'instance invalide : lettres (A-Z), chiffres et . - _ seulement, 64 caractères au plus.</translation>
   <translation key="PackageListForm.InstanceListed">{0} est déjà dans la liste.</translation>
@@ -934,8 +937,8 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="PackageListForm.newProfileButton.Text">Nouveau profil...</translation>
   <translation key="PackageListForm.renameProfileButton.Text">Renommer le profil...</translation>
   <translation key="PackageListForm.deleteProfileButton.Text">Supprimer le profil</translation>
-  <translation key="PackageListForm.importButton.Text">Importer...</translation>
-  <translation key="PackageListForm.exportButton.Text">Exporter...</translation>
+  <translation key="PackageListForm.importButton.Text">Importer une liste...</translation>
+  <translation key="PackageListForm.exportButton.Text">Exporter la liste...</translation>
   <translation key="ProfilePickerForm.Title">Lite Deploy - Profil</translation>
   <translation key="ProfilePickerForm.Hint">Vérifier, Mettre à jour la sélection et Installer visent les logiciels du profil (Catalogue des logiciels... pour modifier les profils).</translation>
   <translation key="ProfilePickerForm.Cancel">Annuler</translation>

@@ -137,7 +137,7 @@ them (and for the PsExec method of the software updates); it is asked for when t
 - **Software catalog...** (*More* in the tool bar, *Tools* menu): every software kept up to date, winget packages
   and update modules (`%LOCALAPPDATA%\LiteDeploy\packages.txt`); search winget, add a module,
   *Parameters...* (lists of values and of the files of the shared cache when the module declares
-  them), *Remove* (or Delete: the selected software, after a confirmation), *Import instances...*
+  them), *Remove* (or Delete: the selected software, after a confirmation), *Import module instances...*
   (catalog of module instances), *Web versions...*. State
   kept in `%LOCALAPPDATA%\LiteDeploy\updates.xml`.
 - **Profiles**: named selections of the catalog (for example *Base*: the software of every
@@ -329,7 +329,7 @@ Actions of the grid (checked computers, else the selected ones):
   never updates it. See *PowerShell 7* and *PSGalleryModule* in [docs/modules.md](docs/modules.md).
 - **Import from a catalog**: `CachedInstaller` and `MsixProvision` take one row per product
   (`module:<Name>/<Instance>`). Instead of adding each row by hand, describe the products in a
-  JSON file and use *Software catalog... > Import instances...*: it adds the missing rows and sets
+  JSON file and use *Software catalog... > Import module instances...*: it adds the missing rows and sets
   their parameters. The dialog opens the team's `catalogs` folder when there is one next to the
   shared modules folder (modules in `...\LiteDeploy\modules`: catalogs in
   `...\LiteDeploy\catalogs`), else `%LOCALAPPDATA%\LiteDeploy` (`catalog.local.json`); any other
@@ -360,7 +360,7 @@ Actions of the grid (checked computers, else the selected ones):
   administrator account that runs LiteDeploy, set once in *App > Options > Software updates* the
   shared installer cache and the shared modules folder (type or paste the network path; *Save*
   warns when this computer cannot read it), choose the credential (*Tools > Credentials*), then
-  open *Software catalog...* and *Import instances...* the team's catalogs (from the shared
+  open *Software catalog...* and *Import module instances...* the team's catalogs (from the shared
   `catalogs` folder): this writes the package list and the module parameters of that user. See
   [docs/modules.md](docs/modules.md#setting-up-another-administrator-computer).
 

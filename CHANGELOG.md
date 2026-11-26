@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- *Software catalog...*: *Import...* and *Export...* become *Import a list...* and *Export the list...*
+  (software and profiles), and *Import instances...* becomes *Import module instances...*, each with
+  a tooltip that says what it does; the buttons of both rows are evenly spaced.
+
 ### Removed
 
 - Quick command *Refresh the computer policies only (gpupdate /target:computer /force)*: run as
