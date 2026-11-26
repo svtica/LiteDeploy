@@ -220,8 +220,7 @@ Actions of the grid (checked computers, else the selected ones):
   PsExec only accepts a password on its command line (readable by the same user and by local
   administrators), as for the standalone deployments.
 - **Quick commands**, fixed (no free text), run as SYSTEM by the worker, output in a window that
-  can be copied: refresh the group policies (`gpupdate /force`), the computer policies only
-  (`gpupdate /target:computer /force`), flush the DNS cache, restart the print spooler, restart the
+  can be copied: refresh the group policies (`gpupdate /force`), flush the DNS cache, restart the print spooler, restart the
   computer in 5 minutes (users are warned), cancel a planned restart, start the TeamViewer
   service (startup type set to automatic first; already running: success; not installed: the
   command fails and says so), allow or deny remote desktop connections (`fDenyTSConnections` and

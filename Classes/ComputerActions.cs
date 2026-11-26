@@ -334,7 +334,6 @@ namespace LiteDeploy
             switch (c.Id)
             {
                 case QuickCommands.GroupPolicy: return Localization.T("ComputerActions.QuickGroupPolicy", "Refresh the group policies (gpupdate /force)");
-                case QuickCommands.GroupPolicyComputer: return Localization.T("ComputerActions.QuickGroupPolicyComputer", "Refresh the computer policies only (gpupdate /target:computer /force)");
                 case QuickCommands.FlushDns: return Localization.T("ComputerActions.QuickFlushDns", "Flush the DNS cache (ipconfig /flushdns)");
                 case QuickCommands.RestartSpooler: return Localization.T("ComputerActions.QuickRestartSpooler", "Restart the print spooler");
                 case QuickCommands.StartTeamViewer: return Localization.T("ComputerActions.QuickStartTeamViewer", "Start the TeamViewer service (automatic startup)");

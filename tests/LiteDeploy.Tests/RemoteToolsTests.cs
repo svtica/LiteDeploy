@@ -176,10 +176,8 @@ namespace LiteDeploy.Tests
         public void QuickCommands_Arguments()
         {
             Assert.AreEqual("quick gpupdate", QuickCommands.WorkerArguments("gpupdate"));
-            Assert.AreEqual("quick gpupdate-computer", QuickCommands.WorkerArguments("GPUPDATE-Computer"));
             Assert.AreEqual("quick flushdns", QuickCommands.WorkerArguments(QuickCommands.FlushDns));
             Assert.AreEqual("gpupdate.exe /force", QuickCommands.Find(QuickCommands.GroupPolicy).CommandText);
-            Assert.AreEqual("gpupdate.exe /target:computer /force", QuickCommands.Find(QuickCommands.GroupPolicyComputer).CommandText);
             Assert.AreEqual("ipconfig.exe /flushdns", QuickCommands.Find(QuickCommands.FlushDns).CommandText);
             Assert.AreEqual("net.exe stop spooler /y & net.exe start spooler", QuickCommands.Find(QuickCommands.RestartSpooler).CommandText);
             StringAssert.StartsWith(QuickCommands.Find(QuickCommands.Restart).Steps[0].Arguments, "/r /t 300 ");
@@ -209,6 +207,9 @@ namespace LiteDeploy.Tests
         [TestMethod]
         public void QuickCommands_NoFreeText()
         {
+            // A single group policy refresh: as SYSTEM, gpupdate /force already refreshes the computer policies
+            Assert.AreEqual(1, QuickCommands.All.Count(c => c.Steps.Any(s => s.FileName == "gpupdate.exe")));
+            Assert.IsNull(QuickCommands.Find("gpupdate-computer"), "removed: same effect as gpupdate");
             Assert.IsNull(QuickCommands.Find("cmd /c del"));
             Assert.IsNull(QuickCommands.Find(null));
             try { QuickCommands.WorkerArguments("gpupdate & calc"); Assert.Fail("unknown identifiers must be refused"); }

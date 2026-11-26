@@ -790,7 +790,6 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="ComputerActions.ConfirmRemoteDesktops">Ouvrir {0} fenêtres de bureau à distance d'un coup ?</translation>
   <translation key="ComputerActions.ConfirmCommandPrompts">Ouvrir {0} fenêtres d'invite de commandes d'un coup ?</translation>
   <translation key="ComputerActions.QuickGroupPolicy">Actualiser les stratégies de groupe (gpupdate /force)</translation>
-  <translation key="ComputerActions.QuickGroupPolicyComputer">Actualiser seulement les stratégies de l'ordinateur (gpupdate /target:computer /force)</translation>
   <translation key="ComputerActions.QuickFlushDns">Vider le cache DNS (ipconfig /flushdns)</translation>
   <translation key="ComputerActions.QuickRestartSpooler">Redémarrer le spouleur d'impression</translation>
   <translation key="ComputerActions.QuickStartTeamViewer">Démarrer le service TeamViewer (démarrage automatique)</translation>
