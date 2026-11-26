@@ -193,12 +193,15 @@ namespace LiteDeploy
         }
 
         /// <summary>Files listed for a files= parameter.</summary>
-        internal const int MaxCacheFiles = 300;
+        internal const int MaxCacheFiles = 500;
+        /// <summary>Levels of subfolders searched under the folder of a pattern ("*.msi": the cache, its vendor folders and one level more).</summary>
+        internal const int MaxCacheDepth = 2;
 
         /// <summary>
         /// The files of the shared cache that match the patterns of a files= parameter ("Folder/*.msi|Folder/*.exe": the
-        /// folder and its subfolders), as paths relative to the cache with "/", sorted; empty without a cache, for a
-        /// pattern that leaves the cache, or when the folder cannot be read. Unit-tested.
+        /// folder and its subfolders, MaxCacheDepth levels down; "*.msi": the whole cache, its vendor folders included),
+        /// as paths relative to the cache with "/", sorted; "OLD" folders (previous versions) are left out. Empty without a
+        /// cache, for a pattern that leaves the cache, or when the folder cannot be read. Unit-tested.
         /// </summary>
         internal static List<String> CacheFiles(String cache, String patterns, int max)
         {
@@ -218,19 +221,35 @@ namespace LiteDeploy
                 {
                     String dir = Path.GetFullPath(Path.Combine(root, folder));
                     if (!(dir + "\\").StartsWith(root, StringComparison.OrdinalIgnoreCase) || !Directory.Exists(dir)) continue;
-                    foreach (String f in Directory.EnumerateFiles(dir, mask, SearchOption.AllDirectories))
-                    {
-                        if (found.Count >= max) break;
-                        String rel = f.Substring(root.Length).Replace('\\', '/');
-                        // Previous versions moved aside by Web versions are not offered
-                        if (rel.Split('/').Any(part => part.Equals("OLD", StringComparison.OrdinalIgnoreCase))) continue;
-                        if (!found.Contains(rel, StringComparer.OrdinalIgnoreCase)) found.Add(rel);
-                    }
+                    Walk(root, dir, mask, MaxCacheDepth, max, found);
                 }
                 catch (Exception) { }   // unreadable folder: nothing offered, the box can still be typed in
             }
             found.Sort(StringComparer.OrdinalIgnoreCase);
             return found;
+        }
+
+        // The files of a folder that match the mask, then its subfolders (depth levels more); OLD folders are skipped
+        static void Walk(String root, String dir, String mask, int depth, int max, List<String> found)
+        {
+            try
+            {
+                foreach (String f in Directory.EnumerateFiles(dir, mask))
+                {
+                    if (found.Count >= max) return;
+                    String rel = f.Substring(root.Length).Replace('\\', '/');
+                    if (!found.Contains(rel, StringComparer.OrdinalIgnoreCase)) found.Add(rel);
+                }
+                if (depth <= 0) return;
+                foreach (String sub in Directory.EnumerateDirectories(dir))
+                {
+                    if (found.Count >= max) return;
+                    // Previous versions moved aside by Web versions are not offered
+                    if (Path.GetFileName(sub).Equals("OLD", StringComparison.OrdinalIgnoreCase)) continue;
+                    Walk(root, sub, mask, depth - 1, max, found);
+                }
+            }
+            catch (Exception) { }   // unreadable folder: skipped, the box can still be typed in
         }
 
         // EM_SETCUEBANNER: grey hint shown while a box is empty (wParam 1: also while it has the focus)

@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - *Software catalog...*: *Import...* and *Export...* become *Import a list...* and *Export the list...*
   (software and profiles), and *Import instances...* becomes *Import module instances...*, each with
   a tooltip that says what it does; the buttons of both rows are evenly spaced.
+- `CachedInstaller`: the *File* list of *Parameters...* offers the installers of the whole shared cache
+  (vendor folders at its root, two levels down), not only those under `CachedInstaller/`.
 
 ### Removed
 

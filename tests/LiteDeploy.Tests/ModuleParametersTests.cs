@@ -436,6 +436,11 @@ namespace LiteDeploy.Tests
                 Assert.AreEqual(0, ModuleParametersForm.CacheFiles(root, @"C:/Windows/*.exe", 100).Count);
                 Assert.AreEqual(0, ModuleParametersForm.CacheFiles(root, "Missing/*.msi", 100).Count);
                 Assert.AreEqual(0, ModuleParametersForm.CacheFiles("", "Vendor/*.msi", 100).Count, "no cache: nothing");
+                // The whole cache: vendor folders at the root, two levels down at most, OLD left out
+                Directory.CreateDirectory(Path.Combine(root, "Deep", "A", "B"));
+                File.WriteAllText(Path.Combine(root, "Deep", "A", "B", "too-deep.msi"), "");
+                CollectionAssert.AreEqual(new[] { "Other/x.msi", "Vendor/b-2.0.msi", "Vendor/Sub/a-1.0.msi" },
+                    ModuleParametersForm.CacheFiles(root, "*.msi", 100));
             }
             finally { Directory.Delete(root, true); }
         }

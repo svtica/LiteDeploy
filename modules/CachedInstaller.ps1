@@ -5,7 +5,7 @@
 # Uninstall: yes
 # Instances: yes
 # Parameter: Product default= Name of the product, shown in the messages (the instance name when empty)
-# Parameter: File files=CachedInstaller/*.msi|CachedInstaller/*.exe Path of the installer under the shared cache, e.g. CachedInstaller/ExampleVendor/app-2.4.1.msi
+# Parameter: File files=*.msi|*.exe Path of the installer under the shared cache, e.g. CachedInstaller/ExampleVendor/app-2.4.1.msi
 # Parameter: Type default= values=msi|exe msi or exe (empty: from the file extension)
 # Parameter: Arguments default= Silent install arguments (msi: /qn /norestart when empty; required for an exe)
 # Parameter: DetectName default= Wildcard on the DisplayName of the Uninstall entry, e.g. "Contoso Example App*"
