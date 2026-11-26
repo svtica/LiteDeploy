@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Quick command *Refresh the computer policies only (gpupdate /target:computer /force)*: run as
+  SYSTEM, *Refresh the group policies (gpupdate /force)* already refreshes the computer policies
+  (the policies of the logged-on users apply at their next refresh), so the menu showed two
+  commands with the same effect.
+
 ## [1.0.38] - 2026-11-26
 
 ### Added

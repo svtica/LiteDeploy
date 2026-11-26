@@ -72,7 +72,6 @@ namespace LiteDeploy
         public const int RestartDelaySeconds = 300;
 
         public const string GroupPolicy = "gpupdate";
-        public const string GroupPolicyComputer = "gpupdate-computer";
         public const string FlushDns = "flushdns";
         public const string RestartSpooler = "restart-spooler";
         public const string StartTeamViewer = "start-teamviewer";
@@ -86,7 +85,6 @@ namespace LiteDeploy
         public static readonly IList<QuickCommand> All = new List<QuickCommand>
         {
             Make(GroupPolicy, "Refresh the group policies (gpupdate /force)", false, Step("gpupdate.exe", "/force")),
-            Make(GroupPolicyComputer, "Refresh the computer policies only (gpupdate /target:computer /force)", false, Step("gpupdate.exe", "/target:computer /force")),
             Make(FlushDns, "Flush the DNS cache (ipconfig /flushdns)", false, Step("ipconfig.exe", "/flushdns")),
             Make(RestartSpooler, "Restart the print spooler", true,
                 new QuickCommandStep { FileName = "net.exe", Arguments = "stop spooler /y", IgnoreFailure = true },
