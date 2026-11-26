@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `OnePassword`: an updated computer stayed *outdated*: winget gives a build number (8.12.46.29) that
+  the MSI does not register (8.12.46). The versions are now compared on the parts both have.
+- `CachedInstaller`: versions compared with their missing parts as 0 (`15.83.7` = `15.83.7.0`), as in
+  `TeamViewer`; such a product no longer stays *outdated* after its update.
+- Main window: the progress bar goes away when a check or an update is over (a full green bar looked
+  like work still in progress); it is shown again at the next run.
 - *Software catalog...*: the search box and the module list start after their label, which hid
   their first characters in French.
 

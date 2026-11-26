@@ -101,6 +101,7 @@ namespace LiteDeploy
         {
             InitializeComponent();
             Localization.Apply(this);
+            progressBar.Visible = false;   // shown while a run is in progress only
             profileButton.MouseEnter += (s, e) => { if (profileTip != null) profileButton.ToolTipText = profileTip; };
             Theme.Apply(this);
             Theme.Apply(actionsButton.DropDown);
@@ -1229,6 +1230,7 @@ namespace LiteDeploy
             UpdateButtons();
             progressBar.Maximum = jobs.Count;
             progressBar.Value = 0;
+            progressBar.Visible = true;
             UpdateProgressText();
 
             Queue<Job> queue = new Queue<Job>(jobs);
@@ -1372,7 +1374,8 @@ namespace LiteDeploy
                 {
                     progressBar.Value = Math.Min(progressBar.Maximum, progressBar.Maximum - left);
                     RefreshList();
-                    if (left == 0) { SetIdleStatus(); RunFinished(); }
+                    // Done: the bar goes away, a full green bar looked like work still in progress
+                    if (left == 0) { progressBar.Visible = false; progressBar.Value = 0; SetIdleStatus(); RunFinished(); }
                     else UpdateProgressText();
                 }));
             }

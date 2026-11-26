@@ -112,9 +112,10 @@ function ConvertTo-Version([string] $Text) {
     if (-not $Text) { return $null }
     $m = [regex]::Match($Text, '\d+(\.\d+){0,3}')
     if (-not $m.Success) { return $null }
-    $v = $m.Value
-    if ($v -notmatch '\.') { $v += '.0' }
-    try { return [version]$v } catch { return $null }
+    # Missing parts are 0: 15.83.7 and 15.83.7.0 are the same version ([version] would rank the first lower)
+    $parts = @($m.Value.Split('.'))
+    while ($parts.Count -lt 4) { $parts += '0' }
+    try { return [version]($parts -join '.') } catch { return $null }
 }
 
 # A property of the Property table of an MSI, read without installing it
