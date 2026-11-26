@@ -230,7 +230,7 @@ own parameter values:
 | Parameter | Value |
 |---|---|
 | `Product` | Name shown in the messages (and as the row label when imported); the instance name when empty |
-| `File` | **Required.** Path of the installer under the cache, e.g. `CachedInstaller/ExampleVendor/ContosoExampleApp-2.4.1.msi` (`/` or `\`; a path that leaves the cache is refused) |
+| `File` | **Required.** Path of the installer under the cache, e.g. `CachedInstaller/ExampleVendor/ContosoExampleApp-2.4.1.msi` (`/` or `\`; a path that leaves the cache is refused). A wildcard in the file name (`ExampleVendor/ContosoExampleApp-*.msi`) takes the matching installer of that folder with the highest version (not its subfolders, so never `OLD`; same version: the most recent file): dropping a newer installer in the folder is enough. Keep the extension in the pattern and leave `Version` empty |
 | `Type` | `msi` or `exe`; empty: from the extension of `File` |
 | `Arguments` | Silent install arguments. `msi`: `/qn /norestart` when empty (the module adds `/i <file>` and a log). `exe`: required (no silent switch is common to every vendor), e.g. `/S` or `/quiet /norestart` |
 | `DetectName` | Wildcard on the `DisplayName` of the Uninstall entry, e.g. `Contoso Example App*` (at least 3 characters besides the wildcards) |

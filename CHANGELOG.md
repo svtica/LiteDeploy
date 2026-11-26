@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `CachedInstaller`: `File` may have a wildcard in its file name (`Firefox/Firefox Setup *.msi`): the
+  module takes the matching installer of that folder with the highest version (not its subfolders,
+  so never `OLD`; same version: the most recent file). Dropping a newer installer in the folder is
+  enough, the catalog no longer has to change. *Web versions* reads the version of that newest file
+  and keeps the pattern after a download whose name matches it. Leave `Version` empty for such an
+  instance.
+
 ## [1.0.41] - 2026-11-26
 
 ### Changed

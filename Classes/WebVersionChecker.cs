@@ -685,6 +685,24 @@ namespace LiteDeploy
         {
             if (String.IsNullOrWhiteSpace(cacheRoot))
                 throw new InvalidOperationException(Localization.T("WebVersions.NoCache", "No shared installer cache is set for your Windows account on this computer: set it in App > Options > Software updates."));
+            if (!t.IsMsix && IsPattern(t.File))
+            {
+                // A wildcard in the file name: the newest matching installer of the folder, as the module picks it
+                String rel = t.File.Trim().Replace('\\', '/');
+                int cut = rel.LastIndexOf('/');
+                String folderRel = cut > 0 ? rel.Substring(0, cut) : "";
+                String leaf = rel.Substring(cut + 1);
+                String dir = folderRel.IndexOfAny(new[] { '*', '?' }) >= 0 ? null : ResolveUnderCache(cacheRoot, folderRel);
+                if (dir == null) throw new InvalidOperationException(Localization.F("WebVersions.InvalidFile", "Invalid File parameter: {0}", t.File));
+                if (!Directory.Exists(dir)) throw new DirectoryNotFoundException(Localization.F("WebVersions.FolderMissing", "Folder not found in the cache: {0}", dir));
+                String newestFile = NewestMatch(Directory.GetFiles(dir), leaf, p =>
+                {
+                    try { return FileVersionOf(p, String.IsNullOrEmpty(t.Type) ? Path.GetExtension(p).TrimStart('.') : t.Type); }
+                    catch (Exception) { return null; }
+                }, p => System.IO.File.GetLastWriteTimeUtc(p));
+                if (newestFile == null) throw new FileNotFoundException(Localization.F("WebVersions.NoMatch", "No installer matching {0} in the cache", t.File));
+                return newestFile;
+            }
             if (!t.IsMsix)
             {
                 String full = ResolveUnderCache(cacheRoot, t.File);
@@ -717,6 +735,49 @@ namespace LiteDeploy
             }
             if (newest == null) throw new FileNotFoundException(Localization.F("WebVersions.NoPackage", "No .msix or .msixbundle of the package {0} in {1}", t.PackageName ?? "", folder));
             return newest;
+        }
+
+        /// <summary>A File with * or ? in its file name: the newest matching installer of its folder (CachedInstaller).</summary>
+        static public bool IsPattern(String file)
+        {
+            if (String.IsNullOrWhiteSpace(file)) return false;
+            String rel = file.Trim().Replace('\\', '/');
+            return rel.Substring(rel.LastIndexOf('/') + 1).IndexOfAny(new[] { '*', '?' }) >= 0;
+        }
+
+        /// <summary>Whether <paramref name="fileName"/> matches the wildcard <paramref name="pattern"/> (* and ?, case-insensitive, whole name).</summary>
+        static public bool MatchesPattern(String pattern, String fileName)
+        {
+            if (String.IsNullOrEmpty(pattern) || String.IsNullOrEmpty(fileName)) return false;
+            String regex = "^" + Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".") + "$";
+            return Regex.IsMatch(fileName, regex, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        }
+
+        /// <summary>
+        /// Among <paramref name="files"/>, the one whose name matches <paramref name="pattern"/> with the highest version
+        /// (<paramref name="versionOf"/>; unknown ranks lowest), the most recent (<paramref name="modified"/>) for the same
+        /// version; null when none matches. Pure logic, unit-tested.
+        /// </summary>
+        static public String NewestMatch(IEnumerable<String> files, String pattern, Func<String, String> versionOf, Func<String, DateTime> modified)
+        {
+            String best = null, bestVersion = null;
+            DateTime bestTime = DateTime.MinValue;
+            foreach (String f in files ?? Enumerable.Empty<String>())
+            {
+                if (!MatchesPattern(pattern, Path.GetFileName(f))) continue;
+                String v = versionOf(f);
+                DateTime when = modified(f);
+                // Unknown version (no number): below any known one
+                int c;
+                if (best == null) c = 1;
+                else
+                {
+                    int? cmp = CompareVersions(v, bestVersion);
+                    c = cmp ?? (VersionParts(v, out _) == null ? (VersionParts(bestVersion, out _) == null ? 0 : -1) : 1);
+                }
+                if (c > 0 || (c == 0 && when > bestTime)) { best = f; bestVersion = v; bestTime = when; }
+            }
+            return best;
         }
 
         /// <summary>Version of an installer file: MSI ProductVersion, EXE product (else file) version, MSIX manifest version.</summary>
