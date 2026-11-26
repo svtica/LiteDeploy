@@ -92,6 +92,34 @@ namespace LiteDeploy.Tests
         }
 
         [TestMethod]
+        public void FilePattern_NewestMatchingInstaller()
+        {
+            Assert.IsTrue(WebVersionChecker.IsPattern("Firefox/Firefox Setup *.msi"));
+            Assert.IsTrue(WebVersionChecker.IsPattern(@"Vendor\app-?.msi"));
+            Assert.IsFalse(WebVersionChecker.IsPattern("Firefox/Firefox Setup 161.0.msi"));
+            Assert.IsFalse(WebVersionChecker.IsPattern(null));
+            Assert.IsTrue(WebVersionChecker.MatchesPattern("Firefox Setup *.msi", "firefox setup 162.0.msi"), "case-insensitive");
+            Assert.IsFalse(WebVersionChecker.MatchesPattern("Firefox Setup *.msi", "Firefox Setup 162.0.msix"), "whole name: .msix is not .msi");
+            Assert.IsFalse(WebVersionChecker.MatchesPattern("app-?.msi", "app-10.msi"));
+
+            Dictionary<String, String> versions = new Dictionary<String, String>
+            {
+                { @"C:\cache\Vendor\app-1.9.msi", "1.9.0" },
+                { @"C:\cache\Vendor\app-1.10.msi", "1.10.0" },
+                { @"C:\cache\Vendor\app-unknown.msi", null },
+                { @"C:\cache\Vendor\other-9.0.msi", "9.0" },
+                { @"C:\cache\Vendor\app-1.10-copy.msi", "1.10.0" }
+            };
+            Dictionary<String, DateTime> times = versions.Keys.ToDictionary(k => k, k => new DateTime(2026, 1, 1));
+            times[@"C:\cache\Vendor\app-1.10-copy.msi"] = new DateTime(2026, 2, 1);
+            Assert.AreEqual(@"C:\cache\Vendor\app-1.10-copy.msi",
+                WebVersionChecker.NewestMatch(versions.Keys, "app-*.msi", f => versions[f], f => times[f]), "1.10 over 1.9, the most recent for the same version");
+            Assert.AreEqual(@"C:\cache\Vendor\app-1.10.msi",
+                WebVersionChecker.NewestMatch(versions.Keys.Take(3), "app-*.msi", f => versions[f], f => times[f]), "an unknown version ranks lowest");
+            Assert.IsNull(WebVersionChecker.NewestMatch(versions.Keys, "none-*.msi", f => versions[f], f => times[f]));
+        }
+
+        [TestMethod]
         public void WingetShow_English()
         {
             AssertExample(WingetShowParser.Parse(English));

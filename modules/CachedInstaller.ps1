@@ -5,7 +5,7 @@
 # Uninstall: yes
 # Instances: yes
 # Parameter: Product default= Name of the product, shown in the messages (the instance name when empty)
-# Parameter: File files=*.msi|*.exe Path of the installer under the shared cache, e.g. CachedInstaller/ExampleVendor/app-2.4.1.msi
+# Parameter: File files=*.msi|*.exe Path of the installer under the shared cache, e.g. ExampleVendor/app-2.4.1.msi, or ExampleVendor/app-*.msi for the newest
 # Parameter: Type default= values=msi|exe msi or exe (empty: from the file extension)
 # Parameter: Arguments default= Silent install arguments (msi: /qn /norestart when empty; required for an exe)
 # Parameter: DetectName default= Wildcard on the DisplayName of the Uninstall entry, e.g. "Contoso Example App*"
@@ -24,6 +24,13 @@
     instance ("module:CachedInstaller/<Instance>" in the package list, values
     in Package list > Parameters... or imported from a catalog, see
     docs/modules.md). Nothing in this script is specific to an organisation.
+
+    File may have a wildcard in its file name ("ExampleVendor/App Setup *.msi"):
+    the installer is then the one with the highest version among the matching
+    files of that folder (not its subfolders: OLD is never taken; same version:
+    the newest file). Dropping a newer installer in the folder is enough, the
+    catalog does not change. Leave Version empty for such an instance (a Version
+    set would stay the expected version whatever the newest file is).
 
     Check: finds the installed version in the Uninstall entries of the registry
     (64 and 32-bit views), by ProductCode or by DetectName (wildcard on
@@ -105,6 +112,36 @@ function Resolve-CacheFile([string] $Relative) {
     $full = [IO.Path]::GetFullPath((Join-Path $root $rel))
     if (-not $full.StartsWith($root, [StringComparison]::OrdinalIgnoreCase)) { throw "Invalid File parameter (outside the cache): $Relative" }
     return $full
+}
+
+# The installer of File: the file itself, or, with a wildcard in the file name, the matching file of that folder with
+# the highest version (an unreadable version ranks lowest; same version: the newest file); throws when there is none
+function Resolve-Installer([string] $Relative) {
+    $rel = $Relative.Trim().Replace([string][char]92, '/')
+    $cut = $rel.LastIndexOf('/')
+    $leaf = $rel.Substring($cut + 1)
+    $folderRel = if ($cut -gt 0) { $rel.Substring(0, $cut) } else { '' }
+    if ($folderRel -match '[\*\?]') { throw "Wildcards are allowed in the file name only: $Relative" }
+    if ($leaf -notmatch '[\*\?]') { return (Resolve-CacheFile $Relative) }
+    if (-not $folderRel) { throw "A File with a wildcard needs a folder: $Relative" }
+    $folder = Resolve-CacheFile $folderRel
+    if (-not (Test-Path -LiteralPath $folder -PathType Container)) { throw "Folder not found in the cache: $folderRel" }
+    $typeParam = (Get-Param 'Type').ToLowerInvariant()
+    $best = $null; $bestRank = $null
+    foreach ($f in @(Get-ChildItem -LiteralPath $folder -File | Where-Object { $_.Name -like $leaf })) {
+        $t = if ($typeParam) { $typeParam } else { $f.Extension.TrimStart('.').ToLowerInvariant() }
+        if ($t -ne 'msi' -and $t -ne 'exe') { continue }
+        $text = $null
+        try {
+            if ($t -eq 'msi') { $text = Get-MsiProperty $f.FullName 'ProductVersion' }
+            else { $info = $f.VersionInfo; $text = if (ConvertTo-Version $info.ProductVersion) { $info.ProductVersion } else { $info.FileVersion } }
+        } catch { }
+        $rank = ConvertTo-Version $text
+        if (-not $rank) { $rank = [version]'0.0.0.0' }
+        if (-not $best -or $rank -gt $bestRank -or ($rank -eq $bestRank -and $f.LastWriteTime -gt $best.LastWriteTime)) { $best = $f; $bestRank = $rank }
+    }
+    if (-not $best) { throw "No installer matching $Relative in the cache" }
+    return $best.FullName
 }
 
 # "2.4.1.0", "v2.4 build 7" -> [version]; $null when there is no number
@@ -351,7 +388,7 @@ try {
         exit 0
     }
 
-    $source = Resolve-CacheFile $file
+    $source = Resolve-Installer $file
     if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw "Installer not found in the cache: $file" }
     $type = (Get-Param 'Type').ToLowerInvariant()
     if (-not $type) { $type = [IO.Path]::GetExtension($source).TrimStart('.').ToLowerInvariant() }

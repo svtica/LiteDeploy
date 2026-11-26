@@ -735,7 +735,8 @@ namespace LiteDeploy
                     String entryName;
                     String extractDir = Path.Combine(temp, "nested");
                     Directory.CreateDirectory(extractDir);
-                    download = ExtractNestedInstaller(download, target.Type, extractDir, MaxNestedBytes, target.File, out entryName);
+                    download = ExtractNestedInstaller(download, target.Type, extractDir, MaxNestedBytes,
+                        WebVersionChecker.IsPattern(target.File) ? current : target.File, out entryName);
                     extension = Path.GetExtension(download);
                     sha = Sha256Of(download);
                     log("  zip installer: " + entryName + " extracted, SHA256 " + sha);
@@ -764,7 +765,11 @@ namespace LiteDeploy
                 step(WebVersionStep.UpdatingSettings, 0, 0);
 
                 // Settings first (the computers get the new file at their next run), then the previous file to OLD
-                String newParameter = target.IsMsix ? newName : NewFileParameter(target.File, newName);
+                // A File with a wildcard stays as it is when the new name matches it (the module takes the newest match)
+                String newParameter = target.IsMsix ? newName
+                    : WebVersionChecker.IsPattern(target.File) && WebVersionChecker.MatchesPattern(Path.GetFileName(target.File.Replace('/', '\\')), newName)
+                        ? target.File
+                        : NewFileParameter(target.File, newName);
                 settings = ModuleSettings.Load();
                 settings.SetValue(entry.Key, "File", newParameter);
                 if (!target.IsMsix && !String.IsNullOrEmpty(target.Version))
