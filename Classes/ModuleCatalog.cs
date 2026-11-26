@@ -9,6 +9,9 @@
 //            { "module": "CachedInstaller",
 //              "products": [ { "Instance": "ContosoExampleApp",
 //                              "Product": "Contoso Example App", ... } ] }
+//          A product may name its own module ("module": "MsixProvision"), so one
+//          file can hold the instances of several modules; the "module" of the
+//          file is the default of its products.
 //          Package list > Import from catalog... creates one row per product
 //          ("module:<module>/<Instance>") and its parameter values in
 //          module-settings.xml. Only LiteDeploy reads the file, never the
@@ -28,6 +31,8 @@ namespace LiteDeploy
     /// <summary>One product of a catalog: the instance name and the values of its parameters.</summary>
     internal sealed class ModuleCatalogEntry
     {
+        /// <summary>Module of the product: its own "module" member, else the "module" of the file.</summary>
+        public String Module = ModuleCatalog.DefaultModule;
         public String Instance;
         /// <summary>Parameter name -> value (names case-insensitive).</summary>
         public Dictionary<String, String> Values = new Dictionary<String, String>(StringComparer.OrdinalIgnoreCase);
@@ -49,6 +54,8 @@ namespace LiteDeploy
         public const String DefaultModule = "CachedInstaller";
         /// <summary>Key of the instance name in a product.</summary>
         public const String InstanceKey = "Instance";
+        /// <summary>Key of the module, in the file (default of its products) or in a product.</summary>
+        public const String ModuleKey = "module";
 
         public String Module = DefaultModule;
         public List<ModuleCatalogEntry> Entries = new List<ModuleCatalogEntry>();
@@ -92,7 +99,7 @@ namespace LiteDeploy
                 return catalog;
             }
 
-            XElement module = Member(root, "module");
+            XElement module = Member(root, ModuleKey);
             if (module != null)
             {
                 String name = module.Value.Trim();
@@ -127,17 +134,30 @@ namespace LiteDeploy
                     catalog.Errors.Add(Localization.F("ModuleCatalog.InvalidInstance", "Product {0}: invalid or missing \"Instance\" (letters, digits and . - _ only): {1}", index, instance ?? ""));
                     continue;
                 }
-                if (catalog.Entries.Any(e => String.Equals(e.Instance, instance, StringComparison.OrdinalIgnoreCase)))
+                String productModule = catalog.Module;
+                XElement moduleElement = Member(product, ModuleKey);
+                if (moduleElement != null && Type(moduleElement) != "null")
+                {
+                    productModule = moduleElement.Value.Trim();
+                    if (Type(moduleElement) != "string" || !UpdatePackage.IsValidModuleName(productModule))
+                    {
+                        catalog.Errors.Add(Localization.F("ModuleCatalog.InvalidProductModule", "Product {0}: invalid module name {1}, skipped.", index, productModule));
+                        continue;
+                    }
+                }
+                if (catalog.Entries.Any(e => String.Equals(e.Module, productModule, StringComparison.OrdinalIgnoreCase)
+                                          && String.Equals(e.Instance, instance, StringComparison.OrdinalIgnoreCase)))
                 {
                     catalog.Errors.Add(Localization.F("ModuleCatalog.Duplicate", "Product {0}: instance {1} listed twice, skipped.", index, instance));
                     continue;
                 }
 
-                ModuleCatalogEntry entry = new ModuleCatalogEntry { Instance = instance };
+                ModuleCatalogEntry entry = new ModuleCatalogEntry { Module = productModule, Instance = instance };
                 foreach (XElement value in product.Elements())
                 {
                     String name = MemberName(value);
                     if (String.Equals(name, InstanceKey, StringComparison.OrdinalIgnoreCase)) continue;
+                    if (String.Equals(name, ModuleKey, StringComparison.OrdinalIgnoreCase)) continue;
                     String type = Type(value);
                     if (type == "null") continue;
                     if (!ModuleParameters.IsValidName(name))
