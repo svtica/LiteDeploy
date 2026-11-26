@@ -98,7 +98,7 @@ namespace LiteDeploy
         public static String BuildWorkerArguments(String command, IEnumerable<UpdatePackage> packages, bool allowUnsignedModules, String cacheShare,
             bool includeServers, bool allowDomainControllers)
         {
-            return BuildWorkerArguments(command, packages, allowUnsignedModules, cacheShare, includeServers, allowDomainControllers, 0, false);
+            return BuildWorkerArguments(command, packages, allowUnsignedModules, cacheShare, includeServers, allowDomainControllers, 0, false, null);
         }
 
         /// <summary>
@@ -107,6 +107,13 @@ namespace LiteDeploy
         /// </summary>
         public static String BuildWorkerArguments(String command, IEnumerable<UpdatePackage> packages, bool allowUnsignedModules, String cacheShare,
             bool includeServers, bool allowDomainControllers, int warnSeconds, bool allowPostpone)
+        {
+            return BuildWorkerArguments(command, packages, allowUnsignedModules, cacheShare, includeServers, allowDomainControllers, warnSeconds, allowPostpone, null);
+        }
+
+        /// <summary>With <paramref name="messageLanguage"/> (fr, en, computer): the language of the warning (--message-language).</summary>
+        public static String BuildWorkerArguments(String command, IEnumerable<UpdatePackage> packages, bool allowUnsignedModules, String cacheShare,
+            bool includeServers, bool allowDomainControllers, int warnSeconds, bool allowPostpone, String messageLanguage)
         {
             StringBuilder sb = new StringBuilder(command);
             foreach (UpdatePackage p in packages)
@@ -125,6 +132,7 @@ namespace LiteDeploy
             {
                 sb.Append(' ').Append(CloseWarning.WarnOption).Append(' ').Append(warn);
                 if (allowPostpone) sb.Append(' ').Append(CloseWarning.PostponeOption);
+                if (CloseWarning.IsValidLanguage(messageLanguage)) sb.Append(' ').Append(CloseWarning.LanguageOption).Append(' ').Append(messageLanguage);
             }
             return sb.ToString();
         }
@@ -281,7 +289,7 @@ namespace LiteDeploy
                 Executable = WorkerPath,
                 Arguments = BuildWorkerArguments(command, packages, UserSettings.Current.AllowUnsignedModules, UserSettings.Current.UpdateCacheShare,
                     UserSettings.Current.IncludeServers, UserSettings.Current.AllowDomainControllers,
-                    UserSettings.Current.CloseWarningSeconds, UserSettings.Current.CloseWarningPostpone)
+                    UserSettings.Current.CloseWarningSeconds, UserSettings.Current.CloseWarningPostpone, UserSettings.Current.MessageLanguage)
             };
         }
 
@@ -382,7 +390,7 @@ namespace LiteDeploy
         public static UpdateRunResult Quick(String computer, String quickCommandId)
         {
             // gpupdate can take minutes: up to 4 per step on the computer, plus the connection
-            return RunSimple(computer, QuickCommands.WorkerArguments(quickCommandId), 10);
+            return RunSimple(computer, QuickCommands.WorkerArguments(quickCommandId, UserSettings.Current.MessageLanguage), 10);
         }
 
         /// <summary>

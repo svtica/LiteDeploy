@@ -472,6 +472,9 @@ Oui : ouvrir les options. Non : continuer avec votre compte.</translation>
   <translation key="OptionsForm.hoursLabel.Text">Heures ouvrables (lundi au vendredi, HH:mm) :</translation>
   <translation key="OptionsForm.unsignedModulesCheckBox.Text">Exécuter les modules non signés (tests seulement : ils tournent en SYSTEM sur les ordinateurs)</translation>
   <translation key="OptionsForm.includeServersCheckBox.Text">Inclure les serveurs (mises à jour et installations)</translation>
+  <translation key="OptionsForm.messageLanguageLabel.Text">Langue des messages aux usagers :</translation>
+  <translation key="OptionsForm.MessageLanguageApp">Celle de LiteDeploy</translation>
+  <translation key="OptionsForm.MessageLanguageComputer">Celle du Windows de chaque ordinateur</translation>
   <translation key="OptionsForm.warnLabel.Text">Avertir avant de fermer les applications (s, 0 : non) :</translation>
   <translation key="OptionsForm.postponeCheckBox.Text">Les usagers peuvent reporter la mise à jour (Annuler dans l'avertissement)</translation>
   <translation key="OptionsForm.parallelLabel.Text">Ordinateurs traités en même temps (1 à 32) :</translation>

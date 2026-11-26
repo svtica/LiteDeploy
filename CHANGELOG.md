@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- *App > Options > Software updates > Language of the messages to the users*: same as LiteDeploy
+  (default), French, English, or the language of the Windows of each computer. Used by the warning
+  before closing the applications and by the comment of the restart quick command, which Windows
+  shows to the users. Before, the language of the Windows of the computer decided, and computers
+  with an English Windows showed English messages. Worker option `--message-language fr|en|computer`
+  (upgrade, and `quick <id>`).
+
+### Fixed
+
+- *Software catalog...*: the search box and the module list start after their label, which hid
+  their first characters in French.
+
 ## [1.0.39] - 2026-11-26
 
 ### Changed

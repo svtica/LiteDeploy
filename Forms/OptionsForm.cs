@@ -97,6 +97,12 @@ namespace LiteDeploy
             parallelBox.Value = UserSettings.ClampParallelism(current.UpdatesParallelism);
             warnBox.Value = CloseWarning.ClampSeconds(current.CloseWarningSeconds);
             postponeCheckBox.Checked = current.CloseWarningPostpone;
+            messageLanguageCombo.Items.AddRange(new Object[] {
+                Localization.T("OptionsForm.MessageLanguageApp", "Same as LiteDeploy"),
+                "Français",
+                "English",
+                Localization.T("OptionsForm.MessageLanguageComputer", "Language of the Windows of each computer") });
+            messageLanguageCombo.SelectedIndex = Math.Max(0, Array.IndexOf(MessageLanguages, current.UserMessageLanguage));
             siwFolderBox.Text = current.SiwFolder ?? "";
             siwHtmlCheckBox.Checked = current.SiwHtml;
             toolsFolderBox.Text = current.ToolsFolder ?? "";
@@ -124,6 +130,8 @@ namespace LiteDeploy
 
         // Order of the items of themeCombo
         static readonly String[] Themes = { Theme.Automatic, Theme.Light, Theme.Dark };
+        /// <summary>Values of UserSettings.UserMessageLanguage, in the order of the list.</summary>
+        static readonly String[] MessageLanguages = { UserSettings.MessageLanguageApp, CloseWarning.LanguageFrench, CloseWarning.LanguageEnglish, CloseWarning.LanguageComputer };
 
         private void button3_Click(object sender, EventArgs e)
         {
@@ -294,6 +302,7 @@ namespace LiteDeploy
             settings.UpdatesParallelism = UserSettings.ClampParallelism((int)parallelBox.Value);
             settings.CloseWarningSeconds = CloseWarning.ClampSeconds((int)warnBox.Value);
             settings.CloseWarningPostpone = postponeCheckBox.Checked;
+            settings.UserMessageLanguage = MessageLanguages[Math.Max(0, messageLanguageCombo.SelectedIndex)];
             settings.UpdateCredential = accountCombo.SelectedIndex > 0 ? (String)accountCombo.SelectedItem : "";
             settings.RemoteMethod = RemoteRunner.Methods[Math.Max(0, methodCombo.SelectedIndex)];
             settings.Theme = Themes[Math.Max(0, themeCombo.SelectedIndex)];

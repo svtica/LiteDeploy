@@ -23,6 +23,30 @@ namespace LiteDeploy
         public const string WarnOption = "--warn-close";
         /// <summary>Worker option: the users may postpone the update (Cancel).</summary>
         public const string PostponeOption = "--allow-postpone";
+        /// <summary>Worker option: language of the messages shown to the users: fr, en, or computer (the Windows of the computer).</summary>
+        public const string LanguageOption = "--message-language";
+
+        public const string LanguageFrench = "fr";
+        public const string LanguageEnglish = "en";
+        /// <summary>The language of the Windows of the computer (InstalledUICulture).</summary>
+        public const string LanguageComputer = "computer";
+
+        /// <summary>A valid value of --message-language.</summary>
+        public static bool IsValidLanguage(string language)
+        {
+            return language == LanguageFrench || language == LanguageEnglish || language == LanguageComputer;
+        }
+
+        /// <summary>
+        /// French for the messages to the users: "fr"; "en": English; anything else (computer, none): after the language
+        /// of the Windows of the computer (<paramref name="computerLanguage"/>, a two-letter ISO code).
+        /// </summary>
+        public static bool IsFrench(string language, string computerLanguage)
+        {
+            if (language == LanguageFrench) return true;
+            if (language == LanguageEnglish) return false;
+            return string.Equals(computerLanguage, "fr", StringComparison.OrdinalIgnoreCase);
+        }
 
         public const int DefaultSeconds = 120;
         public const int MaxSeconds = 900;

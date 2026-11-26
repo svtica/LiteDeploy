@@ -111,7 +111,7 @@ namespace LiteDeploy
                 Step("powercfg.exe", "/change hibernate-timeout-ac 0"),
                 Step("powercfg.exe", "/hibernate off")),
             Make(Restart, "Restart the computer in 5 minutes (users are warned)", true,
-                Step("shutdown.exe", "/r /t " + RestartDelaySeconds + " /d p:0:0 /c \"Restart requested by the administrator (LiteDeploy).\"")),
+                Step("shutdown.exe", "/r /t " + RestartDelaySeconds + " /d p:0:0 /c \"" + RestartComment(false) + "\"")),
             Make(CancelRestart, "Cancel a planned restart (shutdown /a)", false, Step("shutdown.exe", "/a"))
         }.AsReadOnly();
 
@@ -123,6 +123,30 @@ namespace LiteDeploy
         static QuickCommandStep Step(string file, string arguments)
         {
             return new QuickCommandStep { FileName = file, Arguments = arguments };
+        }
+
+        /// <summary>Comment of the restart, shown to the users by Windows (in the language of the messages).</summary>
+        public static string RestartComment(bool french)
+        {
+            return french ? "Redémarrage demandé par l'administrateur (LiteDeploy)." : "Restart requested by the administrator (LiteDeploy).";
+        }
+
+        /// <summary>
+        /// The arguments of a step in the language of the messages to the users: the restart gets its comment in French
+        /// when <paramref name="french"/>; any other step is unchanged.
+        /// </summary>
+        public static string LocalizedArguments(QuickCommand command, QuickCommandStep step, bool french)
+        {
+            if (french && command != null && command.Id == Restart && step.FileName == "shutdown.exe")
+                return step.Arguments.Replace("\"" + RestartComment(false) + "\"", "\"" + RestartComment(true) + "\"");
+            return step.Arguments;
+        }
+
+        /// <summary>Worker arguments with the language of the messages: "quick &lt;id&gt; --message-language fr".</summary>
+        public static string WorkerArguments(string id, string messageLanguage)
+        {
+            string args = WorkerArguments(id);
+            return CloseWarning.IsValidLanguage(messageLanguage) ? args + " " + CloseWarning.LanguageOption + " " + messageLanguage : args;
         }
 
         /// <summary>The command of that identifier (case-insensitive); null when there is none.</summary>

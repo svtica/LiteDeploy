@@ -98,6 +98,20 @@ namespace LiteDeploy
         public int CloseWarningSeconds = CloseWarning.DefaultSeconds;
         /// <summary>The users may postpone the update of a package (Cancel in the warning).</summary>
         public bool CloseWarningPostpone = true;
+        /// <summary>Language of the messages shown to the users of the computers (warning before closing, restart): app (the language of LiteDeploy), fr, en or computer (the Windows of each computer).</summary>
+        public String UserMessageLanguage = MessageLanguageApp;
+
+        public const String MessageLanguageApp = "app";
+
+        /// <summary>The value given to the worker (--message-language): fr, en or computer; "app" (or unknown): the language of LiteDeploy.</summary>
+        static public String ResolveMessageLanguage(String setting, String interfaceLanguage)
+        {
+            if (CloseWarning.IsValidLanguage(setting)) return setting;
+            return interfaceLanguage == Localization.French ? CloseWarning.LanguageFrench : CloseWarning.LanguageEnglish;
+        }
+
+        /// <summary>The language of the messages to the users for this administrator (see ResolveMessageLanguage).</summary>
+        public String MessageLanguage { get { return ResolveMessageLanguage(UserMessageLanguage, Localization.Language); } }
 
         public const int DefaultParallelism = 4;
         public const int MinParallelism = 1;

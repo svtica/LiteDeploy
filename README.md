@@ -299,8 +299,9 @@ Actions of the grid (checked computers, else the selected ones):
   the Office applications for `AdobeReader`, 1Password...), the users of the sessions that run them
   get a message and can save their work: *OK* closes them now, *Cancel* postpones the update (when
   allowed), no answer closes them at the end of the delay. *App > Options > Software updates*:
-  *Warn before closing the applications* (120 seconds; 0: no warning) and *The users can postpone the
-  update*. See *Warning before closing* in [docs/modules.md](docs/modules.md).
+  *Warn before closing the applications* (120 seconds; 0: no warning), *The users can postpone the
+  update* and *Language of the messages to the users* (same as LiteDeploy, French, English or the
+  Windows of each computer; also used for the comment of the restart quick command). See *Warning before closing* in [docs/modules.md](docs/modules.md).
 - **Servers are left alone by default**: the worker reads the operating system type
   (`Win32_OperatingSystem.ProductType`) and refuses to update or install anything on a server
   unless *App > Options > Software updates > Include servers (updates and installs)* is checked

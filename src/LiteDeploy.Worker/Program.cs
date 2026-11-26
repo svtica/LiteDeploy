@@ -126,13 +126,16 @@ namespace LiteDeploy.Worker
             }
             if (args != null && args.Length >= 1 && args[0].Equals(QuickCommands.WorkerCommand, StringComparison.OrdinalIgnoreCase))
             {
-                QuickCommand quick = args.Length == 2 ? QuickCommands.Find(args[1]) : null;
+                // "quick <id> [--message-language fr|en|computer]"
+                QuickCommand quick = args.Length == 2 || (args.Length == 4 && args[2] == CloseWarning.LanguageOption && CloseWarning.IsValidLanguage(args[3]))
+                    ? QuickCommands.Find(args[1]) : null;
                 if (quick == null)
                 {
                     Emit(WorkerProtocol.Format("type", WorkerProtocol.TypeError, "message", "Unknown quick command"));
                     return ExitUsage;
                 }
-                return RunQuick(quick);
+                return RunQuick(quick, CloseWarning.IsFrench(args.Length == 4 ? args[3] : CloseWarning.LanguageComputer,
+                    System.Globalization.CultureInfo.InstalledUICulture.TwoLetterISOLanguageName));
             }
             if (args != null && args.Length == 1 && args[0] == ProgramPolicy.ListCommand)
                 return ProgramRunner.List(Emit);
@@ -554,10 +557,13 @@ namespace LiteDeploy.Worker
         static int closeWarningSeconds;
         /// <summary>--allow-postpone: the users may postpone (Cancel).</summary>
         static bool allowPostpone;
+        /// <summary>--message-language: fr, en or computer (null: computer).</summary>
+        static string messageLanguage;
 
         /// <summary>The warning options of the last ParseArguments (tests).</summary>
         internal static int CloseWarningSeconds { get { return closeWarningSeconds; } }
         internal static bool AllowPostpone { get { return allowPostpone; } }
+        internal static string MessageLanguage { get { return messageLanguage; } }
 
         /// <summary>
         /// Before CloseProcesses: when a process of the package runs in a user session and --warn-close is set, the
@@ -584,7 +590,7 @@ namespace LiteDeploy.Worker
                 }
             }
             if (sessions.Count == 0) return null;
-            bool french = System.Globalization.CultureInfo.InstalledUICulture.TwoLetterISOLanguageName == "fr";
+            bool french = CloseWarning.IsFrench(messageLanguage, System.Globalization.CultureInfo.InstalledUICulture.TwoLetterISOLanguageName);
             string product = string.IsNullOrWhiteSpace(package.Label) ? package.Id : package.Label;
             List<string> users = SessionMessenger.AskBeforeClosing(sessions, CloseWarning.Title(french),
                 CloseWarning.Text(product, CloseWarning.ReadableNames(running), closeWarningSeconds, allowPostpone, french),
@@ -647,11 +653,14 @@ namespace LiteDeploy.Worker
         /// "quick &lt;id&gt;": the steps of a command of the fixed table (QuickCommands), from System32,
         /// their output relayed line by line (type=output), then one type=quick line with the exit code.
         /// </summary>
-        static int RunQuick(QuickCommand quick)
+        static int RunQuick(QuickCommand quick, bool french)
         {
             int code = 0;
-            foreach (QuickCommandStep step in quick.Steps)
+            foreach (QuickCommandStep template in quick.Steps)
             {
+                // The text shown to the users (restart comment) in the language of the messages
+                QuickCommandStep step = new QuickCommandStep { FileName = template.FileName, Arguments = QuickCommands.LocalizedArguments(quick, template, french),
+                    IgnoreFailure = template.IgnoreFailure, AcceptedCodes = template.AcceptedCodes };
                 Emit(WorkerProtocol.Format("type", QuickCommands.TypeOutput, "text", "> " + step.FileName + " " + step.Arguments));
                 code = RunQuickStep(step);
                 if (code != 0 && step.IsSuccess(code))
@@ -792,6 +801,7 @@ namespace LiteDeploy.Worker
             allowDomainControllers = false;
             closeWarningSeconds = 0;
             allowPostpone = false;
+            messageLanguage = null;
             command = null;
             packages = new List<UpdatePackage>();
             timeoutMinutes = 15;
@@ -836,6 +846,11 @@ namespace LiteDeploy.Worker
                 else if (a == CloseWarning.PostponeOption)
                 {
                     allowPostpone = true;
+                }
+                else if (a == CloseWarning.LanguageOption && i + 1 < args.Length)
+                {
+                    if (!CloseWarning.IsValidLanguage(args[++i])) return "Invalid message language: " + args[i];
+                    messageLanguage = args[i];
                 }
                 else if (a == "--timeout" && i + 1 < args.Length)
                 {
