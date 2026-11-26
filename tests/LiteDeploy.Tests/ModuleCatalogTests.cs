@@ -61,6 +61,33 @@ namespace LiteDeploy.Tests
         }
 
         [TestMethod]
+        public void UpdateFile_ChangesOnlyThatProduct()
+        {
+            String json = @"{ ""module"": ""CachedInstaller"", ""products"": [
+                { ""Instance"": ""ExampleApp"", ""File"": ""Vendor/app-1.0.msi"", ""Publisher"": ""ExampleVendor Inc."", ""Count"": 2, ""Flag"": true, ""Empty"": null },
+                { ""Instance"": ""Other"", ""File"": ""Vendor/other-1.0.msi"", ""Version"": ""1.0"" },
+                { ""module"": ""MsixProvision"", ""Instance"": ""ExampleApp"", ""File"": ""example.msix"" } ] }";
+            String updated = ModuleCatalog.UpdateFile(json, "CachedInstaller", "exampleapp", "Vendor/app-2.0.msi", "2.0");
+            Assert.IsNotNull(updated);
+            ModuleCatalog c = ModuleCatalog.Parse(updated);
+            Assert.AreEqual(0, c.Errors.Count, String.Join(" | ", c.Errors));
+            Assert.AreEqual("Vendor/app-2.0.msi", c.Entries[0].Values["File"]);
+            Assert.IsFalse(c.Entries[0].Values.ContainsKey("Version"), "no Version added to a product that has none");
+            Assert.AreEqual("2", c.Entries[0].Values["Count"], "numbers kept");
+            Assert.AreEqual("Vendor/other-1.0.msi", c.Entries[1].Values["File"], "another product unchanged");
+            Assert.AreEqual("example.msix", c.Entries[2].Values["File"], "same instance name, other module: unchanged");
+            StringAssert.Contains(updated, "\"Empty\": null");
+            Assert.IsTrue(updated.IndexOf("\"Instance\"") < updated.IndexOf("\"File\""), "member order kept");
+
+            String other = ModuleCatalog.UpdateFile(json, "CachedInstaller", "Other", @"Vendor\other-2.0.msi", "2.0");
+            Assert.AreEqual("2.0", ModuleCatalog.Parse(other).Entries[1].Values["Version"], "a Version already there follows");
+            Assert.AreEqual(@"Vendor\other-2.0.msi", ModuleCatalog.Parse(other).Entries[1].Values["File"], "backslash escaped and read back");
+
+            Assert.IsNull(ModuleCatalog.UpdateFile(json, "CachedInstaller", "Missing", "x.msi", null), "not listed: nothing to change");
+            Assert.IsNull(ModuleCatalog.UpdateFile("not json", "CachedInstaller", "ExampleApp", "x.msi", null));
+        }
+
+        [TestMethod]
         public void Parse_ProductsOfSeveralModules()
         {
             ModuleCatalog c = ModuleCatalog.Parse(@"{ ""products"": [

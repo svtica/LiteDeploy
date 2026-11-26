@@ -267,6 +267,44 @@ namespace LiteDeploy
             return message.Length <= max ? message : message.Substring(0, max - 3).TrimEnd() + "...";
         }
 
+        // ---- Shared catalogs ---------------------------------------------------------------------
+
+        /// <summary>
+        /// After a download: the File value (and Version, when given) of the product in every catalog of the shared
+        /// catalogs folder that lists it (ModuleCatalog.UpdateFile). Returns a warning when a catalog could not be
+        /// written, else null; no shared folder or no catalog listing the product: only logged.
+        /// </summary>
+        static String UpdateSharedCatalogs(String module, String instance, String file, String version, Action<String> log)
+        {
+            String folder = CatalogLocation.SharedFolder(UserSettings.Current.SharedModulesFolder);
+            if (folder == null || !Directory.Exists(folder))
+            {
+                log("  no shared catalogs folder: the catalog of the team keeps the previous file");
+                return null;
+            }
+            List<String> problems = new List<String>();
+            int updated = 0;
+            foreach (String path in Directory.GetFiles(folder, "*.json"))
+            {
+                try
+                {
+                    String result = ModuleCatalog.UpdateFile(File.ReadAllText(path, Encoding.UTF8), module, instance, file, version);
+                    if (result == null) continue;
+                    String temp = path + ".tmp";
+                    File.WriteAllText(temp, result, new UTF8Encoding(false));
+                    File.Copy(temp, path, true);
+                    File.Delete(temp);
+                    updated++;
+                    log("  catalog " + path + ": File -> " + file + (version != null ? ", Version -> " + version : ""));
+                }
+                catch (Exception ex) { problems.Add(Path.GetFileName(path) + ": " + ex.Message); }
+            }
+            if (updated == 0 && problems.Count == 0) log("  no shared catalog lists " + module + "/" + instance);
+            if (problems.Count == 0) return null;
+            return Localization.F("CacheDownloader.CatalogNotUpdated",
+                "The shared catalog could not be updated ({0}): change the File of {1} in it by hand.", String.Join("; ", problems), instance);
+        }
+
         // ---- Zip installers --------------------------------------------------------------------
 
         /// <summary>Largest installer extracted from a zip.</summary>
@@ -736,9 +774,13 @@ namespace LiteDeploy
                 }
                 settings.Save();
                 log("  File parameter " + (target.File ?? "(empty)") + " -> " + newParameter + " (module-settings.xml)");
+                // The team's catalogs too: another administrator who imports them gets the new file, not the old path
+                String catalogWarning = UpdateSharedCatalogs(entry.Module, entry.Instance, newParameter,
+                    !target.IsMsix && !String.IsNullOrEmpty(target.Version) ? entry.WebVersion : null, log);
 
                 String warning;
                 String movedTo = MoveToOld(current, placed, out warning);
+                if (catalogWarning != null) warning = String.IsNullOrEmpty(warning) ? catalogWarning : warning + " " + catalogWarning;
 
                 WebVersionEntry updated = Clone(entry);
                 updated.CacheFile = placed;
