@@ -54,6 +54,50 @@ namespace LiteDeploy.Tests
         }
 
         [TestMethod]
+        public void MessageLanguage_OptionsAndResolution()
+        {
+            StringAssert.EndsWith(UpdateRunner.BuildWorkerArguments("upgrade", Packages, false, null, false, false, 120, true, "fr"),
+                " --warn-close 120 --allow-postpone --message-language fr");
+            Assert.IsFalse(UpdateRunner.BuildWorkerArguments("upgrade", Packages, false, null, false, false, 0, true, "fr").Contains("--message-language"),
+                "no warning: no language");
+            Assert.IsFalse(UpdateRunner.BuildWorkerArguments("upgrade", Packages, false, null, false, false, 120, true, "de").Contains("--message-language"));
+
+            Assert.AreEqual("fr", UserSettings.ResolveMessageLanguage("app", Localization.French));
+            Assert.AreEqual("en", UserSettings.ResolveMessageLanguage("app", Localization.English));
+            Assert.AreEqual("en", UserSettings.ResolveMessageLanguage("en", Localization.French));
+            Assert.AreEqual("computer", UserSettings.ResolveMessageLanguage("computer", Localization.French));
+            Assert.AreEqual("fr", UserSettings.ResolveMessageLanguage(null, Localization.French), "unknown: the language of LiteDeploy");
+            Assert.AreEqual("app", new UserSettings().UserMessageLanguage);
+
+            Assert.IsTrue(CloseWarning.IsFrench("fr", "en"), "fr even on an English Windows");
+            Assert.IsFalse(CloseWarning.IsFrench("en", "fr"));
+            Assert.IsTrue(CloseWarning.IsFrench("computer", "fr"));
+            Assert.IsFalse(CloseWarning.IsFrench(null, "en"));
+
+            string command, cache;
+            List<UpdatePackage> packages;
+            int timeout;
+            bool unsigned, servers, dcs;
+            Assert.IsNull(Worker.Program.ParseArguments(new[] { "upgrade", "--package", "Example.Product||", "--warn-close", "60", "--message-language", "fr" },
+                out command, out packages, out timeout, out unsigned, out cache, out servers, out dcs));
+            Assert.AreEqual("fr", Worker.Program.MessageLanguage);
+            Assert.IsNotNull(Worker.Program.ParseArguments(new[] { "upgrade", "--package", "Example.Product||", "--message-language", "de" },
+                out command, out packages, out timeout, out unsigned, out cache, out servers, out dcs));
+        }
+
+        [TestMethod]
+        public void QuickCommands_RestartCommentInTheLanguageOfTheMessages()
+        {
+            QuickCommand restart = QuickCommands.Find(QuickCommands.Restart);
+            StringAssert.Contains(QuickCommands.LocalizedArguments(restart, restart.Steps[0], true), "/c \"Red\u00e9marrage demand\u00e9 par l'administrateur (LiteDeploy).\"");
+            StringAssert.Contains(QuickCommands.LocalizedArguments(restart, restart.Steps[0], false), "/c \"Restart requested by the administrator (LiteDeploy).\"");
+            QuickCommand dns = QuickCommands.Find(QuickCommands.FlushDns);
+            Assert.AreEqual("/flushdns", QuickCommands.LocalizedArguments(dns, dns.Steps[0], true), "other commands unchanged");
+            Assert.AreEqual("quick restart --message-language fr", QuickCommands.WorkerArguments("restart", "fr"));
+            Assert.AreEqual("quick restart", QuickCommands.WorkerArguments("restart", null));
+        }
+
+        [TestMethod]
         public void ReadableNames_AndText()
         {
             CollectionAssert.AreEqual(new[] { "Word", "Outlook", "Adobe Acrobat", "MyApp" },

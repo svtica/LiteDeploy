@@ -44,6 +44,15 @@ namespace LiteDeploy
             idColumn.HeaderText = Localization.T("PackageListForm.IdColumn", "winget Id");
             processesColumn.HeaderText = Localization.T("PackageListForm.ProcessesColumn", "Processes to close");
             labelColumn.HeaderText = Localization.T("PackageListForm.LabelColumn", "Label");
+            // The boxes start after the longer of their labels (a translation longer than the English text hid their first characters)
+            int left = Math.Max(searchLabel.Left + searchLabel.PreferredWidth, moduleLabel.Left + moduleLabel.PreferredWidth) + 8;
+            foreach (Control box in new Control[] { searchBox, modulesCombo })
+            {
+                if (left <= box.Left) continue;
+                int right = box.Right;
+                box.Left = left;
+                box.Width = Math.Max(120, right - left);
+            }
             Theme.Apply(this);
             // The two imports do different things: say which is which
             if (components == null) components = new System.ComponentModel.Container();

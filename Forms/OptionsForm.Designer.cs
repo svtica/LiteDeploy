@@ -56,6 +56,8 @@ namespace LiteDeploy
             this.warnBox = new System.Windows.Forms.NumericUpDown();
             ((System.ComponentModel.ISupportInitialize)(this.warnBox)).BeginInit();
             this.postponeCheckBox = new System.Windows.Forms.CheckBox();
+            this.messageLanguageLabel = new System.Windows.Forms.Label();
+            this.messageLanguageCombo = new System.Windows.Forms.ComboBox();
             this.unsignedModulesCheckBox = new System.Windows.Forms.CheckBox();
             this.accountLabel = new System.Windows.Forms.Label();
             this.accountCombo = new System.Windows.Forms.ComboBox();
@@ -187,7 +189,7 @@ namespace LiteDeploy
             // 
             // ApplyButton
             // 
-            this.ApplyButton.Location = new System.Drawing.Point(237, 860);
+            this.ApplyButton.Location = new System.Drawing.Point(237, 912);
             this.ApplyButton.Name = "ApplyButton";
             this.ApplyButton.Size = new System.Drawing.Size(93, 23);
             this.ApplyButton.TabIndex = 6;
@@ -198,7 +200,7 @@ namespace LiteDeploy
             // cancelButton
             // 
             this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cancelButton.Location = new System.Drawing.Point(336, 860);
+            this.cancelButton.Location = new System.Drawing.Point(336, 912);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(93, 23);
             this.cancelButton.TabIndex = 7;
@@ -234,6 +236,8 @@ namespace LiteDeploy
             this.updatesGroup.Controls.Add(this.warnLabel);
             this.updatesGroup.Controls.Add(this.warnBox);
             this.updatesGroup.Controls.Add(this.postponeCheckBox);
+            this.updatesGroup.Controls.Add(this.messageLanguageLabel);
+            this.updatesGroup.Controls.Add(this.messageLanguageCombo);
             this.updatesGroup.Controls.Add(this.unsignedModulesCheckBox);
             this.updatesGroup.Controls.Add(this.accountLabel);
             this.updatesGroup.Controls.Add(this.accountCombo);
@@ -242,7 +246,7 @@ namespace LiteDeploy
             this.updatesGroup.Controls.Add(this.includeServersCheckBox);
             this.updatesGroup.Location = new System.Drawing.Point(12, 265);
             this.updatesGroup.Name = "updatesGroup";
-            this.updatesGroup.Size = new System.Drawing.Size(417, 421);
+            this.updatesGroup.Size = new System.Drawing.Size(417, 473);
             this.updatesGroup.TabIndex = 3;
             this.updatesGroup.TabStop = false;
             this.updatesGroup.Text = "Software updates";
@@ -317,6 +321,15 @@ namespace LiteDeploy
             this.postponeCheckBox.TabIndex = 22;
             this.postponeCheckBox.Text = "The users can postpone the update (Cancel in the warning)";
             this.postponeCheckBox.UseVisualStyleBackColor = true;
+            this.messageLanguageLabel.AutoSize = true;
+            this.messageLanguageLabel.Location = new System.Drawing.Point(17, 425);
+            this.messageLanguageLabel.Name = "messageLanguageLabel";
+            this.messageLanguageLabel.Text = "Language of the messages to the users:";
+            this.messageLanguageCombo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.messageLanguageCombo.Location = new System.Drawing.Point(20, 441);
+            this.messageLanguageCombo.Name = "messageLanguageCombo";
+            this.messageLanguageCombo.Size = new System.Drawing.Size(379, 21);
+            this.messageLanguageCombo.TabIndex = 23;
             this.unsignedModulesCheckBox.Location = new System.Drawing.Point(20, 166);
             this.unsignedModulesCheckBox.Name = "unsignedModulesCheckBox";
             this.unsignedModulesCheckBox.Size = new System.Drawing.Size(379, 40);
@@ -357,7 +370,7 @@ namespace LiteDeploy
             this.siwGroup.Controls.Add(this.toolsFolderLabel);
             this.siwGroup.Controls.Add(this.toolsFolderBox);
             this.siwGroup.Controls.Add(this.toolsFolderButton);
-            this.siwGroup.Location = new System.Drawing.Point(12, 692);
+            this.siwGroup.Location = new System.Drawing.Point(12, 744);
             this.siwGroup.Name = "siwGroup";
             this.siwGroup.Size = new System.Drawing.Size(417, 156);
             this.siwGroup.TabIndex = 4;
@@ -406,7 +419,7 @@ namespace LiteDeploy
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.cancelButton;
-            this.ClientSize = new System.Drawing.Size(445, 895);
+            this.ClientSize = new System.Drawing.Size(445, 947);
             this.Controls.Add(this.cancelButton);
             this.Controls.Add(this.ApplyButton);
             this.Controls.Add(this.groupBox2);
@@ -459,6 +472,8 @@ namespace LiteDeploy
         private System.Windows.Forms.Label warnLabel;
         private System.Windows.Forms.NumericUpDown warnBox;
         private System.Windows.Forms.CheckBox postponeCheckBox;
+        private System.Windows.Forms.Label messageLanguageLabel;
+        private System.Windows.Forms.ComboBox messageLanguageCombo;
         private System.Windows.Forms.CheckBox unsignedModulesCheckBox;
         private System.Windows.Forms.Label accountLabel;
         private System.Windows.Forms.ComboBox accountCombo;
