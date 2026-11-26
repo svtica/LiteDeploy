@@ -177,6 +177,110 @@ namespace LiteDeploy
             return catalog;
         }
 
+        /// <summary>
+        /// Web versions: the catalog <paramref name="json"/> with the File value (and the Version value, when the product
+        /// has one and <paramref name="newVersion"/> is given) of the product <paramref name="module"/>/<paramref name="instance"/>
+        /// replaced. Returns null when the catalog does not list that product (or cannot be read): nothing to change.
+        /// The order of the members is kept; the file is written back with an indentation of two spaces. Unit-tested.
+        /// </summary>
+        static public String UpdateFile(String json, String module, String instance, String newFile, String newVersion)
+        {
+            XElement root;
+            try
+            {
+                byte[] bytes = Encoding.UTF8.GetBytes((json ?? "").TrimStart('\uFEFF'));
+                using (XmlDictionaryReader reader = JsonReaderWriterFactory.CreateJsonReader(bytes, XmlDictionaryReaderQuotas.Max))
+                    root = XElement.Load(reader);
+            }
+            catch (Exception ex) when (ex is XmlException || ex is ArgumentException || ex is InvalidOperationException) { return null; }
+            if (Type(root) != "object") return null;
+            XElement fileModule = Member(root, ModuleKey);
+            String defaultModule = fileModule != null && Type(fileModule) == "string" ? fileModule.Value.Trim() : DefaultModule;
+            XElement products = Member(root, "products");
+            if (products == null || Type(products) != "array") return null;
+
+            bool changed = false;
+            foreach (XElement product in products.Elements().Where(p => Type(p) == "object"))
+            {
+                XElement i = Member(product, InstanceKey);
+                XElement m = Member(product, ModuleKey);
+                String productModule = m != null && Type(m) == "string" ? m.Value.Trim() : defaultModule;
+                if (i == null || !String.Equals(i.Value.Trim(), instance, StringComparison.OrdinalIgnoreCase)
+                    || !String.Equals(productModule, module, StringComparison.OrdinalIgnoreCase)) continue;
+                SetString(product, "File", newFile);
+                XElement version = Member(product, "Version");
+                if (!String.IsNullOrEmpty(newVersion) && version != null && Type(version) != "null") SetString(product, "Version", newVersion);
+                changed = true;
+            }
+            if (!changed) return null;
+            StringBuilder sb = new StringBuilder();
+            WriteJson(sb, root, 0);
+            return sb.Append("\r\n").ToString();
+        }
+
+        // Sets a member to a string (added at the end when missing)
+        static void SetString(XElement obj, String name, String value)
+        {
+            XElement e = Member(obj, name);
+            if (e == null)
+            {
+                e = new XElement("item", new XAttribute("item", name));
+                obj.Add(e);
+            }
+            e.SetAttributeValue("type", "string");
+            e.Value = value ?? "";
+        }
+
+        static void WriteJson(StringBuilder sb, XElement e, int indent)
+        {
+            String type = Type(e);
+            String pad = new String(' ', indent + 2);
+            switch (type)
+            {
+                case "object":
+                case "array":
+                    List<XElement> children = e.Elements().ToList();
+                    bool isObject = type == "object";
+                    if (children.Count == 0) { sb.Append(isObject ? "{}" : "[]"); return; }
+                    sb.Append(isObject ? "{" : "[").Append("\r\n");
+                    for (int k = 0; k < children.Count; k++)
+                    {
+                        sb.Append(pad);
+                        if (isObject) sb.Append(Quote(MemberName(children[k]))).Append(": ");
+                        WriteJson(sb, children[k], indent + 2);
+                        if (k < children.Count - 1) sb.Append(',');
+                        sb.Append("\r\n");
+                    }
+                    sb.Append(new String(' ', indent)).Append(isObject ? "}" : "]");
+                    return;
+                case "null": sb.Append("null"); return;
+                case "number":
+                case "boolean": sb.Append(e.Value); return;
+                default: sb.Append(Quote(e.Value)); return;
+            }
+        }
+
+        static String Quote(String s)
+        {
+            StringBuilder q = new StringBuilder("\"");
+            foreach (char c in s ?? "")
+            {
+                switch (c)
+                {
+                    case '"': q.Append("\\\""); break;
+                    case '\\': q.Append("\\\\"); break;
+                    case '\n': q.Append("\\n"); break;
+                    case '\r': q.Append("\\r"); break;
+                    case '\t': q.Append("\\t"); break;
+                    default:
+                        if (c < ' ') q.Append("\\u").Append(((int)c).ToString("x4"));
+                        else q.Append(c);
+                        break;
+                }
+            }
+            return q.Append('"').ToString();
+        }
+
         // JSON type of an element of the JSON-to-XML mapping (string when not said)
         static String Type(XElement e)
         {

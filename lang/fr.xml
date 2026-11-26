@@ -382,6 +382,7 @@ Oui : ouvrir les options. Non : continuer avec votre compte.</translation>
   <translation key="PackageListForm.NoWinget">winget n'est pas disponible sur cet ordinateur : tapez l'Id du paquet dans la liste.</translation>
   <translation key="PackageListForm.NoResult">Aucun paquet trouvé.</translation>
   <translation key="PackageListForm.InvalidIds">Id de paquet invalide : {0}. Un Id ne contient que des lettres, des chiffres et . - _ +.</translation>
+  <translation key="CacheDownloader.CatalogNotUpdated">Le catalogue partagé n'a pas pu être mis à jour ({0}) : changez-y le File de {1} à la main.</translation>
   <translation key="PackageListForm.CatalogImportQuestion">Importer ces produits ?</translation>
   <translation key="PackageListForm.CatalogModuleLine">{0} produit(s) du module {1} : {2}</translation>
   <translation key="PackageListForm.CatalogReplaces">Les valeurs des paramètres de ces instances sont remplacées par celles du catalogue (les paramètres secrets ne changent pas).</translation>

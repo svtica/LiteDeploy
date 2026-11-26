@@ -622,6 +622,9 @@ rows *Newer on the web* that have an HTTPS installer URL and its SHA256 in the m
 4. The `File` parameter of the instance is set to the new file in `module-settings.xml` (same
    folder part); a `Version` parameter that was set is changed to the web version. The computers
    get the new file at their next run.
+   The catalogs of the shared `catalogs` folder that list the instance get the same `File` (and
+   `Version`, when the product has one), so that the other administrators import the new file;
+   a catalog that cannot be written is named in the result (change it by hand).
 5. The previous file is moved to the `OLD` subfolder of that folder (with a time stamp when `OLD`
    already holds a file of that name), so the last version stays at hand for a rollback.
 

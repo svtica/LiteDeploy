@@ -15,6 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CachedInstaller`: the *File* list of *Parameters...* offers the installers of the whole shared cache
   (vendor folders at its root, two levels down), not only those under `CachedInstaller/`.
 
+### Fixed
+
+- *Web versions > Download to the cache* also updates the catalogs of the shared `catalogs` folder:
+  the `File` (and the `Version`, when the product has one) of the instance downloaded. Before, only
+  the settings of the administrator who downloaded changed, and a later import of the team's catalog
+  put back the path of the previous file, which had moved to `OLD`. A catalog that cannot be written
+  is named in the result.
+
 ### Removed
 
 - Quick command *Refresh the computer policies only (gpupdate /target:computer /force)*: run as
