@@ -799,7 +799,7 @@ order; an earlier LiteDeploy reads `values=` and `files=` as the start of the de
 | `secret` | Optional, right after the name: the value is the password of a stored credential |
 | `default=<value>` | Optional, right after the name: value used when none is set (`default="a b"` for spaces, `default=` for an empty value). Without default, the parameter is **required** |
 | `values=a\|b\|c` | Optional, right after the name: *Parameters...* offers these values in a list (an optional parameter starts with *(default: x)*, which saves no value). The module still checks the value it receives |
-| `files=Folder/*.msi\|Folder/*.exe` | Optional, right after the name: *Parameters...* offers the files of the shared cache that match (the folder and its subfolders, `OLD` folders left out), as paths relative to the cache; the box can still be typed in |
+| `files=Folder/*.msi\|Folder/*.exe` | Optional, right after the name: *Parameters...* offers the files of the shared cache that match (the folder and two levels of subfolders; `*.msi` without a folder: the whole cache, vendor folders included; `OLD` folders left out), as paths relative to the cache; the box can still be typed in |
 | Description | The rest of the line, shown in LiteDeploy |
 
 The administrator sets the values in *Software catalog...* (tool bar of the main window): select a
