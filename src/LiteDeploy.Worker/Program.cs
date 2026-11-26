@@ -599,26 +599,35 @@ namespace LiteDeploy.Worker
             return CloseWarning.PostponedMessage + " (" + string.Join(", ", users.Distinct()) + ")";
         }
 
+        /// <summary>Rounds of closing: a helper started again by another program (a browser starts its native messaging host again) is closed again.</summary>
+        const int CloseRounds = 3;
+
         // Force-closes the package's processes (SYSTEM cannot ask them to close); null when none is left running
         static string CloseProcesses(UpdatePackage package)
         {
             List<string> closed = new List<string>();
-            foreach (string name in package.Processes)
+            string[] still = new string[0];
+            for (int round = 0; round < CloseRounds; round++)
             {
-                foreach (Process p in Process.GetProcessesByName(name))
+                bool killed = false;
+                foreach (string name in package.Processes)
                 {
-                    using (p)
+                    foreach (Process p in Process.GetProcessesByName(name))
                     {
-                        try { p.Kill(); closed.Add(name); }
-                        catch (Exception) { }
+                        using (p)
+                        {
+                            try { p.Kill(); closed.Add(name); killed = true; }
+                            catch (Exception) { }
+                        }
                     }
                 }
+                if (!killed && round == 0) return null;
+                Thread.Sleep(round == 0 ? 3000 : 2000);
+                still = package.Processes.Where(n => Process.GetProcessesByName(n).Length > 0).ToArray();
+                if (still.Length == 0) break;
             }
-            if (closed.Count == 0) return null;
-
-            Thread.Sleep(3000);
-            string[] still = package.Processes.Where(n => Process.GetProcessesByName(n).Length > 0).ToArray();
-            if (still.Length > 0) return "Could not close " + string.Join(", ", still);
+            if (still.Length > 0)
+                return "Could not close " + string.Join(", ", still) + " (started again after " + CloseRounds + " attempts, probably by another program)";
             Emit(WorkerProtocol.Format("type", "closed", "id", package.Id, "processes", string.Join(", ", closed.Distinct())));
             return null;
         }

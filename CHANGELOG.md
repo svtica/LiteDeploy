@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Closing the processes of a package before its update: up to three rounds (a helper that another
+  program starts again is closed again), and the failure says that it was started again.
+- `OnePassword`: `1Password-BrowserSupport` is no longer in `# Processes:`. The browsers start it again
+  at once, so the update failed with *Could not close 1Password-BrowserSupport*; the 1Password MSI
+  stops it itself during the update. A catalog row added earlier keeps the old list: set its
+  *Processes to close* column to `1Password`.
+
 ## [1.0.42] - 2026-11-26
 
 ### Added

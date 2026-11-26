@@ -1,6 +1,6 @@
 # LiteDeploy-Module
 # Label: 1Password
-# Processes: 1Password, 1Password-BrowserSupport
+# Processes: 1Password
 <#
 .SYNOPSIS
     LiteDeploy update module: 1Password installed per machine (MSI), from an
