@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.38] - 2026-11-26
+
 ### Added
 
 - Catalogs: a product can name its own module (`"module"` in the product, the `"module"` of the file
