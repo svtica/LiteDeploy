@@ -48,6 +48,19 @@ function Get-Installed {
         Where-Object { $_.DisplayName -eq '1Password' -and $_.DisplayVersion } | Select-Object -First 1
 }
 
+# True when Installed is older than Latest, compared on the parts both have: winget gives a build number
+# (8.12.46.29) that the MSI does not register (DisplayVersion 8.12.46), so 8.12.46 is up to date with 8.12.46.29
+function Test-Older([string] $Installed, [string] $Latest) {
+    $a = @([regex]::Matches([string]$Installed, '\d+') | ForEach-Object { [long]$_.Value })
+    $b = @([regex]::Matches([string]$Latest, '\d+') | ForEach-Object { [long]$_.Value })
+    $n = [Math]::Min($a.Count, $b.Count)
+    for ($i = 0; $i -lt $n; $i++) {
+        if ($a[$i] -lt $b[$i]) { return $true }
+        if ($a[$i] -gt $b[$i]) { return $false }
+    }
+    return $false
+}
+
 # Latest version known to winget ("Version: 8.11.4")
 function Get-LatestVersion {
     $winget = Get-Winget
@@ -172,7 +185,7 @@ try {
     if (-not $installed) { Write-LiteDeployResult 'notinstalled'; exit 0 }
     $latest = Get-LatestVersion
     if (-not $latest) { Write-LiteDeployResult 'error' $installed.DisplayVersion $null 'Latest version unknown (winget)'; exit 1 }
-    $outdated = [version]$installed.DisplayVersion -lt [version]$latest
+    $outdated = Test-Older $installed.DisplayVersion $latest
 
     if ($Action -eq 'Check' -or -not $outdated) {
         if ($outdated) { Write-LiteDeployResult 'outdated' $installed.DisplayVersion $latest }
