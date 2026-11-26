@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.40] - 2026-11-26
+
 ### Added
 
 - *App > Options > Software updates > Language of the messages to the users*: same as LiteDeploy
