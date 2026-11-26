@@ -436,7 +436,6 @@ Oui : ouvrir les options. Non : continuer avec votre compte.</translation>
   <translation key="PackageListForm.CatalogTitle">Catalogue de produits</translation>
   <translation key="PackageListForm.CatalogFilter">Catalogue (*.json)|*.json|Tous les fichiers (*.*)|*.*</translation>
   <translation key="PackageListForm.CatalogEmpty">Le catalogue n'a aucun produit valide.</translation>
-  <translation key="PackageListForm.CatalogConfirm">Importer {0} produits du module {1} : {2} ?&#10;Les valeurs des paramètres de ces instances sont remplacées par celles du catalogue (les paramètres secrets ne changent pas).</translation>
   <translation key="UpdateModules.NoInstances">Le module {0} ne prend pas en charge les instances ({1}).</translation>
   <translation key="ModuleCatalog.InvalidJson">JSON invalide : {0}</translation>
   <translation key="ModuleCatalog.NoProducts">Catalogue invalide : un objet JSON avec un tableau « products » est attendu.</translation>
