@@ -651,6 +651,14 @@ Oui : en ajouter un. Non : continuer avec votre compte.</translation>
   <translation key="ComputerGrid.OfferUseCredentialOnce">Aucun identifiant n'est choisi pour les mises à jour logicielles : les ordinateurs sont joints avec votre compte ({0}). Utiliser l'identifiant enregistré « {1} » ? Il devient celui par défaut (Application &gt; Options).
 
 Oui : l'utiliser. Non : continuer avec votre compte.</translation>
+  <translation key="ComputerGrid.ConfirmUpdateProfileWarn">Profil {2} : mettre à jour {0} paquet(s) sur {1} ordinateur(s) ? {3}</translation>
+  <translation key="ComputerGrid.ConfirmUpdateOneWarn">Mettre à jour {0} sur {1} ordinateur(s) ? {3}&#10;&#10;{2}</translation>
+  <translation key="ComputerGrid.NightOnlyChoice">{0} de ces ordinateurs sont mis à jour hors heures ouvrables seulement, et nous sommes pendant les heures ouvrables : {1}.</translation>
+  <translation key="ComputerGrid.NightOnlyYesNo">Oui : ces ordinateurs aussi, maintenant.&#10;Non : les autres ordinateurs seulement.&#10;Annuler : rien.</translation>
+  <translation key="ComputerGrid.NightOnlyYesOnly">Oui : les mettre à jour maintenant quand même.&#10;Non ou Annuler : rien.</translation>
+  <translation key="ComputerGrid.CloseNoWarning">Les applications sont fermées sans avertissement avant la mise à jour.</translation>
+  <translation key="ComputerGrid.CloseWithWarning">Les usagers sont avertis {0} seconde(s) avant la fermeture de leurs applications{1}.</translation>
+  <translation key="ComputerGrid.CloseCanPostpone"> (ils peuvent reporter la mise à jour)</translation>
   <translation key="ComputerGrid.NightOnlySkipped">{0} ordinateur(s) mis à jour hors heures ouvrables seulement sont ignorés pour l'instant (heures ouvrables) : {1}. Pour les mettre à jour maintenant, utilisez d'abord « Permettre les mises à jour pendant les heures ouvrables ».</translation>
   <translation key="ComputerGrid.ConfirmStop">Arrêter le traitement en cours ?</translation>
   <translation key="ComputerGrid.NoTargets">Aucun ordinateur coché ni sélectionné</translation>
@@ -915,7 +923,6 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="ComputerGrid.AllColumns">Afficher toutes les colonnes</translation>
   <translation key="ComputerGrid.DetailsState">État : {0} ; utilisateur : {1} ; dernier scan : {2}</translation>
   <translation key="ComputerGrid.AllSoftware">Tous</translation>
-  <translation key="ComputerGrid.ConfirmUpdateProfile">Profil {2} : mettre à jour {0} paquet(s) sur {1} ordinateur(s) ? Leurs applications sont fermées sans avertissement avant la mise à jour.</translation>
   <translation key="ComputerGrid.IdleProfile">{0} logiciel(s) dans le profil {1} ({2} dans le catalogue).</translation>
   <translation key="ComputerGrid.NoPackagesInProfile">Aucun logiciel dans ce profil : cliquez sur « Catalogue des logiciels... » ou choisissez un autre profil.</translation>
   <translation key="ComputerGrid.ProfileButton">Profil : {0}</translation>
@@ -1004,7 +1011,6 @@ Chaque fichier est refusé à moins que son SHA256 soit celui du manifeste winge
   <translation key="ComputerGrid.PackageState">à jour : {0}, non vérifiés : {1}, autre : {2}</translation>
   <translation key="ComputerGrid.NoSoftwareInProfile">Aucun logiciel dans le profil</translation>
   <translation key="ComputerGrid.NothingToInstallOrUpdate">Rien à mettre à jour ni à installer : selon la dernière vérification de ces ordinateurs, les logiciels du profil sont à jour (ou pas encore vérifiés : Vérifier d'abord).</translation>
-  <translation key="ComputerGrid.ConfirmUpdateOne">Mettre à jour {0} sur {1} ordinateur(s) ? L'application est fermée sans avertissement avant la mise à jour : {2}</translation>
   <translation key="RemoteRunForm.Cancel">Annuler</translation>
   <translation key="RemoteRunForm.Running">{0} ordinateur(s) sur {1} terminé(s), {2} en cours ({3})...</translation>
   <translation key="RemoteRunForm.Cancelling">Annulation : attente de {0} ordinateur(s) en cours ({1})...</translation>
