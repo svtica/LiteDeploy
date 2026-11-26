@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Catalogs: a product can name its own module (`"module"` in the product, the `"module"` of the file
+  being the default), so one catalog file can hold the instances of every module (CachedInstaller,
+  MsixProvision, TeamViewer...). *Import instances...* imports each product into its module and
+  lists them by module; the products of a missing module are skipped and reported.
+
 ## [1.0.37] - 2026-11-25
 
 ### Added

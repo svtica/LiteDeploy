@@ -341,7 +341,10 @@ files and arguments that the administrators import.
 }
 ```
 
-- `module`: optional, `CachedInstaller` by default; the module must declare `# Instances: yes`.
+- `module`: optional, `CachedInstaller` by default; the module must declare `# Instances: yes`. A
+  product can name its own module (`"module": "MsixProvision"` in the product): one file then holds
+  the instances of several modules (CachedInstaller, MsixProvision, TeamViewer...), each product
+  imported into its module. The same instance name under two modules is two products.
 - `products`: one object per product; `Instance` is required (same rules as above), every other
   member is the value of the parameter of the same name (strings; a number is taken as its text,
   `null` means no value). Write paths with `/` (a `\` must be doubled in JSON).

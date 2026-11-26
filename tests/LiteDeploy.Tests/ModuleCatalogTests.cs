@@ -61,6 +61,24 @@ namespace LiteDeploy.Tests
         }
 
         [TestMethod]
+        public void Parse_ProductsOfSeveralModules()
+        {
+            ModuleCatalog c = ModuleCatalog.Parse(@"{ ""products"": [
+                { ""Instance"": ""ExampleApp"", ""File"": ""Vendor/app.msi"", ""Publisher"": ""ExampleVendor Inc."" },
+                { ""module"": ""MsixProvision"", ""Instance"": ""ExampleMsix"", ""PackageName"": ""Contoso.Example"", ""Folder"": ""ExampleMsix"" },
+                { ""module"": ""TeamViewer"", ""Instance"": ""ExampleApp"", ""File"": ""TeamViewer/host.msi"" },
+                { ""module"": ""MsixProvision"", ""Instance"": ""ExampleMsix"" },
+                { ""module"": ""bad module!"", ""Instance"": ""Other"" } ] }");
+            Assert.AreEqual(3, c.Entries.Count, "the same instance name under two modules is two products");
+            Assert.AreEqual("CachedInstaller", c.Entries[0].Module, "the default of the file");
+            Assert.AreEqual("MsixProvision", c.Entries[1].Module);
+            Assert.AreEqual("TeamViewer", c.Entries[2].Module);
+            Assert.IsFalse(c.Entries[1].Values.ContainsKey("module"), "module is not a parameter value");
+            Assert.AreEqual("Contoso.Example", c.Entries[1].Values["PackageName"]);
+            Assert.AreEqual(2, c.Errors.Count, "duplicate in the same module, invalid module name");
+        }
+
+        [TestMethod]
         public void Parse_ProductsAndValues()
         {
             ModuleCatalog c = ModuleCatalog.Parse(Example);
