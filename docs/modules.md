@@ -297,7 +297,7 @@ values; it has its own row (label), its own state in the summary and its own las
 
 ### Catalog
 
-Typing the same fields for every product is error-prone: *Software catalog > Import instances...*
+Typing the same fields for every product is error-prone: *Software catalog > Import module instances...*
 reads a JSON catalog and creates one instance per product with its parameter values. Where the
 dialog opens:
 
@@ -661,14 +661,14 @@ computer, for each administrator account, once:
 | Credential of the software updates | *Tools > Credentials*, then *App > Options* | Windows Credential Manager, `settings.xml` (`UpdateCredential`) |
 | Include servers, remote method, business hours | *App > Options > Software updates* | `settings.xml` |
 | Software catalog | *Software catalog...* (tool bar of the main window) | `packages.txt` |
-| Module parameters (instances) | *Software catalog... > Import instances...* (or *Parameters...*) | `module-settings.xml` |
+| Module parameters (instances) | *Software catalog... > Import module instances...* (or *Parameters...*) | `module-settings.xml` |
 
 1. Type or paste the network paths of the cache and of the shared modules folder (the boxes show
    the expected form; *Select* starts at the typed path, shares are under *Network*). *Save*
    checks that this computer can read them with this account and warns otherwise (*Save anyway*
    keeps them, for a share that is down for a moment).
 2. Add the credential and choose it.
-3. Open *Software catalog...*, *Import instances...*: the dialog opens the shared `catalogs` folder
+3. Open *Software catalog...*, *Import module instances...*: the dialog opens the shared `catalogs` folder
    next to the shared modules folder (see *Catalog*). Import each catalog of the team; secret
    parameters are then set in *Parameters...*.
 4. *Tools > Web versions...* lists the instances; *Check now*.

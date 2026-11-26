@@ -198,16 +198,15 @@ namespace LiteDeploy
             this.importButton.AutoSize = true;
             this.importButton.MinimumSize = new System.Drawing.Size(90, 25);
             this.importButton.Name = "importButton";
-            this.importButton.Text = "Import...";
+            this.importButton.Text = "Import a list...";
             this.importButton.UseVisualStyleBackColor = true;
             this.importButton.Click += new System.EventHandler(this.importButton_Click);
             this.exportButton.AutoSize = true;
             this.exportButton.MinimumSize = new System.Drawing.Size(90, 25);
             this.exportButton.Name = "exportButton";
-            this.exportButton.Text = "Export...";
+            this.exportButton.Text = "Export the list...";
             this.exportButton.UseVisualStyleBackColor = true;
             this.exportButton.Click += new System.EventHandler(this.exportButton_Click);
-            this.exportButton.Margin = new System.Windows.Forms.Padding(20, 3, 3, 3);
             //
             // actionPanel: the buttons of the selected row, aligned like the profile buttons above
             //
@@ -220,7 +219,6 @@ namespace LiteDeploy
             //
             // parametersButton
             //
-            this.parametersButton.Margin = new System.Windows.Forms.Padding(20, 3, 3, 3);
             this.parametersButton.Enabled = false;
             this.parametersButton.Name = "parametersButton";
             this.parametersButton.AutoSize = true;
@@ -237,7 +235,7 @@ namespace LiteDeploy
             this.importCatalogButton.MinimumSize = new System.Drawing.Size(90, 25);
             this.importCatalogButton.UseVisualStyleBackColor = true;
             this.importCatalogButton.TabIndex = 10;
-            this.importCatalogButton.Text = "Import instances...";
+            this.importCatalogButton.Text = "Import module instances...";
             this.importCatalogButton.Click += new System.EventHandler(this.importCatalogButton_Click);
             //
             // webVersionsButton

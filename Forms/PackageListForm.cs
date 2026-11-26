@@ -45,6 +45,15 @@ namespace LiteDeploy
             processesColumn.HeaderText = Localization.T("PackageListForm.ProcessesColumn", "Processes to close");
             labelColumn.HeaderText = Localization.T("PackageListForm.LabelColumn", "Label");
             Theme.Apply(this);
+            // The two imports do different things: say which is which
+            if (components == null) components = new System.ComponentModel.Container();
+            ToolTip tips = new ToolTip(components) { AutoPopDelay = 15000 };
+            tips.SetToolTip(exportButton, Localization.T("PackageListForm.ExportTip",
+                "Saves the software list and its profiles to a file, for another administrator (Import a list...)."));
+            tips.SetToolTip(importButton, Localization.T("PackageListForm.ImportTip",
+                "Adds the software and the profiles of a file made with Export the list... Nothing is removed."));
+            tips.SetToolTip(importCatalogButton, Localization.T("PackageListForm.ImportInstancesTip",
+                "Creates or updates the instances of modules (CachedInstaller, MsixProvision, TeamViewer...) and their parameters from a JSON catalog of the team's catalogs folder."));
             ClientSize = new System.Drawing.Size(860, 560);
             Populate(packages.ToList(), profiles ?? new SoftwareProfiles());
 
