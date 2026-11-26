@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- During business hours, the confirmation of *Update checked*, of an update of one software and of
+  *Install* names the "outside business hours only" computers and lets the administrator include them
+  for this run (*Yes*), leave them out (*No*) or cancel. Before, they were always left out and the
+  flag had to be cleared first. The schedules and the queue keep leaving them out.
+- The update confirmations say how the users are warned (the delay of *Warn before closing*, and
+  whether they can postpone) instead of "closed without warning", which was no longer true since 1.0.37.
+
 ## [1.0.40] - 2026-11-26
 
 ### Added

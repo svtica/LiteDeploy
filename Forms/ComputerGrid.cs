@@ -1073,18 +1073,10 @@ namespace LiteDeploy
                 return;
             }
 
-            String skipped;
-            jobs = SkipNightOnly(jobs, out skipped);
-            if (jobs.Count == 0)
-            {
-                statusLabel.Text = skipped;
-                return;
-            }
-            String question = Localization.F("ComputerGrid.ConfirmUpdateProfile", "Profile {2}: update {0} package(s) on {1} computer(s)? Their applications are closed without warning before the update.",
-                jobs.Sum(j => j.Packages.Count), jobs.Count, ProfileDisplayName);
-            if (skipped != null) question += "\n\n" + skipped;
-            if (MessageBox.Show(this, question, Caption, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
-                return;
+            String question = Localization.F("ComputerGrid.ConfirmUpdateProfileWarn", "Profile {2}: update {0} package(s) on {1} computer(s)? {3}",
+                jobs.Sum(j => j.Packages.Count), jobs.Count, ProfileDisplayName, CloseNote());
+            jobs = ConfirmJobs(jobs, question, MessageBoxDefaultButton.Button1);
+            if (jobs == null) return;
             if (!OfferCredential()) return;
             Start("upgrade", jobs);
         }
@@ -1104,6 +1096,38 @@ namespace LiteDeploy
                 "{0} computer(s) updated outside business hours only are skipped now (business hours): {1}. To update them now, use \"Allow updates during business hours\" first.",
                 night.Count, names);
             return jobs.Except(night).ToList();
+        }
+
+        /// <summary>
+        /// Confirmation of an update or an install. During business hours, the "outside business hours only" computers
+        /// of the run are named and the administrator chooses: Yes, them too (the warning is bypassed for this run);
+        /// No, the other computers only; Cancel, nothing. Returns the jobs to run, or null.
+        /// </summary>
+        List<Job> ConfirmJobs(List<Job> jobs, String question, MessageBoxDefaultButton defaultButton)
+        {
+            List<Job> night = UserSettings.Current.IsBusinessHours(DateTime.Now) ? jobs.Where(j => IsNightOnly(j.Computer)).ToList() : new List<Job>();
+            if (night.Count == 0)
+                return MessageBox.Show(this, question, Caption, MessageBoxButtons.YesNo, MessageBoxIcon.Question, defaultButton) == DialogResult.Yes ? jobs : null;
+            bool others = night.Count < jobs.Count;
+            String names = String.Join(", ", night.Select(j => j.Computer).Take(10)) + (night.Count > 10 ? ", ..." : "");
+            String text = question + "\n\n"
+                + Localization.F("ComputerGrid.NightOnlyChoice", "{0} of these computer(s) are updated outside business hours only, and it is business hours now: {1}.", night.Count, names)
+                + "\n\n" + (others
+                    ? Localization.T("ComputerGrid.NightOnlyYesNo", "Yes: these computers too, now.\nNo: the other computers only.\nCancel: nothing.")
+                    : Localization.T("ComputerGrid.NightOnlyYesOnly", "Yes: update them now anyway.\nNo or Cancel: nothing."));
+            DialogResult r = MessageBox.Show(this, text, Caption, MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2);
+            if (r == DialogResult.Yes) return jobs;
+            if (r == DialogResult.No && others) return jobs.Except(night).ToList();
+            return null;
+        }
+
+        /// <summary>What happens to the applications of the users, for the update confirmations (warning of App &gt; Options).</summary>
+        static String CloseNote()
+        {
+            int seconds = CloseWarning.ClampSeconds(UserSettings.Current.CloseWarningSeconds);
+            if (seconds == 0) return Localization.T("ComputerGrid.CloseNoWarning", "The applications are closed without warning before the update.");
+            return Localization.F("ComputerGrid.CloseWithWarning", "The users are warned {0} second(s) before their applications are closed{1}.", seconds,
+                UserSettings.Current.CloseWarningPostpone ? Localization.T("ComputerGrid.CloseCanPostpone", " (they can postpone the update)") : "");
         }
 
         // ---- Install (explicit, opt-in) ---------------------------------------------
@@ -1169,18 +1193,11 @@ namespace LiteDeploy
             if (pending > 0) return;
             List<Job> jobs = targets.Where(c => !IsPaused(c))
                 .Select(c => new Job { Computer = c, Packages = new List<UpdatePackage> { package } }).ToList();
-            String skipped;
-            jobs = SkipNightOnly(jobs, out skipped);
-            if (jobs.Count == 0)
-            {
-                if (skipped != null) statusLabel.Text = skipped;
-                return;
-            }
-            String question = Localization.F("ComputerGrid.ConfirmUpdateOne", "Update {0} on {1} computer(s)? The application is closed without warning before the update: {2}",
-                package.DisplayName, jobs.Count, String.Join(", ", jobs.Select(j => j.Computer).Take(10)) + (jobs.Count > 10 ? ", ..." : ""));
-            if (skipped != null) question += "\n\n" + skipped;
-            if (MessageBox.Show(this, question, Caption, MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
-                return;
+            if (jobs.Count == 0) return;
+            String question = Localization.F("ComputerGrid.ConfirmUpdateOneWarn", "Update {0} on {1} computer(s)? {3}\n\n{2}",
+                package.DisplayName, jobs.Count, String.Join(", ", jobs.Select(j => j.Computer).Take(10)) + (jobs.Count > 10 ? ", ..." : ""), CloseNote());
+            jobs = ConfirmJobs(jobs, question, MessageBoxDefaultButton.Button2);
+            if (jobs == null) return;
             if (!OfferCredential()) return;
             Start("upgrade", jobs);
         }
@@ -1190,19 +1207,12 @@ namespace LiteDeploy
             if (pending > 0) return;
             List<Job> jobs = targets.Where(c => !IsPaused(c))
                 .Select(c => new Job { Computer = c, Packages = new List<UpdatePackage> { package } }).ToList();
-            String skipped;
-            jobs = SkipNightOnly(jobs, out skipped);
-            if (jobs.Count == 0)
-            {
-                if (skipped != null) statusLabel.Text = skipped;
-                return;
-            }
+            if (jobs.Count == 0) return;
 
             String question = Localization.F("ComputerGrid.ConfirmInstall", "Install {0} on {1} computer(s)?\n\nIt is installed only where the check still says it is not installed: {2}",
                 package.DisplayName, jobs.Count, String.Join(", ", jobs.Select(j => j.Computer).Take(10)) + (jobs.Count > 10 ? ", ..." : ""));
-            if (skipped != null) question += "\n\n" + skipped;
-            if (MessageBox.Show(this, question, Caption, MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
-                return;
+            jobs = ConfirmJobs(jobs, question, MessageBoxDefaultButton.Button2);
+            if (jobs == null) return;
             if (!OfferCredential()) return;
             Start(InstallPolicy.Command, jobs);
         }

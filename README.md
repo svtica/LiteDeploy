@@ -117,8 +117,10 @@ them (and for the PsExec method of the software updates); it is asked for when t
   checked* (Ctrl+U) updates them; Esc stops (with a confirmation). Packages that are not
   installed are neither updates nor errors: they are installed only on explicit request
   (*Install*).
-- During business hours, "outside business hours only" computers are left out of an update; the
-  confirmation names them (to update one now, *Allow updates during business hours* first).
+- During business hours, the confirmation of an update or an install names the "outside business
+  hours only" computers of the run and offers a choice: *Yes*, them too, now (for this run only);
+  *No*, the other computers only; *Cancel*. The flag of the computers does not change. The
+  confirmation also says how the users are warned before their applications are closed.
 - No credential chosen: the first run of a session asks once to add one (or use the stored one);
   the credential chosen becomes the default (*App > Options*).
 - Window size and position, splitter, columns, status filters and *Include servers* are kept
